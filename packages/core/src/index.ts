@@ -8,3 +8,4 @@ export * from './repositories/agency-repository.js';
 export * from './repositories/client-repository.js';
 export * from './repositories/staff-repository.js';
 export * from './repositories/schedule-repository.js';
+export * from './services/credential-policy-service.js';
