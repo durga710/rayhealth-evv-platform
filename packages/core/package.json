@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc --composite false",
+    "db:migrate": "tsx src/migrations/runner.ts",
     "lint": "eslint . --ext ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -16,6 +17,8 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
+    "knex": "^3.2.10",
+    "pg": "^8.20.0",
     "zod": "^4.4.3"
   }
 }

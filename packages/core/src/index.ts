@@ -3,3 +3,8 @@ export * from './domain/agency.js';
 export * from './domain/staff.js';
 export * from './domain/client.js';
 export * from './domain/scheduling.js';
+export * from './db/knex.js';
+export * from './repositories/agency-repository.js';
+export * from './repositories/client-repository.js';
+export * from './repositories/staff-repository.js';
+export * from './repositories/schedule-repository.js';
