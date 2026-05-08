@@ -3,8 +3,11 @@ import type { AppRole } from '@rayhealth/core';
 export interface AuthContext {
   agencyId: string;
   role: AppRole;
-  userId?: string;
+  userId: string;
   caregiverId?: string;
+  authMethod: 'session' | 'bearer';
+  sessionId?: string;
+  csrfTokenHash?: string;
 }
 
 declare global {

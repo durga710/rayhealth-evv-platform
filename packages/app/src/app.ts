@@ -5,6 +5,7 @@ import './types.js';
 import { authContext } from './middleware/auth-context.js';
 import { requireCapability } from './middleware/require-capability.js';
 import { auditLog } from './middleware/audit-log.js';
+import { requireCsrf } from './middleware/csrf.js';
 import { createDb } from '@rayhealth/core';
 
 import authRoutes from './routes/auth-routes.js';
@@ -30,12 +31,14 @@ export function createApp() {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:5173'];
 
   app.set('db', db);
-  app.use(cors({ origin: allowedOrigins }));
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
   app.use(express.json());
   app.use('/auth/login', authLimiter);
+  app.use('/auth/mobile/login', authLimiter);
   app.use('/auth/bootstrap', authLimiter);
   app.use('/auth', authRoutes);
   app.use(authContext);
+  app.use(requireCsrf);
   app.use(auditLog);
 
   app.use('/invites', inviteRoutes);
