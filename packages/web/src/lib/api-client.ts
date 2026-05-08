@@ -1,7 +1,14 @@
+import { getCsrfToken } from './session-state.js';
+
 export async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const csrfToken = getCsrfToken();
   const response = await fetch(path, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    credentials: 'include',
+    headers: {
+      'content-type': 'application/json',
+      ...(csrfToken ? { 'x-csrf-token': csrfToken } : {})
+    },
     body: JSON.stringify(body)
   });
 
@@ -14,7 +21,8 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 
 export async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(path, {
-    headers: { 'accept': 'application/json' }
+    credentials: 'include',
+    headers: { accept: 'application/json' }
   });
 
   if (!response.ok) {
