@@ -1,0 +1,29 @@
+{
+  "name": "rayhealth-fresh",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.8.2",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "security:scan": "tsx scripts/security-surface-scan.ts",
+    "check": "./scripts/check.sh",
+    "db:migrate": "npm run db:migrate --workspace=@rayhealth/core",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "5.4.21",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}

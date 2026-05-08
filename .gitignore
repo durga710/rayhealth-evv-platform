@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build artifacts
+dist/
+**/dist/
+.turbo/
+**/.turbo/
+*.tsbuildinfo
+
+# Environment files — NEVER commit. Real values live in Vercel project env vars.
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Tooling caches
+.superpowers/
+.claude/
+
+# OS / editors
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+turbo-*.log
