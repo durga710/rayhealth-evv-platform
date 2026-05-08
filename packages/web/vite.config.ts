@@ -8,5 +8,10 @@ export default defineConfig({
     alias: {
       '@rayhealth/core': path.resolve(__dirname, '../core/src'),
     },
+    dedupe: ['react', 'react-dom'],
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
 });
