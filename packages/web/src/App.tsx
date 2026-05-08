@@ -7,7 +7,7 @@ import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
 import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
 import { LoginPage } from './features/auth/LoginPage.js';
 
-export function App(): JSX.Element {
+export function App() {
   return (
     <div className="admin-shell">
       <nav>
