@@ -17,6 +17,11 @@ export class ClientRepository {
     return this.mapRowToClient(inserted);
   }
 
+  async getClients(agencyId: string): Promise<Client[]> {
+    const rows = await this.db('clients').where({ agency_id: agencyId });
+    return rows.map(row => this.mapRowToClient(row));
+  }
+
   async createAuthorization(authorization: Authorization): Promise<Authorization> {
     const [inserted] = await this.db('authorizations').insert({
       id: authorization.id ?? crypto.randomUUID(),
@@ -29,6 +34,14 @@ export class ClientRepository {
     }).returning('*');
 
     return this.mapRowToAuthorization(inserted);
+  }
+
+  async getAuthorizations(agencyId: string): Promise<Authorization[]> {
+    const rows = await this.db('authorizations')
+      .join('clients', 'authorizations.client_id', 'clients.id')
+      .where('clients.agency_id', agencyId)
+      .select('authorizations.*');
+    return rows.map(row => this.mapRowToAuthorization(row));
   }
 
   private mapRowToClient(row: any): Client {

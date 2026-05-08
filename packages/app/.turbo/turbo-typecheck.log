@@ -2,7 +2,8 @@
 > typecheck
 > tsc --noEmit
 
-src/routes/task-routes.ts(3,10): error TS2305: Module '"@rayhealth/core"' has no exported member 'paTasks'.
+src/routes/evv-routes.ts(3,10): error TS2305: Module '"@rayhealth/core"' has no exported member 'EvvRepository'.
+src/routes/evv-routes.ts(13,29): error TS2339: Property 'caregiverId' does not exist on type 'AuthContext'.
 npm error Lifecycle script `typecheck` failed with error:
 npm error code 2
 npm error path /Users/durgaghimeray/Desktop/rayhealthevv-fresh/rayhealth-fresh/packages/app
