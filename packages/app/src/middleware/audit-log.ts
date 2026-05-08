@@ -3,6 +3,20 @@ import type { Request, Response, NextFunction } from 'express';
 import { AuditEventRepository } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 
+/**
+ * Local alias of the AuditEventType domain enum. The full union lives in
+ * `@rayhealth/core/src/domain/audit.ts`; we redeclare a narrow subset here
+ * to keep this middleware's dispatch table self-documenting and to keep the
+ * type narrow without dragging in the full Zod schema.
+ */
+type AuditEventTypeLite =
+  | 'phi.read'
+  | 'phi.create'
+  | 'phi.update'
+  | 'phi.delete'
+  | 'request.write'
+  | 'permission.denied';
+
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 const PATH_DENY = [/^\/?health$/i, /^\/?favicon\.ico$/i];
@@ -65,15 +79,27 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
     try {
       const { entityType, entityId } = extractResource(path);
       const failed = res.statusCode >= 400;
+      // PHI lifecycle taxonomy:
+      //   GET  → phi.read     (only fires for PHI_GET_PATHS — see filter above)
+      //   POST → phi.create
+      //   PUT/PATCH → phi.update
+      //   DELETE → phi.delete
+      //   anything else write-shaped → request.write (legacy fallback)
+      const lifecycleByMethod: Record<string, AuditEventTypeLite> = {
+        GET: 'phi.read',
+        POST: 'phi.create',
+        PUT: 'phi.update',
+        PATCH: 'phi.update',
+        DELETE: 'phi.delete'
+      };
+      const eventType: AuditEventTypeLite = failed
+        ? 'permission.denied'
+        : (lifecycleByMethod[req.method] ?? 'request.write');
       await new AuditEventRepository(req.app.get('db')).create({
         agencyId: auth.agencyId,
         actorId: auth.userId,
         actorType: 'user',
-        eventType: failed
-          ? 'permission.denied'
-          : req.method === 'GET'
-            ? 'phi.read'
-            : 'request.write',
+        eventType,
         entityType,
         // Resource id when present; fall back to actor only if the path has no
         // resource UUID (e.g. POST /clients creating a record). HIPAA 164.312(b)

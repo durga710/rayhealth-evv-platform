@@ -24,7 +24,7 @@ describe('audit logging middleware', () => {
 
     expect(response.status).toBe(201);
     expect(createAuditEvent).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: 'request.write',
+      eventType: 'phi.create',
       outcome: 'success',
       payload: expect.objectContaining({
         method: 'POST',

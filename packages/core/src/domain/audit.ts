@@ -9,7 +9,12 @@ export const auditEventTypes = [
   'auth.login.success', 'auth.login.failure', 'auth.logout',
   'session.created', 'session.revoked',
   'csrf.failure',
-  'phi.read', 'phi.export',
+  // PHI lifecycle. `phi.create` / `phi.update` / `phi.delete` replace the
+  // legacy `request.write` catch-all so the audit row alone tells you what
+  // kind of mutation happened. `request.write` is retained for backward
+  // compatibility with historical rows. `phi.read` / `phi.export` cover the
+  // disclosure side (HIPAA 164.312(b)).
+  'phi.read', 'phi.create', 'phi.update', 'phi.delete', 'phi.export',
   'request.write',
   'permission.denied',
 ] as const;

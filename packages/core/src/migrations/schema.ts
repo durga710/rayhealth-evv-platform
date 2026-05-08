@@ -292,6 +292,33 @@ export async function up(knex: Knex): Promise<void> {
       END$$;
     `);
   }
+
+  // audit_events is append-only. The compliance position is "audit rows are
+  // evidence; nobody — including future-us with a SQL console open — gets to
+  // edit them." A BEFORE trigger on UPDATE/DELETE/TRUNCATE raises an exception
+  // so the only path to mutation is dropping the trigger first (which itself
+  // is auditable in PG's DDL log).
+  //
+  // Drop+create is idempotent: existing trigger of this name is replaced.
+  await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='audit_events') THEN
+        CREATE OR REPLACE FUNCTION audit_events_block_mutation() RETURNS trigger AS $f$
+        BEGIN
+          RAISE EXCEPTION 'audit_events is append-only; UPDATE/DELETE refused';
+        END;
+        $f$ LANGUAGE plpgsql;
+
+        DROP TRIGGER IF EXISTS audit_events_block_mutation_trg ON audit_events;
+        CREATE TRIGGER audit_events_block_mutation_trg
+          BEFORE UPDATE OR DELETE OR TRUNCATE ON audit_events
+          FOR EACH STATEMENT
+          EXECUTE FUNCTION audit_events_block_mutation();
+      END IF;
+    END$$;
+  `);
 }
 
 export async function down(knex: Knex): Promise<void> {
