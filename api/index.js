@@ -1,7 +1,7 @@
-// Raw Node http handler — no Express/Vercel helpers. Calling res.status(...).json(...)
-// throws TypeError on a non-enriched ServerResponse, which the runtime surfaces as
-// FUNCTION_INVOCATION_FAILED with Memory: -1MB (worker died pre-stat).
-module.exports = (req, res) => {
+// Raw Node http handler — ESM. Root package.json has "type":"module" so .js
+// files are loaded as ECMAScript modules; CJS module.exports here would throw
+// at parse time and surface as FUNCTION_INVOCATION_FAILED with no log.
+export default function handler(req, res) {
   res.statusCode = 200;
   res.setHeader('content-type', 'application/json');
   res.end(
@@ -15,4 +15,4 @@ module.exports = (req, res) => {
       hasENC: Boolean(process.env.ENCRYPTION_KEY)
     })
   );
-};
+}
