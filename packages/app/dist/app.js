@@ -28,6 +28,10 @@ export function createApp() {
     const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:5173'];
     app.set('db', db);
     app.disable('x-powered-by');
+    // Trust Vercel's edge proxy so req.ip resolves to the real client IP from
+    // X-Forwarded-For instead of 127.0.0.1. Exactly 1 hop — never `true` (that
+    // trusts any number of hops and lets a caller spoof X-Forwarded-For).
+    app.set('trust proxy', 1);
     // helmet must come BEFORE routes so its security headers attach to every response,
     // including 4xx/5xx error paths from rate-limit / cors / parse failures.
     app.use(helmet({
