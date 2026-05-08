@@ -99,10 +99,19 @@ export function MarketingShell({
           textAlign: 'center',
           color: 'var(--color-text-muted)',
           fontSize: '0.875rem',
-          borderTop: '1px solid #e3eaf2'
+          borderTop: '1px solid #e3eaf2',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          alignItems: 'center'
         }}
       >
-        © {new Date().getFullYear()} RayHealth. Pennsylvania-built EVV.
+        <div>© {new Date().getFullYear()} RayHealthEVV™. Pennsylvania-built EVV.</div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Link to="/launch" style={{ color: 'var(--color-text-muted)' }}>What's new</Link>
+          <Link to="/status" style={{ color: 'var(--color-text-muted)' }}>Status</Link>
+          <Link to="/contact" style={{ color: 'var(--color-text-muted)' }}>Contact</Link>
+        </div>
       </footer>
     </div>
   );

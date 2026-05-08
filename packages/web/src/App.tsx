@@ -13,6 +13,7 @@ import { PricingPage } from './features/marketing/PricingPage.js';
 import { ContactPage } from './features/marketing/ContactPage.js';
 import { DemoPage } from './features/marketing/DemoPage.js';
 import { LaunchPage } from './features/marketing/LaunchPage.js';
+import { StatusPage } from './features/marketing/StatusPage.js';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -66,6 +67,7 @@ export function App() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/demo" element={<DemoPage />} />
       <Route path="/launch" element={<LaunchPage />} />
+      <Route path="/status" element={<StatusPage />} />
       <Route path="/login" element={<LoginPage />} />
       
       <Route path="/admin" element={<ProtectedRoute />}>
