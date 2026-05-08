@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: lint · typecheck · test · build · security-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      JWT_SECRET: ci-test-secret-not-real-not-prod-just-for-build
+      ENCRYPTION_KEY: ci0000000000000000000000000000000000000000000000000000000000ci
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install (with devDependencies)
+        run: npm ci --include=dev
+
+      - name: Lint (turbo)
+        run: npx turbo lint --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
+
+      - name: Typecheck (turbo)
+        run: npx turbo typecheck --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
+
+      - name: Test (turbo)
+        run: npx turbo test --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
+
+      - name: Build (turbo)
+        run: npx turbo build --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
+
+      - name: Security surface scan
+        run: npx tsx scripts/security-surface-scan.ts
+
+      - name: Confirm no .env or .env.* committed
+        run: |
+          if git ls-files | grep -E '^\.env(\..+)?$' | grep -v '\.env\.example$'; then
+            echo "::error::An .env file is tracked in git — must be removed."
+            exit 1
+          fi
+          echo "OK: no tracked .env files"
