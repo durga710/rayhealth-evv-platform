@@ -8,29 +8,53 @@ interface Template {
   tasks: string[];
 }
 
+interface PATask {
+  id: string;
+  duty: string;
+}
+
 export function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [availableTasks, setAvailableTasks] = useState<PATask[]>([]);
   const [clientId, setClientId] = useState('');
   const [name, setName] = useState('');
-  const [taskInput, setTaskInput] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     getJson<Template[]>('/api/templates')
       .then(data => setTemplates(data || []))
       .catch(console.error);
+      
+    getJson<PATask[]>('/api/tasks')
+      .then(data => setAvailableTasks(data || []))
+      .catch(console.error);
   }, []);
+
+  const handleTaskToggle = (duty: string) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(duty)) {
+      newSelected.delete(duty);
+    } else {
+      newSelected.add(duty);
+    }
+    setSelectedTasks(newSelected);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     try {
-      const tasks = taskInput.split(',').map(t => t.trim()).filter(Boolean);
+      const tasks = Array.from(selectedTasks);
+      if (tasks.length === 0) {
+        setMessage('Please select at least one task');
+        return;
+      }
       const newTemplate = await postJson<Template>('/api/templates', { clientId, name, tasks });
       setTemplates(prev => [...prev, newTemplate]);
       setClientId('');
       setName('');
-      setTaskInput('');
+      setSelectedTasks(new Set());
       setMessage('Template created successfully');
     } catch (err) {
       setMessage('Failed to create template');
@@ -57,8 +81,32 @@ export function TemplatesPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="tasks">Tasks (comma separated)</label>
-              <input id="tasks" value={taskInput} onChange={e => setTaskInput(e.target.value)} placeholder="Bathing, Dressing, Meal Prep" required />
+              <label>Select Tasks</label>
+              <div style={{ 
+                maxHeight: '300px', 
+                overflowY: 'auto', 
+                border: '1px solid #c9d8e8', 
+                borderRadius: '8px', 
+                padding: '0.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem'
+              }}>
+                {availableTasks.length === 0 ? (
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', padding: '0.5rem' }}>Loading tasks...</span>
+                ) : (
+                  availableTasks.map(task => (
+                    <label key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', textTransform: 'none', cursor: 'pointer', padding: '0.25rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTasks.has(task.duty)} 
+                        onChange={() => handleTaskToggle(task.duty)} 
+                      />
+                      <span style={{ fontSize: '0.875rem' }}>{task.id} - {task.duty}</span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
             
             <button type="submit">Create Template</button>

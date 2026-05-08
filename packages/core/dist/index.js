@@ -1,4 +1,5 @@
 export * from './config/pennsylvania.js';
+export * from './config/pa-tasks.js';
 export * from './domain/agency.js';
 export * from './domain/staff.js';
 export * from './domain/client.js';
