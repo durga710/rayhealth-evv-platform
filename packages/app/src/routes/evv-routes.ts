@@ -4,6 +4,18 @@ import { EvvRepository } from '@rayhealth/core';
 
 const router = Router();
 
+router.get('/visits', requireCapability('schedule.read'), async (req, res) => {
+  try {
+    const db = req.app.get('db');
+    const repo = new EvvRepository(db);
+    // In a real implementation, you'd filter by agencyId from req.auth.agencyId
+    const visits = await repo.getAllVisits(); 
+    res.json(visits);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 router.post('/clock-in', requireCapability('schedule.write'), async (req, res) => {
   try {
     if (!req.auth.caregiverId) return res.status(403).json({ message: 'User is not authorized as a caregiver' });

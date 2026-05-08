@@ -27,6 +27,10 @@ export class EvvRepository {
             .returning('*');
         return updated ? this.mapRowToVisit(updated) : null;
     }
+    async getAllVisits() {
+        const rows = await this.db('evv_visits').select('*');
+        return rows.map(row => this.mapRowToVisit(row));
+    }
     mapRowToVisit(row) {
         return {
             id: row.id,

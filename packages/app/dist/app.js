@@ -12,6 +12,8 @@ import clientRoutes from './routes/client-routes.js';
 import authorizationRoutes from './routes/authorization-routes.js';
 import templateRoutes from './routes/template-routes.js';
 import assignmentRoutes from './routes/assignment-routes.js';
+import evvRoutes from './routes/evv-routes.js';
+import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
 export function createApp() {
     const app = express();
@@ -28,6 +30,8 @@ export function createApp() {
     app.use('/authorizations', authorizationRoutes);
     app.use('/templates', templateRoutes);
     app.use('/assignments', assignmentRoutes);
+    app.use('/evv', evvRoutes);
+    app.use('/maintenance', maintenanceRoutes);
     app.use('/tasks', taskRoutes);
     // Protected route for testing (keep for now or remove if redundant)
     app.get('/agencies/current-test', requireCapability('agency.read'), (req, res) => {

@@ -1,17 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { getJson, postJson } from '../../lib/api-client.js';
 
+interface Template {
+  id: string;
+  name: string;
+  clientId: string;
+}
+
 interface Assignment {
   id: string;
   clientId: string;
   caregiverId: string;
   visitDate?: string;
+  visitTemplateId: string;
 }
 
 export function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  
   const [clientId, setClientId] = useState('');
   const [caregiverId, setCaregiverId] = useState('');
+  const [visitTemplateId, setVisitTemplateId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [message, setMessage] = useState('');
 
@@ -19,16 +29,21 @@ export function AssignmentsPage() {
     getJson<Assignment[]>('/api/assignments')
       .then(data => setAssignments(data || []))
       .catch(console.error);
+      
+    getJson<Template[]>('/api/templates')
+      .then(data => setTemplates(data || []))
+      .catch(console.error);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     try {
-      const newAssign = await postJson<Assignment>('/api/assignments', { clientId, caregiverId, visitDate });
+      const newAssign = await postJson<Assignment>('/api/assignments', { clientId, caregiverId, visitTemplateId, visitDate });
       setAssignments(prev => [...prev, newAssign]);
       setClientId('');
       setCaregiverId('');
+      setVisitTemplateId('');
       setVisitDate('');
       setMessage('Assignment created successfully');
     } catch (err) {
@@ -53,6 +68,22 @@ export function AssignmentsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
               <label htmlFor="caregiverId">Caregiver ID</label>
               <input id="caregiverId" value={caregiverId} onChange={e => setCaregiverId(e.target.value)} required />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+              <label htmlFor="templateId">Visit Template</label>
+              <select 
+                id="templateId" 
+                value={visitTemplateId} 
+                onChange={e => setVisitTemplateId(e.target.value)} 
+                required
+                style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
+              >
+                <option value="">Select a template</option>
+                {templates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name} (Client: {t.clientId.slice(0,6)}...)</option>
+                ))}
+              </select>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>

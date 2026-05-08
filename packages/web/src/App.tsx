@@ -8,6 +8,7 @@ import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
 import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
 import { LoginPage } from './features/auth/LoginPage.js';
 import { LandingPage } from './features/landing/LandingPage.js';
+import { VisitReviewPage } from './features/evv/VisitReviewPage.js';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -35,6 +36,7 @@ function AdminLayout() {
           <Link to="/admin/authorizations" className="nav-link">Authorizations</Link>
           <Link to="/admin/templates" className="nav-link">Templates</Link>
           <Link to="/admin/assignments" className="nav-link">Assignments</Link>
+          <Link to="/admin/review" className="nav-link">Visit Review</Link>
         </div>
         <button 
           onClick={logout} 
@@ -66,6 +68,7 @@ export function App() {
           <Route path="authorizations" element={<AuthorizationsPage />} />
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
+          <Route path="review" element={<VisitReviewPage />} />
           <Route index element={<Navigate to="/admin/agency" replace />} />
         </Route>
       </Route>

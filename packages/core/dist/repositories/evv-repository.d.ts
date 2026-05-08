@@ -5,6 +5,7 @@ export declare class EvvRepository {
     constructor(db: Knex);
     createVisit(visit: EvvVisit): Promise<EvvVisit>;
     updateVisit(id: string, visit: Partial<EvvVisit>): Promise<EvvVisit | null>;
+    getAllVisits(): Promise<EvvVisit[]>;
     private mapRowToVisit;
 }
 //# sourceMappingURL=evv-repository.d.ts.map

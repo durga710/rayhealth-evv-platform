@@ -5,6 +5,10 @@ const router = Router();
 router.post('/', requireCapability('schedule.write'), async (req, res) => {
     try {
         const db = req.app.get('db');
+        if (!db) {
+            console.error('Database connection not found in app context');
+            return res.status(500).json({ message: 'Database connection missing' });
+        }
         const repo = new ScheduleRepository(db);
         // Fallback visitTemplateId if not sent by UI (to make UI functional without a dropdown initially)
         // Normally UI must send visitTemplateId 
@@ -17,6 +21,7 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
         res.status(201).json({ ...assignment, visitDate: req.body.visitDate });
     }
     catch (error) {
+        console.error('Assignment creation failed:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });

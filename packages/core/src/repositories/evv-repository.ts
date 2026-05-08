@@ -30,6 +30,11 @@ export class EvvRepository {
       
     return updated ? this.mapRowToVisit(updated) : null;
   }
+  
+  async getAllVisits(): Promise<EvvVisit[]> {
+    const rows = await this.db('evv_visits').select('*');
+    return rows.map(row => this.mapRowToVisit(row));
+  }
 
   private mapRowToVisit(row: any): EvvVisit {
     return {
