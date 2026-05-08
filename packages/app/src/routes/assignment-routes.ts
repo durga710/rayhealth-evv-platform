@@ -48,9 +48,18 @@ router.get('/', requireCapability('schedule.read'), async (req, res) => {
   try {
     const db = req.app.get('db');
     const repo = new ScheduleRepository(db);
+    // Caregivers must only see their own assignments. Without this dispatch,
+    // a caregiver with `schedule.read` can dump every assignment in the agency.
+    if (req.auth.role === 'caregiver') {
+      if (!req.auth.caregiverId) {
+        return res.status(403).json({ message: 'User is not authorized as a caregiver' });
+      }
+      const own = await repo.getAssignmentsByCaregiver(req.auth.caregiverId);
+      return res.json(own);
+    }
     const assignments = await repo.getAssignments(req.auth.agencyId);
     res.json(assignments);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
