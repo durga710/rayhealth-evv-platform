@@ -81,6 +81,25 @@ export async function up(knex: Knex): Promise<void> {
     });
   }
 
+  if (!(await knex.schema.hasTable('sessions'))) {
+    await knex.schema.createTable('sessions', (table) => {
+      table.uuid('id').primary();
+      table.uuid('agency_id').references('id').inTable('agencies').notNullable();
+      table.uuid('user_id').references('id').inTable('users').notNullable();
+      table.string('role').notNullable();
+      table.uuid('caregiver_id');
+      table.string('session_token_hash', 64).notNullable().unique();
+      table.string('csrf_token_hash', 64).notNullable();
+      table.text('user_agent');
+      table.string('ip_address', 64);
+      table.timestamp('expires_at').notNullable();
+      table.timestamp('revoked_at');
+      table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+      table.index(['agency_id', 'user_id']);
+      table.index(['expires_at']);
+    });
+  }
+
   if (!(await knex.schema.hasTable('visit_maintenance'))) {
     await knex.schema.createTable('visit_maintenance', (table) => {
       table.uuid('id').primary();
@@ -169,6 +188,7 @@ export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists('staff_invites');
   await knex.schema.dropTableIfExists('caregiver_credentials');
   await knex.schema.dropTableIfExists('caregivers');
+  await knex.schema.dropTableIfExists('sessions');
   await knex.schema.dropTableIfExists('users');
   await knex.schema.dropTableIfExists('visit_maintenance');
   await knex.schema.dropTableIfExists('evv_visits');
