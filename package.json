@@ -11,6 +11,8 @@
     "test": "turbo test",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "security:scan": "tsx scripts/security-surface-scan.ts",
+    "check": "./scripts/check.sh",
     "db:migrate": "npm run db:migrate --workspace=@rayhealth/core",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
