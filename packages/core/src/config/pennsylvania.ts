@@ -2,6 +2,11 @@ export const pennsylvaniaOperatingTracks = ['personal-assistance', 'home-health'
 export const paCredentialTypes = ['tb-screening', 'background-check', 'license', 'training'] as const;
 export const paCredentialStatuses = ['active', 'expired', 'pending'] as const;
 export const paAssignmentStatuses = ['scheduled', 'completed', 'cancelled'] as const;
+export const paExceptionTypes = ['late-clock-in', 'missing-location', 'telephony-fallback', 'manual-entry'] as const;
+export const paCaregiverStatuses = ['active', 'inactive', 'suspended'] as const;
+
+export type PaCredentialType = typeof paCredentialTypes[number];
+export type PaExceptionType = typeof paExceptionTypes[number];
 
 export type AppRole = 'admin' | 'coordinator' | 'caregiver' | 'family';
 

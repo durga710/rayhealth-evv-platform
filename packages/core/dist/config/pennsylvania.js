@@ -2,6 +2,8 @@ export const pennsylvaniaOperatingTracks = ['personal-assistance', 'home-health'
 export const paCredentialTypes = ['tb-screening', 'background-check', 'license', 'training'];
 export const paCredentialStatuses = ['active', 'expired', 'pending'];
 export const paAssignmentStatuses = ['scheduled', 'completed', 'cancelled'];
+export const paExceptionTypes = ['late-clock-in', 'missing-location', 'telephony-fallback', 'manual-entry'];
+export const paCaregiverStatuses = ['active', 'inactive', 'suspended'];
 const ROLE_CAPABILITIES = {
     admin: [
         'agency.read', 'agency.write',

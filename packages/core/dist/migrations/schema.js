@@ -62,11 +62,22 @@ export async function up(knex) {
             table.timestamps(true, true);
         });
     }
+    if (!(await knex.schema.hasTable('users'))) {
+        await knex.schema.createTable('users', (table) => {
+            table.uuid('id').primary();
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable();
+            table.string('email').notNullable().unique();
+            table.string('password_hash').notNullable();
+            table.string('role').notNullable();
+            table.uuid('caregiver_id');
+            table.timestamps(true, true);
+        });
+    }
     if (!(await knex.schema.hasTable('visit_maintenance'))) {
         await knex.schema.createTable('visit_maintenance', (table) => {
             table.uuid('id').primary();
             table.uuid('visit_id').references('id').inTable('evv_visits').notNullable();
-            table.uuid('requester_id').notNullable(); // Coordinator/Admin
+            table.uuid('requester_id').notNullable();
             table.text('reason').notNullable();
             table.timestamp('original_start_time');
             table.timestamp('original_end_time');
@@ -76,8 +87,75 @@ export async function up(knex) {
             table.timestamps(true, true);
         });
     }
+    if (!(await knex.schema.hasTable('caregivers'))) {
+        await knex.schema.createTable('caregivers', (table) => {
+            table.uuid('id').primary();
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable();
+            table.string('first_name').notNullable();
+            table.string('last_name').notNullable();
+            table.string('email').notNullable().unique();
+            table.string('phone');
+            table.string('npi', 10);
+            table.date('hire_date');
+            table.string('status').notNullable().defaultTo('active');
+            table.timestamps(true, true);
+        });
+    }
+    if (!(await knex.schema.hasTable('caregiver_credentials'))) {
+        await knex.schema.createTable('caregiver_credentials', (table) => {
+            table.uuid('id').primary();
+            table.uuid('caregiver_id').references('id').inTable('caregivers').notNullable();
+            table.string('credential_type').notNullable();
+            table.string('status').notNullable().defaultTo('pending');
+            table.date('expires_at').notNullable();
+            table.date('issued_at').nullable();
+            table.text('notes').nullable();
+            table.timestamps(true, true);
+        });
+    }
+    if (!(await knex.schema.hasTable('staff_invites'))) {
+        await knex.schema.createTable('staff_invites', (table) => {
+            table.uuid('id').primary();
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable();
+            table.string('email').notNullable();
+            table.string('role').notNullable();
+            table.string('status').notNullable().defaultTo('pending');
+            table.uuid('invited_by').references('id').inTable('users').notNullable();
+            table.timestamp('expires_at').notNullable();
+            table.timestamps(true, true);
+        });
+    }
+    if (!(await knex.schema.hasTable('evv_exceptions'))) {
+        await knex.schema.createTable('evv_exceptions', (table) => {
+            table.uuid('id').primary();
+            table.uuid('visit_id').references('id').inTable('evv_visits').notNullable();
+            table.string('exception_type').notNullable();
+            table.text('reason').notNullable();
+            table.uuid('approved_by').nullable();
+            table.timestamp('approved_at').nullable();
+            table.timestamps(true, true);
+        });
+    }
+    if (!(await knex.schema.hasTable('audit_events'))) {
+        await knex.schema.createTable('audit_events', (table) => {
+            table.uuid('id').primary();
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable();
+            table.uuid('actor_id').notNullable();
+            table.string('event_type').notNullable();
+            table.string('entity_type').notNullable();
+            table.uuid('entity_id').notNullable();
+            table.jsonb('payload').notNullable().defaultTo('{}');
+            table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+        });
+    }
 }
 export async function down(knex) {
+    await knex.schema.dropTableIfExists('audit_events');
+    await knex.schema.dropTableIfExists('evv_exceptions');
+    await knex.schema.dropTableIfExists('staff_invites');
+    await knex.schema.dropTableIfExists('caregiver_credentials');
+    await knex.schema.dropTableIfExists('caregivers');
+    await knex.schema.dropTableIfExists('users');
     await knex.schema.dropTableIfExists('visit_maintenance');
     await knex.schema.dropTableIfExists('evv_visits');
     await knex.schema.dropTableIfExists('assignments');
