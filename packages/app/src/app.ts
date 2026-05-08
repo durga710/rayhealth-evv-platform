@@ -4,6 +4,8 @@ import './types.js';
 import { authContext } from './middleware/auth-context.js';
 import { requireCapability } from './middleware/require-capability.js';
 import { auditLog } from './middleware/audit-log.js';
+import { createDb } from '@rayhealth/core';
+
 import inviteRoutes from './routes/invite-routes.js';
 import agencyRoutes from './routes/agency-routes.js';
 import staffRoutes from './routes/staff-routes.js';
@@ -15,6 +17,9 @@ import taskRoutes from './routes/task-routes.js';
 
 export function createApp() {
   const app = express();
+  const db = createDb();
+  
+  app.set('db', db);
   app.use(cors());
   app.use(express.json());
   app.use(authContext);
