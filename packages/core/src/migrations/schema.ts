@@ -253,6 +253,45 @@ export async function up(knex: Knex): Promise<void> {
       END IF;
     END$$;
   `);
+
+  // CHECK constraints — refuse to ever store a role / status / outcome value
+  // outside the documented enum. Caught early at INSERT so a typo or a
+  // forged-payload attempt cannot land bogus data in the audit trail.
+  // Each block is wrapped in a name-not-exists guard so reruns are no-ops.
+  const checkConstraints: Array<{ table: string; name: string; expression: string }> = [
+    { table: 'users', name: 'users_role_check', expression: "role IN ('admin','coordinator','caregiver','family')" },
+    { table: 'sessions', name: 'sessions_role_check', expression: "role IN ('admin','coordinator','caregiver','family')" },
+    { table: 'evv_visits', name: 'evv_visits_status_check', expression: "status IN ('pending','verified','flagged')" },
+    { table: 'caregivers', name: 'caregivers_status_check', expression: "status IN ('active','inactive','terminated')" },
+    { table: 'audit_events', name: 'audit_events_actor_type_check', expression: "actor_type IN ('user','service','system')" },
+    { table: 'audit_events', name: 'audit_events_outcome_check', expression: "outcome IN ('success','failure','denied')" },
+    {
+      table: 'audit_events',
+      name: 'audit_events_event_type_check',
+      expression: `event_type IN (
+        'auth.login.success','auth.login.failure','auth.logout',
+        'session.created','session.revoked','csrf.failure',
+        'phi.read','phi.create','phi.update','phi.delete','phi.export',
+        'request.write','permission.denied'
+      )`
+    }
+  ];
+  for (const c of checkConstraints) {
+    await knex.raw(`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema='public' AND table_name='${c.table}')
+           AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                           WHERE table_schema='public'
+                             AND table_name='${c.table}'
+                             AND constraint_name='${c.name}') THEN
+          ALTER TABLE ${c.table}
+            ADD CONSTRAINT ${c.name} CHECK (${c.expression});
+        END IF;
+      END$$;
+    `);
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {

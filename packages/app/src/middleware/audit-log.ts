@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { AuditEventRepository } from '@rayhealth/core';
+import { safeError } from '../security/safe-log.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -89,9 +90,7 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
         occurredAt: new Date().toISOString()
       });
     } catch (error) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Failed to persist audit event', error);
-      }
+      safeError('Failed to persist audit event', error);
     }
   });
 

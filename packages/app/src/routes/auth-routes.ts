@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AuditEventRepository, SessionRepository, UserRepository, type NewAuditEvent } from '@rayhealth/core';
@@ -6,6 +7,7 @@ import { authContext } from '../middleware/auth-context.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } from '../security/cookies.js';
 import { createOpaqueToken, hashOpaqueToken } from '../security/token-hashing.js';
+import { safeError } from '../security/safe-log.js';
 
 const router = Router();
 type AuditEventDb = ConstructorParameters<typeof AuditEventRepository>[0];
@@ -20,9 +22,7 @@ async function recordAuditEvent(db: AuditEventDb, event: NewAuditEvent): Promise
   try {
     await new AuditEventRepository(db).create(event);
   } catch (error) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Failed to persist auth audit event', error);
-    }
+    safeError('Failed to persist auth audit event', error);
   }
 }
 
@@ -123,7 +123,29 @@ router.post('/mobile/login', async (req, res) => {
 });
 
 // One-time admin bootstrap — serialized via advisory lock so concurrent requests cannot both succeed.
+//
+// Defense in depth: bootstrap is also gated by BOOTSTRAP_SECRET. Without that env
+// var, the endpoint is fully disabled — the inherited "wipe-DB-and-bootstrap-yourself-
+// to-admin" attack (e.g. after a stolen point-in-time backup gets restored) is closed
+// out unless the attacker also has the secret. Compared with constant time so a 401
+// vs 403 timing oracle does not leak whether the var is configured.
 router.post('/bootstrap', async (req, res) => {
+  const expected = process.env.BOOTSTRAP_SECRET;
+  if (!expected) {
+    res.status(403).json({ message: 'Bootstrap is disabled' });
+    return;
+  }
+  const provided = req.header('x-bootstrap-secret') ?? '';
+  const expectedBuf = Buffer.from(expected);
+  const providedBuf = Buffer.from(provided);
+  const same =
+    expectedBuf.length === providedBuf.length &&
+    timingSafeEqual(expectedBuf, providedBuf);
+  if (!same) {
+    res.status(403).json({ message: 'Bootstrap is disabled' });
+    return;
+  }
+
   const { agencyId, email, password } = req.body ?? {};
   if (!agencyId || !email || !password) {
     res.status(400).json({ message: 'agencyId, email and password required' });

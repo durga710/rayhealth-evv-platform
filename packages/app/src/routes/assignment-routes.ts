@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireCapability } from '../middleware/require-capability.js';
 import { ScheduleRepository } from '@rayhealth/core';
+import { safeError } from '../security/safe-log.js';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get('/caregiver', requireCapability('schedule.read'), async (req, res) =>
     const assignments = await repo.getAssignmentsByCaregiver(req.auth.caregiverId);
     res.json(assignments);
   } catch (error) {
-    console.error('Failed to get caregiver assignments:', error);
+    safeError('Failed to get caregiver assignments', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -23,7 +24,7 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
   try {
     const db = req.app.get('db');
     if (!db) {
-      console.error('Database connection not found in app context');
+      safeError('Database connection not found in app context');
       return res.status(500).json({ message: 'Database connection missing' });
     }
     const repo = new ScheduleRepository(db);
@@ -39,7 +40,7 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
     const assignment = await repo.createAssignment(assignmentInput);
     res.status(201).json({ ...assignment, visitDate: req.body.visitDate });
   } catch (error) {
-    console.error('Assignment creation failed:', error);
+    safeError('Assignment creation failed', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
