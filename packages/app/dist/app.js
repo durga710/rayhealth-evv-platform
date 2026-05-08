@@ -10,6 +10,7 @@ import { requireCsrf } from './middleware/csrf.js';
 import { createDb } from '@rayhealth/core';
 import authRoutes from './routes/auth-routes.js';
 import marketingRoutes from './routes/marketing-routes.js';
+import exportRoutes from './routes/export-routes.js';
 import inviteRoutes from './routes/invite-routes.js';
 import agencyRoutes from './routes/agency-routes.js';
 import staffRoutes from './routes/staff-routes.js';
@@ -74,6 +75,7 @@ export function createApp() {
     app.use('/evv', evvRoutes);
     app.use('/maintenance', maintenanceRoutes);
     app.use('/tasks', taskRoutes);
+    app.use('/exports', exportRoutes);
     // Protected route for testing (keep for now or remove if redundant)
     app.get('/agencies/current-test', requireCapability('agency.read'), (req, res) => {
         res.json({ id: req.auth.agencyId, name: 'Current Agency' });

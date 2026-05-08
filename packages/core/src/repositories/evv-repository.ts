@@ -72,6 +72,81 @@ export class EvvRepository {
     return rows.map((row) => this.mapRowToVisit(row));
   }
 
+  /**
+   * Aggregator-export rows. Each row carries all seven 21st Century Cures
+   * Act data points needed by HHAeXchange / Sandata:
+   *   1. service_code   (evv_visits.service_code)
+   *   2. client_id      (evv_visits.client_id, falls back to template's)
+   *   3. service_date   (evv_visits.clock_in_time, date portion)
+   *   4. location       (evv_visits.clock_in_location, lat/lng)
+   *   5. caregiver_id   (evv_visits.caregiver_id)
+   *   6. start_time     (evv_visits.clock_in_time)
+   *   7. end_time       (evv_visits.clock_out_time)
+   *
+   * Tenant-scoped via users.agency_id (caregiver linkage). Optional date
+   * range filters apply to clock_in_time.
+   */
+  async getVisitsForExport(
+    agencyId: string,
+    fromIso?: string,
+    toIso?: string
+  ): Promise<Array<{
+    visitId: string;
+    serviceCode: string | null;
+    clientId: string | null;
+    caregiverId: string;
+    clockInTime: string;
+    clockOutTime: string | null;
+    clockInLocation: unknown;
+    clockOutLocation: unknown;
+    status: string;
+  }>> {
+    let q = this.db('evv_visits as v')
+      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+      .leftJoin('assignments as a', 'a.id', 'v.assignment_id')
+      .leftJoin('visit_templates as t', 't.id', 'a.visit_template_id')
+      .where('u.agency_id', agencyId)
+      .select(
+        'v.id as visit_id',
+        'v.service_code',
+        // Prefer the snapshot column on the visit itself; fall back to the
+        // template's client_id for legacy rows that pre-date the Cures-Act
+        // snapshot. coalesce keeps the row useful either way.
+        this.db.raw('coalesce(v.client_id, t.client_id) as client_id'),
+        'v.caregiver_id',
+        'v.clock_in_time',
+        'v.clock_out_time',
+        'v.clock_in_location',
+        'v.clock_out_location',
+        'v.status'
+      )
+      .orderBy('v.clock_in_time', 'asc');
+    if (fromIso) q = q.andWhere('v.clock_in_time', '>=', fromIso);
+    if (toIso) q = q.andWhere('v.clock_in_time', '<=', toIso);
+    const rows = await q;
+    return rows.map((r: Record<string, unknown>) => ({
+      visitId: r.visit_id as string,
+      serviceCode: (r.service_code as string | null) ?? null,
+      clientId: (r.client_id as string | null) ?? null,
+      caregiverId: r.caregiver_id as string,
+      clockInTime:
+        r.clock_in_time instanceof Date ? r.clock_in_time.toISOString() : (r.clock_in_time as string),
+      clockOutTime:
+        r.clock_out_time instanceof Date
+          ? r.clock_out_time.toISOString()
+          : (r.clock_out_time as string | null),
+      clockInLocation:
+        typeof r.clock_in_location === 'string'
+          ? JSON.parse(r.clock_in_location)
+          : r.clock_in_location,
+      clockOutLocation:
+        typeof r.clock_out_location === 'string'
+          ? JSON.parse(r.clock_out_location)
+          : r.clock_out_location,
+      status: r.status as string
+    }));
+  }
+
   /** Visits for a single caregiver. Caller must pass req.auth.caregiverId. */
   async getVisitsForCaregiver(caregiverId: string): Promise<EvvVisit[]> {
     const rows = await this.db('evv_visits')

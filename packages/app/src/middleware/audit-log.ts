@@ -14,6 +14,7 @@ type AuditEventTypeLite =
   | 'phi.create'
   | 'phi.update'
   | 'phi.delete'
+  | 'phi.export'
   | 'request.write'
   | 'permission.denied';
 
@@ -33,8 +34,14 @@ const PHI_GET_PATHS = [
   /\/authorizations(?:\/|$)/,
   /\/templates(?:\/|$)/,
   /\/staff(?:\/|$)/,
-  /\/maintenance(?:\/|$)/
+  /\/maintenance(?:\/|$)/,
+  /\/exports(?:\/|$)/ // CSV downloads — Cures-Act submission rows + PHI
 ];
+
+// Paths that should record `phi.export` (bulk PHI extraction) rather than
+// the default phi.read. Aggregator submissions are a distinct audit category
+// for HIPAA disclosure logs.
+const PHI_EXPORT_PATHS = [/\/exports(?:\/|$)/];
 
 function looksLikeUuid(segment: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment);
@@ -96,9 +103,12 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
         PATCH: 'phi.update',
         DELETE: 'phi.delete'
       };
+      const isExport = PHI_EXPORT_PATHS.some((re) => re.test(path));
       const eventType: AuditEventTypeLite = failed
         ? 'permission.denied'
-        : (lifecycleByMethod[req.method] ?? 'request.write');
+        : isExport
+          ? 'phi.export'
+          : (lifecycleByMethod[req.method] ?? 'request.write');
       await new AuditEventRepository(req.app.get('db')).create({
         agencyId: auth.agencyId,
         actorId: auth.userId,
