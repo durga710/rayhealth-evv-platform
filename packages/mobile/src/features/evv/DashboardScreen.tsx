@@ -40,8 +40,8 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Today's Visits</Text>
-        <Text style={{color: '#1a5fa8'}} onPress={() => { logout(); router.replace('/login'); }}>Logout</Text>
+        <Text style={styles.title}>{"Today's Visits"}</Text>
+        <Text style={{color: '#1a5fa8'}} onPress={() => { void logout().finally(() => router.replace('/login')); }}>Logout</Text>
       </View>
       {loading ? (
         <ActivityIndicator size="large" color="#1a5fa8" />

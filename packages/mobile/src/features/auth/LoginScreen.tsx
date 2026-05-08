@@ -1,24 +1,36 @@
-import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Text, TextInput, Button, StyleSheet, SafeAreaView } from 'react-native';
 import { useAuth } from '../../lib/AuthContext';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = () => {
-    // Mock login
-    login();
-    router.replace('/(tabs)/dashboard');
+  const handleLogin = async () => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await login(email, password);
+      router.replace('/(tabs)/dashboard');
+    } catch {
+      setError('Invalid email or password');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>RayHealth EVV</Text>
-      <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" />
-      <TextInput style={styles.input} placeholder="Password" secureTextEntry />
-      <Button title="Login" onPress={handleLogin} />
+      <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+      <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {isSubmitting ? <ActivityIndicator /> : <Button title="Login" onPress={handleLogin} disabled={!email || !password} />}
     </SafeAreaView>
   );
 }
@@ -33,6 +45,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     paddingHorizontal: 16,
-    backgroundColor: 'white',
+    backgroundColor: 'white'
   },
+  error: { color: '#b91c1c', marginBottom: 12, textAlign: 'center' }
 });
