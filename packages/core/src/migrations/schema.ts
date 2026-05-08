@@ -69,9 +69,24 @@ export async function up(knex: Knex): Promise<void> {
       table.timestamps(true, true);
     });
   }
+  if (!(await knex.schema.hasTable('visit_maintenance'))) {
+    await knex.schema.createTable('visit_maintenance', (table) => {
+      table.uuid('id').primary();
+      table.uuid('visit_id').references('id').inTable('evv_visits').notNullable();
+      table.uuid('requester_id').notNullable(); // Coordinator/Admin
+      table.text('reason').notNullable();
+      table.timestamp('original_start_time');
+      table.timestamp('original_end_time');
+      table.timestamp('adjusted_start_time');
+      table.timestamp('adjusted_end_time');
+      table.string('status').notNullable().defaultTo('pending');
+      table.timestamps(true, true);
+    });
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('visit_maintenance');
   await knex.schema.dropTableIfExists('evv_visits');
   await knex.schema.dropTableIfExists('assignments');
   await knex.schema.dropTableIfExists('visit_templates');
