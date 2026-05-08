@@ -5,18 +5,18 @@
 
  RUN  v1.6.1 /Users/durgaghimeray/Desktop/rayhealthevv-fresh/rayhealth-fresh/packages/app
 
- ✓ src/routes/__tests__/capability-guard.test.ts  (1 test) 9ms
+ ✓ src/routes/__tests__/capability-guard.test.ts  (1 test) 10ms
 stdout | src/routes/__tests__/assignment-routes.test.ts > assignment routes > creates an assignment when the authorization and caregiver are valid
 [AUDIT] User undefined in Agency agency-1 performed POST on /assignments
 
 stdout | src/routes/__tests__/invite-routes.test.ts > invite routes > creates a pending staff invite for a caregiver role
 [AUDIT] User undefined in Agency agency-1 performed POST on /invites
 
- ✓ src/routes/__tests__/assignment-routes.test.ts  (1 test) 14ms
- ✓ src/routes/__tests__/invite-routes.test.ts  (1 test) 13ms
+ ✓ src/routes/__tests__/assignment-routes.test.ts  (1 test) 15ms
+ ✓ src/routes/__tests__/invite-routes.test.ts  (1 test) 17ms
 
  Test Files  3 passed (3)
       Tests  3 passed (3)
-   Start at  18:09:26
-   Duration  617ms (transform 99ms, setup 0ms, collect 829ms, tests 36ms, environment 0ms, prepare 549ms)
+   Start at  18:14:56
+   Duration  686ms (transform 154ms, setup 0ms, collect 934ms, tests 42ms, environment 1ms, prepare 302ms)
 

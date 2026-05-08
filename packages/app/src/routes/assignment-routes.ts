@@ -8,4 +8,8 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
   res.status(201).json({ id: crypto.randomUUID(), ...req.body });
 });
 
+router.get('/', requireCapability('schedule.read'), async (req, res) => {
+  res.json([]);
+});
+
 export default router;

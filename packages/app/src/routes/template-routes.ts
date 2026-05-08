@@ -7,4 +7,8 @@ router.post('/', requireCapability('schedule.write'), (req, res) => {
   res.status(201).json({ id: crypto.randomUUID(), ...req.body });
 });
 
+router.get('/', requireCapability('schedule.read'), (req, res) => {
+  res.json([]);
+});
+
 export default router;
