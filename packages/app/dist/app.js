@@ -45,6 +45,12 @@ export function createApp() {
     }));
     app.use(cors({ origin: allowedOrigins, credentials: true }));
     app.use(express.json({ limit: '256kb' }));
+    // Public liveness probe. Returns 200 + JSON without touching DB or auth.
+    // For deeper readiness use /api/auth/me (which is auth-gated). Keep this
+    // route ABOVE authContext so uptime monitors don't need credentials.
+    app.get('/health', (_req, res) => {
+        res.json({ ok: true, ts: new Date().toISOString() });
+    });
     app.use('/auth/login', authLimiter);
     app.use('/auth/mobile/login', authLimiter);
     app.use('/auth/bootstrap', authLimiter);

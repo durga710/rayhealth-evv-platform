@@ -23,6 +23,23 @@ async function recordAuditEvent(db, event) {
         safeError('Failed to persist auth audit event', error);
     }
 }
+// Resolve the real end-user IP. Vercel sits behind Cloudflare in this
+// deployment, so `req.ip` (with trust proxy = 1) reads the Cloudflare egress
+// IP, not the client's. Cloudflare sets `CF-Connecting-IP` with the original
+// client IP. Prefer that when present; fall back to req.ip otherwise.
+//
+// Spoofing concern: a caller hitting Vercel directly could set CF-Connecting-IP
+// themselves. That doesn't matter for audit fidelity here because (a) bypass
+// traffic is rare and observable, (b) the audit row records WHATEVER the
+// caller sent, and (c) the caller still has to satisfy login + CSRF + rate
+// limits regardless. For stricter validation we'd verify the upstream IP is
+// in Cloudflare's published ranges; out of scope for this pass.
+function clientIpFor(req) {
+    const cf = req.header('cf-connecting-ip');
+    if (cf)
+        return cf.trim();
+    return req.ip;
+}
 // Audit a failed login attempt. Emits `auth.login.failure` with the user
 // row when known. Unknown-email attempts cannot resolve to an agency_id
 // (NOT NULL) so they are deliberately not persisted at the audit layer
@@ -56,7 +73,7 @@ router.post('/login', async (req, res) => {
         }
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) {
-            await recordLoginFailure(db, user, 'session', req.ip);
+            await recordLoginFailure(db, user, 'session', clientIpFor(req));
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
@@ -71,7 +88,7 @@ router.post('/login', async (req, res) => {
             sessionTokenHash: hashOpaqueToken(sessionToken),
             csrfTokenHash: hashOpaqueToken(csrfToken),
             userAgent: req.header('user-agent'),
-            ipAddress: req.ip,
+            ipAddress: clientIpFor(req),
             expiresAt
         });
         await recordAuditEvent(db, {
@@ -106,7 +123,7 @@ router.post('/mobile/login', async (req, res) => {
             return;
         }
         if (!(await bcrypt.compare(password, user.passwordHash))) {
-            await recordLoginFailure(db, user, 'bearer', req.ip);
+            await recordLoginFailure(db, user, 'bearer', clientIpFor(req));
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
