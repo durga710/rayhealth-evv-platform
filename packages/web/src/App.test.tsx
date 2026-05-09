@@ -24,5 +24,7 @@ describe('admin app shell', () => {
 
     // Hero h1 — unique to LandingPage (the launch banner uses different copy).
     expect(await screen.findByText(/Care, finally on the/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Live operations snapshot/i })).toBeInTheDocument();
+    expect(screen.queryByText(/CARE\. VERIFIED\. DELIVERED/i)).not.toBeInTheDocument();
   });
 });

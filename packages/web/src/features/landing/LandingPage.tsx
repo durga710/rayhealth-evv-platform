@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HeroGraphic } from './HeroGraphic.js';
 import { SupportChat } from '../support/SupportChat.js';
 
 const stats = [
@@ -8,6 +7,18 @@ const stats = [
   { value: '<5m', label: 'Geofence accuracy' },
   { value: '6/6', label: 'Federal Cures-Act elements' },
   { value: '100%', label: 'PA DHS aligned' },
+];
+
+const heroSignals = [
+  { value: '18', label: 'Visits on deck', detail: '7 already GPS verified' },
+  { value: '2', label: 'Exceptions', detail: 'Ready for coordinator review' },
+  { value: '0', label: 'Credential blocks', detail: 'Assignments stay compliant' },
+];
+
+const heroVisitTimeline = [
+  { time: '8:02 AM', title: 'Maria clocked in', detail: 'GPS matched within 21m, personal care visit opened.' },
+  { time: '9:15 AM', title: 'RN supervision due', detail: 'Client review surfaced before the schedule is finalized.' },
+  { time: '10:40 AM', title: 'Billing blocker cleared', detail: 'Task documentation completed before payroll lock.' },
 ];
 
 // "What's at launch" tiles. `comingSoon` items render with a roadmap tag
@@ -167,18 +178,18 @@ export function LandingPage() {
           fontWeight: 600
         }}
       >
-        🩵 <strong>RayHealthEVV™ is live</strong> — the operations-grade home care platform.{' '}
+        🩵 <strong>Now live:</strong> operations-grade home care workflows for Pennsylvania agencies.{' '}
         <Link to="/launch" style={{ color: 'white', textDecoration: 'underline' }}>
           See what's new →
         </Link>
       </div>
 
       {/* Header */}
-      <header style={{ padding: '1.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <header style={{ padding: '1.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', backgroundColor: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-primary-dark)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           RayHealthEVV<span style={{ fontSize: '0.7rem', verticalAlign: 'super', color: 'var(--color-accent)' }}>™</span>
         </div>
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="#features" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Features</a>
           <Link to="/pricing" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Pricing</Link>
           <Link to="/demo" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Demo</Link>
@@ -188,7 +199,7 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5rem 2rem 3rem', textAlign: 'center' }}>
+      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5rem 2rem 3rem', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ maxWidth: '820px', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           <div style={{ color: 'var(--color-accent)', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.875rem' }}>
             Operations-grade home care platform
@@ -197,10 +208,40 @@ export function LandingPage() {
             Care, finally on the<br /> <span style={{ color: 'var(--color-primary-light)' }}>same page.</span>
           </h1>
           <p style={{ fontSize: '1.25rem', color: 'var(--color-text-muted)', maxWidth: '720px', lineHeight: 1.6, margin: 0 }}>
-            RayHealthEVV™ brings scheduling, EVV, billing readiness, payroll, training, and family visibility into one calm workspace — built for the people doing the work.
+            Bring scheduling, EVV, billing readiness, payroll, training, and family visibility into one calm workspace — built for the people doing the work.
           </p>
 
-          <HeroGraphic />
+          <div className="landing-hero-panel" role="region" aria-label="Live operations snapshot">
+            <div className="landing-hero-panel-main">
+              <p className="landing-panel-eyebrow">Live operations command center</p>
+              <h2>Know what is happening before the phone rings.</h2>
+              <p>
+                A launch-ready view for agencies that need EVV, credentialing, care tasks,
+                and exception review connected in one operational rhythm.
+              </p>
+              <div className="landing-signal-grid">
+                {heroSignals.map((signal) => (
+                  <div key={signal.label} className="landing-signal-card">
+                    <strong>{signal.value}</strong>
+                    <span>{signal.label}</span>
+                    <small>{signal.detail}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="landing-hero-side">
+              <p className="landing-panel-eyebrow">Today at a glance</p>
+              {heroVisitTimeline.map((event) => (
+                <div key={`${event.time}-${event.title}`} className="landing-timeline-row">
+                  <span>{event.time}</span>
+                  <div>
+                    <strong>{event.title}</strong>
+                    <p>{event.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             <Link to="/contact" style={{ backgroundColor: 'var(--color-accent)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
