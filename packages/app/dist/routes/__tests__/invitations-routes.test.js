@@ -1,0 +1,199 @@
+import request from 'supertest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import * as core from '@rayhealth/core';
+import { createApp } from '../../app.js';
+import { setTestJwtSecret } from './test-helpers.js';
+beforeAll(() => setTestJwtSecret());
+afterEach(() => {
+    vi.restoreAllMocks();
+});
+const VALID_UUID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
+const FAR_FUTURE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+const FAR_PAST = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+function makePendingInvite(over = {}) {
+    return {
+        id: VALID_UUID,
+        agencyId: 'agency-1',
+        email: 'invitee@keystone.example',
+        role: 'caregiver',
+        status: 'pending',
+        invitedBy: 'user-1',
+        expiresAt: FAR_FUTURE,
+        acceptedAt: null,
+        agencyName: 'Keystone Care',
+        ...over
+    };
+}
+function mockInviteLookup(invite) {
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+        findInviteById: vi.fn().mockResolvedValue(invite),
+        create: vi.fn(),
+        markInviteAccepted: vi.fn()
+    }));
+    vi.spyOn(core, 'UserRepository').mockImplementation(() => ({ create: vi.fn() }));
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({ create: vi.fn() }));
+}
+/**
+ * The accept route runs `await db.transaction(async (trx) => ...)`.
+ * Tests can't reach a real DB, so we replace the app's db with a fake
+ * that calls the callback synchronously with itself as the trx handle.
+ * The mocked `*Repository(trx)` ignores the trx arg via `vi.spyOn`.
+ */
+function appWithFakeTransactionDb() {
+    const app = createApp();
+    const fakeDb = {
+        transaction: async (cb) => cb(fakeDb)
+    };
+    app.set('db', fakeDb);
+    return app;
+}
+describe('GET /invitations/:token (public lookup)', () => {
+    it('rejects malformed UUIDs with 400', async () => {
+        const response = await request(createApp()).get('/invitations/not-a-uuid');
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ isValid: false, status: 'invalid' });
+    });
+    it('returns 404 + same envelope for unknown tokens', async () => {
+        mockInviteLookup(undefined);
+        const response = await request(createApp()).get(`/invitations/${VALID_UUID}`);
+        expect(response.status).toBe(404);
+        expect(response.body).toEqual({ isValid: false, status: 'not_found' });
+    });
+    it('returns isValid:true for a pending non-expired invite, including agency name', async () => {
+        mockInviteLookup(makePendingInvite());
+        const response = await request(createApp()).get(`/invitations/${VALID_UUID}`);
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({
+            token: VALID_UUID,
+            email: 'invitee@keystone.example',
+            role: 'caregiver',
+            agencyId: 'agency-1',
+            agencyName: 'Keystone Care',
+            status: 'pending',
+            isValid: true
+        });
+    });
+    it('returns isValid:false + status:accepted for an already-redeemed invite', async () => {
+        mockInviteLookup(makePendingInvite({
+            acceptedAt: new Date().toISOString(),
+            status: 'accepted'
+        }));
+        const response = await request(createApp()).get(`/invitations/${VALID_UUID}`);
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ status: 'accepted', isValid: false });
+    });
+    it('returns isValid:false + status:expired for an expired invite', async () => {
+        mockInviteLookup(makePendingInvite({ expiresAt: FAR_PAST }));
+        const response = await request(createApp()).get(`/invitations/${VALID_UUID}`);
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ status: 'expired', isValid: false });
+    });
+});
+describe('POST /invitations/accept (public redemption)', () => {
+    const validBody = {
+        token: VALID_UUID,
+        firstName: 'Smoke',
+        lastName: 'Test',
+        password: 'SmokeTestPassword2026',
+        phone: '5555550100'
+    };
+    it('rejects malformed token with 400', async () => {
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send({ ...validBody, token: 'bad' });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/invalid token/i);
+    });
+    it('rejects missing firstName/lastName with 400', async () => {
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send({ ...validBody, firstName: '' });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/firstName and lastName/i);
+    });
+    it('rejects passwords shorter than 12 chars with 400', async () => {
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send({ ...validBody, password: 'short' });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/at least 12 characters/i);
+    });
+    it('returns 404 when the token does not match an invite', async () => {
+        mockInviteLookup(undefined);
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send(validBody);
+        expect(response.status).toBe(404);
+        expect(response.body.message).toMatch(/not found/i);
+    });
+    it('returns 409 for an already-redeemed invite (single-use enforcement)', async () => {
+        mockInviteLookup(makePendingInvite({ acceptedAt: new Date().toISOString(), status: 'accepted' }));
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send(validBody);
+        expect(response.status).toBe(409);
+        expect(response.body.message).toMatch(/already used/i);
+    });
+    it('returns 410 for an expired invite', async () => {
+        mockInviteLookup(makePendingInvite({ expiresAt: FAR_PAST }));
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send(validBody);
+        expect(response.status).toBe(410);
+        expect(response.body.message).toMatch(/expired/i);
+    });
+    it('happy path: creates user (caregiver), marks invite accepted, audit event', async () => {
+        const invite = makePendingInvite();
+        const userCreate = vi.fn().mockResolvedValue({
+            id: 'user-new',
+            agencyId: 'agency-1',
+            email: invite.email,
+            role: 'caregiver'
+        });
+        const caregiverCreate = vi.fn().mockResolvedValue({
+            id: 'caregiver-new',
+            agencyId: 'agency-1',
+            firstName: 'Smoke',
+            lastName: 'Test',
+            email: invite.email,
+            status: 'active'
+        });
+        const markAccepted = vi.fn().mockResolvedValue(undefined);
+        const auditCreate = vi.fn().mockResolvedValue({});
+        vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+            findInviteById: vi.fn().mockResolvedValue(invite),
+            create: caregiverCreate,
+            markInviteAccepted: markAccepted
+        }));
+        vi.spyOn(core, 'UserRepository').mockImplementation(() => ({ create: userCreate }));
+        vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({ create: auditCreate }));
+        const response = await request(appWithFakeTransactionDb())
+            .post('/invitations/accept')
+            .send({ ...validBody, password: 'a-good-12char-password' });
+        expect(response.status).toBe(201);
+        expect(response.body).toMatchObject({ userId: 'user-new' });
+        expect(response.body.message).toMatch(/welcome/i);
+        expect(caregiverCreate).toHaveBeenCalledWith(expect.objectContaining({
+            agencyId: 'agency-1',
+            firstName: 'Smoke',
+            lastName: 'Test',
+            email: invite.email,
+            status: 'active'
+        }));
+        expect(userCreate).toHaveBeenCalledWith(expect.objectContaining({
+            agencyId: 'agency-1',
+            email: invite.email,
+            role: 'caregiver',
+            caregiverId: 'caregiver-new'
+        }));
+        expect(markAccepted).toHaveBeenCalledWith(VALID_UUID, 'user-new', expect.any(String));
+        expect(auditCreate).toHaveBeenCalledWith(expect.objectContaining({
+            eventType: 'invite.accepted',
+            entityType: 'invite',
+            entityId: VALID_UUID,
+            agencyId: 'agency-1',
+            actorId: 'user-new'
+        }));
+    });
+});
+//# sourceMappingURL=invitations-routes.test.js.map

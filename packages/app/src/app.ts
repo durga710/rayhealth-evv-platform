@@ -26,13 +26,17 @@ import evvRoutes from './routes/evv-routes.js';
 import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
+// Skip rate limits in unit tests so the test runner can fire 100s of
+// requests against 127.0.0.1 without exhausting the limiter. Production
+// behavior unchanged.
+const skipInTest = () => process.env.NODE_ENV === 'test';
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, skip: skipInTest });
 // Marketing /contact accepts anonymous POSTs — be more generous than auth
 // (legitimate users may type slowly + retry once on a 5xx) but still cap.
-const marketingLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+const marketingLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, skip: skipInTest });
 // Support /chat is more chatty by nature — allow a real conversation
 // (~30 turns/hr) per IP. Spam-control without throttling real visitors.
-const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false, skip: skipInTest });
 
 export function createApp() {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var must be set before starting');
