@@ -18,11 +18,14 @@ const MAX_USER_LEN = 4000;
 const MAX_HISTORY = 20;
 const MAX_TOOL_LOOPS = 4;
 
-// Bedrock under the AWS BAA covers PHI workloads. Default to Claude 3.5
-// Haiku (cheap, fast). The `us.` prefix is a cross-region inference profile
-// — falls back across us-east-1 / us-east-2 / us-west-2 automatically.
+// Bedrock under the AWS BAA covers PHI workloads. Default to Claude Haiku 4.5
+// (cheap, fast, current). AWS retired Claude 3.x Haiku as legacy, so the
+// older `claude-3-5-haiku-20241022` ID now 404s with "marked by provider
+// as Legacy". The `us.` prefix is a cross-region inference profile — falls
+// back across us-east-1 / us-east-2 / us-west-2 automatically. Override
+// at deploy time via BEDROCK_MODEL_ID.
 const MODEL_ID =
-  process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
+  process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 const REGION = process.env.AWS_REGION || 'us-east-1';
 
 let cachedClient: BedrockRuntimeClient | null = null;

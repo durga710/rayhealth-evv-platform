@@ -5,7 +5,11 @@ import { safeError } from '../security/safe-log.js';
 const router = Router();
 const MAX_USER_LEN = 4000;
 const MAX_HISTORY = 20;
-const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
+// Default model: Claude Haiku 4.5 cross-region inference profile. AWS retired
+// Claude 3.x Haiku as legacy; the older `claude-3-5-haiku-20241022` ID now
+// returns ResourceNotFoundException ("marked by provider as Legacy"). Override
+// at deploy time via BEDROCK_MODEL_ID if you need a different active model.
+const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 const REGION = process.env.AWS_REGION || 'us-east-1';
 let cachedClient = null;
 function bedrockClient() {
