@@ -12,6 +12,24 @@ export declare class CaregiverRepository {
     getCredentials(caregiverId: string): Promise<CaregiverCredential[]>;
     expireCredential(id: string): Promise<void>;
     createInvite(invite: Omit<StaffInvite, 'id'>): Promise<StaffInvite>;
+    /**
+     * Look up an invite by its UUID (which is the share-token). Returns
+     * undefined for unknown ids so the caller can render a generic
+     * "invalid or expired" message without confirming whether the id was
+     * ever issued. Includes the agency name so the accept-invite UI can
+     * show "you're joining <Agency>" before the user types a password.
+     */
+    findInviteById(id: string): Promise<(StaffInvite & {
+        acceptedAt: string | null;
+        agencyName: string | null;
+    }) | undefined>;
+    /**
+     * Mark an invite as redeemed. Idempotent only in the trivial sense —
+     * if `accepted_at` is already non-null the caller should treat the
+     * invite as already-used and refuse to create another user. The route
+     * layer enforces single-use; this method just persists the marker.
+     */
+    markInviteAccepted(id: string, acceptedUserId: string, acceptedAt: string): Promise<void>;
     private mapCaregiver;
     private mapCredential;
     private mapInvite;

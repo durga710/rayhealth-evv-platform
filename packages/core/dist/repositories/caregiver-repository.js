@@ -65,6 +65,43 @@ export class CaregiverRepository {
         }).returning('*');
         return this.mapInvite(row);
     }
+    /**
+     * Look up an invite by its UUID (which is the share-token). Returns
+     * undefined for unknown ids so the caller can render a generic
+     * "invalid or expired" message without confirming whether the id was
+     * ever issued. Includes the agency name so the accept-invite UI can
+     * show "you're joining <Agency>" before the user types a password.
+     */
+    async findInviteById(id) {
+        const row = await this.db('staff_invites as si')
+            .leftJoin('agencies as a', 'a.id', 'si.agency_id')
+            .where('si.id', id)
+            .select('si.*', 'a.name as agency_name')
+            .first();
+        if (!row)
+            return undefined;
+        const base = this.mapInvite(row);
+        return {
+            ...base,
+            acceptedAt: row.accepted_at instanceof Date
+                ? row.accepted_at.toISOString()
+                : row.accepted_at ?? null,
+            agencyName: row.agency_name ?? null,
+        };
+    }
+    /**
+     * Mark an invite as redeemed. Idempotent only in the trivial sense —
+     * if `accepted_at` is already non-null the caller should treat the
+     * invite as already-used and refuse to create another user. The route
+     * layer enforces single-use; this method just persists the marker.
+     */
+    async markInviteAccepted(id, acceptedUserId, acceptedAt) {
+        await this.db('staff_invites').where({ id }).update({
+            accepted_at: acceptedAt,
+            accepted_user_id: acceptedUserId,
+            status: 'accepted',
+        });
+    }
     mapCaregiver(row) {
         return {
             id: row.id,

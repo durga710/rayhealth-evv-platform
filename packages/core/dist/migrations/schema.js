@@ -162,6 +162,22 @@ export async function up(knex) {
             table.timestamps(true, true);
         });
     }
+    // Single-use enforcement for staff invites. Added 2026-05-09 when the
+    // real invite-accept endpoints landed — without these columns we can't
+    // tell whether a token has already been redeemed, which would let the
+    // same invite create multiple users. Idempotent: only adds if missing.
+    if (await knex.schema.hasTable('staff_invites')) {
+        if (!(await knex.schema.hasColumn('staff_invites', 'accepted_at'))) {
+            await knex.schema.alterTable('staff_invites', (table) => {
+                table.timestamp('accepted_at').nullable();
+            });
+        }
+        if (!(await knex.schema.hasColumn('staff_invites', 'accepted_user_id'))) {
+            await knex.schema.alterTable('staff_invites', (table) => {
+                table.uuid('accepted_user_id').nullable();
+            });
+        }
+    }
     if (!(await knex.schema.hasTable('evv_exceptions'))) {
         await knex.schema.createTable('evv_exceptions', (table) => {
             table.uuid('id').primary();
