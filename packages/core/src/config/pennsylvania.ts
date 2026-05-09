@@ -48,13 +48,14 @@ export type PaExceptionType = typeof paExceptionTypes[number];
 
 export type AppRole = 'admin' | 'coordinator' | 'caregiver' | 'family';
 
-export type Capability = 
+export type Capability =
   | 'agency.read' | 'agency.write'
   | 'staff.read' | 'staff.write'
   | 'client.read' | 'client.write'
   | 'schedule.read' | 'schedule.write'
   | 'evv.read' | 'evv.write'
-  | 'auth.read' | 'auth.write';
+  | 'auth.read' | 'auth.write'
+  | 'audit.read';
 
 const ROLE_CAPABILITIES: Record<AppRole, Capability[]> = {
   admin: [
@@ -63,7 +64,8 @@ const ROLE_CAPABILITIES: Record<AppRole, Capability[]> = {
     'client.read', 'client.write',
     'schedule.read', 'schedule.write',
     'evv.read', 'evv.write',
-    'auth.read', 'auth.write'
+    'auth.read', 'auth.write',
+    'audit.read'
   ],
   coordinator: [
     'agency.read',

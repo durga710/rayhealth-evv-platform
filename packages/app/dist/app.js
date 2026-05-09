@@ -25,6 +25,7 @@ import evvRoutes from './routes/evv-routes.js';
 import mobileRoutes from './routes/mobile-routes.js';
 import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
+import auditRetentionRoutes from './routes/audit-retention-routes.js';
 // Skip rate limits in unit tests so the test runner can fire 100s of
 // requests against 127.0.0.1 without exhausting the limiter. Production
 // behavior unchanged.
@@ -96,6 +97,9 @@ export function createApp() {
     app.use('/exports', exportRoutes);
     // Admin assistant — authenticated users only; mounted after authContext.
     app.use('/admin-assistant', adminAssistantRoutes);
+    // HIPAA audit-retention reporting — admin-only via the audit.read
+    // capability. Surfaces retention status without exposing PHI.
+    app.use('/admin/audit-retention', auditRetentionRoutes);
     // Protected route for testing (keep for now or remove if redundant)
     app.get('/agencies/current-test', requireCapability('agency.read'), (req, res) => {
         res.json({ id: req.auth.agencyId, name: 'Current Agency' });

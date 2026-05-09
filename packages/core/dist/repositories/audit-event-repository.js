@@ -43,6 +43,43 @@ export class AuditEventRepository {
             .limit(limit);
         return rows.map((row) => this.mapRow(row));
     }
+    /**
+     * Aggregate retention status for the agency's audit_events. Used by
+     * the admin /admin/audit-retention/status endpoint as HIPAA evidence
+     * (45 CFR §164.530(j) — 6-year retention floor for audit logs).
+     *
+     * Returns:
+     *   - totalRows         : every audit_event for this agency
+     *   - oldestOccurredAt  : ISO timestamp of the earliest record
+     *   - eventsLast30Days  : recent activity sanity-check
+     *   - eventsApproachingSixYearLimit : rows older than 5y 9m — the
+     *                                     bucket that needs cold-storage
+     *                                     extraction in the next 90 days
+     *
+     * Read-only: never mutates audit_events (the table is enforced
+     * append-only at the DB layer via `audit_events_block_mutation_trg`).
+     */
+    async getRetentionStats(agencyId) {
+        const base = () => this.db('audit_events').where({ agency_id: agencyId });
+        const [{ count: totalRowsRaw }] = await base().count('id as count');
+        const totalRows = Number(totalRowsRaw ?? 0);
+        const oldestRow = await base().orderBy('occurred_at', 'asc').first('occurred_at');
+        const oldestOccurredAt = toIso(oldestRow?.occurred_at) ?? null;
+        const [{ count: recentRaw }] = await base()
+            .whereRaw("occurred_at >= now() - interval '30 days'")
+            .count('id as count');
+        const eventsLast30Days = Number(recentRaw ?? 0);
+        const [{ count: approachingRaw }] = await base()
+            .whereRaw("occurred_at < now() - interval '5 years 9 months'")
+            .count('id as count');
+        const eventsApproachingSixYearLimit = Number(approachingRaw ?? 0);
+        return {
+            totalRows,
+            oldestOccurredAt,
+            eventsLast30Days,
+            eventsApproachingSixYearLimit
+        };
+    }
     mapRow(row) {
         return {
             id: row.id,

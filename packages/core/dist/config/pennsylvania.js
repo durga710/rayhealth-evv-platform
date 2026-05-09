@@ -43,7 +43,8 @@ const ROLE_CAPABILITIES = {
         'client.read', 'client.write',
         'schedule.read', 'schedule.write',
         'evv.read', 'evv.write',
-        'auth.read', 'auth.write'
+        'auth.read', 'auth.write',
+        'audit.read'
     ],
     coordinator: [
         'agency.read',
