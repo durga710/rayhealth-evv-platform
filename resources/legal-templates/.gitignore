@@ -1,0 +1,18 @@
+# Customized output (per-agency filled documents — never commit)
+customized/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Optional convert-time artifacts (PDFs are produced from .docx via libreoffice)
+*.pdf

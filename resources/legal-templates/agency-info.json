@@ -1,0 +1,59 @@
+{
+  "AGENCY_SLUG": "acme-homecare",
+
+  "AGENCY_NAME": "Acme Homecare",
+  "AGENCY_LEGAL_ENTITY_TYPE": "LLC",
+  "AGENCY_ADDRESS_LINE_1": "123 Main Street",
+  "AGENCY_ADDRESS_LINE_2": "Suite 200",
+  "AGENCY_CITY": "Philadelphia",
+  "AGENCY_STATE": "PA",
+  "AGENCY_ZIP": "19103",
+  "AGENCY_PHONE": "(215) 555-0100",
+  "AGENCY_FAX": "(215) 555-0101",
+  "AGENCY_EMAIL": "info@acmehomecare.example.com",
+  "AGENCY_WEBSITE": "https://www.acmehomecare.example.com",
+
+  "AGENCY_LICENSE_NUMBER": "HC-000000",
+  "AGENCY_LICENSE_STATE": "PA",
+  "AGENCY_TAX_ID_EIN": "00-0000000",
+
+  "PRIVACY_OFFICER_NAME": "Jane Smith",
+  "PRIVACY_OFFICER_EMAIL": "privacy@acmehomecare.example.com",
+  "PRIVACY_OFFICER_PHONE": "(215) 555-0102",
+
+  "COMPLIANCE_OFFICER_NAME": "Robert Jones",
+  "COMPLIANCE_OFFICER_EMAIL": "compliance@acmehomecare.example.com",
+
+  "HR_CONTACT_NAME": "Maria Garcia",
+  "HR_CONTACT_EMAIL": "hr@acmehomecare.example.com",
+
+  "HOURLY_RATE": "$28.00",
+  "OVERTIME_RATE": "$42.00",
+  "HOLIDAY_RATE": "$42.00",
+  "MILEAGE_RATE": "$0.67",
+  "MINIMUM_VISIT_HOURS": "2",
+
+  "LATE_PAYMENT_FEE_PCT": "1.5",
+  "INVOICE_FREQUENCY": "weekly",
+  "PAYMENT_DUE_DAYS": "15",
+
+  "EFFECTIVE_DATE": "January 1, 2026",
+  "NOTICE_PERIOD_DAYS": "14",
+
+  "STATE_REGULATOR_NAME": "Pennsylvania Department of Health, Division of Home Health",
+  "STATE_REGULATOR_PHONE": "1-800-254-5164",
+  "STATE_REGULATOR_WEBSITE": "https://www.health.pa.gov",
+
+  "APS_PHONE": "1-800-490-8505",
+  "APS_WEBSITE": "https://www.aging.pa.gov",
+
+  "PA_HOMECARE_LICENSE": "PA-HCA-000000",
+  "PA_DEPT_HEALTH_PHONE": "1-877-724-3258",
+
+  "OH_PROVIDER_NUMBER": "OH-HHA-000000",
+  "OH_DEPT_HEALTH_PHONE": "1-614-466-3543",
+
+  "INSURANCE_LIABILITY_LIMIT": "$1,000,000 per occurrence / $3,000,000 aggregate",
+  "INSURANCE_AUTO_LIMIT": "$100,000 / $300,000 / $50,000",
+  "WORKERS_COMP_CARRIER": "State Workers' Insurance Fund (SWIF)"
+}
