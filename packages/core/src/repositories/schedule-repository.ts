@@ -81,4 +81,21 @@ export class ScheduleRepository {
       clientName: `${row.first_name} ${row.last_name}`
     }));
   }
+
+  async getAssignmentForCaregiver(assignmentId: string, caregiverId: string): Promise<any | null> {
+    const row = await this.db('assignments')
+      .where({
+        id: assignmentId,
+        caregiver_id: caregiverId
+      })
+      .first();
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      caregiverId: row.caregiver_id,
+      visitTemplateId: row.visit_template_id
+    };
+  }
 }

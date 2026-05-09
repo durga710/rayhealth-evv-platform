@@ -31,20 +31,17 @@ export function VisitReviewPage() {
     }
   };
 
-  const handleApprove = async (id: string) => {
+  const handleRequestCorrection = async (visitId: string) => {
     setMessage('');
     try {
-      await postJson(`/api/maintenance/approve-unlock/${id}`, { 
-        adjustedTimes: { 
-            // In a real app, this would be editable times
-            start: new Date().toISOString(), 
-            end: new Date().toISOString() 
-        } 
+      await postJson('/api/maintenance/request-unlock', {
+        visitId,
+        reason: 'Coordinator requested EVV correction review from Visit Review'
       });
-      setMessage('Visit approved successfully');
-      fetchVisits(); // Refresh list
+      setMessage('Correction request created successfully');
+      fetchVisits();
     } catch (err) {
-      setMessage('Failed to approve visit');
+      setMessage('Failed to create correction request');
     }
   };
 
@@ -52,7 +49,7 @@ export function VisitReviewPage() {
     <div>
       <h2>EVV Visit Review</h2>
       <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>
-        Review and approve electronically verified visits.
+        Review electronically verified visits and open maintenance requests when corrections are needed.
       </p>
 
       {message && <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '8px' }}>{message}</div>}
@@ -79,7 +76,7 @@ export function VisitReviewPage() {
                 <td style={{ padding: '0.75rem', textTransform: 'capitalize' }}>{visit.status}</td>
                 <td style={{ padding: '0.75rem' }}>
                   {visit.status === 'pending' && (
-                    <button onClick={() => handleApprove(visit.id)}>Approve</button>
+                    <button onClick={() => handleRequestCorrection(visit.id)}>Request Correction</button>
                   )}
                 </td>
               </tr>

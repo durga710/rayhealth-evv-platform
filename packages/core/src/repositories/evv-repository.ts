@@ -36,6 +36,11 @@ export class EvvRepository {
     return rows.map(row => this.mapRowToVisit(row));
   }
 
+  async getVisitById(id: string): Promise<EvvVisit | null> {
+    const row = await this.db('evv_visits').where({ id }).first();
+    return row ? this.mapRowToVisit(row) : null;
+  }
+
   private mapRowToVisit(row: any): EvvVisit {
     return {
       id: row.id,

@@ -8,6 +8,11 @@ export function setTestJwtSecret() {
   process.env.JWT_SECRET = TEST_SECRET;
 }
 
-export function makeToken(role: AppRole, agencyId = 'agency-1', userId = 'user-1'): string {
-  return jwt.sign({ sub: userId, agencyId, role }, TEST_SECRET, { expiresIn: '1h' });
+export function makeToken(
+  role: AppRole,
+  agencyId = 'agency-1',
+  userId = 'user-1',
+  caregiverId?: string
+): string {
+  return jwt.sign({ sub: userId, agencyId, role, caregiverId }, TEST_SECRET, { expiresIn: '1h' });
 }

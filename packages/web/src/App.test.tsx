@@ -23,5 +23,8 @@ describe('admin app shell', () => {
     );
 
     expect(await screen.findByText(/Pennsylvania Home Care Platform/i)).toBeInTheDocument();
+    expect(screen.getByText(/Live visit command center/i)).toBeInTheDocument();
+    expect(screen.getByText(/Implementation Roadmap/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Resource Library/i).length).toBeGreaterThan(0);
   });
 });

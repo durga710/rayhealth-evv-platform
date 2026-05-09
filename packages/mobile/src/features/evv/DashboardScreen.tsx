@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, SafeAreaView, ActivityIndicator, Pressable } from 'react-native';
 import { useAuth } from '../../lib/AuthContext';
 import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
@@ -7,7 +7,7 @@ import apiClient from '../../lib/api-client';
 interface Assignment {
   id: string;
   clientName: string;
-  time?: string; // Placeholder for now
+  time?: string;
 }
 
 export default function DashboardScreen() {
@@ -30,11 +30,25 @@ export default function DashboardScreen() {
     fetchAssignments();
   }, []);
 
+  const openClockIn = (assignment: Assignment) => {
+    router.push({
+      pathname: '/clockin',
+      params: {
+        assignmentId: assignment.id,
+        clientName: assignment.clientName,
+        scheduledTime: assignment.time ?? ''
+      }
+    });
+  };
+
   const renderItem = ({ item }: { item: Assignment }) => (
-    <View style={styles.item}>
-      <Text style={styles.itemText}>{item.clientName}</Text>
-      <Text>{item.time || 'Time not specified'}</Text>
-    </View>
+    <Pressable style={styles.item} onPress={() => openClockIn(item)}>
+      <View>
+        <Text style={styles.itemText}>{item.clientName}</Text>
+        <Text style={styles.itemMeta}>{item.time || 'Time not specified'}</Text>
+      </View>
+      <Text style={styles.itemAction}>Start EVV</Text>
+    </Pressable>
   );
   
   return (
@@ -61,6 +75,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f4f8' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#1a3a5c' },
-  item: { backgroundColor: 'white', padding: 20, marginVertical: 8, marginHorizontal: 16, borderRadius: 8, elevation: 1 },
+  item: {
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    elevation: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 20
+  },
   itemText: { fontSize: 18, fontWeight: '500' },
+  itemMeta: { color: '#64748b', marginTop: 4 },
+  itemAction: { color: '#1a5fa8', fontWeight: '700' },
 });

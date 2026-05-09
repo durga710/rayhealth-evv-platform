@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HeroGraphic } from './HeroGraphic.js';
 
 const stats = [
   { value: '100%', label: 'PA DHS aligned' },
@@ -64,6 +63,95 @@ const compliance = [
   { name: 'Operational guardrails', detail: 'Rate-limited login and bootstrap, advisory-locked first-admin creation, CORS scoped to allowlisted origins.' },
 ];
 
+const operations = [
+  {
+    title: 'Credential-first staffing',
+    body: 'Assignments are designed to fail closed when required background checks, TB screening, training, or role credentials are missing or expired.',
+  },
+  {
+    title: 'Authorization-aware scheduling',
+    body: 'Templates and visits stay tied to payer authorization windows and units, reducing over-service, missed billing support, and retroactive cleanup.',
+  },
+  {
+    title: 'Field-ready EVV capture',
+    body: 'Caregivers get a small mobile workflow for GPS clock-in/out, task completion, exception notes, and offline-friendly retry behavior.',
+  },
+  {
+    title: 'Audit packets on demand',
+    body: 'Every protected write and PHI-sensitive read can be reconstructed from immutable audit events with actor, agency, resource, and outcome context.',
+  },
+];
+
+const roadmap = [
+  {
+    phase: 'Now',
+    title: 'Pennsylvania operating core',
+    status: 'Live in demo',
+    detail: 'Admin login, PA task library, clients, authorizations, templates, assignments, EVV review, CSRF-protected sessions, and audit events.',
+    proof: ['PA-only task catalog', 'Protected admin sessions', 'Visit exception review'],
+  },
+  {
+    phase: 'Next',
+    title: 'Caregiver mobile completion loop',
+    status: 'Hardening',
+    detail: 'Tighten the clock-in/out experience, offline queue visibility, caregiver assignment list, and exception submission from the field.',
+    proof: ['Offline retry visibility', 'Clock-in packet review', 'Exception note capture'],
+  },
+  {
+    phase: 'Then',
+    title: 'Aggregator submission readiness',
+    status: 'Designing',
+    detail: 'Normalize EVV records for Sandata/PROMISe export, rejection handling, visit-maintenance corrections, and submission evidence packets.',
+    proof: ['Submission mapping', 'Rejection queue', 'Audit evidence packets'],
+  },
+  {
+    phase: 'Later',
+    title: 'State expansion without dilution',
+    status: 'Policy gated',
+    detail: 'Add state policy profiles only when credentialing, geofence, retention, and aggregator rules are represented explicitly in the domain model.',
+    proof: ['State policy profiles', 'Aggregator rules', 'Retention controls'],
+  },
+];
+
+const resources = [
+  {
+    title: 'CMS EVV guidance',
+    type: 'Federal rulebook',
+    body: 'Baseline EVV mandate, timelines, and Medicaid expectations for personal care and home health services.',
+    href: 'https://www.medicaid.gov/medicaid/home-community-based-services/home-community-based-services-guidance-additional-resources/electronic-visit-verification',
+  },
+  {
+    title: 'Pennsylvania DHS EVV',
+    type: 'State operating model',
+    body: 'Pennsylvania EVV model, provider responsibilities, open vendor approach, and DHS aggregator context.',
+    href: 'https://www.pa.gov/agencies/dhs/resources/for-providers/evv',
+  },
+  {
+    title: 'PA EVV FAQ',
+    type: 'Provider questions',
+    body: 'Practical DHS answers on capture methods, alternate EVV, aggregator expectations, and provider workflow.',
+    href: 'https://www.pa.gov/agencies/dhs/resources/for-providers/evv/faq-evv',
+  },
+  {
+    title: 'Free DHS EVV solution',
+    type: 'Training and Sandata',
+    body: 'DHS EVV solution resources, Sandata On-Demand training, and provider onboarding references.',
+    href: 'https://www.pa.gov/agencies/dhs/resources/for-providers/evv/free-dhs-evv-solution',
+  },
+  {
+    title: 'HIPAA Security Rule',
+    type: 'Privacy and security',
+    body: 'HHS overview of administrative, physical, and technical safeguards for electronic PHI.',
+    href: 'https://www.hhs.gov/hipaa/for-professionals/security/index.html',
+  },
+  {
+    title: 'RayHealth rollout roadmap',
+    type: 'RayHealth internal',
+    body: 'Current feature readiness, messaging guardrails, and the implementation work still required before production claims.',
+    href: '#roadmap',
+  },
+];
+
 const faqs = [
   {
     q: 'Why Pennsylvania-only?',
@@ -118,43 +206,86 @@ const cardBase: React.CSSProperties = {
 
 export function LandingPage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg)' }}>
+    <div className="landing-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg)' }}>
       {/* Header */}
-      <header style={{ padding: '1.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-primary-dark)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RayHealth <span style={{ backgroundColor: 'var(--color-accent)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', letterSpacing: '2px', fontWeight: 800 }}>EVV</span>
+      <header className="landing-header">
+        <div className="landing-brand">
+          RayHealth <span>EVV</span>
         </div>
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <a href="#how" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>How it works</a>
-          <a href="#roles" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Who it's for</a>
-          <a href="#compliance" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Compliance</a>
-          <a href="#faq" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>FAQ</a>
-          <Link to="/login" style={{ backgroundColor: 'var(--color-primary-light)', color: 'white', textDecoration: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 700 }}>Log In</Link>
+        <nav className="landing-nav">
+          <a href="#how">How it works</a>
+          <a href="#roles">Roles</a>
+          <a href="#compliance">Compliance</a>
+          <a href="#resources">Resources</a>
+          <a href="#roadmap">Roadmap</a>
+          <Link to="/login" className="landing-login-link">Log In</Link>
         </nav>
       </header>
 
       {/* Hero */}
-      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5rem 2rem 3rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '820px', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-          <div style={{ color: 'var(--color-accent)', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.875rem' }}>
+      <section className="landing-hero">
+        <div className="hero-copy">
+          <div className="hero-eyebrow">
             Pennsylvania Home Care Platform
           </div>
-          <h1 style={{ fontSize: '3.75rem', lineHeight: 1.05, color: 'var(--color-primary-dark)', margin: 0 }}>
-            Care You Can Trust.<br /> <span style={{ color: 'var(--color-primary-light)' }}>Verified & Delivered.</span>
+          <h1>
+            EVV operations that prove the visit happened.
           </h1>
-          <p style={{ fontSize: '1.25rem', color: 'var(--color-text-muted)', maxWidth: '640px', lineHeight: 1.6, margin: 0 }}>
-            Electronic Visit Verification, scheduling, credentialing, and a real-time audit trail — built specifically for Pennsylvania personal assistance and home health agencies.
+          <p>
+            RayHealth EVV turns scheduling, authorization units, caregiver credentials, GPS capture, and visit exceptions into one audit-ready workflow for Pennsylvania agencies.
           </p>
-
-          <HeroGraphic />
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link to="/login" style={{ backgroundColor: 'var(--color-accent)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
+          <div className="hero-actions">
+            <Link to="/login" className="primary-cta">
               Access Admin Portal
             </Link>
-            <a href="#how" style={{ backgroundColor: 'white', color: 'var(--color-primary-dark)', border: '2px solid #c9d8e8', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem' }}>
-              See how it works
+            <a href="#resources" className="secondary-cta">
+              Browse resources
             </a>
+          </div>
+          <div className="hero-proof-strip" aria-label="Implementation status">
+            <span>CSRF web sessions</span>
+            <span>PA task library</span>
+            <span>EVV exception queue</span>
+          </div>
+        </div>
+
+        <div className="hero-product-preview" aria-label="Live visit command center">
+          <div className="preview-topbar">
+            <div>
+              <p>Live visit command center</p>
+              <strong>Wednesday field operations</strong>
+            </div>
+            <span>PA DHS mode</span>
+          </div>
+          <div className="preview-grid">
+            <div className="preview-card preview-card-strong">
+              <span className="preview-label">Visit exceptions</span>
+              <strong>7 need coordinator review</strong>
+              <p>2 GPS drift, 3 late clock-outs, 2 missing task attestations</p>
+            </div>
+            <div className="preview-card">
+              <span className="preview-label">Credential gate</span>
+              <strong>Blocked assignment</strong>
+              <p>TB screening expires before scheduled visit window.</p>
+            </div>
+            <div className="preview-card">
+              <span className="preview-label">Authorization burn</span>
+              <strong>68% units used</strong>
+              <div className="burn-meter" aria-hidden="true"><span /></div>
+            </div>
+          </div>
+          <div className="mobile-visit-card">
+            <div>
+              <span>Caregiver mobile</span>
+              <strong>Clock-in packet ready</strong>
+              <p>Client, service code, GPS accuracy, task checklist, and offline retry state.</p>
+            </div>
+            <div className="mobile-status">Ready</div>
+          </div>
+          <div className="audit-ribbon">
+            <span>Audit event:</span>
+            <code>visit.exception.created</code>
+            <span>actor, agency, entity, payload</span>
           </div>
         </div>
       </section>
@@ -244,7 +375,94 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* Resources */}
+      <section id="resources" className="resources-section">
+        <div className="resources-inner">
+          <div className="resources-heading">
+            <p style={sectionEyebrow}>Resource Library</p>
+            <h2 style={sectionHeading}>Give agencies the receipts, not just the pitch.</h2>
+            <p style={sectionLead}>
+              These are the source materials and internal readiness notes we use to keep the product honest while we harden the workflows.
+            </p>
+          </div>
+          <div className="resource-grid">
+            {resources.map((resource) => (
+              <a key={resource.title} className="resource-card" href={resource.href} target={resource.href.startsWith('http') ? '_blank' : undefined} rel={resource.href.startsWith('http') ? 'noreferrer' : undefined}>
+                <span>{resource.type}</span>
+                <strong>{resource.title}</strong>
+                <p>{resource.body}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Operations */}
+      <section id="operations" style={{ padding: '4rem 2rem', backgroundColor: 'white' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <p style={sectionEyebrow}>Operational proof</p>
+            <h2 style={sectionHeading}>Built around the messy handoffs agencies fight every week.</h2>
+            <p style={sectionLead}>
+              RayHealth EVV connects compliance checkpoints to the actual work: hiring, scheduling, field documentation, billing support, and audit response.
+            </p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+            {operations.map((item) => (
+              <div key={item.title} style={{ ...cardBase, backgroundColor: 'var(--color-bg)', boxShadow: 'none', border: '1px solid #c9d8e8' }}>
+                <h3 style={{ color: 'var(--color-primary-dark)', marginTop: 0, marginBottom: '0.75rem', fontSize: '1.2rem' }}>{item.title}</h3>
+                <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.55, margin: 0, fontSize: '0.95rem' }}>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Roadmap */}
+      <section id="roadmap" className="roadmap-section">
+        <div className="roadmap-shell">
+          <div className="roadmap-intro-card">
+            <p style={{ ...sectionEyebrow, color: '#fb923c' }}>Implementation Roadmap</p>
+            <h2>Roadmap cockpit for launch risk.</h2>
+            <p>
+              The sequence is simple: keep the Pennsylvania demo dependable, close the caregiver mobile loop, then harden aggregator submission with evidence packets agencies can actually hand to an auditor.
+            </p>
+            <div className="roadmap-signal-grid">
+              <span>Updated landing UI</span>
+              <span>Resource library added</span>
+              <span>Production deployed</span>
+            </div>
+          </div>
+
+          <div className="roadmap-stage-grid">
+            {roadmap.map((item) => (
+              <article key={item.phase} className="roadmap-card">
+                <div className="roadmap-card-topline">
+                  <span>{item.phase}</span>
+                  <strong>{item.status}</strong>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.detail}</p>
+                <ul>
+                  {item.proof.map((proof) => (
+                    <li key={proof}>{proof}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <div className="roadmap-resource-callout">
+            <div>
+              <span>Launch resources</span>
+              <strong>Use the resource library to validate every roadmap claim.</strong>
+              <p>CMS EVV, Pennsylvania DHS EVV, PA FAQ, Sandata training, and HIPAA Security Rule references are now linked directly on the page.</p>
+            </div>
+            <a href="#resources">Jump to resources</a>
+          </div>
+        </div>
+      </section>
+
       <section id="faq" style={{ padding: '4rem 2rem', backgroundColor: 'white' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
@@ -283,8 +501,8 @@ export function LandingPage() {
       {/* Footer */}
       <footer style={{ padding: '2.5rem 2rem', backgroundColor: 'var(--color-primary-dark)', color: '#9bb0c8', fontSize: '0.875rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <span>&copy; {new Date().getFullYear()} RayHealth EVV™. All rights reserved.</span>
-          <span>Pennsylvania-only • HIPAA-aware • 21st Century Cures Act compliant</span>
+          <span>&copy; {new Date().getFullYear()} RayHealth EVV. All rights reserved.</span>
+          <span>Pennsylvania-only • HIPAA-aware • 21st Century Cures Act aligned</span>
         </div>
       </footer>
     </div>

@@ -1,2 +1,7 @@
 .vercel
 .superpowers/
+
+# Environment files — never commit. Values belong in Vercel project env or local-only files.
+.env
+.env.*
+!.env.example

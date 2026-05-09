@@ -3,7 +3,9 @@ import {
   agencySchema,
   assignmentInputSchema,
   authorizationSchema,
-  caregiverCredentialSchema
+  caregiverCredentialSchema,
+  evvClockInInputSchema,
+  hasCapability
 } from '../index.js';
 
 describe('Pennsylvania domain schemas', () => {
@@ -34,5 +36,28 @@ describe('Pennsylvania domain schemas', () => {
         expiresAt: '2026-12-31'
       }).status
     ).toBe('active');
+  });
+
+  it('rejects placeholder assignment IDs for EVV clock-in', () => {
+    expect(() =>
+      evvClockInInputSchema.parse({
+        assignmentId: 'mock-assignment-id',
+        location: { lat: 40.2732, lng: -76.8867, accuracy: 18 }
+      })
+    ).toThrow();
+  });
+
+  it('accepts a real assignment and bounded GPS coordinates for EVV clock-in', () => {
+    expect(
+      evvClockInInputSchema.parse({
+        assignmentId: '22222222-2222-4222-8222-222222222222',
+        location: { lat: 40.2732, lng: -76.8867, accuracy: 18 }
+      }).assignmentId
+    ).toBe('22222222-2222-4222-8222-222222222222');
+  });
+
+  it('lets caregivers write EVV events without broad schedule write access', () => {
+    expect(hasCapability('caregiver', 'evv.write')).toBe(true);
+    expect(hasCapability('caregiver', 'schedule.write')).toBe(false);
   });
 });

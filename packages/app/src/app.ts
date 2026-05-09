@@ -33,24 +33,28 @@ export function createApp() {
   app.set('db', db);
   app.use(cors({ origin: allowedOrigins, credentials: true }));
   app.use(express.json());
-  app.use('/auth/login', authLimiter);
-  app.use('/auth/mobile/login', authLimiter);
-  app.use('/auth/bootstrap', authLimiter);
-  app.use('/auth', authRoutes);
+  for (const prefix of ['', '/api']) {
+    app.use(`${prefix}/auth/login`, authLimiter);
+    app.use(`${prefix}/auth/mobile/login`, authLimiter);
+    app.use(`${prefix}/auth/bootstrap`, authLimiter);
+    app.use(`${prefix}/auth`, authRoutes);
+  }
   app.use(authContext);
   app.use(requireCsrf);
   app.use(auditLog);
 
-  app.use('/invites', inviteRoutes);
-  app.use('/agencies', agencyRoutes);
-  app.use('/staff', staffRoutes);
-  app.use('/clients', clientRoutes);
-  app.use('/authorizations', authorizationRoutes);
-  app.use('/templates', templateRoutes);
-  app.use('/assignments', assignmentRoutes);
-  app.use('/evv', evvRoutes);
-  app.use('/maintenance', maintenanceRoutes);
-  app.use('/tasks', taskRoutes);
+  for (const prefix of ['', '/api']) {
+    app.use(`${prefix}/invites`, inviteRoutes);
+    app.use(`${prefix}/agencies`, agencyRoutes);
+    app.use(`${prefix}/staff`, staffRoutes);
+    app.use(`${prefix}/clients`, clientRoutes);
+    app.use(`${prefix}/authorizations`, authorizationRoutes);
+    app.use(`${prefix}/templates`, templateRoutes);
+    app.use(`${prefix}/assignments`, assignmentRoutes);
+    app.use(`${prefix}/evv`, evvRoutes);
+    app.use(`${prefix}/maintenance`, maintenanceRoutes);
+    app.use(`${prefix}/tasks`, taskRoutes);
+  }
 
   // Protected route for testing (keep for now or remove if redundant)
   app.get('/agencies/current-test', requireCapability('agency.read'), (req, res) => {

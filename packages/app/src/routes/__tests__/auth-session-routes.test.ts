@@ -32,9 +32,15 @@ describe('auth session routes', () => {
     });
     const createAuditEvent = vi.fn().mockResolvedValue({});
 
-    vi.spyOn(core, 'UserRepository').mockImplementation(() => ({ findByEmail }) as unknown as core.UserRepository);
-    vi.spyOn(core, 'SessionRepository').mockImplementation(() => ({ create: createSession }) as unknown as core.SessionRepository);
-    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({ create: createAuditEvent }) as unknown as core.AuditEventRepository);
+    vi.spyOn(core, 'UserRepository').mockImplementation(function UserRepositoryMock() {
+      return { findByEmail } as unknown as core.UserRepository;
+    } as unknown as typeof core.UserRepository);
+    vi.spyOn(core, 'SessionRepository').mockImplementation(function SessionRepositoryMock() {
+      return { create: createSession } as unknown as core.SessionRepository;
+    } as unknown as typeof core.SessionRepository);
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(function AuditEventRepositoryMock() {
+      return { create: createAuditEvent } as unknown as core.AuditEventRepository;
+    } as unknown as typeof core.AuditEventRepository);
 
     const response = await request(createApp())
       .post('/auth/login')
