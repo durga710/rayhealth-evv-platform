@@ -51,7 +51,11 @@ const ROLE_CAPABILITIES = {
         'schedule.read', 'schedule.write'
     ],
     caregiver: [
-        'schedule.read'
+        // schedule.write is required to hit /evv/clock-in and /evv/clock-out —
+        // without it caregivers cannot record their own visits. This was missing
+        // from the initial role config and surfaced during EVV smoke testing on
+        // 2026-05-08.
+        'schedule.read', 'schedule.write'
     ],
     family: [
         'client.read',
