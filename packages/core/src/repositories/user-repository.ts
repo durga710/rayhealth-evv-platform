@@ -17,6 +17,19 @@ export class UserRepository {
     };
   }
 
+  async findById(id: string): Promise<User | undefined> {
+    const row = await this.db('users').where({ id }).first();
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      agencyId: row.agency_id,
+      email: row.email,
+      passwordHash: row.password_hash,
+      role: row.role,
+      caregiverId: row.caregiver_id ?? undefined
+    };
+  }
+
   async countAll(): Promise<number> {
     const [{ count }] = await this.db('users').count('id as count');
     return Number(count);

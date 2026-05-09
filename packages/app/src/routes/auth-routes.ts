@@ -212,6 +212,54 @@ router.post('/mobile/login', async (req, res) => {
   }
 });
 
+// Mobile profile lookup — refresh the signed-in user's display name and
+// org context. Mobile clients call this on app boot so a session minted
+// before the firstName/lastName login-response augmentation (or one that
+// pre-dates a name change in the caregivers row) updates without
+// requiring the user to log out and back in.
+//
+// Authenticated via authContext (bearer JWT). Returns 401 if the bearer
+// token is missing, expired, or revoked. Caregiver-row lookup degrades
+// gracefully: if the row is missing/renamed, firstName/lastName are
+// omitted and the client falls back to its own derivation.
+router.get('/mobile/me', authContext, async (req, res) => {
+  if (req.auth.authMethod !== 'bearer' || !req.auth.userId) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+  try {
+    const db = req.app.get('db');
+    const user = await new UserRepository(db).findById(req.auth.userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    let firstName: string | undefined;
+    let lastName: string | undefined;
+    if (user.caregiverId) {
+      try {
+        const caregiver = await new CaregiverRepository(db).findById(user.caregiverId);
+        if (caregiver) {
+          firstName = caregiver.firstName;
+          lastName = caregiver.lastName;
+        }
+      } catch {
+        // Non-fatal — leave undefined.
+      }
+    }
+    res.json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      agencyId: user.agencyId,
+      ...(firstName !== undefined ? { firstName } : {}),
+      ...(lastName !== undefined ? { lastName } : {})
+    });
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 // Mobile logout — revoke the active mobile_sessions row by jti.
 //
 // Authenticated via authContext (bearer JWT). Revocation is idempotent so a

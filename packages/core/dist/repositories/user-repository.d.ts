@@ -4,6 +4,7 @@ export declare class UserRepository {
     private readonly db;
     constructor(db: Knex);
     findByEmail(email: string): Promise<User | undefined>;
+    findById(id: string): Promise<User | undefined>;
     countAll(): Promise<number>;
     create(user: NewUser): Promise<User>;
 }

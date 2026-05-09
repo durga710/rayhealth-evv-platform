@@ -15,6 +15,19 @@ export class UserRepository {
             caregiverId: row.caregiver_id ?? undefined
         };
     }
+    async findById(id) {
+        const row = await this.db('users').where({ id }).first();
+        if (!row)
+            return undefined;
+        return {
+            id: row.id,
+            agencyId: row.agency_id,
+            email: row.email,
+            passwordHash: row.password_hash,
+            role: row.role,
+            caregiverId: row.caregiver_id ?? undefined
+        };
+    }
     async countAll() {
         const [{ count }] = await this.db('users').count('id as count');
         return Number(count);
