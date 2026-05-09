@@ -16,7 +16,7 @@ const tiers = [
       'PA DHS / PROMISe ready',
       'Email support'
     ],
-    cta: 'Start with Starter',
+    cta: 'Talk to sales',
     accent: false
   },
   {
@@ -33,7 +33,7 @@ const tiers = [
       'Audit-grade trail with 7-year retention',
       'Phone + Slack support'
     ],
-    cta: 'Start with Standard',
+    cta: 'Talk to sales',
     accent: true
   },
   {

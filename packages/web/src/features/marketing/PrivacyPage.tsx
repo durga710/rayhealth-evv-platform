@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { MarketingShell } from './MarketingShell.js';
 
 /**
@@ -211,7 +212,7 @@ export function PrivacyPage() {
           Privacy / Security Officer — RayHealth EVV<br />
           <a href="mailto:security@rayhealthevv.com">security@rayhealthevv.com</a>
           <br />
-          Or via <a href="/contact">/contact</a> (the form routes to the same
+          Or via <Link to="/contact">/contact</Link> (the form routes to the same
           inbox and is logged).
         </p>
 

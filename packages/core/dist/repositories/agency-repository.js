@@ -17,6 +17,21 @@ export class AgencyRepository {
         const row = await this.db('agencies').where({ id }).first();
         return row ? this.mapRowToAgency(row) : null;
     }
+    /**
+     * Update an agency's mutable fields (today: just `name`). Returns the
+     * updated row, or null if the agency doesn't exist. Used by the admin
+     * AgencySetupPage save action — previously a stub that didn't persist.
+     */
+    async updateName(id, name) {
+        const trimmed = name.trim();
+        if (!trimmed)
+            return this.findById(id);
+        const [row] = await this.db('agencies')
+            .where({ id })
+            .update({ name: trimmed, updated_at: this.db.fn.now() })
+            .returning('*');
+        return row ? this.mapRowToAgency(row) : null;
+    }
     mapRowToAgency(row) {
         return {
             id: row.id,

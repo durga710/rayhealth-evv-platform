@@ -75,8 +75,11 @@ export function VisitReviewPage() {
                 <td style={{ padding: '0.75rem' }}>{visit.clockOutTime ? new Date(visit.clockOutTime).toLocaleString() : 'N/A'}</td>
                 <td style={{ padding: '0.75rem', textTransform: 'capitalize' }}>{visit.status}</td>
                 <td style={{ padding: '0.75rem' }}>
-                  {visit.status === 'pending' && (
+                  {(visit.status === 'pending' || visit.status === 'flagged') && (
                     <button onClick={() => handleRequestCorrection(visit.id)}>Request Correction</button>
+                  )}
+                  {(visit.status === 'verified' || visit.status === 'corrected') && (
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Closed</span>
                   )}
                 </td>
               </tr>

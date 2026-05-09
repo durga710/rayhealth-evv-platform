@@ -21,16 +21,24 @@ export function DemoPage() {
           gap: '1.5rem'
         }}
       >
-        {/* Video placeholder. When the Loom / YouTube URL is ready, replace
-            the inner div with: <iframe src="..." allow="..." style={...} />. */}
-        <div
+        {/* Video placeholder — link to the live-walkthrough CTA so taps
+            don't dead-end on a play glyph. When the Loom / YouTube URL
+            is ready, replace this Link wrapper with: <iframe src="..."
+            allow="..." style={{ position: 'absolute', inset: 0,
+            width: '100%', height: '100%' }} />. */}
+        <Link
+          to="/contact"
+          aria-label="Walkthrough video coming soon — book a live walkthrough instead"
           style={{
             position: 'relative',
             paddingBottom: '56.25%',
             backgroundColor: 'var(--color-primary-dark)',
             borderRadius: '16px',
             overflow: 'hidden',
-            boxShadow: '0 6px 20px rgba(26, 95, 168, 0.15)'
+            boxShadow: '0 6px 20px rgba(26, 95, 168, 0.15)',
+            display: 'block',
+            textDecoration: 'none',
+            cursor: 'pointer'
           }}
         >
           <div
@@ -47,14 +55,38 @@ export function DemoPage() {
               textAlign: 'center'
             }}
           >
-            <div style={{ fontSize: '4rem' }}>▶</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>Walkthrough video coming soon</div>
+            <div
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                color: '#c9d8e8'
+              }}
+            >
+              Coming soon
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, marginTop: '0.25rem' }}>
+              Recorded walkthrough is in production
+            </div>
             <div style={{ color: '#c9d8e8', maxWidth: '480px', lineHeight: 1.5 }}>
-              Two-minute screen capture: caregiver clock-in → 30-second haptic
-              confirmation → coordinator visit review → state aggregator export.
+              Two-minute screen capture: caregiver clock-in → 30-second
+              haptic confirmation → coordinator visit review → state
+              aggregator export.
+            </div>
+            <div
+              style={{
+                marginTop: '1.25rem',
+                fontWeight: 700,
+                color: 'white',
+                borderBottom: '2px solid rgba(255,255,255,0.6)',
+                paddingBottom: '2px'
+              }}
+            >
+              Book a live walkthrough →
             </div>
           </div>
-        </div>
+        </Link>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
           <div style={card}>

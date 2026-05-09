@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { getJson, putJson } from '../../lib/api-client.js';
 
 interface Agency {
   id: string;
@@ -27,15 +27,21 @@ export function AgencySetupPage() {
       });
   }, []);
 
+  const [saving, setSaving] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setSaving(true);
     try {
-      // Stubbing the POST request since it might not be implemented in app package yet
-      // await postJson('/api/agencies/current', { name });
-      setMessage('Agency updated successfully (Stub)');
+      const updated = await putJson<Agency>('/api/agencies/current', { name });
+      setAgency(updated);
+      setName(updated.name);
+      setMessage('Agency saved.');
     } catch (err) {
-      setMessage('Failed to update agency');
+      setMessage(err instanceof Error ? err.message : 'Failed to update agency');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -68,7 +74,9 @@ export function AgencySetupPage() {
           />
         </div>
         
-        <button type="submit">Save Changes</button>
+        <button type="submit" disabled={saving || !name.trim() || name === agency?.name}>
+          {saving ? 'Saving…' : 'Save Changes'}
+        </button>
       </form>
       {message && <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '8px' }}>{message}</div>}
     </div>

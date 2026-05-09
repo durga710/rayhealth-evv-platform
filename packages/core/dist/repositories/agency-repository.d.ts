@@ -14,6 +14,12 @@ export declare class AgencyRepository {
     constructor(db: Knex);
     createAgency(agency: Agency): Promise<Agency>;
     findById(id: string): Promise<Agency | null>;
+    /**
+     * Update an agency's mutable fields (today: just `name`). Returns the
+     * updated row, or null if the agency doesn't exist. Used by the admin
+     * AgencySetupPage save action — previously a stub that didn't persist.
+     */
+    updateName(id: string, name: string): Promise<Agency | null>;
     private mapRowToAgency;
 }
 //# sourceMappingURL=agency-repository.d.ts.map
