@@ -16,6 +16,10 @@ export const auditEventTypes = [
     'phi.read', 'phi.create', 'phi.update', 'phi.delete', 'phi.export',
     'request.write',
     'permission.denied',
+    // Invite lifecycle. `invite.created` is admin-side (a coordinator
+    // sending an invite); `invite.accepted` is public-side (a caregiver
+    // redeeming the token to create their account).
+    'invite.created', 'invite.accepted',
 ];
 export const auditOutcomes = ['success', 'failure', 'denied'];
 export const auditActorTypes = ['user', 'service', 'system'];

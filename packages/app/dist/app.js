@@ -14,6 +14,7 @@ import supportRoutes from './routes/support-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
 import exportRoutes from './routes/export-routes.js';
 import inviteRoutes from './routes/invite-routes.js';
+import invitationsRoutes from './routes/invitations-routes.js';
 import agencyRoutes from './routes/agency-routes.js';
 import staffRoutes from './routes/staff-routes.js';
 import clientRoutes from './routes/client-routes.js';
@@ -68,6 +69,9 @@ export function createApp() {
     // Marketing routes are public — mount BEFORE authContext.
     app.use('/marketing', marketingLimiter, marketingRoutes);
     app.use('/support', supportLimiter, supportRoutes);
+    // Public token-redemption surface — invite recipients have no
+    // session yet, so this MUST be mounted before authContext.
+    app.use('/invitations', authLimiter, invitationsRoutes);
     app.use(authContext);
     app.use(requireCsrf);
     app.use(auditLog);
