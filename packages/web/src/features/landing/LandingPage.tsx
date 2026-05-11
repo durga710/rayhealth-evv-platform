@@ -218,6 +218,7 @@ export function LandingPage() {
           <a href="#compliance">Compliance</a>
           <a href="#resources">Resources</a>
           <a href="#roadmap">Roadmap</a>
+          <a href="#faq">FAQ</a>
           <Link to="/login" className="landing-login-link">Log In</Link>
         </nav>
       </header>

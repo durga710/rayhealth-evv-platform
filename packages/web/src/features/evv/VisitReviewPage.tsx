@@ -31,8 +31,11 @@ export function VisitReviewPage() {
     }
   };
 
+  const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
+
   const handleRequestCorrection = async (visitId: string) => {
     setMessage('');
+    setPendingVisitId(visitId);
     try {
       await postJson('/api/maintenance/request-unlock', {
         visitId,
@@ -40,8 +43,13 @@ export function VisitReviewPage() {
       });
       setMessage('Correction request created successfully');
       fetchVisits();
+      // Auto-clear success message after 4s so the row's hover state isn't masked.
+      setTimeout(() => setMessage((current) => (current === 'Correction request created successfully' ? '' : current)), 4000);
     } catch (err) {
+      console.error('Failed to create correction request', err);
       setMessage('Failed to create correction request');
+    } finally {
+      setPendingVisitId(null);
     }
   };
 
@@ -76,7 +84,13 @@ export function VisitReviewPage() {
                 <td style={{ padding: '0.75rem', textTransform: 'capitalize' }}>{visit.status}</td>
                 <td style={{ padding: '0.75rem' }}>
                   {visit.status === 'pending' && (
-                    <button onClick={() => handleRequestCorrection(visit.id)}>Request Correction</button>
+                    <button
+                      onClick={() => handleRequestCorrection(visit.id)}
+                      disabled={pendingVisitId === visit.id}
+                      aria-busy={pendingVisitId === visit.id}
+                    >
+                      {pendingVisitId === visit.id ? 'Requesting…' : 'Request Correction'}
+                    </button>
                   )}
                 </td>
               </tr>
