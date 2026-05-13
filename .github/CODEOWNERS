@@ -1,0 +1,31 @@
+# CODEOWNERS — automatic reviewer assignment
+#
+# Syntax: <path-pattern> <owner1> [<owner2> ...]
+# Later rules take precedence over earlier ones.
+# Branch protection enforces "Require review from Code Owners," so any PR
+# that touches a protected path must be approved by at least one listed
+# owner here before it can merge.
+
+# Default owner for anything not otherwise matched
+*                                       @durga710
+
+# Backend / API surface — security-sensitive paths get explicit ownership
+/packages/app/src/routes/               @durga710
+/packages/app/src/middleware/           @durga710
+/packages/app/src/security/             @durga710
+/packages/app/src/services/             @durga710
+
+# Core domain + repositories — the shared contract everything builds on
+/packages/core/src/domain/              @durga710
+/packages/core/src/repositories/        @durga710
+/packages/core/src/migrations/          @durga710
+
+# Web admin UI — auth + agency-settings pages are particularly sensitive
+/packages/web/src/features/auth/        @durga710
+/packages/web/src/features/agency/      @durga710
+
+# Compliance + legal — owner signs off on anything that touches HIPAA posture
+/docs/compliance/                       @durga710
+/SECURITY.md                            @durga710
+/.github/                               @durga710
+/scripts/security-surface-scan.ts       @durga710
