@@ -79,7 +79,6 @@ describe('createEmailClient', () => {
 
     const sendSpy = vi
       .spyOn(SESv2Client.prototype, 'send')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValue({ MessageId: 'msg-ses-123' } as any);
 
     const result = await createEmailClient().sendInviteEmail({
@@ -120,7 +119,6 @@ describe('createEmailClient', () => {
 
     const sendSpy = vi
       .spyOn(SESv2Client.prototype, 'send')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValue({ MessageId: 'msg-default' } as any);
 
     await createEmailClient().sendInviteEmail({
@@ -170,7 +168,6 @@ describe('createEmailClient', () => {
     process.env.AWS_SECRET_ACCESS_KEY = 'secret-test';
 
     vi.spyOn(SESv2Client.prototype, 'send')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValue({} as any);
 
     const result = await createEmailClient().sendInviteEmail({

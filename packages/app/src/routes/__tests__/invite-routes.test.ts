@@ -160,7 +160,6 @@ describe('POST /invites', () => {
 
     const sesSpy = vi
       .spyOn(SESv2Client.prototype, 'send')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValue({ MessageId: 'msg-abc-123' } as any);
 
     const response = await request(createApp())
@@ -270,7 +269,6 @@ describe('POST /invites/:id/resend-email', () => {
     stubLookups();
 
     vi.spyOn(SESv2Client.prototype, 'send')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValue({ MessageId: 'msg-resend-1' } as any);
 
     const response = await request(createApp())
