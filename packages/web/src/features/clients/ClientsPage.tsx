@@ -44,6 +44,13 @@ export function ClientsPage() {
     document.getElementById('firstName')?.focus();
   };
 
+  const fillSampleData = () => {
+    setFirstName('Jane');
+    setLastName('Doe');
+    setDateOfBirth('1955-04-12');
+    setMedicaidNumber('PA-1234567');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBanner(null);
@@ -75,29 +82,77 @@ export function ClientsPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>Add New Client</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>Add New Client</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="firstName">First Name</label>
+                <div>
+                  <label htmlFor="firstName">First Name</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="lastName">Last Name</label>
+                <div>
+                  <label htmlFor="lastName">Last Name</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="dob">Date of Birth</label>
+              <div>
+                <label htmlFor="dob">Date of Birth</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="dob" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="medicaid">Medicaid Number (Optional)</label>
-              <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
-            </div>
-            
+            <details style={{ marginTop: '1rem' }}>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-muted)',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Optional fields (1)
+              </summary>
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label htmlFor="medicaid">Medicaid Number (Optional)</label>
+                  <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
+                </div>
+              </div>
+            </details>
+
             <button type="submit" disabled={submitting} style={submitting ? { opacity: 0.6, cursor: 'wait' } : undefined}>
               {submitting ? 'Adding…' : 'Add Client'}
             </button>

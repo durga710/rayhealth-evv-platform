@@ -50,6 +50,19 @@ export function AssignmentsPage() {
     document.getElementById('clientId')?.focus();
   };
 
+  const fillSampleData = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const firstTemplate = templates[0];
+    if (firstTemplate) {
+      setVisitTemplateId(firstTemplate.id);
+      setClientId(firstTemplate.clientId);
+    } else {
+      setClientId('client-sample-1');
+    }
+    setCaregiverId('caregiver-sample-1');
+    setVisitDate(today);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -73,24 +86,55 @@ export function AssignmentsPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>New Assignment</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>New Assignment</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label htmlFor="clientId">Client ID</label>
+              <div>
+                <label htmlFor="clientId">Client ID</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="caregiverId">Caregiver ID</label>
+              <div>
+                <label htmlFor="caregiverId">Caregiver ID</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="caregiverId" value={caregiverId} onChange={e => setCaregiverId(e.target.value)} required />
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="templateId">Visit Template</label>
-              <select 
-                id="templateId" 
-                value={visitTemplateId} 
-                onChange={e => setVisitTemplateId(e.target.value)} 
+              <div>
+                <label htmlFor="templateId">Visit Template</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
+              <select
+                id="templateId"
+                value={visitTemplateId}
+                onChange={e => setVisitTemplateId(e.target.value)}
                 required
                 style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
               >
@@ -101,11 +145,28 @@ export function AssignmentsPage() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="visitDate">Visit Date</label>
-              <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} />
-            </div>
-            
+            <details style={{ marginTop: '1rem' }}>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-muted)',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Optional fields (1)
+              </summary>
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label htmlFor="visitDate">Visit Date</label>
+                  <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} />
+                </div>
+              </div>
+            </details>
+
             <button type="submit">Create Assignment</button>
           </form>
           {message && <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '8px' }}>{message}</div>}
