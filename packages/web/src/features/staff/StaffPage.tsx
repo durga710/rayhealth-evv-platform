@@ -49,6 +49,11 @@ export function StaffPage() {
     document.getElementById('email')?.focus();
   };
 
+  const fillSampleData = () => {
+    setEmail('caregiver+sample@rayhealth.test');
+    setRole('caregiver');
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -89,16 +94,41 @@ export function StaffPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>Invite Staff Member</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>Invite Staff Member</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleInvite} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label htmlFor="email">Email Address</label>
-              <input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
+              <div>
+                <label htmlFor="email">Email Address</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
                 placeholder="staff@example.com"
               />
             </div>
