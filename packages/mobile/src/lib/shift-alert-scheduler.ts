@@ -34,7 +34,7 @@ export interface Assignment {
   serviceCode?: string;
 }
 
-interface ShiftAlertData {
+interface ShiftAlertData extends Record<string, unknown> {
   assignmentId: string;
   clientName: string;
   scheduledTime: string;

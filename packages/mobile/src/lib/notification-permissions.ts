@@ -100,8 +100,7 @@ export async function ensureNotificationPermission(): Promise<PersistedPermStatu
             ios: {
               allowAlert: true,
               allowBadge: true,
-              allowSound: true,
-              allowAnnouncements: true
+              allowSound: true
             }
           }
         : {}
