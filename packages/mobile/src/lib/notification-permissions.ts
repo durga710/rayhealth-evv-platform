@@ -12,8 +12,8 @@ import { Alert, Platform } from 'react-native';
  * - Persists the resulting status under `rayhealth_notification_perm_v1`.
  */
 
-// gitleaks:allow — SecureStore key name, not a credential.
-const PERM_KEY = 'rayhealth_notification_perm_v1';
+// SecureStore key name, not a credential.
+const PERM_KEY = 'rayhealth_notification_perm_v1'; // gitleaks:allow
 
 export type PersistedPermStatus = 'granted' | 'denied' | 'undetermined';
 
