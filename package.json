@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "patch-package",
+    "postinstall": "patch-package",
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
