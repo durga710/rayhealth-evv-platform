@@ -8,6 +8,7 @@ interface CountState {
   staff: number | null;
   assignments: number | null;
   visits: number | null;
+  complianceRate: number | null;
 }
 
 const initialCounts: CountState = {
@@ -15,6 +16,7 @@ const initialCounts: CountState = {
   staff: null,
   assignments: null,
   visits: null,
+  complianceRate: null,
 };
 
 function formatCount(value: number | null): string {
@@ -47,6 +49,12 @@ const quickActions = [
     to: '/admin/assignments',
     cta: 'Open assignments',
   },
+  {
+    title: 'Review training compliance',
+    body: 'PA §52.18 caregiver training rollup with overdue and expiring certification alerts.',
+    to: '/admin/learning',
+    cta: 'Open Learning Hub',
+  },
 ];
 
 const securityHighlights = [
@@ -76,14 +84,24 @@ export function DashboardPage() {
       }
     };
 
+    const safeRollup = async (): Promise<number | null> => {
+      try {
+        const res = await getJson<{ success: boolean; data: { complianceRate: number } }>('/api/learning/rollup');
+        return res.success ? Math.round(res.data.complianceRate * 100) : null;
+      } catch {
+        return null;
+      }
+    };
+
     Promise.all([
       safeCount('/api/clients'),
       safeCount('/api/staff'),
       safeCount('/api/assignments'),
       safeCount('/api/evv'),
-    ]).then(([clients, staff, assignments, visits]) => {
+      safeRollup(),
+    ]).then(([clients, staff, assignments, visits, complianceRate]) => {
       if (cancelled) return;
-      setCounts({ clients, staff, assignments, visits });
+      setCounts({ clients, staff, assignments, visits, complianceRate });
     });
 
     return () => {
@@ -93,11 +111,15 @@ export function DashboardPage() {
 
   const greeting = user ? `Welcome back, ${user.role}.` : 'Welcome back.';
 
+  const complianceDisplay = counts.complianceRate === null ? '—' : `${counts.complianceRate}%`;
+  const complianceTint = counts.complianceRate === null ? '#94a3b8' : counts.complianceRate >= 80 ? '#16a34a' : '#dc2626';
+
   const stats = [
     { label: 'Active clients', value: formatCount(counts.clients), tint: '#1a5fa8' },
     { label: 'Staff & caregivers', value: formatCount(counts.staff), tint: '#3886d5' },
     { label: 'Open assignments', value: formatCount(counts.assignments), tint: '#0f766e' },
     { label: 'Visits this period', value: formatCount(counts.visits), tint: '#f97316' },
+    { label: 'Training compliance', value: complianceDisplay, tint: complianceTint },
   ];
 
   return (
