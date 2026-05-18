@@ -190,11 +190,7 @@ async function main() {
         id: TEST_TEMPLATE_ID,
         client_id: TEST_CLIENT_ID,
         name: 'TEST Daily Personal Care',
-        tasks: JSON.stringify([
-          { code: 'PCA-01', label: 'Vital signs check' },
-          { code: 'PCA-02', label: 'Medication reminder' },
-          { code: 'PCA-03', label: 'Light meal preparation' }
-        ]),
+        tasks: JSON.stringify(['Hygiene', 'Managing-Medication', 'Meal-Preparation']),
         created_at: db.fn.now(),
         updated_at: db.fn.now()
       })

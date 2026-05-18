@@ -14,6 +14,16 @@ interface PATask {
   duty: string;
 }
 
+function taskLabel(task: unknown): string {
+  if (typeof task === 'string') return task;
+  if (task && typeof task === 'object') {
+    const t = task as Record<string, unknown>;
+    if (typeof t.duty === 'string') return t.duty;
+    if (typeof t.label === 'string') return t.label;
+  }
+  return String(task);
+}
+
 export function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [availableTasks, setAvailableTasks] = useState<PATask[]>([]);
@@ -225,7 +235,7 @@ export function TemplatesPage() {
                       <div style={{ marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                         {t.tasks.map((task, i) => (
                           <span key={i} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
-                            {task}
+                            {taskLabel(task)}
                           </span>
                         ))}
                       </div>
@@ -249,7 +259,7 @@ export function TemplatesPage() {
                         <div style={{ fontWeight: 600 }}>Name</div>
                         <div>{t.name}</div>
                         <div style={{ fontWeight: 600 }}>Tasks ({t.tasks.length})</div>
-                        <div>{t.tasks.join(', ') || <em style={{ color: '#94a3b8' }}>none</em>}</div>
+                        <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: '#94a3b8' }}>none</em>}</div>
                       </div>
                     )}
                   </li>
