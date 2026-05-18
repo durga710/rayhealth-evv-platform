@@ -1,30 +1,17 @@
 /**
  * Provider-agnostic email client used by the invite flow.
  *
- * Currently backed by Amazon SES via `@aws-sdk/client-sesv2`. The route
- * layer talks to `EmailClient`, not the underlying provider, so swapping
- * providers later is a one-file change.
+ * Backed by Amazon SES via `@aws-sdk/client-sesv2`. Set AWS_ACCESS_KEY_ID
+ * and AWS_SECRET_ACCESS_KEY in Vercel environment variables to enable.
  *
- * Failure model — by design we NEVER throw:
- *  - If AWS credentials are unset, `createEmailClient()` returns a no-op
- *    implementation that resolves with `{ ok: false, error: 'EMAIL_NOT_CONFIGURED' }`.
- *    This keeps local dev / unconfigured preview deploys functional —
- *    the admin can still copy the invite URL from the response and share
- *    it manually.
- *  - If the SES call throws (network, throttling, unverified sender, etc.)
- *    we catch the error, log it (scrubbed by `safeError`), and return
- *    `{ ok: false, error: '<category>' }`. The route layer surfaces this
- *    as `emailDelivery: 'failed'`.
- *
- * Why the SDK and not raw HTTP — SES requires AWS SigV4 signing on every
- * request, which is non-trivial to implement correctly. `@aws-sdk/client-sesv2`
- * handles signing, retries, and region resolution for us.
+ * When credentials are absent the client falls back to a no-op that returns
+ * EMAIL_NOT_CONFIGURED — the admin can copy the invite link manually.
  */
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { renderInviteEmail } from './templates/invite-email.js';
 import { safeError } from '../security/safe-log.js';
-const DEFAULT_FROM = 'RayHealth <onboarding@rayhealthevv.com>';
-const DEFAULT_REGION = 'us-west-2';
+const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
+const DEFAULT_REGION = 'us-east-1';
 /**
  * Returns a no-op client. Used when AWS credentials are unset so callers
  * don't have to branch — they always get a working `sendInviteEmail` that
@@ -99,36 +86,26 @@ function createSesClient(client, from) {
     };
 }
 /**
- * Construct the appropriate `EmailClient` for the current environment.
+ * Construct the SES email client from environment variables.
  *
- * Reads env vars at call time (not at module load) so test setup can
- * mutate `process.env` between cases. Credentials may come from:
- *  - Explicit `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` env vars
- *    (the path Vercel will use — set these in project env).
- *  - The default AWS provider chain (IAM role, ~/.aws/credentials, etc.)
- *    when running locally / on EC2. The SDK handles that natively if the
- *    explicit env vars are absent but the chain has creds.
+ * Required Vercel env vars:
+ *   AWS_ACCESS_KEY_ID      — IAM access key with ses:SendEmail permission
+ *   AWS_SECRET_ACCESS_KEY  — matching IAM secret key
  *
- * To disable email entirely (no-op fallback), unset
- * `AWS_ACCESS_KEY_ID` AND `AWS_SECRET_ACCESS_KEY`. The route layer will
- * return `emailDelivery: 'not_configured'` and the admin's manual-copy
- * fallback still works.
+ * Optional:
+ *   EMAIL_FROM     — override sender (default: onboarding@www.rayhealthevv.com)
+ *   AWS_SES_REGION — override region (default: us-east-1)
  */
 export function createEmailClient() {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
-    // Treat "no AWS creds at all" as not-configured. Don't probe the
-    // ambient AWS provider chain unless the operator has set at least one
-    // of the explicit env vars — otherwise local dev would pick up the
-    // dev's personal AWS profile and start sending real emails on every
-    // invite create.
     if (!accessKeyId || !secretAccessKey)
         return createNoopClient();
     const from = process.env.EMAIL_FROM?.trim() || DEFAULT_FROM;
     const region = process.env.AWS_SES_REGION?.trim() || process.env.AWS_REGION?.trim() || DEFAULT_REGION;
     const client = new SESv2Client({
         region,
-        credentials: { accessKeyId, secretAccessKey }
+        credentials: { accessKeyId, secretAccessKey },
     });
     return createSesClient(client, from);
 }
