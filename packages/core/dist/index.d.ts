@@ -30,4 +30,6 @@ export * from './security/cell-cipher.js';
 export * from './security/geofence.js';
 export * from './domain/mobile-session.js';
 export * from './repositories/mobile-session-repository.js';
+export * from './domain/learning.js';
+export * from './repositories/learning-repository.js';
 //# sourceMappingURL=index.d.ts.map

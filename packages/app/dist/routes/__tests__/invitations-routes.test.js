@@ -25,13 +25,19 @@ function makePendingInvite(over = {}) {
     };
 }
 function mockInviteLookup(invite) {
-    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
-        findInviteById: vi.fn().mockResolvedValue(invite),
-        create: vi.fn(),
-        markInviteAccepted: vi.fn()
-    }));
-    vi.spyOn(core, 'UserRepository').mockImplementation(() => ({ create: vi.fn() }));
-    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({ create: vi.fn() }));
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(function () {
+        return {
+            findInviteById: vi.fn().mockResolvedValue(invite),
+            create: vi.fn(),
+            markInviteAccepted: vi.fn()
+        };
+    });
+    vi.spyOn(core, 'UserRepository').mockImplementation(function () {
+        return { create: vi.fn() };
+    });
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(function () {
+        return { create: vi.fn() };
+    });
 }
 /**
  * The accept route runs `await db.transaction(async (trx) => ...)`.
