@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/durga710/rayhealth-evv-platform/security/advisories/new
+    about: Report security issues privately. Do NOT use public issues.
+  - name: HIPAA / compliance concern
+    url: mailto:durga@rayhealthevv.com
+    about: Anything related to HIPAA, BAAs, or compliance posture — email, not a public issue.

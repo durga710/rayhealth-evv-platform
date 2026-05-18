@@ -1,6 +1,6 @@
 # RayHealth EVV — Project Status
 
-**Last updated:** 2026-05-11
+**Last updated:** 2026-05-11 (rev 4 — invite acceptance + EVV aggregator config + Copilot context injection + VMUR PA-DHS upgrade + HHAeXchange/Sandata admin surface)
 **Maintained by:** Durga Ghimeray, Founder
 **Replaces:** `AGENT_HANDOFF_2026-05-08.md`, `HANDOFF.md`, `HANDOFF_CLAUDE_SECURITY_PHASE_1_2026-05-08.md`, `HANDOFF_CODEX.md`, `docs/SESSION_HANDOFF_2026-05-09.md`
 
@@ -12,7 +12,47 @@ When updating: bump the timestamp, do not delete prior status — move it to the
 
 ## TL;DR
 
-RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+
+---
+
+## Learning Hub + AI Copilot — current state
+
+Coordinator surface (`/admin/learning/*`):
+- **Dashboard** — KPIs (active caregivers, total enrollments, compliance %), 5-status breakdown, segmented compliance bar, attention banner for overdue+expired, AI-flavored insights panel (5 deterministic signals: due-in-7-days, expired-recently, orientation-incomplete, stalled-enrollments, certification-expiring-soon)
+- **Course catalog** — Required/Global badges, full catalog browse
+- **Per-caregiver detail** — status pills, due dates, expiry, last-completed, inline Mark complete action
+- **Bulk enrollment modal** — multi-select caregivers, smart due-date defaults by cadence, course picker
+- **Single-caregiver enrollment** from caregiver detail page
+- **Analytics page** — per-course completion rate (color-coded bar), average days-to-complete, action-needed summary, sorted required-first then worst-completion-first
+- **Course drill-down** — caregivers grouped by effective status (worst first), links to per-caregiver detail
+- **AI Copilot panel** on dashboard — visible-locked when add-on off, admin-only Enable CTA
+- **AI Copilot chat** at `/admin/learning/copilot` — Gemini-backed, role-specific system prompts, suggested prompts per role, confirm-every-action contract baked in, three states (locked / offline / live)
+- **Compliance gate on assignments** — 422 on uncompleted required training, override-with-reason flow, preflight check as you type the caregiver ID
+
+Caregiver mobile surface (`packages/mobile-capacitor/src/features/learning/`, speculative):
+- LearningHubScreen — assigned courses with status chips
+- CourseDetailScreen — Mark complete / Recertify with attestation disclosure
+- Needs 5-point integration (router, auth hook, env var) before going live
+
+Agency Settings (`/admin/settings`):
+- Admin-only AI Copilot enable toggle
+- Plan picker — Starter / Pro
+- "Owner-only" notice for non-admins (private billing pattern)
+- Saves on toggle, writes structured `agency.feature.changed` audit event
+
+Audit trail:
+- `learning.override` — coordinator bypassed compliance gate, entity_id = new assignment
+- `learning.course.completed` — every completion with `source: caregiver | coordinator`
+- `agency.feature.changed` — feature flag toggle with `{ previous, next }` diff
+- `copilot.query` — every AI ask with prompt **hashed** (never stored raw — can contain PHI), with model and plan, `proposedActionType` if any
+- `copilot.action.confirmed` — every executed action with full payload + summary + outcome
+- `copilot.action.declined` — every failed execution with reason (auth, not-found, cross-agency, etc.)
+
+AI Copilot action vocabulary (extensible):
+- `enroll_caregiver` — wraps `LearningRepository.enroll`, idempotent
+- `send_reminder` — v2 stub, audit-only until notification service ships
+- Adding actions: define Zod schema in `packages/core/src/domain/copilot-actions.ts`, add executor in `packages/app/src/services/copilot-action-executor.ts` — that's it
 
 ---
 
@@ -129,7 +169,7 @@ Synthetic data only — never real PHI. Used for App Store screenshots and end-t
 | Caregiver user UUID | `00000000-0000-4000-8000-000000000003` |
 | Client UUID | `00000000-0000-4000-8000-000000000001` |
 | Client address | 225 National Dr, Pittsburgh PA 15235 |
-| Geofence radius | 150 m |
+| Geofence radius | 100 m (PA spec) |
 | Agency UUID | `e1c4a7e3-1cad-4001-8e0a-000000000001` |
 | Visit template UUID | `00000000-0000-4000-8000-000000000010` |
 | Assignment UUID | `00000000-0000-4000-8000-000000000020` |
@@ -161,12 +201,38 @@ What's still required for spots: VO recording, music license (~$15 Artlist/Epide
 - **Mobile auth:** JWT from `/auth/mobile/login`, stored in `@aparajita/capacitor-secure-storage` (iOS Keychain / Android Keystore).
 - **Server auth context:** session cookies first, then bearer fallback.
 - **Audit persistence:** `audit_events` is append-only via `audit_events_block_mutation_trg` trigger; durable repository in `@rayhealth/core`. Retention sweep (this cycle's work) bypasses the trigger inside a transaction via `SET LOCAL session_replication_role = 'replica'`.
-- **Aggregator transmission:** Sandata CSV, per-agency config in `agency_sandata_config` (this cycle's work). HHAeXchange not yet implemented.
+- **Aggregator transmission:** Sandata + HHAeXchange both implemented. Per-agency config split into three tables: `agency_evv_config` (which aggregator), `agency_sandata_config` (Sandata identity + JSONB mappings), `agency_hhaexchange_config` (HHAeXchange identity + JSONB mappings). The export pipeline resolves the aggregator via `resolveAggregator(stateCode, persistedPreference)` which honours the state registry's `aggregatorChoice` flag (NJ → forced HHAeXchange).
 - **AI surfaces:** Claude Haiku 3.5 on AWS Bedrock — `/api/support/chat` (caregiver) and `/api/admin-assistant/chat` (admin, planned). AWS BAA active.
 
 ---
 
 ## Changelog
+
+### 2026-05-11 rev 4 (invite acceptance + EVV aggregator config + VMUR upgrade + HHAeXchange/Sandata admin surface)
+- **Caregiver invite acceptance flow** — public `GET`/`POST /api/invites/accept/:token` endpoints (mounted before `authContext` so a logged-out caregiver can hit them). Access-code comparison is case- and dash-insensitive, password is bcrypt-cost-12, creates `caregivers` + `users` rows in a transaction, marks invite accepted, returns an 8h bearer. Failed access-code attempts emit a new `invite.access_code_failed` audit event. Web page at `/accept/:token` (`AcceptInvitePage.tsx`) handles expired/revoked/already-used cases. 13 tests.
+- **Agency EVV aggregator config** — new `agency_evv_config` table + repo + GET/PUT `/agencies/me/evv-config` + admin UI picker. Resolver honours state-registry `aggregatorChoice` (NJ → forced HHAeXchange). Production-ready toggle 422s until the chosen aggregator's config is populated AND `enabled=true`. 15 tests.
+- **AI Copilot context injection** — per-request `{caregivers, courses}` UUID blob prepended to every prompt so the model can emit real `PROPOSE_ACTION_DATA`. Role-scoped: admin/coordinator see up to 50 active caregivers + full course catalog; caregivers see only their own record (test asserts no UUID leakage); family role gets empty. Failures degrade gracefully. 8 tests.
+- **VMUR (Visit Maintenance Unlock Request) upgrade** — migration adds PA DHS-required columns (`reason_category_code`, `correction_code`, `originator_role`, `caregiver_signature_present`, `client_signature_present`, `incomplete_signature_reason`, `approver_id`, `approved_at`, `agency_id`). Domain enforces reason-code + correction-code enums and refines "missing-signature requires incompleteSignatureReason" + "OTHR reason requires non-empty reason text". New `POST /maintenance/caregiver-correction` (caregiver-self-filed → coordinator review queue, originator stamped), `POST /maintenance/reject-unlock/:id`, `GET /maintenance/queue`, `GET /maintenance/visit/:visitId`, `GET /maintenance/history` (filters whitelisted, limit clamped at 500). Coordinator review UI at `/admin/corrections`, tracking UI at `/admin/corrections/tracking`. 30 tests.
+- **HHAeXchange aggregator end-to-end** — migration for `agency_hhaexchange_config`, repository (`findByAgency` / `findValid` / `upsert` — `findValid` only returns when Tax ID + Provider ID are present), GET/PUT `/agencies/me/hhaexchange-config` (Tax ID `^\d{9}$`; refuses `enabled=true` until identity is set), admin UI section in `AgencySettingsPage` with identity form + caregiver mappings editor + service mappings editor (caregiver dropdown sourced from `/api/staff`). 17 tests.
+- **Sandata aggregator admin surface** — parallel to HHAeXchange: `AgencySandataConfigRepository`, GET/PUT `/agencies/me/sandata-config` (Provider ID `^\d{9}$`; HCPCS code + modifier validated), admin UI with identity form + caregiver mappings editor + HCPCS service mappings editor. The production-ready guard in `/agencies/me/evv-config` now goes through these repos instead of raw knex. 15 tests.
+- **Audit taxonomy** — new event types: `invite.access_code_failed`, `agency.evv-config.changed`
+- **Tests** — 197 total (74 core / 109 app / 14 web). Typecheck clean, lint clean. **Net new: 105 tests.**
+
+### 2026-05-11 rev 3 (Copilot v2 action runner + notification settings)
+- **Copilot v2 action runner** — typed `CopilotAction` discriminated union in core, `executeCopilotAction` dispatcher with per-action row-level auth checks, `POST /api/copilot/execute` endpoint
+- **End-to-end Confirm wiring** — system prompts now instruct the model to emit `PROPOSE_ACTION_DATA: <JSON>` alongside the natural-language line; the route parses and validates against `copilotActionSchema`, returns as `proposedActionData`. Chat UI's Confirm button posts to `/execute` and renders the result; falls back to advisory mode when the model emits free-text only. "Executable" badge on the proposed-action block when data is present
+- **Notification settings** — coordinator digest (off/daily/weekly), caregiver push/email, family email — admin-only section on the settings page, persisted in `agency_features.notifications` JSONB
+- **Tests** — 7 new for `/copilot/execute` covering 400/402/403/422 paths + happy + cross-agency rejection + send_reminder stub. Total 92 tests (42 core / 45 app / 5 web)
+- Helper: `sync-session4-to-bitbucket.sh`
+
+### 2026-05-11 rev 2 (Learning Hub + AI Copilot end-to-end)
+- **Learning Hub** complete: domain types, migration, repository, 6+ API endpoints, dashboard/catalog/caregiver-detail/analytics/drill-down pages, PA-course seed (8 baseline courses)
+- **Compliance gate** on assignments — 422 with blockers, override-with-audit, preflight check
+- **AI Copilot** end-to-end — agency features migration (JSONB), settings page, locked panel on dashboard, Gemini-backed chat at `/admin/learning/copilot`, per-role system prompts, confirm-every-action contract, prompt-hash audit
+- **AssignmentsPage UX** — caregiver + client + template pickers, name display everywhere, preflight compliance hint
+- **Audit taxonomy** — 6 new event types covering learning, agency, copilot
+- **Tests** — 75 total (42 core / 28 app / 5 web). New coverage: agency features, analytics, drill-down, completion audit, override audit, compliance gate, preflight endpoint
+- **Helper scripts** — `sync-session2-to-bitbucket.sh`, `sync-session3-to-bitbucket.sh`
 
 ### 2026-05-11 (this update)
 - Vercel deploy timeout root-caused and fixed (`--filter=` → `--workspace=` in `installCommand`; `npx turbo` in `buildCommand`)

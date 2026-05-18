@@ -14,5 +14,8 @@ export function makeToken(
   userId = 'user-1',
   caregiverId?: string
 ): string {
-  return jwt.sign({ sub: userId, agencyId, role, caregiverId }, TEST_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ sub: userId, agencyId, role, caregiverId }, TEST_SECRET, {
+    expiresIn: '1h',
+    algorithm: 'HS256',
+  });
 }

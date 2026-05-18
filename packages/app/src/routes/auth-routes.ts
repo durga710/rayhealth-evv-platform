@@ -101,7 +101,7 @@ router.post('/mobile/login', async (req, res) => {
     const token = jwt.sign(
       { sub: user.id, agencyId: user.agencyId, role: user.role, caregiverId: user.caregiverId },
       jwtSecret(),
-      { expiresIn: '8h' }
+      { expiresIn: '8h', algorithm: 'HS256' }
     );
 
     await recordAuditEvent(db, {
@@ -154,7 +154,7 @@ router.post('/bootstrap', async (req, res) => {
     const token = jwt.sign(
       { sub: user.id, agencyId: user.agencyId, role: user.role },
       jwtSecret(),
-      { expiresIn: '8h' }
+      { expiresIn: '8h', algorithm: 'HS256' }
     );
 
     res.status(201).json({ token, role: user.role, agencyId: user.agencyId });

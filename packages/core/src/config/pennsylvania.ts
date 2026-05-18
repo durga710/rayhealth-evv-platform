@@ -17,7 +17,8 @@ export type Capability =
   | 'schedule.read' | 'schedule.write'
   | 'evv.read' | 'evv.write'
   | 'auth.read' | 'auth.write'
-  | 'audit.read' | 'audit.write';
+  | 'audit.read' | 'audit.write'
+  | 'learning.read' | 'learning.write';
 
 const ROLE_CAPABILITIES: Record<AppRole, Capability[]> = {
   admin: [
@@ -27,17 +28,20 @@ const ROLE_CAPABILITIES: Record<AppRole, Capability[]> = {
     'schedule.read', 'schedule.write',
     'evv.read', 'evv.write',
     'auth.read', 'auth.write',
-    'audit.read', 'audit.write'
+    'audit.read', 'audit.write',
+    'learning.read', 'learning.write'
   ],
   coordinator: [
     'agency.read',
     'staff.read',
     'client.read', 'client.write',
     'schedule.read', 'schedule.write',
-    'evv.read'
+    'evv.read',
+    'learning.read', 'learning.write'
   ],
   caregiver: [
-    'schedule.read', 'evv.write'
+    'schedule.read', 'evv.write',
+    'learning.read', 'learning.write'
   ],
   family: [
     'client.read',

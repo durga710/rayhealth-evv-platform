@@ -51,7 +51,10 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
   const secret = process.env.JWT_SECRET!;
 
   try {
-    const payload = jwt.verify(token, secret) as JwtPayload;
+    // Pin to HS256 explicitly. Without this, `jwt.verify` accepts whatever
+    // algorithm the token declares, which enables the classic "alg=none"
+    // bypass and the RS256-to-HS256 key-confusion attack.
+    const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtPayload;
     req.auth = {
       agencyId: payload.agencyId,
       role: payload.role,

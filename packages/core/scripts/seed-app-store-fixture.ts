@@ -38,7 +38,7 @@ const CLIENT = {
   lastName: 'TEST-Ghimeray',
   dateOfBirth: '1948-03-12',
   address: '225 National Dr, Pittsburgh PA 15235',
-  geofenceRadiusMeters: 150,
+  geofenceRadiusMeters: 100, // PA spec — see packages/core/src/config/states/pennsylvania.ts
   // 225 National Dr, Pittsburgh, PA 15235 (approximate)
   latitude: 40.4659,
   longitude: -79.8358,
