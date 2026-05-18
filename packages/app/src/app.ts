@@ -25,6 +25,7 @@ import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
 import auditRetentionRoutes from './routes/audit-retention-routes.js';
 import auditEventsRoutes from './routes/audit-events-routes.js';
+import learningRoutes from './routes/learning-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -176,6 +177,7 @@ export function createApp() {
     app.use(`${prefix}/tasks`, taskRoutes);
     app.use(`${prefix}/admin/audit-retention`, adminAuditLimiter, auditRetentionRoutes);
     app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);
+    app.use(`${prefix}/learning`, learningRoutes);
   }
 
   // Protected route for testing (keep for now or remove if redundant)
