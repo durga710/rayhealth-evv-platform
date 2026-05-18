@@ -33,9 +33,12 @@ const TEST_CAREGIVER_ID = '00000000-0000-4000-8000-000000000002';
 const TEST_USER_ID = '00000000-0000-4000-8000-000000000003';
 const TEST_TEMPLATE_ID = '00000000-0000-4000-8000-000000000004';
 const TEST_ASSIGNMENT_ID = '00000000-0000-4000-8000-000000000005';
+const TEST_ADMIN_USER_ID = '00000000-0000-4000-8000-000000000006';
 
 const TEST_CAREGIVER_EMAIL = 'test-caregiver-fixture@rayhealthevv.local';
 const TEST_CAREGIVER_PASSWORD = 'TestCaregiver2026!';
+const TEST_ADMIN_EMAIL = 'admin-fixture@rayhealthevv.local';
+const TEST_ADMIN_PASSWORD = 'TestAdmin2026!';
 
 const PROD_PROXY_HOST = 'c-5.us-east-1.aws.neon.tech';
 
@@ -158,6 +161,29 @@ async function main() {
         updated_at: db.fn.now()
       });
 
+    // Admin user — needed to exercise the web admin portal end-to-end
+    // (Agency Setup, Visit Review, Audit Retention dashboard, Sandata
+    // export, etc). All admin-only routes gate on capabilities the
+    // 'admin' role grants in pennsylvania.ts.ROLE_CAPABILITIES. Same
+    // agency as the caregiver fixture so admin sees the test schedule.
+    const adminPasswordHash = await bcrypt.hash(TEST_ADMIN_PASSWORD, 12);
+    await db('users')
+      .insert({
+        id: TEST_ADMIN_USER_ID,
+        agency_id: TEST_AGENCY_ID,
+        email: TEST_ADMIN_EMAIL,
+        password_hash: adminPasswordHash,
+        role: 'admin',
+        caregiver_id: null,
+        created_at: db.fn.now(),
+        updated_at: db.fn.now()
+      })
+      .onConflict('id')
+      .merge({
+        password_hash: adminPasswordHash,
+        updated_at: db.fn.now()
+      });
+
     // Visit template — recurring daily personal-care plan.
     await db('visit_templates')
       .insert({
@@ -202,9 +228,12 @@ async function main() {
     console.log('  Client      :', TEST_CLIENT_ID, '(225 National Dr, Pittsburgh PA)');
     console.log('  Template    :', TEST_TEMPLATE_ID);
     console.log('  Assignment  :', TEST_ASSIGNMENT_ID);
+    console.log('  Admin user  :', TEST_ADMIN_USER_ID, `(${TEST_ADMIN_EMAIL})`);
     console.log('');
-    console.log(`Login email   : ${TEST_CAREGIVER_EMAIL}`);
-    console.log(`Login password: ${TEST_CAREGIVER_PASSWORD}`);
+    console.log(`Caregiver login : ${TEST_CAREGIVER_EMAIL}`);
+    console.log(`Caregiver pass  : ${TEST_CAREGIVER_PASSWORD}`);
+    console.log(`Admin login     : ${TEST_ADMIN_EMAIL}`);
+    console.log(`Admin pass      : ${TEST_ADMIN_PASSWORD}`);
   } finally {
     await db.destroy();
   }

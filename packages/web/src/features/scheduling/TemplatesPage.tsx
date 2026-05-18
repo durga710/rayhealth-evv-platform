@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getJson, postJson } from '../../lib/api-client.js';
+import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
 interface Template {
   id: string;
@@ -16,21 +17,45 @@ interface PATask {
 export function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [availableTasks, setAvailableTasks] = useState<PATask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [clientId, setClientId] = useState('');
   const [name, setName] = useState('');
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadTemplates = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     getJson<Template[]>('/api/templates')
       .then(data => setTemplates(data || []))
-      .catch(console.error);
-      
+      .catch((err: Error) => setLoadError(err.message || 'Failed to load templates'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadTemplates();
+
     getJson<PATask[]>('/api/tasks')
       .then(data => setAvailableTasks(data || []))
       .catch(console.error);
-  }, []);
+  }, [loadTemplates]);
+
+  const focusAddTemplate = () => {
+    document.getElementById('clientId')?.focus();
+  };
+
+  const fillSampleData = () => {
+    setName('Personal care — morning');
+    const sampleDuties = availableTasks.slice(0, 3).map(t => t.duty);
+    if (sampleDuties.length > 0) {
+      setSelectedTasks(new Set(sampleDuties));
+    }
+    if (!clientId) {
+      setClientId('client-sample-1');
+    }
+  };
 
   const handleTaskToggle = (duty: string) => {
     const newSelected = new Set(selectedTasks);
@@ -69,20 +94,51 @@ export function TemplatesPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>New Template</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>New Template</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label htmlFor="clientId">Client ID</label>
+              <div>
+                <label htmlFor="clientId">Client ID</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="name">Template Name</label>
+              <div>
+                <label htmlFor="name">Template Name</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Morning Routine" required />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label>Select Tasks</label>
+              <div>
+                <label>Select Tasks</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <div style={{ 
                 maxHeight: '300px', 
                 overflowY: 'auto', 
@@ -117,10 +173,16 @@ export function TemplatesPage() {
 
         <div>
           <h3>Template Library</h3>
-          {templates.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b', marginTop: '1rem' }}>
-              No templates found.
-            </div>
+          {loading ? (
+            <LoadingSkeleton rows={5} columns={2} />
+          ) : loadError ? (
+            <ErrorRetry message={loadError} onRetry={loadTemplates} />
+          ) : templates.length === 0 ? (
+            <EmptyState
+              title="No templates yet"
+              body="Build a visit template so caregivers can complete plan-of-care tasks consistently."
+              cta={{ label: 'Add a template', onClick: focusAddTemplate }}
+            />
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {templates.map(t => {

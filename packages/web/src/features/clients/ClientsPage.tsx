@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getJson, postJson } from '../../lib/api-client.js';
+import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
 interface Client {
   id: string;
@@ -23,8 +24,9 @@ export function ClientsPage() {
   const [banner, setBanner] = useState<Banner>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadClients = useCallback(() => {
     setLoading(true);
+    setLoadError(null);
     getJson<Client[]>('/api/clients')
       .then((data) => {
         setClients(data || []);
@@ -33,6 +35,21 @@ export function ClientsPage() {
       .catch((err: Error) => setLoadError(err.message || 'Failed to load clients'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadClients();
+  }, [loadClients]);
+
+  const focusAddClient = () => {
+    document.getElementById('firstName')?.focus();
+  };
+
+  const fillSampleData = () => {
+    setFirstName('Jane');
+    setLastName('Doe');
+    setDateOfBirth('1955-04-12');
+    setMedicaidNumber('PA-1234567');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,29 +82,77 @@ export function ClientsPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>Add New Client</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>Add New Client</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="firstName">First Name</label>
+                <div>
+                  <label htmlFor="firstName">First Name</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="lastName">Last Name</label>
+                <div>
+                  <label htmlFor="lastName">Last Name</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="dob">Date of Birth</label>
+              <div>
+                <label htmlFor="dob">Date of Birth</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="dob" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="medicaid">Medicaid Number (Optional)</label>
-              <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
-            </div>
-            
+            <details style={{ marginTop: '1rem' }}>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-muted)',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Optional fields (1)
+              </summary>
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label htmlFor="medicaid">Medicaid Number (Optional)</label>
+                  <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
+                </div>
+              </div>
+            </details>
+
             <button type="submit" disabled={submitting} style={submitting ? { opacity: 0.6, cursor: 'wait' } : undefined}>
               {submitting ? 'Adding…' : 'Add Client'}
             </button>
@@ -112,17 +177,15 @@ export function ClientsPage() {
         <div>
           <h3>Client Roster</h3>
           {loading ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b', marginTop: '1rem' }}>
-              Loading…
-            </div>
+            <LoadingSkeleton rows={5} columns={2} />
           ) : loadError ? (
-            <div role="alert" style={{ padding: '1rem', backgroundColor: '#fef2f2', color: '#991b1b', borderRadius: '8px', marginTop: '1rem', fontWeight: 600 }}>
-              {loadError}
-            </div>
+            <ErrorRetry message={loadError} onRetry={loadClients} />
           ) : clients.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b', marginTop: '1rem' }}>
-              No clients yet. Add one to get started.
-            </div>
+            <EmptyState
+              title="No clients yet"
+              body="Add a client to start tracking demographics, Medicaid info, and care plans."
+              cta={{ label: 'Add a client', onClick: focusAddClient }}
+            />
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {clients.map(c => {

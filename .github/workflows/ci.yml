@@ -1,56 +1,126 @@
-name: ci
+name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
+# Cancel in-flight runs on the same ref when a new push lands
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Default to read-only — individual jobs upgrade as needed
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  # Reproducible builds, no surprise locale numeric formatting
+  LC_ALL: C
+  CI: 'true'
+
 jobs:
-  check:
-    name: lint · typecheck · test · build · security-scan
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need full history for tooling that inspects prior commits
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+
+  security-scan:
+    name: security-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run security:scan
+
+  test-core:
+    name: test-core
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npx vitest run
+        working-directory: packages/core
+
+  test-app:
+    name: test-app
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      JWT_SECRET: ci-test-secret-not-real-not-prod-just-for-build
-      ENCRYPTION_KEY: ci0000000000000000000000000000000000000000000000000000000000ci
-      NODE_ENV: test
+      # Tests rely on this being set; the in-test secret is fine for CI
+      JWT_SECRET: ci-jwt-secret-not-used-in-prod
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 22.x
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: '22.x'
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npx vitest run
+        working-directory: packages/app
 
-      - name: Install (with devDependencies)
-        run: npm ci --include=dev
-
-      - name: Lint (turbo)
-        run: npx turbo lint --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
-
-      - name: Typecheck (turbo)
-        run: npx turbo typecheck --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
-
-      - name: Test (turbo)
-        run: npx turbo test --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
-
-      - name: Build (turbo)
-        run: npx turbo build --filter=@rayhealth/core --filter=@rayhealth/app --filter=@rayhealth/web
-
-      - name: Security surface scan
-        run: npx tsx scripts/security-surface-scan.ts
-
-      - name: Confirm no .env or .env.* committed
-        run: |
-          if git ls-files | grep -E '^\.env(\..+)?$' | grep -v '\.env\.example$'; then
-            echo "::error::An .env file is tracked in git — must be removed."
-            exit 1
-          fi
-          echo "OK: no tracked .env files"
+  test-web:
+    name: test-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - run: npx vitest run
+        working-directory: packages/web

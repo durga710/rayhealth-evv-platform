@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getJson, postJson } from '../../lib/api-client.js';
+import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
 interface Authorization {
   id: string;
@@ -13,6 +14,8 @@ interface Authorization {
 
 export function AuthorizationsPage() {
   const [authorizations, setAuthorizations] = useState<Authorization[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [clientId, setClientId] = useState('');
   const [payerId, setPayerId] = useState('');
   const [serviceCode, setServiceCode] = useState('');
@@ -22,11 +25,36 @@ export function AuthorizationsPage() {
   const [message, setMessage] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadAuthorizations = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     getJson<Authorization[]>('/api/authorizations')
       .then(data => setAuthorizations(data || []))
-      .catch(console.error);
+      .catch((err: Error) => setLoadError(err.message || 'Failed to load authorizations'))
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadAuthorizations();
+  }, [loadAuthorizations]);
+
+  const focusAddAuthorization = () => {
+    document.getElementById('clientId')?.focus();
+  };
+
+  const fillSampleData = () => {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const end = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const endStr = end.toISOString().slice(0, 10);
+    const firstClientId = authorizations[0]?.clientId ?? 'client-sample-1';
+    setClientId(firstClientId);
+    setPayerId('PA-MA-12');
+    setServiceCode('W1793');
+    setUnitsAuthorized(120);
+    setStartDate(todayStr);
+    setEndDate(endStr);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,40 +88,80 @@ export function AuthorizationsPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div>
-          <h3>Add Authorization</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>Add Authorization</h3>
+            {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
+              <button
+                type="button"
+                onClick={fillSampleData}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  color: 'var(--color-accent)',
+                  border: '1px dashed var(--color-accent)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Dev · Fill with sample data
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label htmlFor="clientId">Client ID</label>
+              <div>
+                <label htmlFor="clientId">Client ID</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="payerId">Payer ID</label>
+              <div>
+                <label htmlFor="payerId">Payer ID</label>
+                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              </div>
               <input id="payerId" value={payerId} onChange={e => setPayerId(e.target.value)} required />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="serviceCode">Service Code</label>
+                <div>
+                  <label htmlFor="serviceCode">Service Code</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="serviceCode" value={serviceCode} onChange={e => setServiceCode(e.target.value)} required />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="units">Units</label>
+                <div>
+                  <label htmlFor="units">Units</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="units" type="number" min="1" value={unitsAuthorized} onChange={e => setUnitsAuthorized(Number(e.target.value))} required />
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="startDate">Start Date</label>
+                <div>
+                  <label htmlFor="startDate">Start Date</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="startDate" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="endDate">End Date</label>
+                <div>
+                  <label htmlFor="endDate">End Date</label>
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+                </div>
                 <input id="endDate" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required />
               </div>
             </div>
-            
+
             <button type="submit">Save Authorization</button>
           </form>
           {message && <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '8px' }}>{message}</div>}
@@ -101,10 +169,16 @@ export function AuthorizationsPage() {
 
         <div>
           <h3>Active Authorizations</h3>
-          {authorizations.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b', marginTop: '1rem' }}>
-              No authorizations found.
-            </div>
+          {loading ? (
+            <LoadingSkeleton rows={5} columns={2} />
+          ) : loadError ? (
+            <ErrorRetry message={loadError} onRetry={loadAuthorizations} />
+          ) : authorizations.length === 0 ? (
+            <EmptyState
+              title="No authorizations yet"
+              body="Add a PA authorization to track service units and effective dates."
+              cta={{ label: 'Add an authorization', onClick: focusAddAuthorization }}
+            />
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {authorizations.map(a => {
