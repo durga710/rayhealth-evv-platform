@@ -20,6 +20,8 @@ import { AuditRetentionPage } from './features/audit/AuditRetentionPage.js';
 import { DashboardPage } from './features/admin/DashboardPage.js';
 import { AuditEventsPage } from './features/audit/AuditEventsPage.js';
 import { HipaaCompliancePage } from './features/compliance/HipaaCompliancePage.js';
+import { LearningHubPage } from './features/learning/LearningHubPage.js';
+import { LearningPortalPage } from './features/learning/LearningPortalPage.js';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -53,6 +55,8 @@ function AdminLayout() {
           <Link to="/admin/review" className="nav-link">Visit Review</Link>
           <Link to="/admin/audit-events" className="nav-link">Audit Events</Link>
           <Link to="/admin/audit-retention" className="nav-link">Audit Retention</Link>
+          <Link to="/admin/learning" className="nav-link">Learning Hub</Link>
+          <Link to="/admin/learning/portal" className="nav-link">My Training</Link>
         </div>
         <div
           style={{
@@ -192,6 +196,8 @@ export function App() {
           <Route path="review" element={<VisitReviewPage />} />
           <Route path="audit-events" element={<AuditEventsPage />} />
           <Route path="audit-retention" element={<AuditRetentionPage />} />
+          <Route path="learning" element={<LearningHubPage />} />
+          <Route path="learning/portal" element={<LearningPortalPage />} />
           <Route index element={<DashboardPage />} />
         </Route>
       </Route>

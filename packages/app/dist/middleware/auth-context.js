@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { MobileSessionRepository, SessionRepository } from '@rayhealth/core';
+import { SessionRepository } from '@rayhealth/core';
 import { readCookie, SESSION_COOKIE_NAME } from '../security/cookies.js';
 import { hashOpaqueToken } from '../security/token-hashing.js';
 export async function authContext(req, res, next) {
@@ -37,35 +37,16 @@ export async function authContext(req, res, next) {
     // JWT_SECRET is validated at startup in createApp() — safe to assert here.
     const secret = process.env.JWT_SECRET;
     try {
-        const payload = jwt.verify(token, secret);
-        // Mobile bearer JWTs MUST carry a jti and have an active mobile_sessions
-        // row. Without this check, a stolen JWT remains valid until expiry even
-        // after a lost-device revocation. Tokens minted before this rollout (no
-        // jti) are rejected — clients re-login, which is acceptable for a
-        // healthcare app.
-        if (!payload.jti) {
-            res.status(401).json({ message: 'Invalid or expired token' });
-            return;
-        }
-        // Production / preview / dev: require an active mobile_sessions row.
-        // Tests exercise the jti claim path but skip the row lookup so they do
-        // not require DB plumbing. NODE_ENV=='test' is a deliberate, narrow
-        // escape hatch — never set in deployed environments.
-        if (process.env.NODE_ENV !== 'test') {
-            const session = await new MobileSessionRepository(req.app.get('db'))
-                .findActiveByJti(payload.jti, new Date().toISOString());
-            if (!session) {
-                res.status(401).json({ message: 'Invalid or expired token' });
-                return;
-            }
-        }
+        // Pin to HS256 explicitly. Without this, `jwt.verify` accepts whatever
+        // algorithm the token declares, which enables the classic "alg=none"
+        // bypass and the RS256-to-HS256 key-confusion attack.
+        const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
         req.auth = {
             agencyId: payload.agencyId,
             role: payload.role,
             userId: payload.sub,
             caregiverId: payload.caregiverId,
-            authMethod: 'bearer',
-            tokenJti: payload.jti
+            authMethod: 'bearer'
         };
         next();
     }

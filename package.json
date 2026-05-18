@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "patch-package",
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
@@ -26,8 +27,9 @@
     "typescript": "^5.4.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "6.0.2",
-    "vite": "5.4.21"
+    "@vitejs/plugin-react": "^6.0.2",
+    "patch-package": "^8.0.1",
+    "vite": "^8.0.13"
   },
   "overrides": {
     "@vercel/node": {
@@ -47,6 +49,7 @@
     "@expo/metro-config": {
       "postcss": "^8.5.10"
     },
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "eslint-plugin-react": "^7.37.3"
   }
 }

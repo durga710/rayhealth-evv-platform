@@ -587,8 +587,60 @@ export async function up(knex) {
             table.index(['client_id']);
         });
     }
+    // ── Learning management (PA §52.18 training compliance) ───────────────────
+    if (!(await knex.schema.hasTable('learning_courses'))) {
+        await knex.schema.createTable('learning_courses', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').onDelete('CASCADE');
+            table.string('code').notNullable();
+            table.string('title').notNullable();
+            table.text('description').notNullable().defaultTo('');
+            table.string('cadence').notNullable().defaultTo('one_time');
+            table.integer('expires_after_days');
+            table.boolean('required').notNullable().defaultTo(false);
+            table.integer('duration_minutes').notNullable().defaultTo(0);
+            table.timestamps(true, true);
+            table.unique(['agency_id', 'code']);
+            table.index(['agency_id']);
+        });
+    }
+    if (!(await knex.schema.hasTable('course_enrollments'))) {
+        await knex.schema.createTable('course_enrollments', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable().onDelete('CASCADE');
+            table.uuid('caregiver_id').references('id').inTable('caregivers').notNullable().onDelete('CASCADE');
+            table.uuid('course_id').references('id').inTable('learning_courses').notNullable().onDelete('CASCADE');
+            table.timestamp('assigned_at').notNullable().defaultTo(knex.fn.now());
+            table.timestamp('due_at');
+            table.timestamp('last_completed_at');
+            table.timestamp('expires_at');
+            table.string('status').notNullable().defaultTo('not_started');
+            table.timestamps(true, true);
+            table.unique(['caregiver_id', 'course_id']);
+            table.index(['agency_id']);
+            table.index(['caregiver_id']);
+            table.index(['status']);
+        });
+    }
+    if (!(await knex.schema.hasTable('course_completions'))) {
+        await knex.schema.createTable('course_completions', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('enrollment_id').references('id').inTable('course_enrollments').notNullable().onDelete('CASCADE');
+            table.uuid('caregiver_id').references('id').inTable('caregivers').notNullable().onDelete('CASCADE');
+            table.uuid('course_id').references('id').inTable('learning_courses').notNullable().onDelete('CASCADE');
+            table.timestamp('completed_at').notNullable();
+            table.integer('score');
+            table.text('notes');
+            table.timestamps(true, true);
+            table.index(['enrollment_id']);
+            table.index(['caregiver_id']);
+        });
+    }
 }
 export async function down(knex) {
+    await knex.schema.dropTableIfExists('course_completions');
+    await knex.schema.dropTableIfExists('course_enrollments');
+    await knex.schema.dropTableIfExists('learning_courses');
     await knex.schema.dropTableIfExists('audit_events');
     await knex.schema.dropTableIfExists('evv_exceptions');
     await knex.schema.dropTableIfExists('staff_invites');

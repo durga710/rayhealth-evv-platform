@@ -1,13 +1,11 @@
 import { Router } from 'express';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AuditEventRepository, CaregiverRepository, MobileSessionRepository, SessionRepository, UserRepository } from '@rayhealth/core';
+import { AuditEventRepository, SessionRepository, UserRepository } from '@rayhealth/core';
 import { authContext } from '../middleware/auth-context.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } from '../security/cookies.js';
 import { createOpaqueToken, hashOpaqueToken } from '../security/token-hashing.js';
-import { safeError } from '../security/safe-log.js';
 const router = Router();
 function jwtSecret() {
     const secret = process.env.JWT_SECRET;
@@ -20,42 +18,10 @@ async function recordAuditEvent(db, event) {
         await new AuditEventRepository(db).create(event);
     }
     catch (error) {
-        safeError('Failed to persist auth audit event', error);
+        if (process.env.NODE_ENV !== 'test') {
+            console.error('Failed to persist auth audit event', error);
+        }
     }
-}
-// Resolve the real end-user IP. Vercel sits behind Cloudflare in this
-// deployment, so `req.ip` (with trust proxy = 1) reads the Cloudflare egress
-// IP, not the client's. Cloudflare sets `CF-Connecting-IP` with the original
-// client IP. Prefer that when present; fall back to req.ip otherwise.
-//
-// Spoofing concern: a caller hitting Vercel directly could set CF-Connecting-IP
-// themselves. That doesn't matter for audit fidelity here because (a) bypass
-// traffic is rare and observable, (b) the audit row records WHATEVER the
-// caller sent, and (c) the caller still has to satisfy login + CSRF + rate
-// limits regardless. For stricter validation we'd verify the upstream IP is
-// in Cloudflare's published ranges; out of scope for this pass.
-function clientIpFor(req) {
-    const cf = req.header('cf-connecting-ip');
-    if (cf)
-        return cf.trim();
-    return req.ip;
-}
-// Audit a failed login attempt. Emits `auth.login.failure` with the user
-// row when known. Unknown-email attempts cannot resolve to an agency_id
-// (NOT NULL) so they are deliberately not persisted at the audit layer
-// (agency-scoped table); they remain observable via the rate-limit logs.
-async function recordLoginFailure(db, user, authMethod, ipAddress) {
-    await recordAuditEvent(db, {
-        agencyId: user.agencyId,
-        actorId: user.id,
-        actorType: 'user',
-        eventType: 'auth.login.failure',
-        entityType: 'user',
-        entityId: user.id,
-        outcome: 'failure',
-        payload: { authMethod, ipAddress: ipAddress ?? undefined },
-        occurredAt: new Date().toISOString()
-    });
 }
 router.post('/login', async (req, res) => {
     const { email, password } = req.body ?? {};
@@ -73,7 +39,6 @@ router.post('/login', async (req, res) => {
         }
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) {
-            await recordLoginFailure(db, user, 'session', clientIpFor(req));
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
@@ -88,7 +53,7 @@ router.post('/login', async (req, res) => {
             sessionTokenHash: hashOpaqueToken(sessionToken),
             csrfTokenHash: hashOpaqueToken(csrfToken),
             userAgent: req.header('user-agent'),
-            ipAddress: clientIpFor(req),
+            ipAddress: req.ip,
             expiresAt
         });
         await recordAuditEvent(db, {
@@ -118,27 +83,11 @@ router.post('/mobile/login', async (req, res) => {
     try {
         const db = req.app.get('db');
         const user = await new UserRepository(db).findByEmail(email);
-        if (!user) {
+        if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
-        if (!(await bcrypt.compare(password, user.passwordHash))) {
-            await recordLoginFailure(db, user, 'bearer', clientIpFor(req));
-            res.status(401).json({ message: 'Invalid credentials' });
-            return;
-        }
-        // Mint a unique jti and persist a mobile_sessions row so the token can
-        // be revoked individually on a lost-device event. Without this row the
-        // bearer auth path will reject the JWT — see auth-context middleware.
-        const jti = randomUUID();
-        const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
-        await new MobileSessionRepository(db).create({
-            userId: user.id,
-            tokenJti: jti,
-            deviceLabel: typeof req.body?.deviceLabel === 'string' ? req.body.deviceLabel : undefined,
-            expiresAt
-        });
-        const token = jwt.sign({ sub: user.id, agencyId: user.agencyId, role: user.role, caregiverId: user.caregiverId }, jwtSecret(), { expiresIn: '8h', jwtid: jti });
+        const token = jwt.sign({ sub: user.id, agencyId: user.agencyId, role: user.role, caregiverId: user.caregiverId }, jwtSecret(), { expiresIn: '8h', algorithm: 'HS256' });
         await recordAuditEvent(db, {
             agencyId: user.agencyId,
             actorId: user.id,
@@ -147,138 +96,17 @@ router.post('/mobile/login', async (req, res) => {
             entityType: 'user',
             entityId: user.id,
             outcome: 'success',
-            payload: { authMethod: 'bearer', jti },
+            payload: { authMethod: 'bearer' },
             occurredAt: new Date().toISOString()
         });
-        // Pull display name from the caregivers row (when this user IS a
-        // caregiver). The mobile app needs first_name/last_name to greet the
-        // user without falling back to their email handle. We do this read
-        // AFTER the audit write so a missing/renamed caregiver row degrades
-        // gracefully — the login still succeeds with no display name.
-        let firstName;
-        let lastName;
-        if (user.caregiverId) {
-            try {
-                const caregiver = await new CaregiverRepository(db).findById(user.caregiverId);
-                if (caregiver) {
-                    firstName = caregiver.firstName;
-                    lastName = caregiver.lastName;
-                }
-            }
-            catch {
-                // Non-fatal: keep login response shape stable even if lookup fails.
-            }
-        }
-        res.json({
-            token,
-            role: user.role,
-            agencyId: user.agencyId,
-            ...(firstName !== undefined ? { firstName } : {}),
-            ...(lastName !== undefined ? { lastName } : {})
-        });
+        res.json({ token, role: user.role, agencyId: user.agencyId });
     }
     catch {
         res.status(500).json({ message: 'Internal Server Error' });
     }
-});
-// Mobile profile lookup — refresh the signed-in user's display name and
-// org context. Mobile clients call this on app boot so a session minted
-// before the firstName/lastName login-response augmentation (or one that
-// pre-dates a name change in the caregivers row) updates without
-// requiring the user to log out and back in.
-//
-// Authenticated via authContext (bearer JWT). Returns 401 if the bearer
-// token is missing, expired, or revoked. Caregiver-row lookup degrades
-// gracefully: if the row is missing/renamed, firstName/lastName are
-// omitted and the client falls back to its own derivation.
-router.get('/mobile/me', authContext, async (req, res) => {
-    if (req.auth.authMethod !== 'bearer' || !req.auth.userId) {
-        res.status(401).json({ message: 'Authentication required' });
-        return;
-    }
-    try {
-        const db = req.app.get('db');
-        const user = await new UserRepository(db).findById(req.auth.userId);
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        let firstName;
-        let lastName;
-        if (user.caregiverId) {
-            try {
-                const caregiver = await new CaregiverRepository(db).findById(user.caregiverId);
-                if (caregiver) {
-                    firstName = caregiver.firstName;
-                    lastName = caregiver.lastName;
-                }
-            }
-            catch {
-                // Non-fatal — leave undefined.
-            }
-        }
-        res.json({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            agencyId: user.agencyId,
-            ...(firstName !== undefined ? { firstName } : {}),
-            ...(lastName !== undefined ? { lastName } : {})
-        });
-    }
-    catch {
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
-// Mobile logout — revoke the active mobile_sessions row by jti.
-//
-// Authenticated via authContext (bearer JWT). Revocation is idempotent so a
-// re-tried logout from a flaky device just succeeds. After revocation the
-// JWT itself remains technically valid until expiry, but auth-context will
-// reject it because findActiveByJti returns nothing.
-router.post('/mobile/logout', authContext, async (req, res) => {
-    if (req.auth.authMethod !== 'bearer' || !req.auth.tokenJti) {
-        res.status(400).json({ message: 'No mobile session to revoke' });
-        return;
-    }
-    const db = req.app.get('db');
-    const now = new Date().toISOString();
-    await new MobileSessionRepository(db).revokeByJti(req.auth.tokenJti, now);
-    await recordAuditEvent(db, {
-        agencyId: req.auth.agencyId,
-        actorId: req.auth.userId,
-        actorType: 'user',
-        eventType: 'session.revoked',
-        entityType: 'mobile_session',
-        entityId: req.auth.userId,
-        outcome: 'success',
-        payload: { authMethod: 'bearer', jti: req.auth.tokenJti },
-        occurredAt: now
-    });
-    res.status(204).send();
 });
 // One-time admin bootstrap — serialized via advisory lock so concurrent requests cannot both succeed.
-//
-// Defense in depth: bootstrap is also gated by BOOTSTRAP_SECRET. Without that env
-// var, the endpoint is fully disabled — the inherited "wipe-DB-and-bootstrap-yourself-
-// to-admin" attack (e.g. after a stolen point-in-time backup gets restored) is closed
-// out unless the attacker also has the secret. Compared with constant time so a 401
-// vs 403 timing oracle does not leak whether the var is configured.
 router.post('/bootstrap', async (req, res) => {
-    const expected = process.env.BOOTSTRAP_SECRET;
-    if (!expected) {
-        res.status(403).json({ message: 'Bootstrap is disabled' });
-        return;
-    }
-    const provided = req.header('x-bootstrap-secret') ?? '';
-    const expectedBuf = Buffer.from(expected);
-    const providedBuf = Buffer.from(provided);
-    const same = expectedBuf.length === providedBuf.length &&
-        timingSafeEqual(expectedBuf, providedBuf);
-    if (!same) {
-        res.status(403).json({ message: 'Bootstrap is disabled' });
-        return;
-    }
     const { agencyId, email, password } = req.body ?? {};
     if (!agencyId || !email || !password) {
         res.status(400).json({ message: 'agencyId, email and password required' });
@@ -303,7 +131,7 @@ router.post('/bootstrap', async (req, res) => {
             }
             return new UserRepository(trx).create({ agencyId, email, passwordHash, role: 'admin' });
         });
-        const token = jwt.sign({ sub: user.id, agencyId: user.agencyId, role: user.role }, jwtSecret(), { expiresIn: '8h' });
+        const token = jwt.sign({ sub: user.id, agencyId: user.agencyId, role: user.role }, jwtSecret(), { expiresIn: '8h', algorithm: 'HS256' });
         res.status(201).json({ token, role: user.role, agencyId: user.agencyId });
     }
     catch (err) {
