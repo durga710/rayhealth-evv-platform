@@ -157,11 +157,8 @@ export function StaffPage() {
     }
   };
 
-  const statusBadgeClass = (status: string): string => {
-    if (status === 'pending') return 'badge badge-warning';
-    if (status === 'active') return 'badge badge-info';
-    return 'badge badge-neutral';
-  };
+  const activeStaff = staff.filter(s => s.status === 'active');
+  const pendingInvites = staff.filter(s => s.status === 'pending');
 
   return (
     <div>
@@ -273,45 +270,111 @@ export function StaffPage() {
           )}
         </div>
 
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Active staff directory</h3>
-            {!loading && !loadError && staff.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{staff.length} member{staff.length === 1 ? '' : 's'}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* ── Active staff directory ── */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+              <h3 className="section-title" style={{ margin: 0 }}>Active staff directory</h3>
+              {!loading && !loadError && activeStaff.length > 0 && (
+                <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{activeStaff.length} member{activeStaff.length === 1 ? '' : 's'}</span>
+              )}
+            </div>
+            {loading ? (
+              <LoadingSkeleton rows={5} columns={3} />
+            ) : loadError ? (
+              <ErrorRetry message={loadError} onRetry={loadStaff} />
+            ) : activeStaff.length === 0 ? (
+              <EmptyState
+                title="No active staff yet"
+                body="Staff appear here once they accept their invite and set up their account."
+                cta={{ label: 'Invite a staff member', onClick: focusInvite }}
+              />
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th style={{ width: '40px' }} aria-label="actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeStaff.map((s) => {
+                    const isExpanded = expandedId === s.id;
+                    return (
+                      <React.Fragment key={s.id}>
+                        <tr
+                          onClick={() => setExpandedId(isExpanded ? null : s.id)}
+                          style={{ cursor: 'pointer' }}
+                          aria-expanded={isExpanded}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div
+                                aria-hidden
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '50%',
+                                  background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+                                  color: 'white',
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  fontWeight: 600,
+                                  fontSize: '0.75rem',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {s.email.charAt(0).toUpperCase()}
+                              </div>
+                              <span style={{ fontWeight: 500 }}>{s.email}</span>
+                            </div>
+                          </td>
+                          <td style={{ textTransform: 'capitalize', color: '#475569' }}>{s.role}</td>
+                          <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                        </tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={3} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                                <div style={{ fontWeight: 600 }}>User ID</div>
+                                <div style={{ fontFamily: 'var(--font-mono)' }}>{s.id}</div>
+                                <div style={{ fontWeight: 600 }}>Email</div>
+                                <div>{s.email}</div>
+                                <div style={{ fontWeight: 600 }}>Role</div>
+                                <div style={{ textTransform: 'capitalize' }}>{s.role}</div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
-          {loading ? (
-            <LoadingSkeleton rows={5} columns={3} />
-          ) : loadError ? (
-            <ErrorRetry message={loadError} onRetry={loadStaff} />
-          ) : staff.length === 0 ? (
-            <EmptyState
-              title="No staff yet"
-              body="Invite a caregiver, coordinator, or admin to start staffing visits."
-              cta={{ label: 'Invite a staff member', onClick: focusInvite }}
-            />
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th style={{ width: '40px' }} aria-label="actions" />
-                </tr>
-              </thead>
-              <tbody>
-                {staff.map((s) => {
-                  const isExpanded = expandedId === s.id;
-                  const isPending = s.status === 'pending';
-                  const resend = resendState[s.id] ?? { status: 'idle' as const };
-                  return (
-                    <React.Fragment key={s.id}>
-                      <tr
-                        onClick={() => setExpandedId(isExpanded ? null : s.id)}
-                        style={{ cursor: 'pointer' }}
-                        aria-expanded={isExpanded}
-                      >
+
+          {/* ── Pending invitations ── only shown when invites exist ── */}
+          {!loading && !loadError && pendingInvites.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+                <h3 className="section-title" style={{ margin: 0 }}>Pending invitations</h3>
+                <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{pendingInvites.length} awaiting acceptance</span>
+              </div>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th style={{ width: '140px' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingInvites.map((s) => {
+                    const resend = resendState[s.id] ?? { status: 'idle' as const };
+                    return (
+                      <tr key={s.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <div
@@ -320,8 +383,8 @@ export function StaffPage() {
                                 width: '28px',
                                 height: '28px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
-                                color: 'white',
+                                background: '#E2E8F0',
+                                color: '#64748B',
                                 display: 'grid',
                                 placeItems: 'center',
                                 fontWeight: 600,
@@ -331,58 +394,31 @@ export function StaffPage() {
                             >
                               {s.email.charAt(0).toUpperCase()}
                             </div>
-                            <span style={{ fontWeight: 500 }}>{s.email}</span>
+                            <span style={{ fontWeight: 500, color: '#64748B' }}>{s.email}</span>
                           </div>
                         </td>
-                        <td style={{ textTransform: 'capitalize', color: '#475569' }}>{s.role}</td>
+                        <td style={{ textTransform: 'capitalize', color: '#94A3B8' }}>{s.role}</td>
                         <td>
-                          <span className={statusBadgeClass(s.status)}>{s.status}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleResend(s.id)}
+                              disabled={resend.status === 'sending'}
+                              className={resend.status === 'sent' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'}
+                            >
+                              {resend.status === 'sending' ? 'Resending…' : resend.status === 'sent' ? 'Sent' : 'Resend invite'}
+                            </button>
+                            {resend.status === 'failed' && (
+                              <span style={{ fontSize: '0.75rem', color: '#BE123C' }}>{resend.reason}</span>
+                            )}
+                          </div>
                         </td>
-                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
                       </tr>
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan={4} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
-                              <div style={{ fontWeight: 600 }}>User ID</div>
-                              <div style={{ fontFamily: 'var(--font-mono)' }}>{s.id}</div>
-                              <div style={{ fontWeight: 600 }}>Email</div>
-                              <div>{s.email}</div>
-                              <div style={{ fontWeight: 600 }}>Role</div>
-                              <div style={{ textTransform: 'capitalize' }}>{s.role}</div>
-                              <div style={{ fontWeight: 600 }}>Status</div>
-                              <div style={{ textTransform: 'capitalize' }}>{s.status}</div>
-                              {isPending && (
-                                <>
-                                  <div style={{ fontWeight: 600 }}>Actions</div>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); handleResend(s.id); }}
-                                      disabled={resend.status === 'sending'}
-                                      className={resend.status === 'sent' ? 'btn-secondary btn-sm' : 'btn-primary btn-sm'}
-                                    >
-                                      {resend.status === 'sending'
-                                        ? 'Resending…'
-                                        : resend.status === 'sent'
-                                          ? 'Email resent'
-                                          : 'Resend email'}
-                                    </button>
-                                    {resend.status === 'failed' && (
-                                      <span style={{ fontSize: '0.75rem', color: '#BE123C' }}>{resend.reason}</span>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
