@@ -42,9 +42,9 @@ interface Insight {
 interface StaffMember { id: string; email: string; role: string; }
 
 const severityColors: Record<string, { bg: string; text: string; border: string }> = {
-  critical: { bg: '#fef2f2', text: '#b91c1c', border: '#fca5a5' },
-  warning: { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
-  info: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  critical: { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' },
+  warning: { bg: '#FFFBEB', text: '#B45309', border: '#FCD34D' },
+  info: { bg: 'rgba(99, 102, 241, 0.08)', text: '#4F46E5', border: 'rgba(99, 102, 241, 0.25)' },
 };
 
 const cadenceLabel: Record<string, string> = {
@@ -102,30 +102,39 @@ export function LearningHubPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading learning data…</div>;
+    return (
+      <div>
+        <header className="page-header">
+          <div className="page-header__title">
+            <h1 style={{ margin: 0 }}>Learning Hub</h1>
+          </div>
+        </header>
+        <div style={{ padding: '2rem', color: '#94A3B8' }}>Loading learning data…</div>
+      </div>
+    );
   }
 
   const compliancePct = rollup ? Math.round(rollup.complianceRate * 100) : 0;
 
   return (
     <div>
-      <h2 style={{ marginBottom: '0.25rem' }}>Learning Hub</h2>
-      <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
-        PA §52.18 training compliance — caregiver enrollments, completions, and expirations.
-      </p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Learning Hub</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            PA §52.18 training compliance &mdash; caregiver enrollments, completions, and expirations.
+          </p>
+        </div>
+      </header>
 
       {/* Rollup strip */}
       {rollup && (
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-            gap: '1px',
-            backgroundColor: '#c9d8e8',
-            borderRadius: '12px',
-            overflow: 'hidden',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '0.75rem',
             marginBottom: '2rem',
-            boxShadow: '0 2px 8px rgba(26,95,168,0.08)',
           }}
         >
           {(
@@ -138,14 +147,14 @@ export function LearningHubPage() {
               { label: 'Not started', value: rollup.notStarted },
             ] as Array<{ label: string; value: string | number; ok?: boolean; warn?: boolean }>
           ).map(({ label, value, ok, warn }) => (
-            <div key={label} style={{ backgroundColor: 'white', padding: '1.25rem 1rem', textAlign: 'center' }}>
+            <div key={label} className="stat-card" style={{ padding: '1.25rem 1.1rem' }}>
               <div
                 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '2rem',
-                  fontWeight: 900,
-                  color: (warn as boolean | undefined) ? '#b91c1c' : (ok as boolean | undefined) ? '#166534' : 'var(--color-primary-dark)',
+                  fontSize: '1.875rem',
+                  fontWeight: 700,
+                  color: warn ? '#F43F5E' : ok ? '#10B981' : '#0F172A',
                   lineHeight: 1,
+                  letterSpacing: '-0.02em',
                 }}
               >
                 {value}
@@ -153,11 +162,9 @@ export function LearningHubPage() {
               <div
                 style={{
                   fontSize: '0.75rem',
-                  color: 'var(--color-text-muted)',
-                  marginTop: '0.4rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.5px',
-                  fontWeight: 600,
+                  color: '#64748B',
+                  marginTop: '0.45rem',
+                  fontWeight: 500,
                 }}
               >
                 {label}
@@ -170,8 +177,8 @@ export function LearningHubPage() {
       {/* Insights */}
       {insights.length > 0 && (
         <div style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Action items</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <h3 className="section-title" style={{ marginBottom: '0.85rem' }}>Action items</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {insights.map((insight) => {
               const colors = severityColors[insight.severity] ?? severityColors.info;
               return (
@@ -184,8 +191,8 @@ export function LearningHubPage() {
                     padding: '1rem 1.25rem',
                   }}
                 >
-                  <strong style={{ color: colors.text, fontSize: '0.95rem' }}>{insight.title}</strong>
-                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.875rem', color: '#374151', lineHeight: 1.5 }}>
+                  <strong style={{ color: colors.text, fontSize: '0.9375rem' }}>{insight.title}</strong>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.875rem', color: '#475569', lineHeight: 1.5 }}>
                     {insight.summary}
                   </p>
                   {insight.caregivers.length > 0 && (
@@ -194,12 +201,12 @@ export function LearningHubPage() {
                         margin: '0.5rem 0 0',
                         padding: '0 0 0 1rem',
                         fontSize: '0.8rem',
-                        color: '#6b7280',
+                        color: '#64748B',
                       }}
                     >
                       {insight.caregivers.slice(0, 4).map((cg) => (
                         <li key={cg.caregiverId}>
-                          {cg.firstName} {cg.lastName} — {cg.context}
+                          {cg.firstName} {cg.lastName} &mdash; {cg.context}
                         </li>
                       ))}
                       {insight.totalCount > 4 && (
@@ -214,18 +221,19 @@ export function LearningHubPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 380px)', gap: '1.5rem', alignItems: 'start' }}>
         {/* Course catalog */}
         <div>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Course catalog</h3>
+          <h3 className="section-title" style={{ marginBottom: '0.85rem' }}>Course catalog</h3>
           {courses.length === 0 ? (
             <div
               style={{
                 padding: '2rem',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
+                backgroundColor: 'white',
+                border: '1px dashed #CBD5E1',
+                borderRadius: '12px',
                 textAlign: 'center',
-                color: '#64748b',
+                color: '#94A3B8',
               }}
             >
               No courses configured for this agency yet.
@@ -236,9 +244,9 @@ export function LearningHubPage() {
                 <div
                   key={c.id}
                   style={{
-                    padding: '0.875rem 1rem',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
+                    padding: '1rem 1.1rem',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '10px',
                     backgroundColor: 'white',
                   }}
                 >
@@ -247,55 +255,37 @@ export function LearningHubPage() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'flex-start',
+                      gap: '0.75rem',
                     }}
                   >
                     <div>
-                      <strong style={{ fontSize: '0.9rem', color: 'var(--color-primary-dark)' }}>
+                      <strong style={{ fontSize: '0.9375rem', color: '#0F172A', fontWeight: 600 }}>
                         {c.title}
                       </strong>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
                         {c.code}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
                       {c.required && (
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            padding: '2px 6px',
-                            backgroundColor: '#fef2f2',
-                            color: '#b91c1c',
-                            borderRadius: '4px',
-                            fontWeight: 700,
-                          }}
-                        >
-                          Required
-                        </span>
+                        <span className="badge badge-danger">Required</span>
                       )}
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          padding: '2px 6px',
-                          backgroundColor: '#eff6ff',
-                          color: '#1d4ed8',
-                          borderRadius: '4px',
-                        }}
-                      >
+                      <span className="badge badge-info">
                         {cadenceLabel[c.cadence] ?? c.cadence}
                       </span>
                     </div>
                   </div>
                   <p
                     style={{
-                      margin: '0.4rem 0 0',
-                      fontSize: '0.8rem',
-                      color: '#64748b',
-                      lineHeight: 1.4,
+                      margin: '0.5rem 0 0',
+                      fontSize: '0.8125rem',
+                      color: '#64748B',
+                      lineHeight: 1.5,
                     }}
                   >
                     {c.description}
                   </p>
-                  <div style={{ marginTop: '0.3rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#94A3B8' }}>
                     {c.durationMinutes} min
                     {c.expiresAfterDays ? ` · expires after ${c.expiresAfterDays} days` : ''}
                   </div>
@@ -306,19 +296,17 @@ export function LearningHubPage() {
         </div>
 
         {/* Enroll a caregiver */}
-        <div>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Enroll a caregiver</h3>
-          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="form-card">
+          <h3 className="section-title" style={{ marginBottom: '1rem', margin: '0 0 1rem' }}>Enroll a caregiver</h3>
+          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label htmlFor="enroll-caregiver" style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                Caregiver
-              </label>
+              <label htmlFor="enroll-caregiver" className="label">Caregiver</label>
               <select
                 id="enroll-caregiver"
                 value={enrollCaregiverId}
                 onChange={(e) => setEnrollCaregiverId(e.target.value)}
                 required
-                style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '0.9rem', backgroundColor: 'white' }}
+                className="select-field"
               >
                 <option value="">Select a caregiver…</option>
                 {caregivers.map(s => (
@@ -327,21 +315,13 @@ export function LearningHubPage() {
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label htmlFor="enroll-course" style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                Course
-              </label>
+              <label htmlFor="enroll-course" className="label">Course</label>
               <select
                 id="enroll-course"
                 value={enrollCourseId}
                 onChange={(e) => setEnrollCourseId(e.target.value)}
                 required
-                style={{
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #c9d8e8',
-                  borderRadius: '8px',
-                  fontFamily: 'inherit',
-                  fontSize: '0.9rem',
-                }}
+                className="select-field"
               >
                 <option value="">Select a course…</option>
                 {courses.map((c) => (
@@ -352,28 +332,22 @@ export function LearningHubPage() {
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label htmlFor="enroll-due" style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                Due date (optional)
-              </label>
+              <label htmlFor="enroll-due" className="label">Due date (optional)</label>
               <input
                 id="enroll-due"
                 type="date"
                 value={enrollDueAt}
                 onChange={(e) => setEnrollDueAt(e.target.value)}
+                className="input-field"
               />
             </div>
-            <button type="submit">Enroll Caregiver</button>
+            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
+              Enroll Caregiver
+            </button>
             {enrollMsg && (
               <div
                 role={enrollMsg.kind === 'error' ? 'alert' : 'status'}
-                style={{
-                  padding: '0.75rem 1rem',
-                  backgroundColor: enrollMsg.kind === 'success' ? '#f0fdf4' : '#fef2f2',
-                  color: enrollMsg.kind === 'success' ? '#166534' : '#b91c1c',
-                  borderRadius: '8px',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                }}
+                className={`info-banner ${enrollMsg.kind === 'success' ? 'banner-success' : 'banner-error'}`}
               >
                 {enrollMsg.text}
               </div>

@@ -109,55 +109,112 @@ export function DashboardPage() {
     };
   }, []);
 
-  const greeting = user ? `Welcome back, ${user.role}.` : 'Welcome back.';
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const roleLabel = user?.role ?? 'admin';
 
   const complianceDisplay = counts.complianceRate === null ? '—' : `${counts.complianceRate}%`;
-  const complianceTint = counts.complianceRate === null ? '#94a3b8' : counts.complianceRate >= 80 ? '#16a34a' : '#dc2626';
+  const complianceTint = counts.complianceRate === null
+    ? '#94A3B8'
+    : counts.complianceRate >= 80
+      ? '#10B981'
+      : '#F43F5E';
 
-  const stats = [
-    { label: 'Active clients', value: formatCount(counts.clients), tint: '#1a5fa8' },
-    { label: 'Staff & caregivers', value: formatCount(counts.staff), tint: '#3886d5' },
-    { label: 'Open assignments', value: formatCount(counts.assignments), tint: '#0f766e' },
-    { label: 'Visits this period', value: formatCount(counts.visits), tint: '#f97316' },
-    { label: 'Training compliance', value: complianceDisplay, tint: complianceTint },
+  type StatTile = {
+    label: string;
+    value: string;
+    tint: string;
+    icon: React.ReactElement;
+  };
+
+  const stats: StatTile[] = [
+    {
+      label: 'Active clients',
+      value: formatCount(counts.clients),
+      tint: '#6366F1',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Staff & caregivers',
+      value: formatCount(counts.staff),
+      tint: '#8B5CF6',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Open assignments',
+      value: formatCount(counts.assignments),
+      tint: '#0EA5E9',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Visits this period',
+      value: formatCount(counts.visits),
+      tint: '#10B981',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Training compliance',
+      value: complianceDisplay,
+      tint: complianceTint,
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
       {/* Header */}
-      <header style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: 'rgba(34, 197, 94, 0.12)',
-            color: '#15803d',
-            fontSize: '0.7rem',
-            fontWeight: 700,
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            padding: '0.3rem 0.7rem',
-            borderRadius: '999px',
-            alignSelf: 'flex-start',
-          }}
-        >
-          <span
-            aria-hidden
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '999px',
-              backgroundColor: '#16a34a',
-              boxShadow: '0 0 0 3px rgba(22,163,74,0.2)',
-            }}
-          />
-          Cookie session active
+      <header className="page-header" style={{ marginBottom: 0 }}>
+        <div className="page-header__title">
+          <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {timeGreeting}
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: '#4F46E5',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '0.25rem 0.6rem',
+                borderRadius: '6px',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+              }}
+            >
+              {roleLabel}
+            </span>
+          </h1>
+          <p style={{ margin: 0, color: '#64748B', fontSize: '0.95rem', maxWidth: '640px' }}>
+            Here&apos;s what&apos;s happening at your agency today.
+          </p>
         </div>
-        <h1 style={{ margin: 0, fontSize: '2rem', color: 'var(--color-primary-dark)' }}>{greeting}</h1>
-        <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '1rem', maxWidth: '720px' }}>
-          A snapshot of the agency's day-to-day, plus the security posture auditors will ask about.
-        </p>
       </header>
 
       {/* Stats */}
@@ -165,55 +222,46 @@ export function DashboardPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1rem',
+          gap: '0.75rem',
         }}
       >
         {stats.map((s) => (
-          <div
-            key={s.label}
-            style={{
-              backgroundColor: 'white',
-              border: '1px solid #e2eaf2',
-              borderRadius: '14px',
-              padding: '1.5rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-              boxShadow: '0 4px 12px rgba(26,95,168,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span
-                aria-hidden
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '999px',
-                  backgroundColor: s.tint,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '1.5px',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-text-muted)',
-                  fontWeight: 700,
-                }}
-              >
-                {s.label}
-              </span>
+          <div key={s.label} className="stat-card">
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                backgroundColor: `${s.tint}1A`,
+                color: s.tint,
+                display: 'grid',
+                placeItems: 'center',
+                marginBottom: '0.85rem',
+              }}
+              aria-hidden
+            >
+              {s.icon}
             </div>
             <div
               style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '2.25rem',
-                fontWeight: 900,
-                color: 'var(--color-primary-dark)',
+                fontSize: '1.875rem',
+                fontWeight: 700,
+                color: '#0F172A',
                 lineHeight: 1,
+                letterSpacing: '-0.02em',
               }}
             >
               {s.value}
+            </div>
+            <div
+              style={{
+                fontSize: '0.8125rem',
+                color: '#64748B',
+                marginTop: '0.4rem',
+                fontWeight: 500,
+              }}
+            >
+              {s.label}
             </div>
           </div>
         ))}
@@ -221,79 +269,76 @@ export function DashboardPage() {
 
       {/* Quick actions */}
       <section>
-        <h2 style={{ margin: '0 0 1rem', color: 'var(--color-primary-dark)', fontSize: '1.125rem' }}>Quick actions</h2>
+        <h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600, color: '#0F172A' }}>Quick actions</h2>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '0.75rem',
           }}
         >
           {quickActions.map((q) => (
-            <div
+            <Link
               key={q.title}
-              style={{
-                backgroundColor: 'white',
-                border: '1px solid #e2eaf2',
-                borderRadius: '14px',
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.65rem',
-              }}
+              to={q.to}
+              className="action-card"
+              style={{ textDecoration: 'none' }}
             >
-              <h3 style={{ margin: 0, color: 'var(--color-primary-dark)', fontSize: '1rem', lineHeight: 1.3 }}>
+              <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, color: '#0F172A', lineHeight: 1.3 }}>
                 {q.title}
               </h3>
-              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.875rem', lineHeight: 1.5, flex: 1 }}>
+              <p style={{ margin: 0, color: '#64748B', fontSize: '0.8125rem', lineHeight: 1.5, flex: 1 }}>
                 {q.body}
               </p>
-              <Link
-                to={q.to}
+              <span
                 style={{
-                  alignSelf: 'flex-start',
                   marginTop: '0.25rem',
-                  color: 'var(--color-accent)',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
+                  color: '#6366F1',
+                  fontWeight: 500,
+                  fontSize: '0.8125rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
                 }}
               >
-                {q.cta} →
-              </Link>
-            </div>
+                {q.cta}
+                <span aria-hidden>&rarr;</span>
+              </span>
+            </Link>
           ))}
         </div>
       </section>
 
       {/* Security highlights */}
       <section>
-        <h2 style={{ margin: '0 0 1rem', color: 'var(--color-primary-dark)', fontSize: '1.125rem' }}>Security posture</h2>
+        <h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600, color: '#0F172A' }}>Security posture</h2>
         <div
           style={{
-            backgroundColor: 'var(--color-primary-dark)',
+            backgroundColor: '#0F172A',
+            backgroundImage: 'radial-gradient(circle at 90% 10%, rgba(99,102,241,0.15) 0%, transparent 60%)',
             color: 'white',
-            borderRadius: '14px',
-            padding: '1.5rem',
+            borderRadius: '12px',
+            padding: '1.75rem',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
+            gap: '1.5rem',
+            border: '1px solid #1E293B',
           }}
         >
           {securityHighlights.map((h) => (
-            <div key={h.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div key={h.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <span
                 style={{
                   fontSize: '0.7rem',
-                  letterSpacing: '1.5px',
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.6)',
-                  fontWeight: 700,
+                  color: '#94A3B8',
+                  fontWeight: 600,
                 }}
               >
                 {h.label}
               </span>
-              <span style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>{h.value}</span>
+              <span style={{ fontSize: '0.875rem', lineHeight: 1.5, color: '#E2E8F0' }}>{h.value}</span>
             </div>
           ))}
         </div>

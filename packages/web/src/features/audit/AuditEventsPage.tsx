@@ -77,45 +77,25 @@ const card: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
   padding: '1.5rem',
-  border: '1px solid #e2e8f0'
+  border: '1px solid #E2E8F0'
 };
 
 const statLabel: React.CSSProperties = {
   fontSize: '0.7rem',
-  fontWeight: 700,
-  color: '#64748b',
+  fontWeight: 600,
+  color: '#475569',
   textTransform: 'uppercase',
   letterSpacing: '0.06em'
 };
 
 const input: React.CSSProperties = {
-  padding: '0.45rem 0.6rem',
-  border: '1px solid #cbd5e1',
-  borderRadius: '6px',
+  padding: '0.5rem 0.7rem',
+  border: '1px solid #CBD5E1',
+  borderRadius: '8px',
   fontSize: '0.85rem',
-  backgroundColor: 'white'
-};
-
-const button: React.CSSProperties = {
-  padding: '0.5rem 0.9rem',
-  border: '1px solid #1d4ed8',
-  backgroundColor: '#1d4ed8',
-  color: 'white',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  cursor: 'pointer'
-};
-
-const buttonSecondary: React.CSSProperties = {
-  ...button,
   backgroundColor: 'white',
-  color: '#1d4ed8'
-};
-
-const buttonDisabled: React.CSSProperties = {
-  ...buttonSecondary,
-  opacity: 0.5,
-  cursor: 'not-allowed'
+  fontFamily: 'inherit',
+  color: '#0F172A',
 };
 
 function outcomePillStyle(outcome: Outcome): React.CSSProperties {
@@ -283,12 +263,16 @@ export function AuditEventsPage() {
 
   return (
     <div>
-      <h2>Audit Events</h2>
-      <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-muted, #64748b)' }}>
-        Filterable timeline of every audit event for this agency — authentication, PHI access,
-        permission denials, CSRF failures, and lifecycle events. Backed by the same append-only
-        store as the retention dashboard.
-      </p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Audit Events</h1>
+          <p style={{ margin: 0, color: '#64748B', maxWidth: '720px' }}>
+            Filterable timeline of every audit event for this agency &mdash; authentication, PHI access,
+            permission denials, CSRF failures, and lifecycle events. Backed by the same append-only
+            store as the retention dashboard.
+          </p>
+        </div>
+      </header>
 
       <form onSubmit={applyFilters} style={{ ...card, marginBottom: '1rem' }}>
         <div
@@ -375,11 +359,11 @@ export function AuditEventsPage() {
           </label>
         </div>
 
-        <div style={{ marginTop: '0.9rem', display: 'flex', gap: '0.5rem' }}>
-          <button type="submit" style={button}>
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+          <button type="submit" className="btn-primary btn-sm">
             Apply
           </button>
-          <button type="button" onClick={resetFilters} style={buttonSecondary}>
+          <button type="button" onClick={resetFilters} className="btn-secondary btn-sm">
             Reset
           </button>
         </div>
@@ -421,7 +405,7 @@ export function AuditEventsPage() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
-                style={canPrev ? buttonSecondary : buttonDisabled}
+                className="btn-secondary btn-sm"
                 disabled={!canPrev}
                 onClick={() => setOffset(Math.max(0, currentOffset - limit))}
               >
@@ -429,7 +413,7 @@ export function AuditEventsPage() {
               </button>
               <button
                 type="button"
-                style={canNext ? buttonSecondary : buttonDisabled}
+                className="btn-secondary btn-sm"
                 disabled={!canNext}
                 onClick={() => setOffset(currentOffset + limit)}
               >

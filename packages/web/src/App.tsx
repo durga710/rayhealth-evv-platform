@@ -1,3 +1,4 @@
+import type React from 'react';
 import { NavLink, Link, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/AuthContext.js';
 import { AgencySetupPage } from './features/agency/AgencySetupPage.js';
@@ -34,139 +35,232 @@ function ProtectedRoute() {
   return <Outlet />;
 }
 
+interface NavItem {
+  to: string;
+  label: string;
+  end?: boolean;
+  icon: React.ReactElement;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+// Inline 16x16 stroke icons — kept tiny so the sidebar reads as text-first.
+const icons = {
+  dashboard: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
+    </svg>
+  ),
+  agency: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 21h18" />
+      <path d="M5 21V8l7-5 7 5v13" />
+      <path d="M10 12h4M10 16h4" />
+    </svg>
+  ),
+  staff: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  clients: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  auth: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  templates: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  ),
+  assignments: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
+  visit: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  learning: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  ),
+  training: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+      <path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5" />
+    </svg>
+  ),
+  audit: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+  ),
+  archive: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="5" rx="1" />
+      <path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9" />
+      <line x1="10" y1="13" x2="14" y2="13" />
+    </svg>
+  ),
+};
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [{ to: '/admin', label: 'Dashboard', end: true, icon: icons.dashboard }],
+  },
+  {
+    label: 'Agency',
+    items: [
+      { to: '/admin/agency', label: 'Agency Setup', icon: icons.agency },
+      { to: '/admin/staff', label: 'Staff', icon: icons.staff },
+      { to: '/admin/clients', label: 'Clients', icon: icons.clients },
+      { to: '/admin/authorizations', label: 'Authorizations', icon: icons.auth },
+    ],
+  },
+  {
+    label: 'Scheduling',
+    items: [
+      { to: '/admin/templates', label: 'Templates', icon: icons.templates },
+      { to: '/admin/assignments', label: 'Assignments', icon: icons.assignments },
+    ],
+  },
+  {
+    label: 'Visits',
+    items: [{ to: '/admin/review', label: 'Visit Review', icon: icons.visit }],
+  },
+  {
+    label: 'Compliance',
+    items: [
+      { to: '/admin/learning', end: true, label: 'Learning Hub', icon: icons.learning },
+      { to: '/admin/learning/portal', label: 'My Training', icon: icons.training },
+    ],
+  },
+  {
+    label: 'Audit',
+    items: [
+      { to: '/admin/audit-events', label: 'Audit Events', icon: icons.audit },
+      { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
+    ],
+  },
+];
+
 function AdminLayout() {
   const { logout, user } = useAuth();
 
   const initial = (user?.userId ?? '?').slice(0, 1).toUpperCase();
+  const roleLabel = user?.role ?? 'signed in';
+  const userIdShort = user?.userId ? `${user.userId.slice(0, 8)}…` : '—';
 
   return (
     <div className="admin-shell">
-      <nav className="admin-nav">
-        <Link to="/" className="brand">
-          RayHealth <span className="evv-badge">EVV</span>
+      <aside className="admin-sidebar" aria-label="Primary">
+        <Link to="/" className="admin-sidebar__brand">
+          RayHealth
+          <span className="admin-sidebar__evv-badge">EVV</span>
         </Link>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <NavLink to="/admin" end className="nav-link">Dashboard</NavLink>
-          <NavLink to="/admin/agency" className="nav-link">Agency Setup</NavLink>
-          <NavLink to="/admin/staff" className="nav-link">Staff</NavLink>
-          <NavLink to="/admin/clients" className="nav-link">Clients</NavLink>
-          <NavLink to="/admin/authorizations" className="nav-link">Authorizations</NavLink>
-          <NavLink to="/admin/templates" className="nav-link">Templates</NavLink>
-          <NavLink to="/admin/assignments" className="nav-link">Assignments</NavLink>
-          <NavLink to="/admin/review" className="nav-link">Visit Review</NavLink>
-          <NavLink to="/admin/audit-events" className="nav-link">Audit Events</NavLink>
-          <NavLink to="/admin/audit-retention" className="nav-link">Audit Retention</NavLink>
-          <NavLink to="/admin/learning" end className="nav-link">Learning Hub</NavLink>
-          <NavLink to="/admin/learning/portal" className="nav-link">My Training</NavLink>
-        </div>
-        <div
-          style={{
-            marginTop: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            padding: '1rem',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div
-              aria-hidden
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '999px',
-                backgroundColor: 'var(--color-accent)',
-                color: 'white',
-                display: 'grid',
-                placeItems: 'center',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 800,
-                fontSize: '0.95rem',
-              }}
-            >
-              {initial}
+
+        <nav className="admin-sidebar__nav">
+          {navGroups.map((group) => (
+            <div key={group.label} className="admin-sidebar__group">
+              <div className="admin-sidebar__group-label">{group.label}</div>
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `admin-sidebar__nav-link${isActive ? ' active' : ''}`
+                  }
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar__user-card">
+          <div className="admin-sidebar__user-row">
+            <div aria-hidden className="admin-sidebar__avatar">{initial}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
               <span
                 style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  color: '#F1F5F9',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  textTransform: 'capitalize',
                 }}
               >
-                {user?.role ?? 'Signed in'}
+                {roleLabel}
               </span>
               <span
                 style={{
                   fontSize: '0.7rem',
-                  color: 'rgba(255,255,255,0.55)',
+                  color: '#64748B',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  fontFamily: 'var(--font-mono)',
                 }}
                 title={user?.userId}
               >
-                {user?.userId ? `${user.userId.slice(0, 8)}…` : '—'}
+                {userIdShort}
               </span>
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              backgroundColor: 'rgba(34,197,94,0.16)',
-              color: '#86efac',
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              padding: '0.25rem 0.55rem',
-              borderRadius: '999px',
-              alignSelf: 'flex-start',
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                width: '5px',
-                height: '5px',
-                borderRadius: '999px',
-                backgroundColor: '#16a34a',
-                boxShadow: '0 0 0 3px rgba(22,163,74,0.25)',
-              }}
-            />
-            Cookie session
-          </div>
+          <span className="admin-sidebar__role-badge">{roleLabel}</span>
 
           <button
+            type="button"
             onClick={logout}
-            style={{
-              backgroundColor: 'transparent',
-              border: '1px solid rgba(255,255,255,0.2)',
-              padding: '0.5rem',
-              width: '100%',
-              textAlign: 'center',
-              borderRadius: '6px',
-              color: 'inherit',
-              cursor: 'pointer',
-            }}
+            className="admin-sidebar__signout"
           >
-            Sign Out
+            Sign out
           </button>
         </div>
-      </nav>
-      <main>
-        <div className="card">
+      </aside>
+
+      <main className="admin-main">
+        <div className="admin-main__inner">
           <Outlet />
         </div>
       </main>
+
       {/* Floating admin assistant — only inside /admin/*, authenticated. */}
       <AdminAssistant />
     </div>

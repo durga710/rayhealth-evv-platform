@@ -15,24 +15,14 @@ interface StaffMember { id: string; email: string; role: string; }
 
 type Banner = { kind: 'success' | 'error'; text: string } | null;
 
-const statusStyle = (status: EvvVisit['status']): React.CSSProperties => {
-  const palette: Record<EvvVisit['status'], { bg: string; fg: string }> = {
-    pending: { bg: '#fef3c7', fg: '#92400e' },
-    verified: { bg: '#f0fdf4', fg: '#15803d' },
-    flagged: { bg: '#fef2f2', fg: '#991b1b' },
-    corrected: { bg: '#eff6ff', fg: '#1d4ed8' },
+const statusBadgeClass = (status: EvvVisit['status']): string => {
+  const map: Record<EvvVisit['status'], string> = {
+    pending: 'badge badge-warning',
+    verified: 'badge badge-success',
+    flagged: 'badge badge-danger',
+    corrected: 'badge badge-info',
   };
-  const p = palette[status] ?? palette.pending;
-  return {
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    padding: '0.2rem 0.55rem',
-    borderRadius: '999px',
-    backgroundColor: p.bg,
-    color: p.fg,
-    textTransform: 'capitalize',
-    letterSpacing: '0.04em',
-  };
+  return map[status] ?? 'badge badge-neutral';
 };
 
 export function VisitReviewPage() {
@@ -80,19 +70,20 @@ export function VisitReviewPage() {
 
   return (
     <div>
-      <h2>EVV Visit Review</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>
-        Review electronically verified visits and route corrections through visit maintenance.
-      </p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Visit Review</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Review electronically verified visits and route corrections through visit maintenance.
+          </p>
+        </div>
+      </header>
 
       {banner && (
         <div
           role={banner.kind === 'error' ? 'alert' : 'status'}
-          style={{
-            marginBottom: '1rem', padding: '1rem', borderRadius: '8px', fontWeight: 600,
-            backgroundColor: banner.kind === 'success' ? '#ecfdf5' : '#fef2f2',
-            color: banner.kind === 'success' ? '#065f46' : '#991b1b',
-          }}
+          className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+          style={{ marginBottom: '1rem' }}
         >
           {banner.text}
         </div>
@@ -108,59 +99,47 @@ export function VisitReviewPage() {
           body="Verified visits will appear here once caregivers complete a clock-in/clock-out cycle."
         />
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Caregiver</th>
-                <th style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Clock In</th>
-                <th style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Clock Out</th>
-                <th style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
-                <th style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions</th>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Caregiver</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visits.map((visit) => (
+              <tr key={visit.id}>
+                <td>{caregiverLabel(visit.caregiverId)}</td>
+                <td style={{ whiteSpace: 'nowrap', color: '#475569', fontSize: '0.8125rem' }}>{new Date(visit.clockInTime).toLocaleString()}</td>
+                <td style={{ whiteSpace: 'nowrap', color: '#475569', fontSize: '0.8125rem' }}>
+                  {visit.clockOutTime ? new Date(visit.clockOutTime).toLocaleString() : <em style={{ color: '#94A3B8' }}>In progress</em>}
+                </td>
+                <td>
+                  <span className={statusBadgeClass(visit.status)} style={{ textTransform: 'capitalize' }}>{visit.status}</span>
+                </td>
+                <td>
+                  {(visit.status === 'pending' || visit.status === 'flagged') && (
+                    <button
+                      onClick={() => handleRequestCorrection(visit.id)}
+                      className="btn-ghost btn-sm"
+                    >
+                      Request Correction
+                    </button>
+                  )}
+                  {visit.status === 'verified' && (
+                    <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Closed</span>
+                  )}
+                  {visit.status === 'corrected' && (
+                    <span style={{ fontSize: '0.8125rem', color: '#4F46E5' }}>Corrected</span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {visits.map((visit) => (
-                <tr key={visit.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{caregiverLabel(visit.caregiverId)}</td>
-                  <td style={{ padding: '0.75rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>{new Date(visit.clockInTime).toLocaleString()}</td>
-                  <td style={{ padding: '0.75rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
-                    {visit.clockOutTime ? new Date(visit.clockOutTime).toLocaleString() : <em style={{ color: '#94a3b8' }}>In progress</em>}
-                  </td>
-                  <td style={{ padding: '0.75rem' }}>
-                    <span style={statusStyle(visit.status)}>{visit.status}</span>
-                  </td>
-                  <td style={{ padding: '0.75rem' }}>
-                    {(visit.status === 'pending' || visit.status === 'flagged') && (
-                      <button
-                        onClick={() => handleRequestCorrection(visit.id)}
-                        style={{
-                          fontSize: '0.8rem',
-                          padding: '0.35rem 0.75rem',
-                          backgroundColor: 'transparent',
-                          color: 'var(--color-primary)',
-                          border: '1px solid var(--color-primary)',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          marginTop: 0,
-                        }}
-                      >
-                        Request Correction
-                      </button>
-                    )}
-                    {visit.status === 'verified' && (
-                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Closed</span>
-                    )}
-                    {visit.status === 'corrected' && (
-                      <span style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>Corrected</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

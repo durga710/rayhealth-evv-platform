@@ -32,12 +32,12 @@ interface Progress {
   isCompliant: boolean;
 }
 
-const statusStyle: Record<string, { bg: string; text: string; label: string }> = {
-  completed: { bg: '#f0fdf4', text: '#166534', label: 'Completed' },
-  in_progress: { bg: '#eff6ff', text: '#1d4ed8', label: 'In progress' },
-  overdue: { bg: '#fef2f2', text: '#b91c1c', label: 'Overdue' },
-  expired: { bg: '#fef2f2', text: '#b91c1c', label: 'Expired' },
-  not_started: { bg: '#f8fafc', text: '#64748b', label: 'Not started' },
+const statusStyle: Record<string, { className: string; label: string }> = {
+  completed: { className: 'badge badge-success', label: 'Completed' },
+  in_progress: { className: 'badge badge-info', label: 'In progress' },
+  overdue: { className: 'badge badge-danger', label: 'Overdue' },
+  expired: { className: 'badge badge-danger', label: 'Expired' },
+  not_started: { className: 'badge badge-neutral', label: 'Not started' },
 };
 
 function formatDate(iso: string | null): string {
@@ -83,21 +83,35 @@ export function LearningPortalPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading your training…</div>;
+    return (
+      <div>
+        <header className="page-header">
+          <div className="page-header__title">
+            <h1 style={{ margin: 0 }}>My Training</h1>
+          </div>
+        </header>
+        <div style={{ padding: '2rem', color: '#94A3B8' }}>Loading your training…</div>
+      </div>
+    );
   }
 
   if (!progress || progress.enrollments.length === 0) {
     return (
       <div>
-        <h2>My Training</h2>
+        <header className="page-header">
+          <div className="page-header__title">
+            <h1 style={{ margin: 0 }}>My Training</h1>
+            <p style={{ margin: 0, color: '#64748B' }}>PA §52.18 caregiver training portal.</p>
+          </div>
+        </header>
         <div
           style={{
-            marginTop: '2rem',
-            padding: '2rem',
-            backgroundColor: '#f8fafc',
+            padding: '2.5rem',
+            backgroundColor: 'white',
+            border: '1px dashed #CBD5E1',
             borderRadius: '12px',
             textAlign: 'center',
-            color: '#64748b',
+            color: '#94A3B8',
           }}
         >
           No training courses assigned yet. Your coordinator will assign courses based on your role.
@@ -112,57 +126,43 @@ export function LearningPortalPage() {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        <div>
-          <h2 style={{ margin: 0 }}>My Training</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>My Training</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
             PA §52.18 caregiver training portal
           </p>
         </div>
         <div
           style={{
-            padding: '0.75rem 1.25rem',
-            backgroundColor: progress.isCompliant ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${progress.isCompliant ? '#86efac' : '#fca5a5'}`,
+            padding: '0.85rem 1.25rem',
+            backgroundColor: progress.isCompliant ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+            border: `1px solid ${progress.isCompliant ? '#A7F3D0' : '#FECDD3'}`,
             borderRadius: '10px',
             textAlign: 'center',
           }}
         >
           <div
             style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '1.5rem',
-              fontWeight: 900,
-              color: progress.isCompliant ? '#166534' : '#b91c1c',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: progress.isCompliant ? '#047857' : '#BE123C',
+              letterSpacing: '-0.01em',
             }}
           >
             {progress.isCompliant ? 'Compliant' : 'Action needed'}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.2rem' }}>
             {completedCount}/{required.length} required done
           </div>
         </div>
-      </div>
+      </header>
 
       {msg && (
         <div
-          style={{
-            padding: '0.75rem 1rem',
-            marginBottom: '1rem',
-            backgroundColor: msg.includes('!') ? '#f0fdf4' : '#fef2f2',
-            color: msg.includes('!') ? '#166534' : '#b91c1c',
-            borderRadius: '8px',
-            fontSize: '0.875rem',
-          }}
+          className={`info-banner ${msg.includes('!') ? 'banner-success' : 'banner-error'}`}
+          style={{ marginBottom: '1rem' }}
+          role={msg.includes('!') ? 'status' : 'alert'}
         >
           {msg}
         </div>
@@ -170,21 +170,19 @@ export function LearningPortalPage() {
 
       {required.length > 0 && (
         <section style={{ marginBottom: '2rem' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', color: 'var(--color-primary-dark)' }}>
-            Required training
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <h3 className="section-title" style={{ marginBottom: '0.75rem' }}>Required training</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {required.map(({ enrollment, course }) => {
               const s = statusStyle[enrollment.status] ?? statusStyle.not_started;
               const isExpanding = completingId === enrollment.id;
               return (
                 <div
                   key={enrollment.id}
-                  style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', backgroundColor: 'white' }}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
                 >
                   <div
                     style={{
-                      padding: '1rem 1.25rem',
+                      padding: '1.1rem 1.25rem',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -192,46 +190,26 @@ export function LearningPortalPage() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <strong style={{ color: 'var(--color-primary-dark)', fontSize: '0.95rem' }}>
+                      <strong style={{ color: '#0F172A', fontSize: '0.9375rem', fontWeight: 600 }}>
                         {course.title}
                       </strong>
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b', lineHeight: 1.4 }}>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#64748B', lineHeight: 1.5 }}>
                         {course.description}
                       </p>
-                      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#94A3B8' }}>
                         <span>{course.durationMinutes} min</span>
                         {enrollment.dueAt && <span>Due {formatDate(enrollment.dueAt)}</span>}
                         {enrollment.lastCompletedAt && <span>Completed {formatDate(enrollment.lastCompletedAt)}</span>}
                         {enrollment.expiresAt && <span>Expires {formatDate(enrollment.expiresAt)}</span>}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                      <span
-                        style={{
-                          padding: '3px 10px',
-                          backgroundColor: s.bg,
-                          color: s.text,
-                          borderRadius: '999px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {s.label}
-                      </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.55rem' }}>
+                      <span className={s.className}>{s.label}</span>
                       {enrollment.status !== 'completed' && (
                         <button
+                          type="button"
                           onClick={() => setCompletingId(isExpanding ? null : enrollment.id)}
-                          style={{
-                            fontSize: '0.8rem',
-                            padding: '0.4rem 0.9rem',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
+                          className={isExpanding ? 'btn-secondary btn-sm' : 'btn-primary btn-sm'}
                         >
                           {isExpanding ? 'Cancel' : 'Mark complete'}
                         </button>
@@ -244,19 +222,19 @@ export function LearningPortalPage() {
                       onSubmit={(e) => handleComplete(e, enrollment.id, course.id)}
                       style={{
                         padding: '1rem 1.25rem',
-                        borderTop: '1px solid #f1f5f9',
-                        backgroundColor: '#f8fafc',
+                        borderTop: '1px solid #E2E8F0',
+                        backgroundColor: '#F8FAFC',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.6rem',
+                        gap: '0.75rem',
                       }}
                     >
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748B' }}>
                         Record that you have completed <strong>{course.title}</strong>.
                       </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Score (0–100, optional)</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <label className="label">Score (0–100, optional)</label>
                           <input
                             type="number"
                             min="0"
@@ -264,34 +242,24 @@ export function LearningPortalPage() {
                             value={score}
                             onChange={(e) => setScore(e.target.value)}
                             placeholder="e.g. 85"
-                            style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                            className="input-field"
                           />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Notes (optional)</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <label className="label">Notes (optional)</label>
                           <input
                             type="text"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="e.g. in-person classroom"
-                            style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                            className="input-field"
                           />
                         </div>
                       </div>
                       <button
                         type="submit"
-                        style={{
-                          alignSelf: 'flex-start',
-                          padding: '0.5rem 1.25rem',
-                          backgroundColor: '#166534',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontFamily: 'inherit',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                        }}
+                        className="btn-primary btn-sm"
+                        style={{ alignSelf: 'flex-start', backgroundColor: '#10B981', borderColor: '#10B981' }}
                       >
                         Confirm completion
                       </button>
@@ -306,9 +274,7 @@ export function LearningPortalPage() {
 
       {elective.length > 0 && (
         <section>
-          <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', color: 'var(--color-primary-dark)' }}>
-            Elective training
-          </h3>
+          <h3 className="section-title" style={{ marginBottom: '0.75rem' }}>Elective training</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {elective.map(({ enrollment, course }) => {
               const s = statusStyle[enrollment.status] ?? statusStyle.not_started;
@@ -316,11 +282,11 @@ export function LearningPortalPage() {
               return (
                 <div
                   key={enrollment.id}
-                  style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', backgroundColor: 'white' }}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
                 >
                   <div
                     style={{
-                      padding: '0.875rem 1.25rem',
+                      padding: '0.95rem 1.25rem',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -328,40 +294,21 @@ export function LearningPortalPage() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <strong style={{ color: 'var(--color-primary-dark)', fontSize: '0.9rem' }}>
+                      <strong style={{ color: '#0F172A', fontSize: '0.9rem', fontWeight: 600 }}>
                         {course.title}
                       </strong>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem' }}>
                         {course.durationMinutes} min
                         {enrollment.lastCompletedAt && ` · completed ${formatDate(enrollment.lastCompletedAt)}`}
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span
-                        style={{
-                          padding: '2px 8px',
-                          backgroundColor: s.bg,
-                          color: s.text,
-                          borderRadius: '999px',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {s.label}
-                      </span>
+                      <span className={s.className}>{s.label}</span>
                       {enrollment.status !== 'completed' && (
                         <button
+                          type="button"
                           onClick={() => setCompletingId(isExpanding ? null : enrollment.id)}
-                          style={{
-                            fontSize: '0.75rem',
-                            padding: '0.35rem 0.8rem',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
+                          className={isExpanding ? 'btn-secondary btn-sm' : 'btn-primary btn-sm'}
                         >
                           {isExpanding ? 'Cancel' : 'Mark complete'}
                         </button>
@@ -373,38 +320,30 @@ export function LearningPortalPage() {
                     <form
                       onSubmit={(e) => handleComplete(e, enrollment.id, course.id)}
                       style={{
-                        padding: '0.875rem 1.25rem',
-                        borderTop: '1px solid #f1f5f9',
-                        backgroundColor: '#f8fafc',
+                        padding: '0.95rem 1.25rem',
+                        borderTop: '1px solid #E2E8F0',
+                        backgroundColor: '#F8FAFC',
                         display: 'flex',
-                        gap: '0.6rem',
+                        gap: '0.75rem',
                         alignItems: 'flex-end',
                         flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Notes (optional)</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <label className="label">Notes (optional)</label>
                         <input
                           type="text"
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           placeholder="delivery method…"
-                          style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', width: '200px' }}
+                          className="input-field"
+                          style={{ width: '220px' }}
                         />
                       </div>
                       <button
                         type="submit"
-                        style={{
-                          padding: '0.4rem 1rem',
-                          backgroundColor: '#166534',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontFamily: 'inherit',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: '0.8rem',
-                        }}
+                        className="btn-primary btn-sm"
+                        style={{ backgroundColor: '#10B981', borderColor: '#10B981' }}
                       >
                         Confirm
                       </button>

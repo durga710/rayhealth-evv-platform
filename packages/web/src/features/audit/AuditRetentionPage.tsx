@@ -23,26 +23,27 @@ const card: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
   padding: '1.5rem',
-  border: '1px solid #e2e8f0'
+  border: '1px solid #E2E8F0'
 };
 
 const stat: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.25rem'
+  gap: '0.35rem'
 };
 
 const statValue: React.CSSProperties = {
-  fontSize: '1.6rem',
-  fontWeight: 800,
-  color: 'var(--color-primary-dark, #0d1f3c)',
-  lineHeight: 1
+  fontSize: '1.875rem',
+  fontWeight: 700,
+  color: '#0F172A',
+  lineHeight: 1,
+  letterSpacing: '-0.02em'
 };
 
 const statLabel: React.CSSProperties = {
   fontSize: '0.7rem',
-  fontWeight: 700,
-  color: '#64748b',
+  fontWeight: 600,
+  color: '#64748B',
   textTransform: 'uppercase',
   letterSpacing: '0.06em'
 };
@@ -76,11 +77,15 @@ export function AuditRetentionPage() {
 
   return (
     <div>
-      <h2>Audit Log Retention</h2>
-      <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-muted, #64748b)' }}>
-        HIPAA evidence dashboard — 45 CFR §164.530(j) requires 6-year retention of audit logs.
-        This page reports the data of record without exposing PHI.
-      </p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Audit Log Retention</h1>
+          <p style={{ margin: 0, color: '#64748B', maxWidth: '720px' }}>
+            HIPAA evidence dashboard &mdash; 45 CFR §164.530(j) requires 6-year retention of audit logs.
+            This page reports the data of record without exposing PHI.
+          </p>
+        </div>
+      </header>
 
       {loading && (
         <div style={{ ...card, textAlign: 'center', color: '#64748b' }}>Loading…</div>

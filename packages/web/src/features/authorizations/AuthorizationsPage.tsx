@@ -24,16 +24,7 @@ const PA_SERVICE_CODES = [
   { code: 'T1019', label: 'T1019 — Personal Care Aide' },
 ];
 
-const selectStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  border: '1px solid #c9d8e8',
-  borderRadius: '8px',
-  fontFamily: 'inherit',
-  fontSize: '1rem',
-  color: 'var(--color-text)',
-  backgroundColor: 'white',
-  width: '100%',
-};
+// Select fields use the global .select-field class for consistency.
 
 export function AuthorizationsPage() {
   const [authorizations, setAuthorizations] = useState<Authorization[]>([]);
@@ -109,19 +100,25 @@ export function AuthorizationsPage() {
 
   return (
     <div>
-      <h2>PA Authorizations</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Manage service authorizations and unit tracking.</p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Authorizations</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Manage Pennsylvania service authorizations and unit tracking.
+          </p>
+        </div>
+        <button type="button" onClick={focusAdd} className="btn-primary">
+          Add authorization
+        </button>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <h3 style={{ margin: 0, marginBottom: '1rem' }}>Add Authorization</h3>
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div>
-                <label htmlFor="authClientId">Client</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <select id="authClientId" value={clientId} onChange={e => setClientId(e.target.value)} required style={selectStyle}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="form-card">
+          <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>Add authorization</h3>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="authClientId" className="label">Client</label>
+              <select id="authClientId" value={clientId} onChange={e => setClientId(e.target.value)} required className="select-field">
                 <option value="">Select a client…</option>
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
@@ -129,21 +126,15 @@ export function AuthorizationsPage() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label htmlFor="payerId">Payer ID</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <input id="payerId" value={payerId} onChange={e => setPayerId(e.target.value)} placeholder="e.g. PA-MA-12" required />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="payerId" className="label">Payer ID</label>
+              <input id="payerId" value={payerId} onChange={e => setPayerId(e.target.value)} placeholder="e.g. PA-MA-12" required className="input-field" />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="serviceCode">Service Code</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <select id="serviceCode" value={serviceCode} onChange={e => { setServiceCode(e.target.value); setCustomCode(''); }} required style={selectStyle}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="serviceCode" className="label">Service Code</label>
+                <select id="serviceCode" value={serviceCode} onChange={e => { setServiceCode(e.target.value); setCustomCode(''); }} required className="select-field">
                   <option value="">Select…</option>
                   {PA_SERVICE_CODES.map(s => (
                     <option key={s.code} value={s.code}>{s.label}</option>
@@ -155,55 +146,44 @@ export function AuthorizationsPage() {
                     placeholder="Enter service code"
                     value={customCode}
                     onChange={e => setCustomCode(e.target.value)}
-                    style={{ marginTop: '0.5rem' }}
+                    style={{ marginTop: '0.4rem' }}
                     required
+                    className="input-field"
                   />
                 )}
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="units">Units</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <input id="units" type="number" min="1" value={unitsAuthorized} onChange={e => setUnitsAuthorized(Number(e.target.value))} required />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="units" className="label">Units</label>
+                <input id="units" type="number" min="1" value={unitsAuthorized} onChange={e => setUnitsAuthorized(Number(e.target.value))} required className="input-field" />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="startDate">Start Date</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <input id="startDate" type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setValidationError(''); }} required />
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="startDate" className="label">Start Date</label>
+                <input id="startDate" type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setValidationError(''); }} required className="input-field" />
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="endDate">End Date</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <input id="endDate" type="date" value={endDate} min={startDate || undefined} onChange={e => { setEndDate(e.target.value); setValidationError(''); }} required />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="endDate" className="label">End Date</label>
+                <input id="endDate" type="date" value={endDate} min={startDate || undefined} onChange={e => { setEndDate(e.target.value); setValidationError(''); }} required className="input-field" />
               </div>
             </div>
 
             {validationError && (
-              <div role="alert" style={{ marginTop: '0.5rem', color: '#991b1b', fontSize: '0.875rem', fontWeight: 600 }}>
+              <div role="alert" style={{ color: '#BE123C', fontSize: '0.8125rem', fontWeight: 500 }}>
                 {validationError}
               </div>
             )}
 
-            <button type="submit" disabled={submitting} style={submitting ? { opacity: 0.6, cursor: 'wait' } : undefined}>
+            <button type="submit" disabled={submitting} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
               {submitting ? 'Saving…' : 'Save Authorization'}
             </button>
           </form>
           {banner && (
             <div
               role={banner.kind === 'error' ? 'alert' : 'status'}
-              style={{
-                marginTop: '1rem', padding: '1rem', borderRadius: '8px', fontWeight: 600,
-                backgroundColor: banner.kind === 'success' ? '#ecfdf5' : '#fef2f2',
-                color: banner.kind === 'success' ? '#065f46' : '#991b1b',
-              }}
+              className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+              style={{ marginTop: '1rem' }}
             >
               {banner.text}
             </div>
@@ -211,9 +191,14 @@ export function AuthorizationsPage() {
         </div>
 
         <div>
-          <h3>Active Authorizations</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Active authorizations</h3>
+            {!loading && !loadError && authorizations.length > 0 && (
+              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{authorizations.length} total</span>
+            )}
+          </div>
           {loading ? (
-            <LoadingSkeleton rows={5} columns={2} />
+            <LoadingSkeleton rows={5} columns={4} />
           ) : loadError ? (
             <ErrorRetry message={loadError} onRetry={loadData} />
           ) : authorizations.length === 0 ? (
@@ -223,50 +208,68 @@ export function AuthorizationsPage() {
               cta={{ label: 'Add an authorization', onClick: focusAdd }}
             />
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {authorizations.map(a => {
-                const isExpanded = expandedId === a.id;
-                const today = new Date().toISOString().slice(0, 10);
-                const isExpired = a.endDate < today;
-                const isExpiringSoon = !isExpired && a.endDate <= new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-                return (
-                  <li key={a.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', backgroundColor: isExpanded ? '#f8fafc' : 'white' }}>
-                    <button
-                      type="button"
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedId(isExpanded ? null : a.id)}
-                      style={{ width: '100%', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit', color: 'inherit' }}
-                    >
-                      <div>
-                        <strong>{a.serviceCode}</strong> — {clientName(a.clientId)}
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                          {a.unitsAuthorized} units · {a.startDate} → {a.endDate}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                        {isExpired && (
-                          <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '4px', fontWeight: 700 }}>EXPIRED</span>
-                        )}
-                        {isExpiringSoon && (
-                          <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '4px', fontWeight: 700 }}>EXPIRING SOON</span>
-                        )}
-                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{isExpanded ? '▾' : '▸'}</span>
-                      </div>
-                    </button>
-                    {isExpanded && (
-                      <div style={{ padding: '0 1rem 1rem', borderTop: '1px solid #e2e8f0', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1rem', color: '#475569' }}>
-                        <div style={{ fontWeight: 600 }}>Authorization ID</div><div style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{a.id}</div>
-                        <div style={{ fontWeight: 600 }}>Client</div><div>{clientName(a.clientId)}</div>
-                        <div style={{ fontWeight: 600 }}>Payer ID</div><div>{a.payerId}</div>
-                        <div style={{ fontWeight: 600 }}>Service code</div><div>{a.serviceCode}</div>
-                        <div style={{ fontWeight: 600 }}>Units authorized</div><div>{a.unitsAuthorized}</div>
-                        <div style={{ fontWeight: 600 }}>Effective</div><div>{a.startDate} → {a.endDate}</div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Client</th>
+                  <th>Units</th>
+                  <th>Effective</th>
+                  <th>Status</th>
+                  <th style={{ width: '40px' }} aria-label="expand" />
+                </tr>
+              </thead>
+              <tbody>
+                {authorizations.map((a) => {
+                  const isExpanded = expandedId === a.id;
+                  const today = new Date().toISOString().slice(0, 10);
+                  const isExpired = a.endDate < today;
+                  const isExpiringSoon = !isExpired && a.endDate <= new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+                  return (
+                    <React.Fragment key={a.id}>
+                      <tr
+                        onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                        style={{ cursor: 'pointer' }}
+                        aria-expanded={isExpanded}
+                      >
+                        <td>
+                          <span className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', letterSpacing: 0, textTransform: 'none' }}>{a.serviceCode}</span>
+                        </td>
+                        <td>{clientName(a.clientId)}</td>
+                        <td style={{ color: '#475569' }}>{a.unitsAuthorized}</td>
+                        <td style={{ color: '#475569', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
+                          {a.startDate} → {a.endDate}
+                        </td>
+                        <td>
+                          {isExpired ? (
+                            <span className="badge badge-danger">Expired</span>
+                          ) : isExpiringSoon ? (
+                            <span className="badge badge-warning">Expiring soon</span>
+                          ) : (
+                            <span className="badge badge-success">Active</span>
+                          )}
+                        </td>
+                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={6} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                              <div style={{ fontWeight: 600 }}>Authorization ID</div><div style={{ fontFamily: 'var(--font-mono)' }}>{a.id}</div>
+                              <div style={{ fontWeight: 600 }}>Client</div><div>{clientName(a.clientId)}</div>
+                              <div style={{ fontWeight: 600 }}>Payer ID</div><div>{a.payerId}</div>
+                              <div style={{ fontWeight: 600 }}>Service code</div><div>{a.serviceCode}</div>
+                              <div style={{ fontWeight: 600 }}>Units authorized</div><div>{a.unitsAuthorized}</div>
+                              <div style={{ fontWeight: 600 }}>Effective</div><div>{a.startDate} → {a.endDate}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

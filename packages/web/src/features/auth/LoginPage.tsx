@@ -3,10 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext.js';
 
 const trustPoints = [
-  'Server-managed sessions in HttpOnly cookies — no JWTs in browser storage.',
-  'Double-submit CSRF tokens on every state-changing request.',
-  'Every login, logout, and CSRF failure is recorded in audit_events.',
-  'Mobile access tokens live in expo-secure-store, never plain JS.',
+  'HIPAA-aware infrastructure with HttpOnly cookie sessions.',
+  'Double-submit CSRF protection on every state-changing request.',
+  'Append-only audit trail — every login, logout, and access is logged.',
 ];
 
 export function LoginPage() {
@@ -38,70 +37,95 @@ export function LoginPage() {
       style={{
         minHeight: '100vh',
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)',
-        backgroundColor: 'var(--color-bg)',
+        gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)',
+        backgroundColor: 'white',
       }}
     >
-      {/* Brand panel */}
+      {/* Dark brand panel */}
       <aside
         style={{
-          backgroundColor: 'var(--color-primary-dark)',
+          backgroundColor: '#0F172A',
           color: 'white',
-          padding: '3rem 3.5rem',
+          padding: '3rem 4rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          backgroundImage:
-            'radial-gradient(circle at 12% 18%, rgba(249,115,22,0.12), transparent 38%), radial-gradient(circle at 85% 80%, rgba(56,134,213,0.18), transparent 42%)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div>
-          <Link
-            to="/"
-            style={{
-              textDecoration: 'none',
-              color: 'white',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 900,
-              fontSize: '1.5rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-            }}
-          >
-            RayHealth
-            <span
-              style={{
-                backgroundColor: 'var(--color-accent)',
-                color: 'white',
-                padding: '2px 10px',
-                borderRadius: '12px',
-                fontSize: '0.75rem',
-                letterSpacing: '2px',
-                fontWeight: 800,
-              }}
-            >
-              EVV
-            </span>
-          </Link>
-        </div>
+        {/* Subtle ambient highlight — single soft indigo glow, no dual-color gradient. */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: '-10%',
+            right: '-20%',
+            width: '60%',
+            height: '60%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '460px' }}>
-          <div
+        <Link
+          to="/"
+          style={{
+            position: 'relative',
+            textDecoration: 'none',
+            color: 'white',
+            fontWeight: 700,
+            fontSize: '1.25rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          RayHealth
+          <span
             style={{
-              fontSize: '0.75rem',
-              letterSpacing: '3px',
+              background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+              color: 'white',
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              letterSpacing: '0.14em',
               fontWeight: 700,
-              color: 'var(--color-accent)',
               textTransform: 'uppercase',
             }}
           >
-            Hardened admin portal
-          </div>
-          <h1 style={{ fontSize: '2.5rem', lineHeight: 1.15, margin: 0, color: 'white' }}>
-            Sign in to the verified care platform.
+            EVV
+          </span>
+        </Link>
+
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '1.75rem', maxWidth: '480px' }}>
+          <h1
+            style={{
+              fontSize: '2.5rem',
+              lineHeight: 1.1,
+              margin: 0,
+              color: 'white',
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            The verified care platform for Pennsylvania agencies.
           </h1>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
+            Schedule, verify, and audit every visit &mdash; built around PA DHS Personal Assistance Services and the 21st Century Cures Act.
+          </p>
+
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem',
+            }}
+          >
             {trustPoints.map((point) => (
               <li
                 key={point}
@@ -109,31 +133,33 @@ export function LoginPage() {
                   display: 'flex',
                   gap: '0.75rem',
                   alignItems: 'flex-start',
-                  color: '#cfe1f7',
-                  fontSize: '0.95rem',
+                  color: '#94A3B8',
+                  fontSize: '0.9rem',
                   lineHeight: 1.5,
                 }}
               >
-                <span
-                  aria-hidden
-                  style={{
-                    flexShrink: 0,
-                    marginTop: '0.35rem',
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '999px',
-                    backgroundColor: 'var(--color-accent)',
-                    boxShadow: '0 0 0 4px rgba(249,115,22,0.18)',
-                  }}
-                />
+                <svg
+                  aria-hidden="true"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#6366F1"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0, marginTop: '2px' }}
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 <span>{point}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)' }}>
-          Pennsylvania-only · HIPAA-aware · 21st Century Cures Act compliant
+        <div style={{ position: 'relative', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.04em' }}>
+          Pennsylvania-only &middot; HIPAA-aware &middot; 21st Century Cures Act compliant
         </div>
       </aside>
 
@@ -144,89 +170,52 @@ export function LoginPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '3rem 2rem',
+          backgroundColor: 'white',
         }}
       >
         <div
           style={{
             width: '100%',
-            maxWidth: '420px',
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '2.5rem',
-            boxShadow: '0 20px 50px rgba(26, 95, 168, 0.10)',
-            border: '1px solid rgba(201, 216, 232, 0.5)',
+            maxWidth: '380px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2rem',
           }}
         >
-          <div style={{ marginBottom: '1.75rem' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                backgroundColor: 'rgba(34, 197, 94, 0.12)',
-                color: '#15803d',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                padding: '0.3rem 0.7rem',
-                borderRadius: '999px',
-                marginBottom: '1rem',
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '999px',
-                  backgroundColor: '#16a34a',
-                  boxShadow: '0 0 0 3px rgba(22,163,74,0.2)',
-                }}
-              />
-              Cookie session active
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <h2
               style={{
                 margin: 0,
-                fontSize: '1.875rem',
-                color: 'var(--color-primary-dark)',
-                lineHeight: 1.2,
+                fontSize: '1.625rem',
+                fontWeight: 700,
+                color: '#0F172A',
+                letterSpacing: '-0.02em',
               }}
             >
-              Welcome back.
+              Sign in
             </h2>
-            <p
-              style={{
-                margin: '0.5rem 0 0',
-                color: 'var(--color-text-muted)',
-                fontSize: '0.95rem',
-              }}
-            >
-              Sign in to coordinate care, review visits, and clear exceptions.
+            <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem' }}>
+              Welcome back. Enter your credentials to continue.
             </p>
           </div>
 
           {error && (
             <div
               role="alert"
-              style={{
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fca5a5',
-                borderRadius: '8px',
-                padding: '0.75rem 1rem',
-                marginBottom: '1.25rem',
-                color: '#b91c1c',
-                fontSize: '0.875rem',
-              }}
+              className="info-banner banner-error"
             >
-              {error}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <label htmlFor="email" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-              Email
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="email" className="label">Email</label>
               <input
                 id="email"
                 type="email"
@@ -235,89 +224,74 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@your-agency.example"
                 required
-                style={{ fontWeight: 400 }}
+                className="input-field"
               />
-            </label>
-            <label htmlFor="password" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-              Password
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="password" className="label">Password</label>
               <input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 required
-                style={{ fontWeight: 400 }}
+                className="input-field"
               />
-            </label>
+            </div>
 
             <button
               type="submit"
               disabled={loading}
+              className="btn-primary"
               style={{
                 width: '100%',
+                padding: '0.75rem',
+                fontWeight: 600,
                 marginTop: '0.5rem',
-                padding: '0.85rem 1rem',
-                backgroundColor: 'var(--color-accent)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '1rem',
+                fontSize: '0.9375rem',
                 cursor: loading ? 'wait' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                boxShadow: '0 6px 18px rgba(249,115,22,0.28)',
               }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
-          <p
+          <div
             style={{
-              marginTop: '1.5rem',
-              fontSize: '0.8rem',
-              color: 'var(--color-text-muted)',
-              textAlign: 'center',
+              borderTop: '1px solid #E2E8F0',
+              paddingTop: '1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.75rem',
             }}
           >
-            Need access? <Link to="/" style={{ color: 'var(--color-primary-light)', fontWeight: 600 }}>Talk to your agency admin.</Link>
-          </p>
-
-          {/* Trust footer — links to public HIPAA compliance page. */}
-          <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'center' }}>
             <Link
               to="/compliance/hipaa"
-              aria-label="HIPAA-compliant — view our control documentation"
+              aria-label="View HIPAA compliance documentation"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                backgroundColor: 'rgba(34, 197, 94, 0.12)',
-                color: '#15803d',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '999px',
-                fontSize: '0.625rem',
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
+                color: '#64748B',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                letterSpacing: '0.04em',
                 textDecoration: 'none',
               }}
             >
-              <span
-                aria-hidden="true"
-                style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#16a34a',
-                }}
-              />
-              HIPAA-COMPLIANT
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 12l2 2 4-4" />
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              HIPAA compliance documentation
             </Link>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+              Need access? <Link to="/" style={{ color: '#6366F1', fontWeight: 500 }}>Contact your agency admin.</Link>
+            </span>
           </div>
         </div>
       </main>
