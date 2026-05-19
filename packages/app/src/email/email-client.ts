@@ -31,7 +31,9 @@ export interface EmailClient {
   sendInviteEmail(params: InviteEmailParams): Promise<SendEmailResult>;
 }
 
-const DEFAULT_FROM = 'RayHealth <onboarding@rayhealthevv.com>';
+// Uses Resend's own shared domain so emails work before rayhealthevv.com
+// is verified in the Resend dashboard.
+const DEFAULT_FROM = 'onboarding@resend.dev';
 
 function createNoopClient(): EmailClient {
   return {
