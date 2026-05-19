@@ -22,8 +22,8 @@ export class CaregiverRepository {
     return this.mapCaregiver(row);
   }
 
-  async findById(id: string): Promise<Caregiver | undefined> {
-    const row = await this.db('caregivers').where({ id }).first();
+  async findById(id: string, agencyId: string): Promise<Caregiver | undefined> {
+    const row = await this.db('caregivers').where({ id, agency_id: agencyId }).first();
     return row ? this.mapCaregiver(row) : undefined;
   }
 
@@ -32,13 +32,14 @@ export class CaregiverRepository {
     return rows.map((r: Record<string, unknown>) => this.mapCaregiver(r));
   }
 
-  async findByEmail(email: string): Promise<Caregiver | undefined> {
-    const row = await this.db('caregivers').where({ email }).first();
+  async findByEmail(email: string, agencyId: string): Promise<Caregiver | undefined> {
+    const row = await this.db('caregivers').where({ email, agency_id: agencyId }).first();
     return row ? this.mapCaregiver(row) : undefined;
   }
 
-  async updateStatus(id: string, status: 'active' | 'inactive' | 'suspended'): Promise<void> {
-    await this.db('caregivers').where({ id }).update({ status });
+  async updateStatus(id: string, agencyId: string, status: 'active' | 'inactive' | 'terminated'): Promise<void> {
+    const updated = await this.db('caregivers').where({ id, agency_id: agencyId }).update({ status });
+    if (updated === 0) throw new Error('caregiver not found in agency');
   }
 
   async saveCredential(credential: Omit<CaregiverCredential, 'id'>): Promise<CaregiverCredential> {
@@ -54,13 +55,19 @@ export class CaregiverRepository {
     return this.mapCredential(row);
   }
 
-  async getCredentials(caregiverId: string): Promise<CaregiverCredential[]> {
-    const rows = await this.db('caregiver_credentials').where({ caregiver_id: caregiverId });
+  async getCredentials(caregiverId: string, agencyId: string): Promise<CaregiverCredential[]> {
+    const rows = await this.db('caregiver_credentials as cc')
+      .join('caregivers as c', 'c.id', 'cc.caregiver_id')
+      .where({ 'cc.caregiver_id': caregiverId, 'c.agency_id': agencyId })
+      .select('cc.*');
     return rows.map((r: Record<string, unknown>) => this.mapCredential(r));
   }
 
-  async expireCredential(id: string): Promise<void> {
-    await this.db('caregiver_credentials').where({ id }).update({ status: 'expired' });
+  async expireCredential(id: string, agencyId: string): Promise<void> {
+    await this.db('caregiver_credentials as cc')
+      .join('caregivers as c', 'c.id', 'cc.caregiver_id')
+      .where({ 'cc.id': id, 'c.agency_id': agencyId })
+      .update({ 'cc.status': 'expired' });
   }
 
   async createInvite(invite: Omit<StaffInvite, 'id'>): Promise<PersistedStaffInvite> {

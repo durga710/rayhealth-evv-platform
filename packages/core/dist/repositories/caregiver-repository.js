@@ -19,20 +19,22 @@ export class CaregiverRepository {
         }).returning('*');
         return this.mapCaregiver(row);
     }
-    async findById(id) {
-        const row = await this.db('caregivers').where({ id }).first();
+    async findById(id, agencyId) {
+        const row = await this.db('caregivers').where({ id, agency_id: agencyId }).first();
         return row ? this.mapCaregiver(row) : undefined;
     }
     async findByAgency(agencyId) {
         const rows = await this.db('caregivers').where({ agency_id: agencyId });
         return rows.map((r) => this.mapCaregiver(r));
     }
-    async findByEmail(email) {
-        const row = await this.db('caregivers').where({ email }).first();
+    async findByEmail(email, agencyId) {
+        const row = await this.db('caregivers').where({ email, agency_id: agencyId }).first();
         return row ? this.mapCaregiver(row) : undefined;
     }
-    async updateStatus(id, status) {
-        await this.db('caregivers').where({ id }).update({ status });
+    async updateStatus(id, agencyId, status) {
+        const updated = await this.db('caregivers').where({ id, agency_id: agencyId }).update({ status });
+        if (updated === 0)
+            throw new Error('caregiver not found in agency');
     }
     async saveCredential(credential) {
         const [row] = await this.db('caregiver_credentials').insert({
@@ -46,12 +48,18 @@ export class CaregiverRepository {
         }).returning('*');
         return this.mapCredential(row);
     }
-    async getCredentials(caregiverId) {
-        const rows = await this.db('caregiver_credentials').where({ caregiver_id: caregiverId });
+    async getCredentials(caregiverId, agencyId) {
+        const rows = await this.db('caregiver_credentials as cc')
+            .join('caregivers as c', 'c.id', 'cc.caregiver_id')
+            .where({ 'cc.caregiver_id': caregiverId, 'c.agency_id': agencyId })
+            .select('cc.*');
         return rows.map((r) => this.mapCredential(r));
     }
-    async expireCredential(id) {
-        await this.db('caregiver_credentials').where({ id }).update({ status: 'expired' });
+    async expireCredential(id, agencyId) {
+        await this.db('caregiver_credentials as cc')
+            .join('caregivers as c', 'c.id', 'cc.caregiver_id')
+            .where({ 'cc.id': id, 'c.agency_id': agencyId })
+            .update({ 'cc.status': 'expired' });
     }
     async createInvite(invite) {
         const [row] = await this.db('staff_invites').insert({

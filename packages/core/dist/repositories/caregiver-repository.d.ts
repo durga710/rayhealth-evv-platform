@@ -4,13 +4,13 @@ export declare class CaregiverRepository {
     private readonly db;
     constructor(db: Knex);
     create(data: Omit<Caregiver, 'id'>): Promise<Caregiver>;
-    findById(id: string): Promise<Caregiver | undefined>;
+    findById(id: string, agencyId: string): Promise<Caregiver | undefined>;
     findByAgency(agencyId: string): Promise<Caregiver[]>;
-    findByEmail(email: string): Promise<Caregiver | undefined>;
-    updateStatus(id: string, status: 'active' | 'inactive' | 'suspended'): Promise<void>;
+    findByEmail(email: string, agencyId: string): Promise<Caregiver | undefined>;
+    updateStatus(id: string, agencyId: string, status: 'active' | 'inactive' | 'terminated'): Promise<void>;
     saveCredential(credential: Omit<CaregiverCredential, 'id'>): Promise<CaregiverCredential>;
-    getCredentials(caregiverId: string): Promise<CaregiverCredential[]>;
-    expireCredential(id: string): Promise<void>;
+    getCredentials(caregiverId: string, agencyId: string): Promise<CaregiverCredential[]>;
+    expireCredential(id: string, agencyId: string): Promise<void>;
     createInvite(invite: Omit<StaffInvite, 'id'>): Promise<PersistedStaffInvite>;
     /**
      * Look up an invite by its UUID (which is the share-token). Returns

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireCapability } from '../middleware/require-capability.js';
-import { ScheduleRepository, assignmentInputSchema } from '@rayhealth/core';
+import { CaregiverRepository, ScheduleRepository, assignmentInputSchema } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 const router = Router();
 router.get('/caregiver', requireCapability('schedule.read'), async (req, res) => {
@@ -34,6 +34,13 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
         });
         if (!parsed.success) {
             return res.status(400).json({ message: 'Valid caregiverId and visitTemplateId are required' });
+        }
+        // Verify the caregiver belongs to this agency before creating the assignment.
+        // Without this check an admin with a leaked caregiverId from another agency
+        // could create cross-agency assignments.
+        const caregiver = await new CaregiverRepository(db).findById(parsed.data.caregiverId, req.auth.agencyId);
+        if (!caregiver) {
+            return res.status(403).json({ message: 'Caregiver does not belong to this agency' });
         }
         const assignment = await repo.createAssignment(parsed.data);
         res.status(201).json(assignment);

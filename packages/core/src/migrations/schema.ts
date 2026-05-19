@@ -158,6 +158,24 @@ export async function up(knex: Knex): Promise<void> {
     });
   }
 
+  // Enforce per-agency email uniqueness on caregivers. The same email address
+  // must not appear twice within one agency (duplicate enrollment). Cross-agency
+  // is allowed (same person contracted at two agencies).
+  await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='caregivers')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                         WHERE table_schema='public'
+                           AND table_name='caregivers'
+                           AND constraint_name='caregivers_agency_email_unique') THEN
+        ALTER TABLE caregivers
+          ADD CONSTRAINT caregivers_agency_email_unique UNIQUE (agency_id, email);
+      END IF;
+    END$$;
+  `);
+
   // Idempotent: add active_agency_id to sessions if it doesn't exist yet.
   // The column was added manually to the live DB; this guard ensures a
   // fresh schema run or test DB also picks it up.
