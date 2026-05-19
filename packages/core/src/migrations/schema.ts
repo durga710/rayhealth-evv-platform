@@ -729,6 +729,44 @@ export async function up(knex: Knex): Promise<void> {
       table.index(['caregiver_id']);
     });
   }
+
+  // ── R7 — Sandata aggregator submission tracking ───────────────────────────
+  // Track each visit's lifecycle through the state aggregator pipeline.
+  // Intentionally excluded from the immutability trigger's blocked list —
+  // these are the only columns that legitimately change after clock-out,
+  // when the background job submits to Sandata and records the acceptance.
+  if (await knex.schema.hasTable('evv_visits')) {
+    if (!(await knex.schema.hasColumn('evv_visits', 'sandata_status'))) {
+      await knex.schema.alterTable('evv_visits', (t) => {
+        t.string('sandata_status').nullable();
+      });
+    }
+    if (!(await knex.schema.hasColumn('evv_visits', 'sandata_confirmation_id'))) {
+      await knex.schema.alterTable('evv_visits', (t) => {
+        t.text('sandata_confirmation_id').nullable();
+      });
+    }
+    await knex.raw(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE table_schema = 'public'
+            AND table_name = 'evv_visits'
+            AND constraint_name = 'evv_visits_sandata_status_check'
+        ) AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'evv_visits'
+            AND column_name = 'sandata_status'
+        ) THEN
+          ALTER TABLE evv_visits
+            ADD CONSTRAINT evv_visits_sandata_status_check
+            CHECK (sandata_status IN ('pending','submitted','accepted','rejected'));
+        END IF;
+      END$$;
+    `);
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {

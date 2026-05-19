@@ -60,6 +60,13 @@ export declare const evvVisitSchema: z.ZodObject<{
         verified: "verified";
         flagged: "flagged";
     }>>;
+    sandataStatus: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+        pending: "pending";
+        accepted: "accepted";
+        submitted: "submitted";
+        rejected: "rejected";
+    }>>>;
+    sandataConfirmationId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, z.core.$strip>;
 export type EvvVisit = z.infer<typeof evvVisitSchema>;
 export type EvvClockInInput = z.infer<typeof evvClockInInputSchema>;

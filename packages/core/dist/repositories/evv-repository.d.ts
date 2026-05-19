@@ -50,5 +50,12 @@ export declare class EvvRepository {
     /** Visits for a single caregiver. Caller must pass req.auth.caregiverId. */
     getVisitsForCaregiver(caregiverId: string): Promise<EvvVisit[]>;
     private mapRowToVisit;
+    /**
+     * Record the outcome of a Sandata submission attempt. Only touches the two
+     * aggregator-tracking columns; all immutable visit fields are left untouched.
+     * Tenant-scoped via the caregiver → users → agency join so a rogue caller
+     * cannot update a visit from a different agency.
+     */
+    markSandataSubmission(visitId: string, agencyId: string, status: 'pending' | 'submitted' | 'accepted' | 'rejected', confirmationId?: string | null): Promise<boolean>;
 }
 //# sourceMappingURL=evv-repository.d.ts.map

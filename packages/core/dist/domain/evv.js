@@ -27,6 +27,10 @@ export const evvVisitSchema = z.object({
     clockOutTime: z.string().datetime().optional(),
     clockInLocation: evvLocationSchema,
     clockOutLocation: evvLocationSchema.optional(),
-    status: z.enum(['pending', 'verified', 'flagged']).default('pending')
+    status: z.enum(['pending', 'verified', 'flagged']).default('pending'),
+    // Aggregator submission lifecycle. Null until the background job first
+    // attempts submission; 'accepted' means Sandata returned a confirmation ID.
+    sandataStatus: z.enum(['pending', 'submitted', 'accepted', 'rejected']).nullable().optional(),
+    sandataConfirmationId: z.string().nullable().optional()
 });
 //# sourceMappingURL=evv.js.map
