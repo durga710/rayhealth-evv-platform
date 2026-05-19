@@ -10,6 +10,7 @@ interface Course {
   required: boolean;
   durationMinutes: number;
   expiresAfterDays: number | null;
+  externalUrl: string | null;
 }
 
 interface Enrollment {
@@ -122,6 +123,24 @@ export function CaregiverTrainingPage() {
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to mark complete');
+    } finally {
+      setCompleting(null);
+    }
+  };
+
+  const handleStart = async (item: ProgressItem) => {
+    if (!item.course.externalUrl) {
+      await handleMarkComplete(item);
+      return;
+    }
+    setCompleting(item.enrollment.id);
+    setError(null);
+    try {
+      await postJson('/api/learning/start', { enrollmentId: item.enrollment.id });
+      window.open(item.course.externalUrl, '_blank', 'noopener,noreferrer');
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start course');
     } finally {
       setCompleting(null);
     }
@@ -246,7 +265,26 @@ export function CaregiverTrainingPage() {
                       🏅 Certificate
                     </span>
                   )}
-                  {isActionable && (
+                  {isActionable && enrollment.status === 'in_progress' && course.externalUrl && (
+                    <a
+                      href={course.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: 'var(--color-primary, #6366F1)',
+                        background: '#EEF2FF',
+                        border: '1px solid #C7D2FE',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Continue ↗
+                    </a>
+                  )}
+                  {isActionable && enrollment.status === 'in_progress' && (
                     <button
                       type="button"
                       disabled={completing === enrollment.id}
@@ -263,9 +301,27 @@ export function CaregiverTrainingPage() {
                         opacity: completing === enrollment.id ? 0.7 : 1,
                       }}
                     >
-                      {completing === enrollment.id
-                        ? 'Saving…'
-                        : enrollment.status === 'in_progress' ? 'Mark Complete' : 'Start'}
+                      {completing === enrollment.id ? 'Saving…' : 'Mark Complete'}
+                    </button>
+                  )}
+                  {isActionable && enrollment.status !== 'in_progress' && (
+                    <button
+                      type="button"
+                      disabled={completing === enrollment.id}
+                      onClick={() => void handleStart({ enrollment, course })}
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: 'var(--color-primary, #6366F1)',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: completing === enrollment.id ? 'wait' : 'pointer',
+                        opacity: completing === enrollment.id ? 0.7 : 1,
+                      }}
+                    >
+                      {completing === enrollment.id ? 'Starting…' : (course.externalUrl ? 'Start Course ↗' : 'Start')}
                     </button>
                   )}
                 </div>
