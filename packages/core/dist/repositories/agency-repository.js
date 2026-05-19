@@ -43,6 +43,40 @@ export class AgencyRepository {
             .returning('*');
         return row ? this.mapRowToAgency(row) : null;
     }
+    async updateBilling(id, data) {
+        const patch = {};
+        if (data.stripeCustomerId !== undefined)
+            patch.stripe_customer_id = data.stripeCustomerId;
+        if (data.stripeSubscriptionId !== undefined)
+            patch.stripe_subscription_id = data.stripeSubscriptionId;
+        if (data.subscriptionStatus !== undefined)
+            patch.subscription_status = data.subscriptionStatus;
+        if (data.subscriptionTier !== undefined)
+            patch.subscription_tier = data.subscriptionTier;
+        if (Object.keys(patch).length === 0)
+            return;
+        await this.db('agencies').where({ id }).update(patch);
+    }
+    async findByStripeCustomer(stripeCustomerId) {
+        const row = await this.db('agencies')
+            .where({ stripe_customer_id: stripeCustomerId })
+            .first();
+        return row ? this.mapRowToAgency(row) : null;
+    }
+    async getBillingStatus(id) {
+        const row = await this.db('agencies')
+            .where({ id })
+            .select('stripe_customer_id', 'stripe_subscription_id', 'subscription_status', 'subscription_tier')
+            .first();
+        if (!row)
+            return null;
+        return {
+            stripeCustomerId: row.stripe_customer_id ?? null,
+            stripeSubscriptionId: row.stripe_subscription_id ?? null,
+            subscriptionStatus: row.subscription_status ?? null,
+            subscriptionTier: row.subscription_tier ?? null,
+        };
+    }
     mapRowToAgency(row) {
         return {
             id: row.id,

@@ -7,6 +7,10 @@ export interface AgencyRow {
   state: string;
   operating_tracks: string;
   medicaid_provider_number?: string;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string | null;
+  subscription_tier?: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -57,6 +61,50 @@ export class AgencyRepository {
       .update({ name: trimmed, updated_at: this.db.fn.now() as unknown as Date })
       .returning('*');
     return row ? this.mapRowToAgency(row) : null;
+  }
+
+  async updateBilling(
+    id: string,
+    data: {
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+      subscriptionStatus?: string;
+      subscriptionTier?: string;
+    }
+  ): Promise<void> {
+    const patch: Partial<AgencyRow> = {};
+    if (data.stripeCustomerId !== undefined) patch.stripe_customer_id = data.stripeCustomerId;
+    if (data.stripeSubscriptionId !== undefined) patch.stripe_subscription_id = data.stripeSubscriptionId;
+    if (data.subscriptionStatus !== undefined) patch.subscription_status = data.subscriptionStatus;
+    if (data.subscriptionTier !== undefined) patch.subscription_tier = data.subscriptionTier;
+    if (Object.keys(patch).length === 0) return;
+    await this.db<AgencyRow>('agencies').where({ id }).update(patch);
+  }
+
+  async findByStripeCustomer(stripeCustomerId: string): Promise<Agency | null> {
+    const row = await this.db<AgencyRow>('agencies')
+      .where({ stripe_customer_id: stripeCustomerId })
+      .first();
+    return row ? this.mapRowToAgency(row) : null;
+  }
+
+  async getBillingStatus(id: string): Promise<{
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionStatus: string | null;
+    subscriptionTier: string | null;
+  } | null> {
+    const row = await this.db<AgencyRow>('agencies')
+      .where({ id })
+      .select('stripe_customer_id', 'stripe_subscription_id', 'subscription_status', 'subscription_tier')
+      .first();
+    if (!row) return null;
+    return {
+      stripeCustomerId: row.stripe_customer_id ?? null,
+      stripeSubscriptionId: row.stripe_subscription_id ?? null,
+      subscriptionStatus: row.subscription_status ?? null,
+      subscriptionTier: row.subscription_tier ?? null,
+    };
   }
 
   private mapRowToAgency(row: AgencyRow): Agency {

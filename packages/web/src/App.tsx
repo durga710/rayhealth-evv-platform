@@ -9,8 +9,14 @@ import { AuthorizationsPage } from './features/authorizations/AuthorizationsPage
 import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
 import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
 import { LoginPage } from './features/auth/LoginPage.js';
+import { SignupPage } from './features/auth/SignupPage.js';
 import { AcceptInvitePage } from './features/auth/AcceptInvitePage.js';
-import { CaregiverPortalPage } from './features/auth/CaregiverPortalPage.js';
+import { CaregiverLayout } from './features/caregiver/CaregiverLayout.js';
+import { CaregiverDashboard } from './features/caregiver/CaregiverDashboard.js';
+import { CaregiverSchedulePage } from './features/caregiver/CaregiverSchedulePage.js';
+import { CaregiverVisitsPage } from './features/caregiver/CaregiverVisitsPage.js';
+import { CaregiverLearningHubPage } from './features/caregiver/CaregiverLearningHubPage.js';
+import { CaregiverTrainingPage } from './features/caregiver/CaregiverTrainingPage.js';
 import { LandingPage } from './features/landing/LandingPage.js';
 import { VisitReviewPage } from './features/evv/VisitReviewPage.js';
 import { PricingPage } from './features/marketing/PricingPage.js';
@@ -26,6 +32,11 @@ import { AuditEventsPage } from './features/audit/AuditEventsPage.js';
 import { HipaaCompliancePage } from './features/compliance/HipaaCompliancePage.js';
 import { LearningHubPage } from './features/learning/LearningHubPage.js';
 import { LearningPortalPage } from './features/learning/LearningPortalPage.js';
+import { ApplyPage } from './features/onboarding/ApplyPage.js';
+import { InterviewPage } from './features/onboarding/InterviewPage.js';
+import { OnboardingHubPage } from './features/onboarding/OnboardingHubPage.js';
+import { ApplicantDetailPage } from './features/onboarding/ApplicantDetailPage.js';
+import { ProfilePage } from './features/profile/ProfilePage.js';
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
 
@@ -157,6 +168,20 @@ const icons = {
       <line x1="10" y1="13" x2="14" y2="13" />
     </svg>
   ),
+  hiring: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <line x1="19" y1="8" x2="19" y2="14" />
+      <line x1="22" y1="11" x2="16" y2="11" />
+    </svg>
+  ),
+  profile: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  ),
 };
 
 interface NavGroupDef extends NavGroup {
@@ -205,11 +230,24 @@ const navGroupDefs: NavGroupDef[] = [
     ],
   },
   {
+    label: 'Hiring',
+    allowedRoles: ['admin', 'coordinator'],
+    items: [
+      { to: '/admin/onboarding', label: 'Onboarding', icon: icons.hiring },
+    ],
+  },
+  {
     label: 'Audit',
     allowedRoles: ['admin'],
     items: [
       { to: '/admin/audit-events', label: 'Audit Events', icon: icons.audit },
       { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { to: '/admin/profile', label: 'My Profile', icon: icons.profile },
     ],
   },
 ];
@@ -221,10 +259,10 @@ function AdminLayout() {
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [switching, setSwitching] = useState(false);
 
-  const initial = (user?.userId ?? '?').slice(0, 1).toUpperCase();
   const roleLabel = user?.role ?? 'signed in';
-  const userIdShort = user?.userId ? `${user.userId.slice(0, 8)}…` : '—';
   const brandName = user?.agencyTheme?.logoText ?? 'RayHealth';
+  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || roleLabel;
+  const initial = displayName.slice(0, 1).toUpperCase() || '?';
 
   // Fetch all agencies for the switcher — admin only.
   useEffect(() => {
@@ -322,7 +360,15 @@ function AdminLayout() {
 
         <div className="admin-sidebar__user-card">
           <div className="admin-sidebar__user-row">
-            <div aria-hidden className="admin-sidebar__avatar">{initial}</div>
+            <div
+              aria-hidden
+              className="admin-sidebar__avatar"
+              style={user?.avatarUrl ? { padding: 0, overflow: 'hidden' } : undefined}
+            >
+              {user?.avatarUrl
+                ? <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initial}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
               <span
                 style={{
@@ -332,10 +378,9 @@ function AdminLayout() {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  textTransform: 'capitalize',
                 }}
               >
-                {roleLabel}
+                {displayName}
               </span>
               <span
                 style={{
@@ -344,11 +389,10 @@ function AdminLayout() {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'capitalize',
                 }}
-                title={user?.userId}
               >
-                {userIdShort}
+                {roleLabel}
               </span>
             </div>
           </div>
@@ -389,11 +433,21 @@ export function App() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
+      <Route path="/apply/:agencyId" element={<ApplyPage />} />
+      <Route path="/interview/:token" element={<InterviewPage />} />
 
-      {/* Caregiver/family accounts land here — no admin portal access. */}
+      {/* Caregiver/family portal — full self-service shell. Admins redirected to /admin by CaregiverLayout. */}
       <Route path="/portal" element={<ProtectedRoute />}>
-        <Route index element={<CaregiverPortalPage />} />
+        <Route element={<CaregiverLayout />}>
+          <Route index element={<CaregiverDashboard />} />
+          <Route path="schedule" element={<CaregiverSchedulePage />} />
+          <Route path="visits" element={<CaregiverVisitsPage />} />
+          <Route path="learning" element={<CaregiverLearningHubPage />} />
+          <Route path="training" element={<CaregiverTrainingPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
       </Route>
 
       {/* Admin portal — admin and coordinator roles only. */}
@@ -410,6 +464,9 @@ export function App() {
           <Route path="audit-retention" element={<AuditRetentionPage />} />
           <Route path="learning" element={<LearningHubPage />} />
           <Route path="learning/portal" element={<LearningPortalPage />} />
+          <Route path="onboarding" element={<OnboardingHubPage />} />
+          <Route path="onboarding/:id" element={<ApplicantDetailPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route index element={<DashboardPage />} />
         </Route>
       </Route>

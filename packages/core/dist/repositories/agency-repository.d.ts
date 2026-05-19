@@ -6,6 +6,10 @@ export interface AgencyRow {
     state: string;
     operating_tracks: string;
     medicaid_provider_number?: string;
+    stripe_customer_id?: string | null;
+    stripe_subscription_id?: string | null;
+    subscription_status?: string | null;
+    subscription_tier?: string | null;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -22,6 +26,19 @@ export declare class AgencyRepository {
     findAll(): Promise<Agency[]>;
     findTheme(id: string): Promise<AgencyTheme | null>;
     updateName(id: string, name: string): Promise<Agency | null>;
+    updateBilling(id: string, data: {
+        stripeCustomerId?: string;
+        stripeSubscriptionId?: string;
+        subscriptionStatus?: string;
+        subscriptionTier?: string;
+    }): Promise<void>;
+    findByStripeCustomer(stripeCustomerId: string): Promise<Agency | null>;
+    getBillingStatus(id: string): Promise<{
+        stripeCustomerId: string | null;
+        stripeSubscriptionId: string | null;
+        subscriptionStatus: string | null;
+        subscriptionTier: string | null;
+    } | null>;
     private mapRowToAgency;
 }
 //# sourceMappingURL=agency-repository.d.ts.map
