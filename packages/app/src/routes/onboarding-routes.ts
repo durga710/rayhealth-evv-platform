@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { generateText } from 'ai';
 import { OnboardingRepository, type OnboardingInterview } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 
 const router = Router();
 
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = process.env.ANTHROPIC_MODEL ?? 'anthropic/claude-haiku-4-5-20251001';
 const TOTAL_QUESTIONS = 8;
 
 const applyBodySchema = z.object({
@@ -46,60 +46,29 @@ Rules:
 - If the applicant says something inappropriate, politely redirect.
 - Track where you are in the interview based on how many user messages have been sent.`;
 
-interface AnthropicMessage {
+interface InterviewMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-interface AnthropicResponseBody {
-  content: Array<{ type: string; text?: string }>;
-  stop_reason: string;
-}
-
-async function callAnthropicInterview(
-  messages: AnthropicMessage[],
+async function callInterviewAI(
+  messages: InterviewMessage[],
   systemPrompt: string
 ): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-
-  const res = await fetch(ANTHROPIC_API, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 600,
-      system: systemPrompt,
-      messages,
-    }),
+  const result = await generateText({
+    model: MODEL,
+    system: systemPrompt,
+    messages,
+    maxOutputTokens: 600,
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Anthropic API error ${res.status}: ${body.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as AnthropicResponseBody;
-  const text = data.content
-    .filter((b) => b.type === 'text' && typeof b.text === 'string')
-    .map((b) => b.text as string)
-    .join('\n')
-    .trim();
-
-  if (!text) throw new Error('Empty response from Anthropic');
+  const text = result.text.trim();
+  if (!text) throw new Error('Empty response from AI');
   return text;
 }
 
 async function generateSummaryAndScore(
-  messages: AnthropicMessage[]
+  messages: InterviewMessage[]
 ): Promise<{ summary: string; score: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { summary: 'Interview completed.', score: 5 };
-
   const transcript = messages
     .map((m) => `${m.role === 'user' ? 'Applicant' : 'Interviewer'}: ${m.content}`)
     .join('\n\n');
@@ -117,29 +86,12 @@ Respond in this exact JSON format (no other text):
 {"summary": "...", "score": <integer 1-10>}`;
 
   try {
-    const res = await fetch(ANTHROPIC_API, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 400,
-        messages: [{ role: 'user', content: summarizePrompt }],
-      }),
+    const result = await generateText({
+      model: MODEL,
+      messages: [{ role: 'user', content: summarizePrompt }],
+      maxOutputTokens: 400,
     });
-
-    if (!res.ok) return { summary: 'Interview completed.', score: 5 };
-
-    const data = (await res.json()) as AnthropicResponseBody;
-    const text = data.content
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text as string)
-      .join('')
-      .trim();
-
+    const text = result.text.trim();
     const parsed = JSON.parse(text) as { summary?: unknown; score?: unknown };
     const summary = typeof parsed.summary === 'string' ? parsed.summary : 'Interview completed.';
     const rawScore = typeof parsed.score === 'number' ? parsed.score : 5;
@@ -284,15 +236,15 @@ router.post('/interview/:token/message', async (req, res) => {
     const now = new Date().toISOString();
     const startedAt = interview.startedAt ?? now;
 
-    // Call Anthropic for the next interviewer message
-    const aiMessages: AnthropicMessage[] = updatedMessages.map((m) => ({
+    // Call AI for the next interviewer message
+    const aiMessages: InterviewMessage[] = updatedMessages.map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
     let aiReply: string;
     try {
-      aiReply = await callAnthropicInterview(aiMessages, INTERVIEW_SYSTEM_PROMPT);
+      aiReply = await callInterviewAI(aiMessages, INTERVIEW_SYSTEM_PROMPT);
     } catch (err) {
       safeError('Interview Anthropic call failed', err);
       res.status(502).json({ message: 'Could not reach the interview service. Please try again.' });
