@@ -730,6 +730,25 @@ export async function up(knex: Knex): Promise<void> {
     });
   }
 
+  // ── R8 — Stripe billing columns on agencies ──────────────────────────────
+  // Self-serve billing: each agency row tracks its Stripe customer and
+  // subscription so billing routes can operate without a separate billing
+  // service. subscription_status mirrors Stripe's enum so the app can gate
+  // features without a live Stripe call (webhook keeps it current).
+  if (await knex.schema.hasTable('agencies')) {
+    const billingCols: Array<[string, (t: import('knex').Knex.AlterTableBuilder) => void]> = [
+      ['stripe_customer_id', (t) => t.string('stripe_customer_id').nullable()],
+      ['stripe_subscription_id', (t) => t.string('stripe_subscription_id').nullable()],
+      ['subscription_status', (t) => t.string('subscription_status', 32).nullable()],
+      ['subscription_tier', (t) => t.string('subscription_tier', 32).nullable()],
+    ];
+    for (const [col, build] of billingCols) {
+      if (!(await knex.schema.hasColumn('agencies', col))) {
+        await knex.schema.alterTable('agencies', build);
+      }
+    }
+  }
+
   // ── R7 — Sandata aggregator submission tracking ───────────────────────────
   // Track each visit's lifecycle through the state aggregator pipeline.
   // Intentionally excluded from the immutability trigger's blocked list —

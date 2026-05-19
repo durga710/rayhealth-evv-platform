@@ -300,6 +300,10 @@ export function LoginPage() {
             <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
               Need access? <Link to="/" style={{ color: '#6366F1', fontWeight: 500 }}>Contact your agency admin.</Link>
             </span>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+              New agency?{' '}
+              <Link to="/signup" style={{ color: '#6366F1', fontWeight: 500 }}>Create an account.</Link>
+            </span>
           </div>
         </div>
       </main>

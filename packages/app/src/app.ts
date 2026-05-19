@@ -27,6 +27,7 @@ import auditEventsRoutes from './routes/audit-events-routes.js';
 import learningRoutes from './routes/learning-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
 import marketingRoutes from './routes/marketing-routes.js';
+import billingRoutes from './routes/billing-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -133,6 +134,12 @@ export function createApp() {
   // ---------- CORS ----------
   app.use(cors({ origin: allowedOrigins, credentials: true }));
 
+  // Stripe webhook needs the raw body for signature verification — must be
+  // mounted BEFORE express.json() so the buffer is untouched.
+  for (const prefix of ['', '/api']) {
+    app.use(`${prefix}/billing/webhook`, express.raw({ type: 'application/json' }), billingRoutes);
+  }
+
   // ---------- Body parsing with explicit size cap ----------
   // 100KB is generous for our payload shapes (invite acceptance, agency
   // config updates, EVV punches) and prevents JSON-bomb DoS. Copilot is
@@ -143,6 +150,7 @@ export function createApp() {
     app.use(`${prefix}/auth/login`, authLimiter);
     app.use(`${prefix}/auth/mobile/login`, authLimiter);
     app.use(`${prefix}/auth/bootstrap`, authLimiter);
+    app.use(`${prefix}/auth/signup`, authLimiter);
     app.use(`${prefix}/auth`, authRoutes);
     // Public invitation lookup + accept. Mounted before authContext so a
     // caregiver clicking the email link can hit them without a session.
@@ -177,6 +185,7 @@ export function createApp() {
     app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);
     app.use(`${prefix}/learning`, learningRoutes);
     app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
+    app.use(`${prefix}/billing`, billingRoutes);
   }
 
   return app;

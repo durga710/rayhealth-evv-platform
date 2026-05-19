@@ -9,6 +9,7 @@ import { AuthorizationsPage } from './features/authorizations/AuthorizationsPage
 import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
 import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
 import { LoginPage } from './features/auth/LoginPage.js';
+import { SignupPage } from './features/auth/SignupPage.js';
 import { AcceptInvitePage } from './features/auth/AcceptInvitePage.js';
 import { CaregiverPortalPage } from './features/auth/CaregiverPortalPage.js';
 import { LandingPage } from './features/landing/LandingPage.js';
@@ -389,6 +390,7 @@ export function App() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
       {/* Caregiver/family accounts land here — no admin portal access. */}
