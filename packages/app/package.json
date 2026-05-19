@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^4.0.107",
     "@aws-sdk/client-sesv2": "^3.1048.0",
     "@rayhealth/core": "file:../core",
     "ai": "^6.0.185",

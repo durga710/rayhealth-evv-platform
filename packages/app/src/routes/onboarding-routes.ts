@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { generateText } from 'ai';
 import { OnboardingRepository, type OnboardingInterview } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
+import { aiModel } from '../ai.js';
 
 const router = Router();
-
-const MODEL = process.env.ANTHROPIC_MODEL ?? 'anthropic/claude-haiku-4-5-20251001';
 const TOTAL_QUESTIONS = 8;
 
 const applyBodySchema = z.object({
@@ -56,7 +55,7 @@ async function callInterviewAI(
   systemPrompt: string
 ): Promise<string> {
   const result = await generateText({
-    model: MODEL,
+    model: aiModel,
     system: systemPrompt,
     messages,
     maxOutputTokens: 600,
@@ -87,7 +86,7 @@ Respond in this exact JSON format (no other text):
 
   try {
     const result = await generateText({
-      model: MODEL,
+      model: aiModel,
       messages: [{ role: 'user', content: summarizePrompt }],
       maxOutputTokens: 400,
     });

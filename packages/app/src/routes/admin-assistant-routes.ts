@@ -3,12 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { generateText, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
 import { safeError } from '../security/safe-log.js';
+import { aiModel } from '../ai.js';
 
 const router = Router();
 
 const MAX_USER_LEN = 4000;
 const MAX_HISTORY = 20;
-const MODEL = process.env.ANTHROPIC_MODEL ?? 'anthropic/claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = `You are RayHealthOps, the in-app assistant for RayHealthEVV. The user is a coordinator or admin signed into their agency's account. You can answer operational questions about THIS agency by calling the provided tools. NEVER:
 - mention specific patient/client names or full PHI fields unless the user explicitly asked for a single record
@@ -143,7 +143,7 @@ router.post('/chat', async (req, res) => {
 
   try {
     const result = await generateText({
-      model: MODEL,
+      model: aiModel,
       system: SYSTEM_PROMPT,
       messages: incoming,
       maxOutputTokens: 800,
@@ -188,8 +188,8 @@ router.post('/chat', async (req, res) => {
       await (db as (table: string) => { insert: (rows: unknown[]) => Promise<unknown> })(
         'support_conversations'
       ).insert([
-        { id: randomUUID(), session_id: sessionId, role: 'user',      content: incoming[incoming.length - 1].content, model: MODEL, ip_address: ip },
-        { id: randomUUID(), session_id: sessionId, role: 'assistant', content: text,                                  model: MODEL, ip_address: ip },
+        { id: randomUUID(), session_id: sessionId, role: 'user',      content: incoming[incoming.length - 1].content, model: process.env.BEDROCK_MODEL_ID ?? 'bedrock', ip_address: ip },
+        { id: randomUUID(), session_id: sessionId, role: 'assistant', content: text,                                  model: process.env.BEDROCK_MODEL_ID ?? 'bedrock', ip_address: ip },
       ]);
     } catch (err) {
       safeError('admin-assistant log insert failed', err);
