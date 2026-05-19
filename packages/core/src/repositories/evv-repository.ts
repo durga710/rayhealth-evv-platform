@@ -192,7 +192,37 @@ export class EvvRepository {
         typeof outLoc === 'string'
           ? JSON.parse(outLoc)
           : (outLoc as EvvVisit['clockOutLocation']),
-      status: row.status as EvvVisit['status']
+      status: row.status as EvvVisit['status'],
+      sandataStatus: (row.sandata_status as EvvVisit['sandataStatus']) ?? null,
+      sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null
     };
+  }
+
+  /**
+   * Record the outcome of a Sandata submission attempt. Only touches the two
+   * aggregator-tracking columns; all immutable visit fields are left untouched.
+   * Tenant-scoped via the caregiver → users → agency join so a rogue caller
+   * cannot update a visit from a different agency.
+   */
+  async markSandataSubmission(
+    visitId: string,
+    agencyId: string,
+    status: 'pending' | 'submitted' | 'accepted' | 'rejected',
+    confirmationId?: string | null
+  ): Promise<boolean> {
+    const allowedIds = this.db('evv_visits as v')
+      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+      .where('u.agency_id', agencyId)
+      .andWhere('v.id', visitId)
+      .select('v.id');
+
+    const count = await this.db('evv_visits')
+      .whereIn('id', allowedIds)
+      .update({
+        sandata_status: status,
+        ...(confirmationId !== undefined ? { sandata_confirmation_id: confirmationId } : {})
+      });
+
+    return count > 0;
   }
 }

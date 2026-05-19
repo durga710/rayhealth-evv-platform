@@ -148,8 +148,30 @@ export class EvvRepository {
             clockOutLocation: typeof outLoc === 'string'
                 ? JSON.parse(outLoc)
                 : outLoc,
-            status: row.status
+            status: row.status,
+            sandataStatus: row.sandata_status ?? null,
+            sandataConfirmationId: row.sandata_confirmation_id ?? null
         };
+    }
+    /**
+     * Record the outcome of a Sandata submission attempt. Only touches the two
+     * aggregator-tracking columns; all immutable visit fields are left untouched.
+     * Tenant-scoped via the caregiver → users → agency join so a rogue caller
+     * cannot update a visit from a different agency.
+     */
+    async markSandataSubmission(visitId, agencyId, status, confirmationId) {
+        const allowedIds = this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .andWhere('v.id', visitId)
+            .select('v.id');
+        const count = await this.db('evv_visits')
+            .whereIn('id', allowedIds)
+            .update({
+            sandata_status: status,
+            ...(confirmationId !== undefined ? { sandata_confirmation_id: confirmationId } : {})
+        });
+        return count > 0;
     }
 }
 //# sourceMappingURL=evv-repository.js.map

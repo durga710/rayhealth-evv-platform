@@ -10,8 +10,8 @@ export declare const visitMaintenanceSchema: z.ZodObject<{
     adjustedEndTime: z.ZodOptional<z.ZodString>;
     status: z.ZodDefault<z.ZodEnum<{
         pending: "pending";
-        approved: "approved";
         rejected: "rejected";
+        approved: "approved";
     }>>;
 }, z.core.$strip>;
 export type VisitMaintenance = z.infer<typeof visitMaintenanceSchema>;
