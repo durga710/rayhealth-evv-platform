@@ -12,7 +12,7 @@ interface AuthUser {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: AuthUser | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ role: string }>;
   logout: () => Promise<void>;
 }
 
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{ role: string }> => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       credentials: 'include',
@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     setUser({ userId: data.userId, role: data.role, agencyId: data.agencyId });
     setCsrfToken(data.csrfToken ?? null);
+    return { role: data.role as string };
   };
 
   const logout = async () => {

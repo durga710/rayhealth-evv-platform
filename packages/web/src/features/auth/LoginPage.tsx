@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext.js';
 
+const ADMIN_ROLES = new Set(['admin', 'coordinator']);
+
 const trustPoints = [
   'HIPAA-aware infrastructure with HttpOnly cookie sessions.',
   'Double-submit CSRF protection on every state-changing request.',
@@ -22,9 +24,15 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      const { role } = await login(email, password);
       const returnTo = searchParams.get('returnTo');
-      navigate(returnTo && returnTo.startsWith('/') ? returnTo : '/admin');
+      if (returnTo && returnTo.startsWith('/') && ADMIN_ROLES.has(role)) {
+        navigate(returnTo);
+      } else if (ADMIN_ROLES.has(role)) {
+        navigate('/admin');
+      } else {
+        navigate('/portal');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

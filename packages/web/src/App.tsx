@@ -9,6 +9,7 @@ import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
 import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
 import { LoginPage } from './features/auth/LoginPage.js';
 import { AcceptInvitePage } from './features/auth/AcceptInvitePage.js';
+import { CaregiverPortalPage } from './features/auth/CaregiverPortalPage.js';
 import { LandingPage } from './features/landing/LandingPage.js';
 import { VisitReviewPage } from './features/evv/VisitReviewPage.js';
 import { PricingPage } from './features/marketing/PricingPage.js';
@@ -25,12 +26,35 @@ import { HipaaCompliancePage } from './features/compliance/HipaaCompliancePage.j
 import { LearningHubPage } from './features/learning/LearningHubPage.js';
 import { LearningPortalPage } from './features/learning/LearningPortalPage.js';
 
+const ADMIN_ROLES = new Set(['admin', 'coordinator']);
+
+/** Redirects unauthenticated users to /login. */
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  return <Outlet />;
+}
+
+/**
+ * Allows only admin and coordinator roles into the admin portal.
+ * Caregivers and family users are redirected to /portal — they must
+ * use the mobile app and have no business in the admin shell.
+ */
+function AdminRoute() {
+  const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  if (!user || !ADMIN_ROLES.has(user.role)) {
+    return <Navigate to="/portal" replace />;
   }
 
   return <Outlet />;
@@ -134,18 +158,31 @@ const icons = {
   ),
 };
 
-const navGroups: NavGroup[] = [
+interface NavGroupDef extends NavGroup {
+  /** Roles that can see this group. Omit = all admin roles. */
+  allowedRoles?: string[];
+}
+
+const navGroupDefs: NavGroupDef[] = [
   {
     label: 'Overview',
     items: [{ to: '/admin', label: 'Dashboard', end: true, icon: icons.dashboard }],
   },
   {
     label: 'Agency',
+    allowedRoles: ['admin'],
     items: [
       { to: '/admin/agency', label: 'Agency Setup', icon: icons.agency },
       { to: '/admin/staff', label: 'Staff', icon: icons.staff },
       { to: '/admin/clients', label: 'Clients', icon: icons.clients },
       { to: '/admin/authorizations', label: 'Authorizations', icon: icons.auth },
+    ],
+  },
+  {
+    label: 'Agency',
+    allowedRoles: ['coordinator'],
+    items: [
+      { to: '/admin/clients', label: 'Clients', icon: icons.clients },
     ],
   },
   {
@@ -168,6 +205,7 @@ const navGroups: NavGroup[] = [
   },
   {
     label: 'Audit',
+    allowedRoles: ['admin'],
     items: [
       { to: '/admin/audit-events', label: 'Audit Events', icon: icons.audit },
       { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
@@ -182,6 +220,11 @@ function AdminLayout() {
   const roleLabel = user?.role ?? 'signed in';
   const userIdShort = user?.userId ? `${user.userId.slice(0, 8)}…` : '—';
 
+  // Only show nav groups relevant to this user's role.
+  const visibleGroups = navGroupDefs.filter(
+    (g) => !g.allowedRoles || (user?.role && g.allowedRoles.includes(user.role))
+  );
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="Primary">
@@ -191,7 +234,7 @@ function AdminLayout() {
         </Link>
 
         <nav className="admin-sidebar__nav">
-          {navGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.label} className="admin-sidebar__group">
               <div className="admin-sidebar__group-label">{group.label}</div>
               {group.items.map((item) => (
@@ -281,8 +324,14 @@ export function App() {
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
-      
-      <Route path="/admin" element={<ProtectedRoute />}>
+
+      {/* Caregiver/family accounts land here — no admin portal access. */}
+      <Route path="/portal" element={<ProtectedRoute />}>
+        <Route index element={<CaregiverPortalPage />} />
+      </Route>
+
+      {/* Admin portal — admin and coordinator roles only. */}
+      <Route path="/admin" element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="agency" element={<AgencySetupPage />} />
           <Route path="staff" element={<StaffPage />} />
