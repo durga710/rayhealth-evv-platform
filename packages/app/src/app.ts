@@ -30,6 +30,7 @@ import marketingRoutes from './routes/marketing-routes.js';
 import billingRoutes from './routes/billing-routes.js';
 import onboardingRoutes from './routes/onboarding-routes.js';
 import onboardingAdminRoutes from './routes/onboarding-admin-routes.js';
+import profileRoutes from './routes/profile-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -190,6 +191,7 @@ export function createApp() {
     app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
     app.use(`${prefix}/billing`, billingRoutes);
     app.use(`${prefix}/admin/onboarding`, onboardingAdminRoutes);
+    app.use(`${prefix}/profile`, profileRoutes);
   }
 
   return app;

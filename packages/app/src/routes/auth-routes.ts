@@ -284,15 +284,28 @@ router.post('/logout', authContext, requireCsrf, async (req, res) => {
 router.get('/me', authContext, async (req, res) => {
   const { userId, role, agencyId } = req.auth;
   const db = req.app.get('db');
-  const agencyTheme = await new AgencyRepository(db).findTheme(agencyId).catch(() => null);
+
+  type ProfileRow = { email: string; first_name: string | null; last_name: string | null; avatar_url: string | null };
+  const [agencyTheme, profileRow] = await Promise.all([
+    new AgencyRepository(db).findTheme(agencyId).catch(() => null),
+    (db('users').where({ id: userId }).select('email', 'first_name', 'last_name', 'avatar_url').first().catch(() => null)) as Promise<ProfileRow | null>,
+  ]);
+
+  const profile = {
+    email:     profileRow?.email      ?? null,
+    firstName: profileRow?.first_name ?? null,
+    lastName:  profileRow?.last_name  ?? null,
+    avatarUrl: profileRow?.avatar_url ?? null,
+  };
+
   if (req.auth.authMethod === 'session' && req.auth.sessionId) {
     const csrfToken = createOpaqueToken();
     await new SessionRepository(db).rotateCsrfToken(req.auth.sessionId, hashOpaqueToken(csrfToken));
-    res.json({ userId, role, agencyId, csrfToken, agencyTheme });
+    res.json({ userId, role, agencyId, csrfToken, agencyTheme, ...profile });
     return;
   }
 
-  res.json({ userId, role, agencyId, agencyTheme });
+  res.json({ userId, role, agencyId, agencyTheme, ...profile });
 });
 
 export default router;

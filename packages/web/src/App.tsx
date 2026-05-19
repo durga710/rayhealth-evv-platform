@@ -31,6 +31,7 @@ import { ApplyPage } from './features/onboarding/ApplyPage.js';
 import { InterviewPage } from './features/onboarding/InterviewPage.js';
 import { OnboardingHubPage } from './features/onboarding/OnboardingHubPage.js';
 import { ApplicantDetailPage } from './features/onboarding/ApplicantDetailPage.js';
+import { ProfilePage } from './features/profile/ProfilePage.js';
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
 
@@ -170,6 +171,12 @@ const icons = {
       <line x1="22" y1="11" x2="16" y2="11" />
     </svg>
   ),
+  profile: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  ),
 };
 
 interface NavGroupDef extends NavGroup {
@@ -232,6 +239,12 @@ const navGroupDefs: NavGroupDef[] = [
       { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
     ],
   },
+  {
+    label: 'Account',
+    items: [
+      { to: '/admin/profile', label: 'My Profile', icon: icons.profile },
+    ],
+  },
 ];
 
 interface AgencyOption { id: string; name: string; }
@@ -241,10 +254,10 @@ function AdminLayout() {
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [switching, setSwitching] = useState(false);
 
-  const initial = (user?.userId ?? '?').slice(0, 1).toUpperCase();
   const roleLabel = user?.role ?? 'signed in';
-  const userIdShort = user?.userId ? `${user.userId.slice(0, 8)}…` : '—';
   const brandName = user?.agencyTheme?.logoText ?? 'RayHealth';
+  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || roleLabel;
+  const initial = displayName.slice(0, 1).toUpperCase() || '?';
 
   // Fetch all agencies for the switcher — admin only.
   useEffect(() => {
@@ -342,7 +355,15 @@ function AdminLayout() {
 
         <div className="admin-sidebar__user-card">
           <div className="admin-sidebar__user-row">
-            <div aria-hidden className="admin-sidebar__avatar">{initial}</div>
+            <div
+              aria-hidden
+              className="admin-sidebar__avatar"
+              style={user?.avatarUrl ? { padding: 0, overflow: 'hidden' } : undefined}
+            >
+              {user?.avatarUrl
+                ? <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initial}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
               <span
                 style={{
@@ -352,10 +373,9 @@ function AdminLayout() {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  textTransform: 'capitalize',
                 }}
               >
-                {roleLabel}
+                {displayName}
               </span>
               <span
                 style={{
@@ -364,11 +384,10 @@ function AdminLayout() {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'capitalize',
                 }}
-                title={user?.userId}
               >
-                {userIdShort}
+                {roleLabel}
               </span>
             </div>
           </div>
@@ -435,6 +454,7 @@ export function App() {
           <Route path="learning/portal" element={<LearningPortalPage />} />
           <Route path="onboarding" element={<OnboardingHubPage />} />
           <Route path="onboarding/:id" element={<ApplicantDetailPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route index element={<DashboardPage />} />
         </Route>
       </Route>

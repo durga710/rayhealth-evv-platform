@@ -15,6 +15,10 @@ interface AuthUser {
   userId: string;
   role: string;
   agencyId: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatarUrl?: string | null;
   agencyTheme?: AgencyTheme | null;
 }
 
@@ -24,6 +28,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ role: string }>;
   logout: () => Promise<void>;
   switchAgency: (agencyId: string) => Promise<{ agencyName: string }>;
+  refreshUser: () => Promise<void>;
 }
 
 function applyAgencyTheme(theme?: AgencyTheme | null) {
@@ -54,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) {
-          setUser({ userId: data.userId, role: data.role, agencyId: data.agencyId, agencyTheme: data.agencyTheme });
+          setUser({ userId: data.userId, role: data.role, agencyId: data.agencyId, agencyTheme: data.agencyTheme, email: data.email ?? null, firstName: data.firstName ?? null, lastName: data.lastName ?? null, avatarUrl: data.avatarUrl ?? null });
           setCsrfToken(data.csrfToken ?? null);
           applyAgencyTheme(data.agencyTheme);
         }
@@ -83,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(message);
     }
     const data = await res.json();
-    setUser({ userId: data.userId, role: data.role, agencyId: data.agencyId, agencyTheme: data.agencyTheme });
+    setUser({ userId: data.userId, role: data.role, agencyId: data.agencyId, agencyTheme: data.agencyTheme, email: data.email ?? null, firstName: data.firstName ?? null, lastName: data.lastName ?? null, avatarUrl: data.avatarUrl ?? null });
     setCsrfToken(data.csrfToken ?? null);
     applyAgencyTheme(data.agencyTheme);
     return { role: data.role as string };
@@ -110,6 +115,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { agencyName: data.agencyName as string };
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include', headers: { accept: 'application/json' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setUser((prev) => prev ? { ...prev, email: data.email ?? null, firstName: data.firstName ?? null, lastName: data.lastName ?? null, avatarUrl: data.avatarUrl ?? null } : prev);
+    } catch { /* silent */ }
+  };
+
   const logout = async () => {
     const csrfToken = getCsrfToken();
     await fetch(`${API_BASE}/auth/logout`, {
@@ -127,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout, switchAgency }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout, switchAgency, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
