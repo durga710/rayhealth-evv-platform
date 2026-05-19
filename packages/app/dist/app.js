@@ -9,7 +9,6 @@ import { requireCsrf } from './middleware/csrf.js';
 import { createDb } from '@rayhealth/core';
 import authRoutes from './routes/auth-routes.js';
 import healthRoutes, { healthLimiter } from './routes/health-routes.js';
-import inviteAcceptanceRoutes from './routes/invite-acceptance-routes.js';
 import invitationsRoutes from './routes/invitations-routes.js';
 import inviteRoutes from './routes/invite-routes.js';
 import agencyRoutes from './routes/agency-routes.js';
@@ -128,12 +127,8 @@ export function createApp() {
         app.use(`${prefix}/auth/mobile/login`, authLimiter);
         app.use(`${prefix}/auth/bootstrap`, authLimiter);
         app.use(`${prefix}/auth`, authRoutes);
-        // Public invite-acceptance endpoints — mounted before authContext so a
+        // Public invitation lookup + accept. Mounted before authContext so a
         // caregiver clicking the email link can hit them without a session.
-        // Rate-limited to dampen access-code brute-force.
-        app.use(`${prefix}/invites/accept`, inviteAcceptanceLimiter, inviteAcceptanceRoutes);
-        // Public invitation lookup + accept (newer surface; same rate-limit
-        // category as the legacy /invites/accept endpoint).
         app.use(`${prefix}/invitations`, inviteAcceptanceLimiter, invitationsRoutes);
         // Public health endpoints (liveness, DB, audit-pipeline). Unauthenticated
         // on purpose — the public /status page polls these. Mounted BEFORE
