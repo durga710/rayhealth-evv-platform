@@ -150,6 +150,23 @@ export async function up(knex) {
             table.index(['expires_at']);
         });
     }
+    // Idempotent: add active_agency_id to sessions if it doesn't exist yet.
+    // The column was added manually to the live DB; this guard ensures a
+    // fresh schema run or test DB also picks it up.
+    await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='sessions')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+                         WHERE table_schema='public' AND table_name='sessions'
+                           AND column_name='active_agency_id') THEN
+        ALTER TABLE sessions
+          ADD COLUMN active_agency_id UUID
+          REFERENCES agencies(id) ON DELETE SET NULL;
+      END IF;
+    END$$;
+  `);
     if (!(await knex.schema.hasTable('visit_maintenance'))) {
         await knex.schema.createTable('visit_maintenance', (table) => {
             table.uuid('id').primary();
@@ -349,6 +366,28 @@ export async function up(knex) {
       END$$;
     `);
     }
+    // Expand audit_events_event_type_check to include invite and email event
+    // types emitted by invite-routes. DROP IF EXISTS + ADD is idempotent:
+    // safe whether the old narrow constraint exists or the new wide one does.
+    await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='audit_events') THEN
+        ALTER TABLE audit_events
+          DROP CONSTRAINT IF EXISTS audit_events_event_type_check;
+        ALTER TABLE audit_events
+          ADD CONSTRAINT audit_events_event_type_check CHECK (event_type IN (
+            'auth.login.success','auth.login.failure','auth.logout',
+            'session.created','session.revoked','csrf.failure',
+            'phi.read','phi.create','phi.update','phi.delete','phi.export',
+            'request.write','permission.denied',
+            'invite.created','invite.email.sent','invite.email.failed',
+            'invite.accepted','invite.access_code_failed'
+          ));
+      END IF;
+    END$$;
+  `);
     // audit_events is append-only. The compliance position is "audit rows are
     // evidence; nobody — including future-us with a SQL console open — gets to
     // edit them." A BEFORE trigger on UPDATE/DELETE/TRUNCATE raises an exception

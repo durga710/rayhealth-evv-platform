@@ -32,9 +32,7 @@ export interface EmailClient {
   sendInviteEmail(params: InviteEmailParams): Promise<SendEmailResult>;
 }
 
-// Uses Resend's own shared domain so emails work before rayhealthevv.com
-// is verified in the Resend dashboard.
-const DEFAULT_FROM = 'onboarding@resend.dev';
+const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
 
 function createSmtpClient(user: string, pass: string): EmailClient {
   const transporter = nodemailer.createTransport({

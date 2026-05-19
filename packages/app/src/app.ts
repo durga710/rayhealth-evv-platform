@@ -27,6 +27,7 @@ import auditRetentionRoutes from './routes/audit-retention-routes.js';
 import auditEventsRoutes from './routes/audit-events-routes.js';
 import learningRoutes from './routes/learning-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
+import marketingRoutes from './routes/marketing-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -155,6 +156,7 @@ export function createApp() {
     // on purpose — the public /status page polls these. Mounted BEFORE
     // authContext, behind their own tighter rate limit (60 / 15-min per IP).
     app.use(`${prefix}/health`, healthLimiter, healthRoutes);
+    app.use(`${prefix}/marketing`, marketingRoutes);
   }
 
   // ---------- Authenticated surface ----------

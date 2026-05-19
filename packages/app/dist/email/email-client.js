@@ -12,9 +12,7 @@ import { Resend } from 'resend';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { renderInviteEmail } from './templates/invite-email.js';
 import { safeError } from '../security/safe-log.js';
-// Uses Resend's own shared domain so emails work before rayhealthevv.com
-// is verified in the Resend dashboard.
-const DEFAULT_FROM = 'onboarding@resend.dev';
+const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
 function createSmtpClient(user, pass) {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
