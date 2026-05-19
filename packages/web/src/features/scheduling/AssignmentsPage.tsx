@@ -21,16 +21,7 @@ interface Assignment {
 
 type Banner = { kind: 'success' | 'error'; text: string } | null;
 
-const selectStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  border: '1px solid #c9d8e8',
-  borderRadius: '8px',
-  fontFamily: 'inherit',
-  fontSize: '1rem',
-  color: 'var(--color-text)',
-  backgroundColor: 'white',
-  width: '100%',
-};
+// Select fields use the global .select-field class for consistency.
 
 export function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -114,69 +105,71 @@ export function AssignmentsPage() {
 
   return (
     <div>
-      <h2>Caregiver Assignments</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Schedule and assign caregivers to client visits.</p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Assignments</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Schedule and assign caregivers to client visits.
+          </p>
+        </div>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <h3 style={{ margin: 0, marginBottom: '1rem' }}>New Assignment</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="form-card">
+          <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>New assignment</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div>
-                <label htmlFor="assignClientId">Client</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '1rem',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="assignClientId" className="label">Client</label>
+                <select id="assignClientId" value={clientId} onChange={e => setClientId(e.target.value)} required className="select-field">
+                  <option value="">Select a client…</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                  ))}
+                </select>
               </div>
-              <select id="assignClientId" value={clientId} onChange={e => setClientId(e.target.value)} required style={selectStyle}>
-                <option value="">Select a client…</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
-                ))}
-              </select>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label htmlFor="assignCaregiverId">Caregiver</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="assignCaregiverId" className="label">Caregiver</label>
+                <select id="assignCaregiverId" value={caregiverId} onChange={e => setCaregiverId(e.target.value)} required className="select-field">
+                  <option value="">Select a caregiver…</option>
+                  {caregivers.map(s => (
+                    <option key={s.id} value={s.id}>{s.email} ({s.role})</option>
+                  ))}
+                </select>
               </div>
-              <select id="assignCaregiverId" value={caregiverId} onChange={e => setCaregiverId(e.target.value)} required style={selectStyle}>
-                <option value="">Select a caregiver…</option>
-                {caregivers.map(s => (
-                  <option key={s.id} value={s.id}>{s.email} ({s.role})</option>
-                ))}
-              </select>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label htmlFor="assignTemplateId">Visit Template</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="assignTemplateId" className="label">Visit Template</label>
+                <select id="assignTemplateId" value={visitTemplateId} onChange={e => setVisitTemplateId(e.target.value)} required className="select-field">
+                  <option value="">Select a template…</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} — {clientName(t.clientId)}</option>
+                  ))}
+                </select>
               </div>
-              <select id="assignTemplateId" value={visitTemplateId} onChange={e => setVisitTemplateId(e.target.value)} required style={selectStyle}>
-                <option value="">Select a template…</option>
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} — {clientName(t.clientId)}</option>
-                ))}
-              </select>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="visitDate" className="label">Visit Date <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="input-field" />
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="visitDate">Visit Date <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '0.8rem' }}>(optional)</span></label>
-              <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} />
-            </div>
-
-            <button type="submit" disabled={submitting} style={submitting ? { opacity: 0.6, cursor: 'wait' } : undefined}>
+            <button type="submit" disabled={submitting} className="btn-primary" style={{ marginTop: '1.25rem' }}>
               {submitting ? 'Saving…' : 'Create Assignment'}
             </button>
           </form>
           {banner && (
             <div
               role={banner.kind === 'error' ? 'alert' : 'status'}
-              style={{
-                marginTop: '1rem', padding: '1rem', borderRadius: '8px', fontWeight: 600,
-                backgroundColor: banner.kind === 'success' ? '#ecfdf5' : '#fef2f2',
-                color: banner.kind === 'success' ? '#065f46' : '#991b1b',
-              }}
+              className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+              style={{ marginTop: '1rem' }}
             >
               {banner.text}
             </div>
@@ -184,9 +177,14 @@ export function AssignmentsPage() {
         </div>
 
         <div>
-          <h3>Upcoming Assignments</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Upcoming assignments</h3>
+            {!loading && !loadError && assignments.length > 0 && (
+              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{assignments.length} total</span>
+            )}
+          </div>
           {loading ? (
-            <LoadingSkeleton rows={5} columns={2} />
+            <LoadingSkeleton rows={5} columns={4} />
           ) : loadError ? (
             <ErrorRetry message={loadError} onRetry={loadAll} />
           ) : assignments.length === 0 ? (
@@ -196,53 +194,61 @@ export function AssignmentsPage() {
               cta={{ label: 'Add an assignment', onClick: focusAdd }}
             />
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {assignments.map(a => {
-                const isExpanded = expandedId === a.id;
-                return (
-                  <li
-                    key={a.id}
-                    style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', backgroundColor: isExpanded ? '#f8fafc' : 'white' }}
-                  >
-                    <button
-                      type="button"
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedId(isExpanded ? null : a.id)}
-                      style={{ width: '100%', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit', color: 'inherit' }}
-                    >
-                      <div>
-                        <strong>{caregiverLabel(a.caregiverId)}</strong>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                          Client: {clientName(a.clientId)}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                        {a.visitDate && (
-                          <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#f0fdf4', color: '#047857', borderRadius: '4px', fontWeight: 600 }}>
-                            {a.visitDate}
-                          </span>
-                        )}
-                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{isExpanded ? '▾' : '▸'}</span>
-                      </div>
-                    </button>
-                    {isExpanded && (
-                      <div style={{ padding: '0 1rem 1rem', borderTop: '1px solid #e2e8f0', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1rem', color: '#475569' }}>
-                        <div style={{ fontWeight: 600 }}>Assignment ID</div>
-                        <div style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{a.id}</div>
-                        <div style={{ fontWeight: 600 }}>Caregiver</div>
-                        <div>{caregiverLabel(a.caregiverId)}</div>
-                        <div style={{ fontWeight: 600 }}>Client</div>
-                        <div>{clientName(a.clientId)}</div>
-                        <div style={{ fontWeight: 600 }}>Template</div>
-                        <div>{templateLabel(a.visitTemplateId)}</div>
-                        <div style={{ fontWeight: 600 }}>Visit date</div>
-                        <div>{a.visitDate || <em style={{ color: '#94a3b8' }}>not set</em>}</div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Caregiver</th>
+                  <th>Client</th>
+                  <th>Template</th>
+                  <th>Visit date</th>
+                  <th style={{ width: '40px' }} aria-label="expand" />
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((a) => {
+                  const isExpanded = expandedId === a.id;
+                  return (
+                    <React.Fragment key={a.id}>
+                      <tr
+                        onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                        style={{ cursor: 'pointer' }}
+                        aria-expanded={isExpanded}
+                      >
+                        <td style={{ fontWeight: 500 }}>{caregiverLabel(a.caregiverId)}</td>
+                        <td style={{ color: '#475569' }}>{clientName(a.clientId)}</td>
+                        <td style={{ color: '#475569', fontSize: '0.8125rem' }}>{templateLabel(a.visitTemplateId)}</td>
+                        <td>
+                          {a.visitDate ? (
+                            <span className="badge badge-success" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{a.visitDate}</span>
+                          ) : (
+                            <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={5} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                              <div style={{ fontWeight: 600 }}>Assignment ID</div>
+                              <div style={{ fontFamily: 'var(--font-mono)' }}>{a.id}</div>
+                              <div style={{ fontWeight: 600 }}>Caregiver</div>
+                              <div>{caregiverLabel(a.caregiverId)}</div>
+                              <div style={{ fontWeight: 600 }}>Client</div>
+                              <div>{clientName(a.clientId)}</div>
+                              <div style={{ fontWeight: 600 }}>Template</div>
+                              <div>{templateLabel(a.visitTemplateId)}</div>
+                              <div style={{ fontWeight: 600 }}>Visit date</div>
+                              <div>{a.visitDate || <em style={{ color: '#94A3B8' }}>not set</em>}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

@@ -77,97 +77,76 @@ export function ClientsPage() {
 
   return (
     <div>
-      <h2>Client Management</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Manage your clients and their demographic information.</p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0 }}>Add New Client</h3>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Clients</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Manage your clients and their demographic information.
+          </p>
+        </div>
+        <button type="button" onClick={focusAddClient} className="btn-primary">
+          Add client
+        </button>
+      </header>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 380px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="form-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Add new client</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
               <button
                 type="button"
                 onClick={fillSampleData}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '0.4rem 0.75rem',
-                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                  color: 'var(--color-accent)',
-                  border: '1px dashed var(--color-accent)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
-                }}
+                className="btn-ghost btn-sm"
+                style={{ fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}
               >
-                Dev · Fill with sample data
+                Sample data
               </button>
             )}
           </div>
-          <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="firstName">First Name</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="firstName" className="label">First Name</label>
+                <input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required className="input-field" />
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <label htmlFor="lastName">Last Name</label>
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-                </div>
-                <input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="lastName" className="label">Last Name</label>
+                <input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required className="input-field" />
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label htmlFor="dob">Date of Birth</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <input id="dob" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="dob" className="label">Date of Birth</label>
+              <input id="dob" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required className="input-field" />
             </div>
 
-            <details style={{ marginTop: '1rem' }}>
+            <details>
               <summary
                 style={{
                   cursor: 'pointer',
-                  fontFamily: 'var(--font-heading)',
-                  fontWeight: 700,
-                  fontSize: '0.875rem',
-                  color: 'var(--color-text-muted)',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  color: '#6366F1',
                 }}
               >
-                Optional fields (1)
+                Show optional fields
               </summary>
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label htmlFor="medicaid">Medicaid Number (Optional)</label>
-                  <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
-                </div>
+              <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="medicaid" className="label">Medicaid Number (Optional)</label>
+                <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} className="input-field" />
               </div>
             </details>
 
-            <button type="submit" disabled={submitting} style={submitting ? { opacity: 0.6, cursor: 'wait' } : undefined}>
+            <button type="submit" disabled={submitting} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
               {submitting ? 'Adding…' : 'Add Client'}
             </button>
           </form>
           {banner && (
             <div
               role={banner.kind === 'error' ? 'alert' : 'status'}
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: banner.kind === 'success' ? '#ecfdf5' : '#fef2f2',
-                color: banner.kind === 'success' ? '#065f46' : '#991b1b',
-                borderRadius: '8px',
-                fontWeight: 600
-              }}
+              className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+              style={{ marginTop: '1rem' }}
             >
               {banner.text}
             </div>
@@ -175,9 +154,14 @@ export function ClientsPage() {
         </div>
 
         <div>
-          <h3>Client Roster</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Client roster</h3>
+            {!loading && !loadError && clients.length > 0 && (
+              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{clients.length} client{clients.length === 1 ? '' : 's'}</span>
+            )}
+          </div>
           {loading ? (
-            <LoadingSkeleton rows={5} columns={2} />
+            <LoadingSkeleton rows={5} columns={3} />
           ) : loadError ? (
             <ErrorRetry message={loadError} onRetry={loadClients} />
           ) : clients.length === 0 ? (
@@ -187,78 +171,79 @@ export function ClientsPage() {
               cta={{ label: 'Add a client', onClick: focusAddClient }}
             />
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {clients.map(c => {
-                const isExpanded = expandedId === c.id;
-                return (
-                  <li
-                    key={c.id}
-                    style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      backgroundColor: isExpanded ? '#f8fafc' : 'white'
-                    }}
-                  >
-                    <button
-                      type="button"
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedId(isExpanded ? null : c.id)}
-                      style={{
-                        width: '100%',
-                        padding: '1rem',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        font: 'inherit',
-                        color: 'inherit'
-                      }}
-                    >
-                      <div>
-                        <strong>{c.firstName} {c.lastName}</strong>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>DOB: {c.dateOfBirth}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {c.medicaidNumber && (
-                          <div style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#e0f2fe', color: '#0284c7', borderRadius: '4px' }}>
-                            Medicaid: {c.medicaidNumber}
-                          </div>
-                        )}
-                        <span style={{ color: '#94a3b8', fontSize: '0.875rem', minWidth: '1ch', textAlign: 'center' }}>
-                          {isExpanded ? '▾' : '▸'}
-                        </span>
-                      </div>
-                    </button>
-                    {isExpanded && (
-                      <div
-                        style={{
-                          padding: '0 1rem 1rem',
-                          borderTop: '1px solid #e2e8f0',
-                          fontSize: '0.85rem',
-                          display: 'grid',
-                          gridTemplateColumns: 'auto 1fr',
-                          gap: '0.35rem 1rem',
-                          color: '#475569'
-                        }}
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Date of birth</th>
+                  <th>Medicaid #</th>
+                  <th style={{ width: '40px' }} aria-label="expand" />
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((c) => {
+                  const isExpanded = expandedId === c.id;
+                  const initials = `${c.firstName.charAt(0)}${c.lastName.charAt(0)}`.toUpperCase();
+                  return (
+                    <React.Fragment key={c.id}>
+                      <tr
+                        onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                        style={{ cursor: 'pointer' }}
+                        aria-expanded={isExpanded}
                       >
-                        <div style={{ fontWeight: 600 }}>Client ID</div>
-                        <div style={{ fontFamily: 'monospace' }}>{c.id}</div>
-                        <div style={{ fontWeight: 600 }}>Full name</div>
-                        <div>{c.firstName} {c.lastName}</div>
-                        <div style={{ fontWeight: 600 }}>Date of birth</div>
-                        <div>{c.dateOfBirth}</div>
-                        <div style={{ fontWeight: 600 }}>Medicaid #</div>
-                        <div>{c.medicaidNumber || <em style={{ color: '#94a3b8' }}>not on file</em>}</div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                            <div
+                              aria-hidden
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+                                color: 'white',
+                                display: 'grid',
+                                placeItems: 'center',
+                                fontWeight: 600,
+                                fontSize: '0.7rem',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {initials}
+                            </div>
+                            <span style={{ fontWeight: 500 }}>{c.firstName} {c.lastName}</span>
+                          </div>
+                        </td>
+                        <td style={{ color: '#475569', fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{c.dateOfBirth}</td>
+                        <td>
+                          {c.medicaidNumber ? (
+                            <span className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{c.medicaidNumber}</span>
+                          ) : (
+                            <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={4} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                              <div style={{ fontWeight: 600 }}>Client ID</div>
+                              <div style={{ fontFamily: 'var(--font-mono)' }}>{c.id}</div>
+                              <div style={{ fontWeight: 600 }}>Full name</div>
+                              <div>{c.firstName} {c.lastName}</div>
+                              <div style={{ fontWeight: 600 }}>Date of birth</div>
+                              <div>{c.dateOfBirth}</div>
+                              <div style={{ fontWeight: 600 }}>Medicaid #</div>
+                              <div>{c.medicaidNumber || <em style={{ color: '#94A3B8' }}>not on file</em>}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

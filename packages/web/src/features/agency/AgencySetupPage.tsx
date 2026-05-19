@@ -45,66 +45,91 @@ export function AgencySetupPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading agency details…</div>
+      <div>
+        <header className="page-header">
+          <div className="page-header__title">
+            <h1 style={{ margin: 0 }}>Agency Setup</h1>
+            <p style={{ margin: 0, color: '#64748B' }}>Configure your Pennsylvania agency details.</p>
+          </div>
+        </header>
+        <div style={{ padding: '2rem', color: '#94A3B8' }}>Loading agency details…</div>
+      </div>
     );
   }
 
   if (loadError) {
     return (
-      <div role="alert" style={{ padding: '1rem', backgroundColor: '#fef2f2', color: '#991b1b', borderRadius: '8px' }}>
-        {loadError}
+      <div>
+        <header className="page-header">
+          <div className="page-header__title">
+            <h1 style={{ margin: 0 }}>Agency Setup</h1>
+          </div>
+        </header>
+        <div role="alert" className="info-banner banner-error">
+          {loadError}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h2>Agency Setup</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Configure your Pennsylvania agency details and operating tracks.</p>
-
-      <form onSubmit={handleSubmit} style={{ maxWidth: '480px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="agencyName">Agency Name</label>
-          <input
-            id="agencyName"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Enter agency name"
-            required
-          />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-          <label htmlFor="agencyState">State</label>
-          <input
-            id="agencyState"
-            value={agency?.state || 'PA'}
-            disabled
-            style={{ backgroundColor: '#f8fafc', color: '#94a3b8', cursor: 'not-allowed' }}
-          />
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>
-            State is locked to Pennsylvania. RayHealth EVV is purpose-built for PA DHS
-            Personal Assistance Services and cannot be reconfigured for other states.
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Agency Setup</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Configure your Pennsylvania agency details and operating tracks.
           </p>
         </div>
+      </header>
 
-        <button type="submit" disabled={saving || !name.trim() || name === agency?.name}>
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
-      </form>
+      <div className="form-card" style={{ maxWidth: '560px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label htmlFor="agencyName" className="label">Agency Name</label>
+            <input
+              id="agencyName"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Enter agency name"
+              required
+              className="input-field"
+            />
+          </div>
 
-      {banner && (
-        <div
-          role={banner.kind === 'error' ? 'alert' : 'status'}
-          style={{
-            marginTop: '1rem', padding: '1rem', borderRadius: '8px', fontWeight: 600, maxWidth: '480px',
-            backgroundColor: banner.kind === 'success' ? '#ecfdf5' : '#fef2f2',
-            color: banner.kind === 'success' ? '#065f46' : '#991b1b',
-          }}
-        >
-          {banner.text}
-        </div>
-      )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label htmlFor="agencyState" className="label">State</label>
+            <input
+              id="agencyState"
+              value={agency?.state || 'PA'}
+              disabled
+              className="input-field"
+            />
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.5 }}>
+              State is locked to Pennsylvania. RayHealth EVV is purpose-built for PA DHS Personal Assistance Services.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving || !name.trim() || name === agency?.name}
+            className="btn-primary"
+            style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </form>
+
+        {banner && (
+          <div
+            role={banner.kind === 'error' ? 'alert' : 'status'}
+            className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+            style={{ marginTop: '1rem' }}
+          >
+            {banner.text}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

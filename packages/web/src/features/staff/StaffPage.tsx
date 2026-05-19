@@ -153,42 +153,44 @@ export function StaffPage() {
     }
   };
 
+  const statusBadgeClass = (status: string): string => {
+    if (status === 'pending') return 'badge badge-warning';
+    if (status === 'active') return 'badge badge-info';
+    return 'badge badge-neutral';
+  };
+
   return (
     <div>
-      <h2>Staff Management</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Manage caregivers, coordinators, and invite new staff members.</p>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Staff</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Manage caregivers, coordinators, and invite new staff members.
+          </p>
+        </div>
+        <button type="button" onClick={focusInvite} className="btn-primary">
+          Invite staff
+        </button>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0 }}>Invite Staff Member</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 380px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="form-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Invite a staff member</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
               <button
                 type="button"
                 onClick={fillSampleData}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '0.4rem 0.75rem',
-                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                  color: 'var(--color-accent)',
-                  border: '1px dashed var(--color-accent)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
-                }}
+                className="btn-ghost btn-sm"
+                style={{ fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}
               >
-                Dev · Fill with sample data
+                Sample data
               </button>
             )}
           </div>
-          <form onSubmit={handleInvite} style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div>
-                <label htmlFor="email">Email Address</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
+          <form onSubmit={handleInvite} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="email" className="label">Email Address</label>
               <input
                 id="email"
                 type="email"
@@ -196,16 +198,17 @@ export function StaffPage() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 placeholder="staff@example.com"
+                className="input-field"
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="role">Role</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="role" className="label">Role</label>
               <select
                 id="role"
                 value={role}
                 onChange={e => setRole(e.target.value)}
-                style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
+                className="select-field"
               >
                 <option value="caregiver">Caregiver</option>
                 <option value="coordinator">Coordinator</option>
@@ -213,17 +216,15 @@ export function StaffPage() {
               </select>
             </div>
 
-            <button type="submit">Create Invite</button>
+            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
+              Create Invite
+            </button>
           </form>
           {message && (
             <div
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: createdInvite ? '#e0f2fe' : '#fee2e2',
-                color: createdInvite ? '#0369a1' : '#991b1b',
-                borderRadius: '8px'
-              }}
+              className={`info-banner ${createdInvite ? 'banner-info' : 'banner-error'}`}
+              style={{ marginTop: '1rem' }}
+              role={createdInvite ? 'status' : 'alert'}
             >
               {message}
             </div>
@@ -232,13 +233,13 @@ export function StaffPage() {
             <div
               style={{
                 marginTop: '1rem',
-                padding: '1.25rem',
-                border: '1px solid #c9d8e8',
+                padding: '1rem',
+                border: '1px solid #E2E8F0',
                 borderRadius: '8px',
-                backgroundColor: '#f8fafc'
+                backgroundColor: '#F8FAFC'
               }}
             >
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.8125rem', color: '#475569', marginBottom: '0.6rem', lineHeight: 1.5 }}>
                 {createdInvite.emailDelivery === 'sent'
                   ? `Backup link — only needed if ${createdInvite.email} doesn't see the email.`
                   : `Share this link with ${createdInvite.email}. They'll set a password and finish creating their account.`}
@@ -252,31 +253,31 @@ export function StaffPage() {
                   onFocus={(e) => e.currentTarget.select()}
                   style={{
                     flex: 1,
-                    padding: '0.6rem 0.75rem',
-                    border: '1px solid #c9d8e8',
-                    borderRadius: '6px',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '0.8125rem',
                     backgroundColor: 'white'
                   }}
                 />
-                <button type="button" onClick={handleCopy} style={{ whiteSpace: 'nowrap' }}>
-                  {copied ? 'Copied ✓' : 'Copy link'}
+                <button type="button" onClick={handleCopy} className="btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+                  {copied ? 'Copied' : 'Copy link'}
                 </button>
               </div>
-              <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
-                Expires {new Date(createdInvite.expiresAt).toLocaleString()}
-                {' · '}
-                Single-use — once they accept, the link stops working.
+              <div style={{ marginTop: '0.6rem', fontSize: '0.75rem', color: '#94A3B8' }}>
+                Expires {new Date(createdInvite.expiresAt).toLocaleString()} &middot; single-use
               </div>
             </div>
           )}
         </div>
 
         <div>
-          <h3>Active Staff Directory</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Active staff directory</h3>
+            {!loading && !loadError && staff.length > 0 && (
+              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{staff.length} member{staff.length === 1 ? '' : 's'}</span>
+            )}
+          </div>
           {loading ? (
-            <LoadingSkeleton rows={5} columns={2} />
+            <LoadingSkeleton rows={5} columns={3} />
           ) : loadError ? (
             <ErrorRetry message={loadError} onRetry={loadStaff} />
           ) : staff.length === 0 ? (
@@ -286,112 +287,98 @@ export function StaffPage() {
               cta={{ label: 'Invite a staff member', onClick: focusInvite }}
             />
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {staff.map(s => {
-                const isExpanded = expandedId === s.id;
-                const isPending = s.status === 'pending';
-                const resend = resendState[s.id] ?? { status: 'idle' as const };
-                return (
-                  <li
-                    key={s.id}
-                    style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      backgroundColor: isExpanded ? '#f8fafc' : 'white'
-                    }}
-                  >
-                    <button
-                      type="button"
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedId(isExpanded ? null : s.id)}
-                      style={{
-                        width: '100%',
-                        padding: '1rem',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        font: 'inherit',
-                        color: 'inherit'
-                      }}
-                    >
-                      <div>
-                        <strong>{s.email}</strong>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Role: {s.role}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: s.status === 'pending' ? '#fef3c7' : '#e0f2fe', color: s.status === 'pending' ? '#d97706' : '#0284c7', borderRadius: '4px', textTransform: 'uppercase' }}>
-                          {s.status}
-                        </div>
-                        <span style={{ color: '#94a3b8', fontSize: '0.875rem', minWidth: '1ch', textAlign: 'center' }}>
-                          {isExpanded ? '▾' : '▸'}
-                        </span>
-                      </div>
-                    </button>
-                    {isExpanded && (
-                      <div
-                        style={{
-                          padding: '0 1rem 1rem',
-                          borderTop: '1px solid #e2e8f0',
-                          fontSize: '0.85rem',
-                          display: 'grid',
-                          gridTemplateColumns: 'auto 1fr',
-                          gap: '0.35rem 1rem',
-                          color: '#475569'
-                        }}
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th style={{ width: '40px' }} aria-label="actions" />
+                </tr>
+              </thead>
+              <tbody>
+                {staff.map((s) => {
+                  const isExpanded = expandedId === s.id;
+                  const isPending = s.status === 'pending';
+                  const resend = resendState[s.id] ?? { status: 'idle' as const };
+                  return (
+                    <React.Fragment key={s.id}>
+                      <tr
+                        onClick={() => setExpandedId(isExpanded ? null : s.id)}
+                        style={{ cursor: 'pointer' }}
+                        aria-expanded={isExpanded}
                       >
-                        <div style={{ fontWeight: 600 }}>User ID</div>
-                        <div style={{ fontFamily: 'monospace' }}>{s.id}</div>
-                        <div style={{ fontWeight: 600 }}>Email</div>
-                        <div>{s.email}</div>
-                        <div style={{ fontWeight: 600 }}>Role</div>
-                        <div style={{ textTransform: 'capitalize' }}>{s.role}</div>
-                        <div style={{ fontWeight: 600 }}>Status</div>
-                        <div style={{ textTransform: 'capitalize' }}>{s.status}</div>
-                        {isPending && (
-                          <>
-                            <div style={{ fontWeight: 600 }}>Actions</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
-                              <button
-                                type="button"
-                                onClick={() => handleResend(s.id)}
-                                disabled={resend.status === 'sending'}
-                                style={{
-                                  padding: '0.4rem 0.85rem',
-                                  fontSize: '0.8125rem',
-                                  fontWeight: 600,
-                                  backgroundColor: resend.status === 'sent' ? '#dcfce7' : '#0b2a4a',
-                                  color: resend.status === 'sent' ? '#166534' : '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  cursor: resend.status === 'sending' ? 'wait' : 'pointer',
-                                  opacity: resend.status === 'sending' ? 0.7 : 1
-                                }}
-                              >
-                                {resend.status === 'sending'
-                                  ? 'Resending…'
-                                  : resend.status === 'sent'
-                                  ? 'Email resent ✓'
-                                  : 'Resend email'}
-                              </button>
-                              {resend.status === 'failed' && (
-                                <span style={{ fontSize: '0.75rem', color: '#991b1b' }}>
-                                  {resend.reason}
-                                </span>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <div
+                              aria-hidden
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+                                color: 'white',
+                                display: 'grid',
+                                placeItems: 'center',
+                                fontWeight: 600,
+                                fontSize: '0.75rem',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {s.email.charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{ fontWeight: 500 }}>{s.email}</span>
+                          </div>
+                        </td>
+                        <td style={{ textTransform: 'capitalize', color: '#475569' }}>{s.role}</td>
+                        <td>
+                          <span className={statusBadgeClass(s.status)}>{s.status}</span>
+                        </td>
+                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={4} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                              <div style={{ fontWeight: 600 }}>User ID</div>
+                              <div style={{ fontFamily: 'var(--font-mono)' }}>{s.id}</div>
+                              <div style={{ fontWeight: 600 }}>Email</div>
+                              <div>{s.email}</div>
+                              <div style={{ fontWeight: 600 }}>Role</div>
+                              <div style={{ textTransform: 'capitalize' }}>{s.role}</div>
+                              <div style={{ fontWeight: 600 }}>Status</div>
+                              <div style={{ textTransform: 'capitalize' }}>{s.status}</div>
+                              {isPending && (
+                                <>
+                                  <div style={{ fontWeight: 600 }}>Actions</div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleResend(s.id); }}
+                                      disabled={resend.status === 'sending'}
+                                      className={resend.status === 'sent' ? 'btn-secondary btn-sm' : 'btn-primary btn-sm'}
+                                    >
+                                      {resend.status === 'sending'
+                                        ? 'Resending…'
+                                        : resend.status === 'sent'
+                                          ? 'Email resent'
+                                          : 'Resend email'}
+                                    </button>
+                                    {resend.status === 'failed' && (
+                                      <span style={{ fontSize: '0.75rem', color: '#BE123C' }}>{resend.reason}</span>
+                                    )}
+                                  </div>
+                                </>
                               )}
                             </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

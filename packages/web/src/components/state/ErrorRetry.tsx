@@ -10,16 +10,15 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
     <div
       role="alert"
       style={{
-        marginTop: '1rem',
-        padding: '1.5rem',
-        backgroundColor: '#fef2f2',
-        border: '1px solid #fecaca',
+        padding: '2rem 1.5rem',
+        backgroundColor: '#FFF1F2',
+        border: '1px solid #FECDD3',
         borderRadius: '12px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        gap: '0.5rem'
+        gap: '0.6rem',
       }}
     >
       <div
@@ -28,21 +27,24 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
           width: '44px',
           height: '44px',
           borderRadius: '50%',
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
+          backgroundColor: 'rgba(244, 63, 94, 0.12)',
+          color: '#BE123C',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.2rem',
-          fontWeight: 700
+          border: '1px solid rgba(244, 63, 94, 0.25)',
         }}
       >
-        !
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
       </div>
-      <h4 style={{ margin: 0, color: 'var(--color-primary-dark)' }}>
-        Couldn't load
+      <h4 style={{ margin: 0, color: '#BE123C', fontSize: '0.9375rem', fontWeight: 600 }}>
+        Couldn&apos;t load
       </h4>
-      <p style={{ margin: 0, color: '#991b1b', maxWidth: '36ch' }}>
+      <p style={{ margin: 0, color: '#9F1239', maxWidth: '36ch', fontSize: '0.8125rem', lineHeight: 1.5 }}>
         {message ?? 'Something went wrong while loading this list. Please try again.'}
       </p>
       <button
@@ -50,14 +52,15 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
         onClick={onRetry}
         style={{
           marginTop: '0.5rem',
-          backgroundColor: 'var(--color-accent)',
+          backgroundColor: '#6366F1',
           color: 'white',
-          border: 'none',
-          padding: '0.55rem 1.1rem',
+          border: '1px solid #6366F1',
+          padding: '0.5rem 1.1rem',
           borderRadius: '8px',
-          fontWeight: 600,
+          fontWeight: 500,
           cursor: 'pointer',
-          fontSize: '0.95rem'
+          fontSize: '0.875rem',
+          fontFamily: 'inherit',
         }}
       >
         Retry

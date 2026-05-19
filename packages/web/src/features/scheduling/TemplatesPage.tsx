@@ -26,16 +26,7 @@ function taskLabel(task: unknown): string {
   return String(task);
 }
 
-const selectStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  border: '1px solid #c9d8e8',
-  borderRadius: '8px',
-  fontFamily: 'inherit',
-  fontSize: '1rem',
-  color: 'var(--color-text)',
-  backgroundColor: 'white',
-  width: '100%',
-};
+// Select fields use the global .select-field class for consistency.
 
 export function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -123,41 +114,37 @@ export function TemplatesPage() {
 
   return (
     <div>
-      <h2>Visit Templates</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Create and manage plan-of-care visit templates.</p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0 }}>New Template</h3>
+      <header className="page-header">
+        <div className="page-header__title">
+          <h1 style={{ margin: 0 }}>Templates</h1>
+          <p style={{ margin: 0, color: '#64748B' }}>
+            Create and manage plan-of-care visit templates.
+          </p>
+        </div>
+        <button type="button" onClick={focusAddTemplate} className="btn-primary">
+          New template
+        </button>
+      </header>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="form-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>New template</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
               <button
                 type="button"
                 onClick={fillSampleData}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '0.4rem 0.75rem',
-                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                  color: 'var(--color-accent)',
-                  border: '1px dashed var(--color-accent)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
-                }}
+                className="btn-ghost btn-sm"
+                style={{ fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}
               >
-                Dev · Fill with sample data
+                Sample data
               </button>
             )}
           </div>
-          <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div>
-                <label htmlFor="clientId">Client</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <select id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required style={selectStyle}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="clientId" className="label">Client</label>
+              <select id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required className="select-field">
                 <option value="">Select a client…</option>
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
@@ -165,52 +152,73 @@ export function TemplatesPage() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label htmlFor="name">Template Name</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Morning Routine" required />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label htmlFor="name" className="label">Template Name</label>
+              <input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Morning Routine" required className="input-field" />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <div>
-                <label>Select Tasks</label>
-                <span style={{ color: '#dc2626', marginLeft: '0.25rem' }} aria-hidden="true">*</span>
-              </div>
-              <div style={{ 
-                maxHeight: '300px', 
-                overflowY: 'auto', 
-                border: '1px solid #c9d8e8', 
-                borderRadius: '8px', 
-                padding: '0.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.25rem'
-              }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label className="label">Select Tasks</label>
+              <div
+                style={{
+                  maxHeight: '280px',
+                  overflowY: 'auto',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '0.4rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.15rem',
+                  backgroundColor: '#F8FAFC',
+                }}
+              >
                 {availableTasks.length === 0 ? (
-                  <span style={{ fontSize: '0.875rem', color: '#64748b', padding: '0.5rem' }}>Loading tasks...</span>
+                  <span style={{ fontSize: '0.8125rem', color: '#94A3B8', padding: '0.6rem' }}>Loading tasks…</span>
                 ) : (
-                  availableTasks.map(task => (
-                    <label key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', textTransform: 'none', cursor: 'pointer', padding: '0.25rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedTasks.has(task.duty)} 
-                        onChange={() => handleTaskToggle(task.duty)} 
-                      />
-                      <span style={{ fontSize: '0.875rem' }}>{task.id} - {task.duty}</span>
-                    </label>
-                  ))
+                  availableTasks.map(task => {
+                    const isSelected = selectedTasks.has(task.duty);
+                    return (
+                      <label
+                        key={task.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          fontWeight: 400,
+                          textTransform: 'none',
+                          cursor: 'pointer',
+                          padding: '0.45rem 0.6rem',
+                          borderRadius: '6px',
+                          backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                          transition: 'background-color 0.1s ease',
+                          fontSize: '0.8125rem',
+                          color: '#0F172A',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleTaskToggle(task.duty)}
+                          style={{ width: 'auto', accentColor: '#6366F1' }}
+                        />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#6366F1', fontWeight: 600 }}>{task.id}</span>
+                        <span>{task.duty}</span>
+                      </label>
+                    );
+                  })
                 )}
               </div>
             </div>
-            
-            <button type="submit">Create Template</button>
+
+            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
+              Create Template
+            </button>
           </form>
           {message && (
             <div
               role={messageKind === 'error' ? 'alert' : 'status'}
-              style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', fontWeight: 600, backgroundColor: messageKind === 'success' ? '#ecfdf5' : '#fef2f2', color: messageKind === 'success' ? '#065f46' : '#991b1b' }}
+              className={`info-banner ${messageKind === 'success' ? 'banner-success' : 'banner-error'}`}
+              style={{ marginTop: '1rem' }}
             >
               {message}
             </div>
@@ -218,9 +226,14 @@ export function TemplatesPage() {
         </div>
 
         <div>
-          <h3>Template Library</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Template library</h3>
+            {!loading && !loadError && templates.length > 0 && (
+              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{templates.length} total</span>
+            )}
+          </div>
           {loading ? (
-            <LoadingSkeleton rows={5} columns={2} />
+            <LoadingSkeleton rows={5} columns={3} />
           ) : loadError ? (
             <ErrorRetry message={loadError} onRetry={loadTemplates} />
           ) : templates.length === 0 ? (
@@ -230,17 +243,17 @@ export function TemplatesPage() {
               cta={{ label: 'Add a template', onClick: focusAddTemplate }}
             />
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {templates.map(t => {
                 const isExpanded = expandedId === t.id;
                 return (
-                  <li
+                  <div
                     key={t.id}
                     style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
                       overflow: 'hidden',
-                      backgroundColor: isExpanded ? '#f8fafc' : 'white'
+                      backgroundColor: 'white',
                     }}
                   >
                     <button
@@ -249,28 +262,38 @@ export function TemplatesPage() {
                       onClick={() => setExpandedId(isExpanded ? null : t.id)}
                       style={{
                         width: '100%',
-                        padding: '1rem',
+                        padding: '1.1rem 1.25rem',
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
                         textAlign: 'left',
                         font: 'inherit',
                         color: 'inherit',
-                        display: 'block'
+                        display: 'block',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong>{t.name}</strong>
-                        <span style={{ color: '#94a3b8', fontSize: '0.875rem', minWidth: '1ch', textAlign: 'center' }}>
-                          {isExpanded ? '▾' : '▸'}
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>{t.name}</div>
+                          <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.15rem' }}>
+                            Client: {clientName(t.clientId)}
+                          </div>
+                        </div>
+                        <span style={{ color: '#94A3B8', fontSize: '0.875rem' }}>{isExpanded ? '▾' : '▸'}</span>
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                        Client: {clientName(t.clientId)}
-                      </div>
-                      <div style={{ marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                      <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                         {t.tasks.map((task, i) => (
-                          <span key={i} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
+                          <span
+                            key={i}
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '0.15rem 0.5rem',
+                              backgroundColor: '#F1F5F9',
+                              color: '#475569',
+                              borderRadius: '4px',
+                              fontWeight: 500,
+                            }}
+                          >
                             {taskLabel(task)}
                           </span>
                         ))}
@@ -279,29 +302,30 @@ export function TemplatesPage() {
                     {isExpanded && (
                       <div
                         style={{
-                          padding: '0 1rem 1rem',
-                          borderTop: '1px solid #e2e8f0',
-                          fontSize: '0.85rem',
+                          padding: '1rem 1.25rem',
+                          borderTop: '1px solid #E2E8F0',
+                          backgroundColor: '#F8FAFC',
+                          fontSize: '0.8125rem',
                           display: 'grid',
                           gridTemplateColumns: 'auto 1fr',
-                          gap: '0.35rem 1rem',
-                          color: '#475569'
+                          gap: '0.35rem 1.25rem',
+                          color: '#475569',
                         }}
                       >
                         <div style={{ fontWeight: 600 }}>Template ID</div>
-                        <div style={{ fontFamily: 'monospace' }}>{t.id}</div>
+                        <div style={{ fontFamily: 'var(--font-mono)' }}>{t.id}</div>
                         <div style={{ fontWeight: 600 }}>Client</div>
                         <div>{clientName(t.clientId)}</div>
                         <div style={{ fontWeight: 600 }}>Name</div>
                         <div>{t.name}</div>
                         <div style={{ fontWeight: 600 }}>Tasks ({t.tasks.length})</div>
-                        <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: '#94a3b8' }}>none</em>}</div>
+                        <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: '#94A3B8' }}>none</em>}</div>
                       </div>
                     )}
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
       </div>
