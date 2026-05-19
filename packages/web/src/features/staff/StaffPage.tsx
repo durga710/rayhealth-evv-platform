@@ -25,6 +25,7 @@ interface ResendResponse {
   id: string;
   email: string;
   emailDelivery: EmailDeliveryStatus;
+  emailError?: string;
 }
 
 type ResendState =
@@ -122,9 +123,12 @@ export function StaffPage() {
           [inviteId]: { status: 'failed', reason: 'Email not configured on server' }
         }));
       } else {
+        const reason = result.emailError
+          ? `Send failed: ${result.emailError}`
+          : 'Send failed — try again later';
         setResendState(prev => ({
           ...prev,
-          [inviteId]: { status: 'failed', reason: 'Send failed — try again later' }
+          [inviteId]: { status: 'failed', reason }
         }));
       }
     } catch (err) {

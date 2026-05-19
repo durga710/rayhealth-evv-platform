@@ -364,6 +364,7 @@ router.post(
         id: inviteId,
         email: invite.email,
         emailDelivery: delivery.status,
+        emailError: delivery.errorCategory,
       });
     } catch (err) {
       safeError('POST /invites/:id/resend-email failed', err);
