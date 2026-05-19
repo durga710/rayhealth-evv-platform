@@ -1,9 +1,19 @@
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext.js';
+
+const ADMIN_ROLES = new Set(['admin', 'coordinator']);
 
 export function CaregiverPortalPage() {
   const { user, logout } = useAuth();
 
-  const roleLabel = user?.role === 'family' ? 'Family' : 'Caregiver';
+  // Admins/coordinators who land here directly (e.g. typed /portal in the URL)
+  // get sent straight to the admin portal.
+  if (user && ADMIN_ROLES.has(user.role)) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  const role = user?.role ?? 'user';
+  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
 
   return (
     <div
@@ -62,9 +72,9 @@ export function CaregiverPortalPage() {
             {roleLabel} account active
           </h1>
           <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
-            {user?.role === 'family'
+            {role === 'family'
               ? "Your family member's care plan and visit history are available in the RayHealth mobile app."
-              : 'Use the RayHealth EVV mobile app to clock in, document tasks, and clock out. The web portal is for coordinators and admins only.'}
+              : 'Use the RayHealth EVV mobile app to clock in, document tasks, and clock out.'}
           </p>
         </div>
 
