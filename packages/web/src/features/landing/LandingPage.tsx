@@ -220,7 +220,7 @@ export function LandingPage() {
           <Link to="/pricing" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Pricing</Link>
           <Link to="/demo" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Demo</Link>
           <Link to="/contact" style={{ textDecoration: 'none', color: 'var(--color-text-muted)', fontWeight: 600 }}>Contact</Link>
-          <Link to="/login" style={{ backgroundColor: 'var(--color-primary-light)', color: 'white', textDecoration: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 700 }}>Log In</Link>
+          <Link to="/login" style={{ backgroundColor: 'var(--color-primary)', color: 'white', textDecoration: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 700 }}>Log In</Link>
         </nav>
       </header>
 
@@ -303,7 +303,7 @@ export function LandingPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link to="/contact" style={{ backgroundColor: 'var(--color-accent)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
+            <Link to="/contact" style={{ backgroundColor: 'var(--color-primary)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)' }}>
               Book an agency demo
             </Link>
             <a href="#features" style={{ backgroundColor: 'white', color: 'var(--color-primary-dark)', border: '2px solid #c9d8e8', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.1rem' }}>
@@ -517,7 +517,7 @@ export function LandingPage() {
             Get a live walkthrough of the admin portal and the caregiver mobile flow. We'll bring sample data — bring your hardest workflow.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
-            <Link to="/login" style={{ backgroundColor: 'var(--color-accent)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.05rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
+            <Link to="/login" style={{ backgroundColor: '#6366F1', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.05rem', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)' }}>
               Access Admin Portal
             </Link>
             <a href="mailto:hello@rayhealthevv.com" style={{ backgroundColor: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.3)', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.05rem' }}>

@@ -2,20 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 interface InviteInfo {
+  token: string;
   email: string;
   role: string;
-  firstName: string | null;
-  lastName: string | null;
-  agencyName: string;
+  agencyName: string | null;
   expiresAt: string;
-  status: 'pending' | 'expired' | 'revoked' | 'accepted';
+  status: string;
+  isValid: boolean;
 }
 
 type PageState =
   | { phase: 'loading' }
   | { phase: 'error'; message: string }
-  | { phase: 'form'; info: InviteInfo; token: string }
-  | { phase: 'success'; role: string };
+  | { phase: 'form'; info: InviteInfo }
+  | { phase: 'success' };
 
 function CheckIcon() {
   return (
@@ -33,7 +33,6 @@ export function AcceptInvitePage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [accessCode, setAccessCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -47,26 +46,25 @@ export function AcceptInvitePage() {
       return;
     }
 
-    fetch(`/api/invites/accept/${encodeURIComponent(token)}`, {
+    fetch(`/api/invitations/${encodeURIComponent(token)}`, {
       headers: { accept: 'application/json' }
     })
       .then(async (res) => {
-        const body = await res.json() as { success?: boolean; data?: InviteInfo; error?: string };
-        if (!res.ok || !body.success || !body.data) {
-          setPageState({ phase: 'error', message: body.error ?? 'Invite not found.' });
+        const body = await res.json() as InviteInfo & { isValid?: boolean };
+        if (!res.ok) {
+          setPageState({ phase: 'error', message: 'Invite not found. The link may be invalid or expired.' });
           return;
         }
-        const info = body.data;
-        if (info.status === 'accepted') {
+        if (body.status === 'accepted') {
           setPageState({ phase: 'error', message: 'This invite has already been used. If you need access, ask your agency admin to send a new invite.' });
-        } else if (info.status === 'expired') {
+        } else if (body.status === 'expired') {
           setPageState({ phase: 'error', message: 'This invite has expired. Please ask your agency admin to resend it.' });
-        } else if (info.status === 'revoked') {
+        } else if (body.status === 'revoked') {
           setPageState({ phase: 'error', message: 'This invite has been revoked. Please contact your agency admin.' });
+        } else if (!body.isValid) {
+          setPageState({ phase: 'error', message: 'This invite link is no longer valid. Please contact your agency admin.' });
         } else {
-          setFirstName(info.firstName ?? '');
-          setLastName(info.lastName ?? '');
-          setPageState({ phase: 'form', info, token });
+          setPageState({ phase: 'form', info: body });
         }
       })
       .catch(() => {
@@ -89,26 +87,26 @@ export function AcceptInvitePage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/invites/accept/${encodeURIComponent(token)}`, {
+      const res = await fetch('/api/invitations/accept', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          accessCode,
-          password,
+          token,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          password,
           phone: phone.trim() || undefined,
         })
       });
 
-      const body = await res.json() as { success?: boolean; data?: { role: string }; error?: string };
+      const body = await res.json() as { userId?: string; message?: string };
 
-      if (!res.ok || !body.success) {
-        setFormError(body.error ?? 'Something went wrong. Please try again.');
+      if (!res.ok) {
+        setFormError(body.message ?? 'Something went wrong. Please try again.');
         return;
       }
 
-      setPageState({ phase: 'success', role: body.data?.role ?? 'user' });
+      setPageState({ phase: 'success' });
     } catch {
       setFormError('Network error. Please check your connection and try again.');
     } finally {
@@ -173,16 +171,7 @@ export function AcceptInvitePage() {
       </Link>
 
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '1.75rem', maxWidth: '480px' }}>
-        <h1
-          style={{
-            fontSize: '2.5rem',
-            lineHeight: 1.1,
-            margin: 0,
-            color: 'white',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-          }}
-        >
+        <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, margin: 0, color: 'white', fontWeight: 700, letterSpacing: '-0.02em' }}>
           Set up your care account.
         </h1>
         <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
@@ -190,14 +179,11 @@ export function AcceptInvitePage() {
         </p>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {[
-            'Your access code is in the invite email.',
             'Password must be at least 12 characters.',
             'This link is single-use and expires after acceptance.',
+            'After setup, sign in at rayhealthevv.com/login.',
           ].map((point) => (
-            <li
-              key={point}
-              style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}
-            >
+            <li key={point} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}>
               <CheckIcon />
               <span>{point}</span>
             </li>
@@ -249,26 +235,16 @@ export function AcceptInvitePage() {
           <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
             <div
               aria-hidden
-              style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
-                Account created!
-              </h2>
+              <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>Account created!</h2>
               <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.6 }}>
-                Your {pageState.role} account is ready. Sign in with your email and the password you just set.
+                Your account is ready. Sign in with your email and the password you just set.
               </p>
             </div>
             <button
@@ -298,7 +274,7 @@ export function AcceptInvitePage() {
               Create your account
             </h2>
             <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.5 }}>
-              Invited to <strong style={{ color: '#0F172A' }}>{info.agencyName}</strong> as <span style={{ textTransform: 'capitalize' }}>{info.role}</span>.
+              Joining <strong style={{ color: '#0F172A' }}>{info.agencyName ?? 'your agency'}</strong> as <span style={{ textTransform: 'capitalize' }}>{info.role}</span>.
             </p>
             <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.8125rem' }}>{info.email}</p>
           </div>
@@ -352,22 +328,6 @@ export function AcceptInvitePage() {
                 className="input-field"
                 placeholder="(215) 555-0100"
               />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label htmlFor="accessCode" className="label">Access code</label>
-              <input
-                id="accessCode"
-                type="text"
-                autoComplete="one-time-code"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                required
-                className="input-field"
-                placeholder="XXXX-XXXX"
-                style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}
-              />
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Find this in your invite email.</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
