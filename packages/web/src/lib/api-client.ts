@@ -96,3 +96,19 @@ export async function getJson<T>(path: string): Promise<T> {
 
   return (await response.json()) as T;
 }
+
+export async function deleteJson<T = void>(path: string): Promise<T | null> {
+  const csrfToken = getCsrfToken();
+  const response = await fetch(path, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
+  });
+
+  if (!response.ok) {
+    throw await extractError(response);
+  }
+
+  if (response.status === 204) return null;
+  return (await response.json()) as T;
+}
