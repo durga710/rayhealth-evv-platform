@@ -90,6 +90,23 @@ router.post('/enroll', requireCapability('staff.write'), async (req, res) => {
         res.status(500).json({ success: false, error: message });
     }
 });
+// POST /learning/start — mark enrollment as in_progress when caregiver opens external course
+router.post('/start', requireCapability('evv.write'), async (req, res) => {
+    try {
+        const { enrollmentId } = req.body;
+        if (!enrollmentId) {
+            return res.status(400).json({ success: false, error: 'enrollmentId is required' });
+        }
+        const db = req.app.get('db');
+        const repo = new LearningRepository(db);
+        await repo.markInProgress(enrollmentId);
+        res.json({ success: true });
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : 'unexpected error';
+        res.status(500).json({ success: false, error: message });
+    }
+});
 // POST /learning/complete — record a course completion
 router.post('/complete', requireCapability('evv.write'), async (req, res) => {
     try {

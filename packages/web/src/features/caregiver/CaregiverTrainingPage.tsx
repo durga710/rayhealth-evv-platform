@@ -10,6 +10,7 @@ interface Course {
   required: boolean;
   durationMinutes: number;
   expiresAfterDays: number | null;
+  externalUrl: string | null;
 }
 
 interface Enrollment {
@@ -125,6 +126,12 @@ export function CaregiverTrainingPage() {
     } finally {
       setCompleting(null);
     }
+  };
+
+  const trackStarted = (enrollmentId: string) => {
+    postJson('/api/learning/start', { enrollmentId })
+      .then(() => load())
+      .catch(() => { /* tracking failure doesn't block the link */ });
   };
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
@@ -246,7 +253,45 @@ export function CaregiverTrainingPage() {
                       🏅 Certificate
                     </span>
                   )}
-                  {isActionable && (
+                  {isCompleted && course.externalUrl && (
+                    <a
+                      href={course.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: '#64748B',
+                        background: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Review ↗
+                    </a>
+                  )}
+                  {isActionable && enrollment.status === 'in_progress' && course.externalUrl && (
+                    <a
+                      href={course.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: 'var(--color-primary, #6366F1)',
+                        background: '#EEF2FF',
+                        border: '1px solid #C7D2FE',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Continue ↗
+                    </a>
+                  )}
+                  {isActionable && enrollment.status === 'in_progress' && (
                     <button
                       type="button"
                       disabled={completing === enrollment.id}
@@ -263,9 +308,47 @@ export function CaregiverTrainingPage() {
                         opacity: completing === enrollment.id ? 0.7 : 1,
                       }}
                     >
-                      {completing === enrollment.id
-                        ? 'Saving…'
-                        : enrollment.status === 'in_progress' ? 'Mark Complete' : 'Start'}
+                      {completing === enrollment.id ? 'Saving…' : 'Mark Complete'}
+                    </button>
+                  )}
+                  {isActionable && enrollment.status !== 'in_progress' && course.externalUrl && (
+                    <a
+                      href={course.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackStarted(enrollment.id)}
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: 'var(--color-primary, #6366F1)',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                      }}
+                    >
+                      Start Course ↗
+                    </a>
+                  )}
+                  {isActionable && enrollment.status !== 'in_progress' && !course.externalUrl && (
+                    <button
+                      type="button"
+                      disabled={completing === enrollment.id}
+                      onClick={() => void handleMarkComplete({ enrollment, course })}
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: 'var(--color-primary, #6366F1)',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: completing === enrollment.id ? 'wait' : 'pointer',
+                        opacity: completing === enrollment.id ? 0.7 : 1,
+                      }}
+                    >
+                      {completing === enrollment.id ? 'Saving…' : 'Start'}
                     </button>
                   )}
                 </div>
