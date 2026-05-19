@@ -1,26 +1,89 @@
 /**
  * Provider-agnostic email client used by the invite flow.
  *
- * Backed by Amazon SES via `@aws-sdk/client-sesv2`. Set AWS_ACCESS_KEY_ID
- * and AWS_SECRET_ACCESS_KEY in Vercel environment variables to enable.
- *
- * When credentials are absent the client falls back to a no-op that returns
- * EMAIL_NOT_CONFIGURED — the admin can copy the invite link manually.
+ * Provider selection (first match wins):
+ *   1. SMTP/Gmail — set GMAIL_USER + GMAIL_APP_PASSWORD in Vercel.
+ *   2. Resend — set RESEND_API_KEY in Vercel environment variables.
+ *   3. Amazon SES — set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY.
+ *   4. No-op fallback — returns EMAIL_NOT_CONFIGURED.
  */
+import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { renderInviteEmail } from './templates/invite-email.js';
 import { safeError } from '../security/safe-log.js';
-const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
-const DEFAULT_REGION = 'us-east-1';
-/**
- * Returns a no-op client. Used when AWS credentials are unset so callers
- * don't have to branch — they always get a working `sendInviteEmail` that
- * resolves with a "not configured" outcome.
- */
+// Uses Resend's own shared domain so emails work before rayhealthevv.com
+// is verified in the Resend dashboard.
+const DEFAULT_FROM = 'onboarding@resend.dev';
+function createSmtpClient(user, pass) {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass }
+    });
+    return {
+        async sendInviteEmail(params) {
+            const { subject, html, text } = renderInviteEmail({
+                to: params.to,
+                inviteUrl: params.inviteUrl,
+                agencyName: params.agencyName,
+                role: params.role,
+                expiresAt: params.expiresAt,
+                invitedByName: params.invitedByName
+            });
+            try {
+                const info = await transporter.sendMail({ from: `RayHealth <${user}>`, to: params.to, subject, html, text });
+                return { ok: true, id: info.messageId ?? 'sent' };
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : 'SMTP_ERROR';
+                safeError('smtp.send failed', new Error(msg));
+                return { ok: false, error: 'SMTP_ERROR' };
+            }
+        }
+    };
+}
 function createNoopClient() {
     return {
         async sendInviteEmail() {
             return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
+        }
+    };
+}
+function createResendClient(apiKey, from) {
+    const resend = new Resend(apiKey);
+    return {
+        async sendInviteEmail(params) {
+            const { subject, html, text } = renderInviteEmail({
+                to: params.to,
+                inviteUrl: params.inviteUrl,
+                agencyName: params.agencyName,
+                role: params.role,
+                expiresAt: params.expiresAt,
+                invitedByName: params.invitedByName
+            });
+            try {
+                const { data, error } = await resend.emails.send({
+                    from,
+                    to: [params.to],
+                    subject,
+                    html,
+                    text
+                });
+                if (error) {
+                    safeError('resend.send failed', new Error(error.name ?? 'RESEND_ERROR'));
+                    return { ok: false, error: error.name ?? 'RESEND_ERROR' };
+                }
+                if (!data?.id) {
+                    safeError('resend.send returned ok without id');
+                    return { ok: false, error: 'NO_MESSAGE_ID' };
+                }
+                return { ok: true, id: data.id };
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : 'UNKNOWN_ERROR';
+                safeError('resend.send threw', new Error(msg));
+                return { ok: false, error: msg };
+            }
         }
     };
 }
@@ -86,28 +149,39 @@ function createSesClient(client, from) {
     };
 }
 /**
- * Construct the SES email client from environment variables.
+ * Construct the email client from environment variables.
  *
- * Required Vercel env vars:
- *   AWS_ACCESS_KEY_ID      — IAM access key with ses:SendEmail permission
- *   AWS_SECRET_ACCESS_KEY  — matching IAM secret key
+ * Provider selection (first match wins):
+ *   RESEND_API_KEY         — Resend (preferred, already set in Vercel)
+ *   AWS_ACCESS_KEY_ID +
+ *   AWS_SECRET_ACCESS_KEY  — Amazon SES fallback
  *
  * Optional:
- *   EMAIL_FROM     — override sender (default: onboarding@www.rayhealthevv.com)
- *   AWS_SES_REGION — override region (default: us-east-1)
+ *   EMAIL_FROM     — override sender address
+ *   AWS_SES_REGION — override SES region (default: us-east-1)
  */
 export function createEmailClient() {
+    const from = process.env.EMAIL_FROM?.trim() || DEFAULT_FROM;
+    const gmailUser = process.env.GMAIL_USER?.trim();
+    const gmailPass = process.env.GMAIL_APP_PASSWORD?.trim();
+    if (gmailUser && gmailPass)
+        return createSmtpClient(gmailUser, gmailPass);
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    if (resendKey)
+        return createResendClient(resendKey, from);
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
-    if (!accessKeyId || !secretAccessKey)
-        return createNoopClient();
-    const from = process.env.EMAIL_FROM?.trim() || DEFAULT_FROM;
-    const region = process.env.AWS_SES_REGION?.trim() || process.env.AWS_REGION?.trim() || DEFAULT_REGION;
-    const client = new SESv2Client({
-        region,
-        credentials: { accessKeyId, secretAccessKey },
-    });
-    return createSesClient(client, from);
+    if (accessKeyId && secretAccessKey) {
+        const region = process.env.AWS_SES_REGION?.trim() ||
+            process.env.AWS_REGION?.trim() ||
+            'us-east-1';
+        const sesClient = new SESv2Client({
+            region,
+            credentials: { accessKeyId, secretAccessKey }
+        });
+        return createSesClient(sesClient, from);
+    }
+    return createNoopClient();
 }
 /**
  * Build the absolute invite URL the recipient will click.

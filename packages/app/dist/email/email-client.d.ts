@@ -1,11 +1,11 @@
 /**
  * Provider-agnostic email client used by the invite flow.
  *
- * Backed by Amazon SES via `@aws-sdk/client-sesv2`. Set AWS_ACCESS_KEY_ID
- * and AWS_SECRET_ACCESS_KEY in Vercel environment variables to enable.
- *
- * When credentials are absent the client falls back to a no-op that returns
- * EMAIL_NOT_CONFIGURED — the admin can copy the invite link manually.
+ * Provider selection (first match wins):
+ *   1. SMTP/Gmail — set GMAIL_USER + GMAIL_APP_PASSWORD in Vercel.
+ *   2. Resend — set RESEND_API_KEY in Vercel environment variables.
+ *   3. Amazon SES — set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY.
+ *   4. No-op fallback — returns EMAIL_NOT_CONFIGURED.
  */
 export interface InviteEmailParams {
     to: string;
@@ -27,15 +27,16 @@ export interface EmailClient {
     sendInviteEmail(params: InviteEmailParams): Promise<SendEmailResult>;
 }
 /**
- * Construct the SES email client from environment variables.
+ * Construct the email client from environment variables.
  *
- * Required Vercel env vars:
- *   AWS_ACCESS_KEY_ID      — IAM access key with ses:SendEmail permission
- *   AWS_SECRET_ACCESS_KEY  — matching IAM secret key
+ * Provider selection (first match wins):
+ *   RESEND_API_KEY         — Resend (preferred, already set in Vercel)
+ *   AWS_ACCESS_KEY_ID +
+ *   AWS_SECRET_ACCESS_KEY  — Amazon SES fallback
  *
  * Optional:
- *   EMAIL_FROM     — override sender (default: onboarding@www.rayhealthevv.com)
- *   AWS_SES_REGION — override region (default: us-east-1)
+ *   EMAIL_FROM     — override sender address
+ *   AWS_SES_REGION — override SES region (default: us-east-1)
  */
 export declare function createEmailClient(): EmailClient;
 /**

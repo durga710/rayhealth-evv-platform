@@ -309,6 +309,7 @@ router.post('/:id/resend-email', resendLimiter, requireCapability('staff.write')
             id: inviteId,
             email: invite.email,
             emailDelivery: delivery.status,
+            emailError: delivery.errorCategory,
         });
     }
     catch (err) {
