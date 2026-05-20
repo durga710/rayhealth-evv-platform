@@ -68,16 +68,36 @@ export function VisitReviewPage() {
     }
   };
 
+  const totalVisits = visits.length;
+  const pendingCount = visits.filter(v => v.status === 'pending').length;
+  const verifiedCount = visits.filter(v => v.status === 'verified').length;
+  const flaggedCount = visits.filter(v => v.status === 'flagged').length;
+
   return (
     <div>
-      <header className="page-header">
-        <div className="page-header__title">
-          <h1 style={{ margin: 0 }}>Visit Review</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+      {/* Gradient banner header */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          borderRadius: '12px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.75rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 4px 24px rgba(15,45,82,0.18)',
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+            Visit Review
+          </h1>
+          <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
             Review electronically verified visits and route corrections through visit maintenance.
           </p>
         </div>
-      </header>
+      </div>
 
       {banner && (
         <div
@@ -86,6 +106,51 @@ export function VisitReviewPage() {
           style={{ marginBottom: '1rem' }}
         >
           {banner.text}
+        </div>
+      )}
+
+      {!loading && !loadError && visits.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.25rem' }}>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(100,116,139,0.18)',
+              borderRadius: '999px', padding: '0.3rem 0.85rem',
+              fontSize: '0.7rem', fontWeight: 700, color: '#64748B',
+            }}
+          >
+            Total: {totalVisits}
+          </span>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.18)',
+              borderRadius: '999px', padding: '0.3rem 0.85rem',
+              fontSize: '0.7rem', fontWeight: 700, color: '#D97706',
+            }}
+          >
+            Pending: {pendingCount}
+          </span>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)',
+              borderRadius: '999px', padding: '0.3rem 0.85rem',
+              fontSize: '0.7rem', fontWeight: 700, color: '#059669',
+            }}
+          >
+            Verified: {verifiedCount}
+          </span>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)',
+              borderRadius: '999px', padding: '0.3rem 0.85rem',
+              fontSize: '0.7rem', fontWeight: 700, color: '#DC2626',
+            }}
+          >
+            Flagged: {flaggedCount}
+          </span>
         </div>
       )}
 

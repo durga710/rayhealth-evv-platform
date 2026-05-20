@@ -100,20 +100,50 @@ export function AuthorizationsPage() {
 
   return (
     <div>
-      <header className="page-header">
-        <div className="page-header__title">
-          <h1 style={{ margin: 0 }}>Authorizations</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+      {/* Gradient banner header */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          borderRadius: '12px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.75rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 4px 24px rgba(15,45,82,0.18)',
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+            Authorizations
+          </h1>
+          <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
             Manage Pennsylvania service authorizations and unit tracking.
           </p>
         </div>
-        <button type="button" onClick={focusAdd} className="btn-primary">
+        <button
+          type="button"
+          onClick={focusAdd}
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.25)',
+            borderRadius: '8px',
+            padding: '0.5rem 1.1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
           Add authorization
         </button>
-      </header>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card">
+        <div className="form-card" style={{ borderTop: '3px solid #8B5CF6' }}>
           <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>Add authorization</h3>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -191,10 +221,33 @@ export function AuthorizationsPage() {
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Active authorizations</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: '#94A3B8',
+              }}
+            >
+              Active authorizations
+            </span>
             {!loading && !loadError && authorizations.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{authorizations.length} total</span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#8B5CF6',
+                  background: 'rgba(139,92,246,0.1)',
+                  border: '1px solid rgba(139,92,246,0.2)',
+                  borderRadius: '999px',
+                  padding: '0.2rem 0.65rem',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {authorizations.length} total
+              </span>
             )}
           </div>
           {loading ? (
