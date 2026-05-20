@@ -159,6 +159,9 @@ router.post('/apply', async (req, res) => {
   }
 });
 
+const FIRST_QUESTION_FALLBACK =
+  "Hi! Thanks for applying. Let's get started — tell me a bit about yourself and your background in caregiving or direct support work.";
+
 // GET /onboarding/interview/:token
 router.get('/interview/:token', async (req, res) => {
   try {
@@ -175,6 +178,20 @@ router.get('/interview/:token', async (req, res) => {
     if (!interview) {
       res.status(404).json({ message: 'Interview not found' });
       return;
+    }
+
+    // Auto-generate the opening question on first access so the applicant
+    // isn't staring at a blank chat window.
+    if (interview.messages.length === 0 && interview.status === 'pending') {
+      let greeting = FIRST_QUESTION_FALLBACK;
+      try {
+        greeting = await callInterviewAI([], INTERVIEW_SYSTEM_PROMPT);
+      } catch {
+        // static fallback already set
+      }
+      const firstMessage = { role: 'assistant' as const, content: greeting };
+      await repo.updateInterview(interview.id!, { messages: [firstMessage] });
+      interview.messages = [firstMessage];
     }
 
     const userMessageCount = interview.messages.filter((m) => m.role === 'user').length;

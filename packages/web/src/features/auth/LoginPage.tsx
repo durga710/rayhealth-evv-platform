@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext.js';
 
@@ -11,13 +11,27 @@ const trustPoints = [
 ];
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // If the user is already authenticated (e.g. pressing Back from /admin),
+  // send them straight to their dashboard instead of showing the login form.
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo && returnTo.startsWith('/') && ADMIN_ROLES.has(user.role)) {
+      navigate(returnTo, { replace: true });
+    } else if (ADMIN_ROLES.has(user.role)) {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/portal', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +40,13 @@ export function LoginPage() {
     try {
       const { role } = await login(email, password);
       const returnTo = searchParams.get('returnTo');
+      // replace: true so /login is never in the back-button history
       if (returnTo && returnTo.startsWith('/') && ADMIN_ROLES.has(role)) {
-        navigate(returnTo);
+        navigate(returnTo, { replace: true });
       } else if (ADMIN_ROLES.has(role)) {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/portal');
+        navigate('/portal', { replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
