@@ -77,20 +77,50 @@ export function ClientsPage() {
 
   return (
     <div>
-      <header className="page-header">
-        <div className="page-header__title">
-          <h1 style={{ margin: 0 }}>Clients</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+      {/* Gradient banner header */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          borderRadius: '12px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.75rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 4px 24px rgba(15,45,82,0.18)',
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+            Clients
+          </h1>
+          <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
             Manage your clients and their demographic information.
           </p>
         </div>
-        <button type="button" onClick={focusAddClient} className="btn-primary">
+        <button
+          type="button"
+          onClick={focusAddClient}
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.25)',
+            borderRadius: '8px',
+            padding: '0.5rem 1.1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
           Add client
         </button>
-      </header>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 380px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card">
+        <div className="form-card" style={{ borderTop: '3px solid #6366F1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>Add new client</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
@@ -154,10 +184,33 @@ export function ClientsPage() {
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Client roster</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: '#94A3B8',
+              }}
+            >
+              Client roster
+            </span>
             {!loading && !loadError && clients.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{clients.length} client{clients.length === 1 ? '' : 's'}</span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#6366F1',
+                  background: 'rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                  borderRadius: '999px',
+                  padding: '0.2rem 0.65rem',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {clients.length} client{clients.length === 1 ? '' : 's'}
+              </span>
             )}
           </div>
           {loading ? (

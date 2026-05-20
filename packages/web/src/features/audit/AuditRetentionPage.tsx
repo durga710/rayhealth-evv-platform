@@ -77,13 +77,77 @@ export function AuditRetentionPage() {
 
   return (
     <div>
-      <header className="page-header">
-        <div className="page-header__title">
-          <h1 style={{ margin: 0 }}>Audit Log Retention</h1>
-          <p style={{ margin: 0, color: '#64748B', maxWidth: '720px' }}>
-            HIPAA evidence dashboard &mdash; 45 CFR §164.530(j) requires 6-year retention of audit logs.
-            This page reports the data of record without exposing PHI.
-          </p>
+      {/* Dark gradient hero banner */}
+      <header
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          borderRadius: '14px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.5rem',
+          border: '1px solid #1e293b',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+          <div
+            style={{
+              fontSize: '1.75rem',
+              lineHeight: 1,
+              marginTop: '0.1rem',
+              flexShrink: 0
+            }}
+          >
+            🗄️
+          </div>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: '#F1F5F9',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2
+              }}
+            >
+              Audit Log Retention
+            </h1>
+            <p
+              style={{
+                margin: '0.4rem 0 0',
+                color: '#64748B',
+                maxWidth: '620px',
+                fontSize: '0.9rem',
+                lineHeight: 1.5
+              }}
+            >
+              HIPAA evidence dashboard &mdash; 45 CFR §164.530(j) requires 6-year retention of audit logs.
+              This page reports the data of record without exposing PHI.
+            </p>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'rgba(99,102,241,0.2)',
+            color: '#C7D2FE',
+            borderRadius: '6px',
+            padding: '0.3rem 0.75rem',
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            alignSelf: 'flex-start'
+          }}
+        >
+          Append-only &middot; HIPAA
         </div>
       </header>
 
@@ -128,21 +192,21 @@ export function AuditRetentionPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-            <div style={card}>
+            <div style={{ ...card, borderTop: '3px solid #6366F1' }}>
               <div style={stat}>
                 <div style={statLabel}>Total events</div>
                 <div style={statValue}>{formatNumber(status.totalRows)}</div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>retained for this agency</div>
               </div>
             </div>
-            <div style={card}>
+            <div style={{ ...card, borderTop: '3px solid #0ea5e9' }}>
               <div style={stat}>
                 <div style={statLabel}>Last 30 days</div>
                 <div style={statValue}>{formatNumber(status.eventsLast30Days)}</div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>recent activity</div>
               </div>
             </div>
-            <div style={card}>
+            <div style={{ ...card, borderTop: '3px solid #8b5cf6' }}>
               <div style={stat}>
                 <div style={statLabel}>Oldest event</div>
                 <div style={statValue}>
@@ -155,7 +219,12 @@ export function AuditRetentionPage() {
                 </div>
               </div>
             </div>
-            <div style={card}>
+            <div
+              style={{
+                ...card,
+                borderTop: `3px solid ${status.eventsApproachingSixYearLimit > 0 ? '#f59e0b' : '#22c55e'}`
+              }}
+            >
               <div style={stat}>
                 <div style={statLabel}>Approaching 6y limit</div>
                 <div
@@ -171,7 +240,7 @@ export function AuditRetentionPage() {
             </div>
           </div>
 
-          <div style={card}>
+          <div style={{ ...card, borderTop: '3px solid #334155' }}>
             <div style={statLabel}>Append-only enforcement</div>
             <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
               Postgres trigger{' '}
@@ -183,7 +252,7 @@ export function AuditRetentionPage() {
             </div>
           </div>
 
-          <div style={{ ...card, backgroundColor: '#f8fafc' }}>
+          <div style={{ ...card, backgroundColor: '#f8fafc', borderTop: '3px solid #e2e8f0' }}>
             <div style={statLabel}>Statutory reference</div>
             <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#475569', lineHeight: 1.5 }}>
               45 CFR §164.530(j) — <em>Documentation</em>. Covered entities must retain

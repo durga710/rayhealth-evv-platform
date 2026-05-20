@@ -70,11 +70,46 @@ export function LaunchPage() {
         </p>
 
         <h2 style={sectionHeading}>What's live today</h2>
-        <ul style={{ ...lead, paddingLeft: '1.25rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '0.75rem',
+            marginBottom: '0.5rem'
+          }}
+        >
           {liveItems.map((line) => (
-            <li key={line} style={{ marginBottom: '0.4rem' }}>{line}</li>
+            <div
+              key={line}
+              style={{
+                background: '#fff',
+                borderRadius: '10px',
+                border: '1px solid #E2E8F0',
+                padding: '1rem 1.25rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem'
+              }}
+            >
+              <div
+                style={{
+                  background: '#dcfce7',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                  color: '#16a34a',
+                  fontSize: '0.875rem'
+                }}
+              >
+                ✓
+              </div>
+              <span style={{ color: '#0F172A', fontSize: '0.9rem', lineHeight: 1.5 }}>{line}</span>
+            </div>
           ))}
-        </ul>
+        </div>
 
         <h2 style={sectionHeading}>What's on the immediate roadmap</h2>
         <p style={lead}>
@@ -82,14 +117,62 @@ export function LaunchPage() {
           Everything below is committed against the next two release cycles. We'd rather tell you straight
           than over-claim:
         </p>
-        <ul style={{ ...lead, paddingLeft: '1.25rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '0.75rem',
+            marginBottom: '0.5rem'
+          }}
+        >
           {roadmapItems.map((line) => (
-            <li key={line} style={{ marginBottom: '0.4rem' }}>
-              {line}
-              <span style={tagPill}>Roadmap</span>
-            </li>
+            <div
+              key={line}
+              style={{
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #E2E8F0',
+                padding: '1rem 1.25rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem'
+              }}
+            >
+              <div
+                style={{
+                  background: '#fef3c7',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                  fontSize: '0.875rem'
+                }}
+              >
+                ⏱
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span style={{ color: '#0F172A', fontSize: '0.9rem', lineHeight: 1.5 }}>{line}</span>
+                <span
+                  style={{
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    borderRadius: '4px',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    alignSelf: 'flex-start'
+                  }}
+                >
+                  Roadmap
+                </span>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
 
         <h2 style={sectionHeading}>Built audit-ready</h2>
         <p style={lead}>
@@ -142,13 +225,13 @@ export function LaunchPage() {
           <Link
             to="/contact"
             style={{
-              backgroundColor: 'var(--color-accent)',
+              background: 'linear-gradient(135deg, #1a5fa8 0%, #0f3d72 100%)',
               color: 'white',
               textDecoration: 'none',
               padding: '1rem 2rem',
               borderRadius: '8px',
               fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)'
+              boxShadow: '0 4px 14px rgba(15,61,114,0.3)'
             }}
           >
             Book an agency demo
@@ -156,9 +239,9 @@ export function LaunchPage() {
           <Link
             to="/pricing"
             style={{
-              backgroundColor: 'white',
-              color: 'var(--color-primary-dark)',
-              border: '2px solid #c9d8e8',
+              background: '#fff',
+              border: '1.5px solid #C9D8E8',
+              color: '#1a3a5c',
               textDecoration: 'none',
               padding: '1rem 2rem',
               borderRadius: '8px',

@@ -35,8 +35,20 @@ export function PrivacyPage() {
 
   return (
     <MarketingShell eyebrow="Privacy" title="How we handle your data">
-      <div style={sectionStyle}>
-        <p style={small}>Last updated: {lastUpdated}</p>
+      <div style={{ ...sectionStyle, maxWidth: '800px', margin: '0 auto' }}>
+        <span
+          style={{
+            background: '#F1F5F9',
+            borderRadius: '6px',
+            padding: '0.25rem 0.75rem',
+            fontSize: '0.75rem',
+            color: '#475569',
+            display: 'inline-block',
+            marginBottom: '1.5rem'
+          }}
+        >
+          Last updated: {lastUpdated}
+        </span>
 
         <p>
           RayHealthEVV™ is a HIPAA-aware Electronic Visit Verification (EVV)
@@ -49,7 +61,20 @@ export function PrivacyPage() {
           source repository under <code>docs/compliance/hipaa/</code>.
         </p>
 
-        <h2 style={h2}>What we collect</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >What we collect</h2>
         <ul>
           <li>
             <strong>Caregiver and client names + contact info</strong> —
@@ -79,7 +104,20 @@ export function PrivacyPage() {
           </li>
         </ul>
 
-        <h2 style={h2}>How we use it</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >How we use it</h2>
         <p>
           Only to provide the EVV service the agency contracted us for:
           recording visits, surfacing schedules, generating compliance
@@ -88,30 +126,101 @@ export function PrivacyPage() {
           third-party AI models on raw PHI.
         </p>
 
-        <h2 style={h2}>Encryption</h2>
-        <ul>
-          <li>
-            <strong>In transit:</strong> TLS 1.2+ everywhere. HSTS is enforced
-            on <code>rayhealthevv.com</code> end-to-end through Cloudflare to
-            our compute origin.
-          </li>
-          <li>
-            <strong>At rest:</strong> Database storage is encrypted by our
-            Postgres provider (Neon). Two especially sensitive fields —
-            client Medicaid numbers and caregiver NPIs — get an additional
-            application-layer AES-256-GCM envelope so even a database
-            snapshot exfiltration would expose only ciphertext for those
-            columns.
-          </li>
-          <li>
-            <strong>Mobile credentials:</strong> Stored in the device
-            platform's secure storage. We treat short-lived bearer JWTs
-            (8-hour expiry) and any device-level keys as the highest
-            sensitivity tier on the device.
-          </li>
-        </ul>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Encryption</h2>
+        <div
+          style={{
+            background: '#0F172A',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            border: '1px solid #1E293B'
+          }}
+        >
+          <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <li style={{ color: '#E2E8F0', lineHeight: 1.6 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#38bdf8',
+                  marginRight: '0.5rem',
+                  verticalAlign: 'middle'
+                }}
+              />
+              <strong style={{ color: '#F1F5F9' }}>In transit:</strong>{' '}
+              TLS 1.2+ everywhere. HSTS is enforced
+              on <code style={{ color: '#7dd3fc', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>rayhealthevv.com</code> end-to-end through Cloudflare to
+              our compute origin.
+            </li>
+            <li style={{ color: '#E2E8F0', lineHeight: 1.6 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#a78bfa',
+                  marginRight: '0.5rem',
+                  verticalAlign: 'middle'
+                }}
+              />
+              <strong style={{ color: '#F1F5F9' }}>At rest:</strong>{' '}
+              Database storage is encrypted by our
+              Postgres provider (Neon). Two especially sensitive fields —
+              client Medicaid numbers and caregiver NPIs — get an additional
+              application-layer AES-256-GCM envelope so even a database
+              snapshot exfiltration would expose only ciphertext for those
+              columns.
+            </li>
+            <li style={{ color: '#E2E8F0', lineHeight: 1.6 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#34d399',
+                  marginRight: '0.5rem',
+                  verticalAlign: 'middle'
+                }}
+              />
+              <strong style={{ color: '#F1F5F9' }}>Mobile credentials:</strong>{' '}
+              Stored in the device
+              platform's secure storage. We treat short-lived bearer JWTs
+              (8-hour expiry) and any device-level keys as the highest
+              sensitivity tier on the device.
+            </li>
+          </ul>
+        </div>
 
-        <h2 style={h2}>Audit trail</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Audit trail</h2>
         <p>
           Every PHI access — read, mutation, login, permission decision — is
           recorded in an append-only audit table. The append-only property
@@ -121,7 +230,20 @@ export function PrivacyPage() {
           re-verify the trigger nightly via an automated workflow.
         </p>
 
-        <h2 style={h2}>AI features</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >AI features</h2>
         <p>
           Our marketing-site chat and our in-app coordinator assistant both
           run on AWS Bedrock under an active Business Associate Addendum.
@@ -133,7 +255,20 @@ export function PrivacyPage() {
           closed instead of routing elsewhere.
         </p>
 
-        <h2 style={h2}>Subprocessors</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Subprocessors</h2>
         <p>
           We use these vendors to deliver the service. Each handles PHI only
           as needed for its function and operates under a HIPAA Business
@@ -162,7 +297,20 @@ export function PrivacyPage() {
           </li>
         </ul>
 
-        <h2 style={h2}>Retention</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Retention</h2>
         <ul>
           <li>Audit logs: minimum 6 years (HIPAA §164.530(j))</li>
           <li>Operational PHI records: 7 years (Pennsylvania state floor)</li>
@@ -177,7 +325,20 @@ export function PrivacyPage() {
           </li>
         </ul>
 
-        <h2 style={h2}>Your rights</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Your rights</h2>
         <p>
           If you are a client or caregiver receiving services through an
           agency that uses RayHealthEVV, your privacy rights flow through
@@ -189,7 +350,20 @@ export function PrivacyPage() {
           <a href="mailto:security@rayhealthevv.com">security@rayhealthevv.com</a>.
         </p>
 
-        <h2 style={h2}>Incidents</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Incidents</h2>
         <p>
           If we believe a security incident may have affected your data, we
           will notify the affected agency without unreasonable delay and no
@@ -199,7 +373,20 @@ export function PrivacyPage() {
           windows; we apply whichever rule is stricter.
         </p>
 
-        <h2 style={h2}>Changes</h2>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Changes</h2>
         <p>
           When the architecture changes materially, we update the underlying
           policy in our source repository within 30 days and refresh this
@@ -207,14 +394,36 @@ export function PrivacyPage() {
           review log of <code>docs/compliance/hipaa/SECURITY_POLICY.md</code>.
         </p>
 
-        <h2 style={h2}>Contact</h2>
-        <p>
-          Privacy / Security Officer — RayHealth EVV<br />
-          <a href="mailto:security@rayhealthevv.com">security@rayhealthevv.com</a>
-          <br />
-          Or via <Link to="/contact">/contact</Link> (the form routes to the same
-          inbox and is logged).
-        </p>
+        <h2
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '2.5rem 0 0.75rem',
+            paddingTop: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#0F172A',
+            letterSpacing: '-0.01em'
+          }}
+        >Contact</h2>
+        <div
+          style={{
+            background: '#F8FAFC',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            border: '1px solid #E2E8F0'
+          }}
+        >
+          <p style={{ margin: 0, lineHeight: 1.7 }}>
+            Privacy / Security Officer — RayHealth EVV<br />
+            <a href="mailto:security@rayhealthevv.com">security@rayhealthevv.com</a>
+            <br />
+            Or via <Link to="/contact">/contact</Link> (the form routes to the same
+            inbox and is logged).
+          </p>
+        </div>
 
         <p style={{ ...small, marginTop: '3rem' }}>
           This summary is intended to be readable. The authoritative
