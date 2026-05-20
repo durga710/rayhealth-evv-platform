@@ -249,7 +249,7 @@ export default function DashboardScreen() {
           assignments.length === 0 && { flex: 1 },
         ]}
         ListHeaderComponent={
-          <Text style={styles.sectionTitle}>Today's Visits</Text>
+          <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
         ListEmptyComponent={loading ? null : <EmptyVisits />}
         refreshControl={
