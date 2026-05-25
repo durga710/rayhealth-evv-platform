@@ -1,6 +1,6 @@
 # RayHealth EVV — Project Status
 
-**Last updated:** 2026-05-11 (rev 4 — invite acceptance + EVV aggregator config + Copilot context injection + VMUR PA-DHS upgrade + HHAeXchange/Sandata admin surface)
+**Last updated:** 2026-05-24 (rev 5 — mobile EVV backlog execution + Playwright smoke CI scaffold)
 **Maintained by:** Durga Ghimeray, Founder
 **Replaces:** `AGENT_HANDOFF_2026-05-08.md`, `HANDOFF.md`, `HANDOFF_CLAUDE_SECURITY_PHASE_1_2026-05-08.md`, `HANDOFF_CODEX.md`, `docs/SESSION_HANDOFF_2026-05-09.md`
 
@@ -12,7 +12,27 @@ When updating: bump the timestamp, do not delete prior status — move it to the
 
 ## TL;DR
 
-RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. The 2026-05-24 sprint closed key caregiver-mobile backlog gaps: today's schedule now has a dedicated endpoint, missing mobile screens are routable, first clock-in requests reminder permission, mock-location detection blocks suspect clock-ins, and web has a Playwright smoke scaffold in CI. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+
+---
+
+## 2026-05-24 Sprint Status
+
+Completed in this source monorepo:
+- `.claude/worktrees/` removed from git tracking and ignored
+- `GET /api/evv/today-schedule` added and mobile `DashboardScreen` refactored to use it
+- Mobile `VisitDetailScreen`, `CorrectionScreen`, `NotificationScreen`, and `ProfileScreen` routes added
+- `requestClockReminderPermission()` wired after successful first clock-in
+- Mock-location/geofence integrity guard added before clock-in submission
+- Web Playwright smoke scaffold added with CI `e2e-smoke` job
+
+Verification:
+- Earlier sprint verification: 218/218 unit tests passing (77 core / 119 app / 22 web) and all package typechecks clean
+- Continuation verification: `npm run build --workspace=@rayhealth/web` passing; static build served with `serve -s`; 5/5 Playwright smoke tests passing
+
+Still future work:
+- Full authenticated caregiver clock-in/out Playwright scenario against a seeded test DB
+- Real-device mobile smoke on the new clock-in integrity and reminder-permission path
 
 ---
 
@@ -108,6 +128,11 @@ These changes are committed to the worktree at `/rayhealth-fresh` and need to be
 | `docs/sandata-onboarding.md` | First-pilot-agency runbook | Used during first pilot onboarding |
 | `packages/web/src/features/evv/VisitReviewPage.tsx` | Disabled state + auto-clearing success message | Already in this monorepo |
 | `packages/web/src/features/landing/LandingPage.tsx` | FAQ added to nav | Already in this monorepo |
+| `packages/core/src/repositories/schedule-repository.ts`, `packages/app/src/routes/evv-routes.ts`, `packages/mobile/src/features/evv/DashboardScreen.tsx` | Today-schedule endpoint and caregiver dashboard refactor | This repo + deployed app/mobile repos |
+| `packages/mobile/src/features/evv/VisitDetailScreen.tsx`, `CorrectionScreen.tsx`, `NotificationScreen.tsx`, `ProfileScreen.tsx` | Missing mobile routes made tappable; correction screen posts to existing caregiver correction API | Mobile repo |
+| `packages/mobile/src/services/clockReminderService.ts` | Deferred notification permission request after first clock-in | Mobile repo |
+| `packages/mobile/src/services/locationIntegrityService.ts` | Android mock-location detection + zero-accuracy heuristic before EVV clock-in | Mobile repo |
+| `packages/web/e2e/smoke.spec.ts`, `packages/web/playwright.config.ts`, `.github/workflows/ci.yml` | Playwright smoke tests and CI `e2e-smoke` job for static web build routing/login sanity | This repo CI |
 
 ---
 
@@ -137,17 +162,13 @@ These changes are committed to the worktree at `/rayhealth-fresh` and need to be
 
 **Engineering — high impact, not yet started:**
 
-- [ ] DashboardScreen visit cards refactor: use `getTodaysSchedule()` instead of `/evv/visits` recent history (mobile)
-- [ ] VisitDetailScreen / CorrectionScreen / NotificationScreen / Profile sub-options clickability audit (mobile)
-- [ ] Real-device end-to-end smoke on the codepath fixes shipped 2026-05-09 (mobile)
-- [ ] Wire `requestClockReminderPermission()` (new export in `src/services/clockReminderService.ts`) into the first clock-in flow
+- [ ] Real-device end-to-end smoke on the mobile clock-in path, including location integrity and deferred notification permission
 
 **Engineering — medium impact:**
 
 - [ ] First-agency Sandata test transmission once Provider ID is issued
-- [ ] Add a mock-location detector if PA DHS audit flags geofence integrity
 - [ ] CodeQL / Dependabot on `rayhealth-evv-platform` and `rayhealth-evv-mobile`
-- [ ] Playwright e2e in CI for caregiver clock-in/out
+- [ ] Full authenticated Playwright caregiver clock-in/out flow backed by a seeded test DB
 
 **Stretch:**
 
@@ -207,6 +228,14 @@ What's still required for spots: VO recording, music license (~$15 Artlist/Epide
 ---
 
 ## Changelog
+
+### 2026-05-24 rev 5 (mobile EVV backlog execution + Playwright smoke CI scaffold)
+- **Git hygiene** — `.claude/worktrees/` was removed from tracking and added to `.gitignore` so agent worktree placeholders stop leaking into commits.
+- **Today schedule** — added `ScheduleRepository.getTodaySchedule(caregiverId, date)`, `GET /api/evv/today-schedule`, and a mobile dashboard refactor that renders only today's visits and shows the `Clocked In` state when an EVV visit already exists for the assignment.
+- **Mobile clickability** — added `VisitDetailScreen`, `CorrectionScreen`, `NotificationScreen`, and `ProfileScreen` routes. `CorrectionScreen` is wired to `/api/maintenance/caregiver-correction`; notifications degrade to an empty state until the notifications API ships.
+- **Clock-in safeguards** — first successful clock-in now requests reminder permission once per install. Clock-in also runs location integrity checks first and aborts on Android mock-location signals or impossible zero-accuracy readings.
+- **Web e2e scaffold** — added Playwright config, 5 unauthenticated smoke tests, web `e2e` script, Playwright/wait-on/serve dev dependencies, and CI `e2e-smoke` job. CI serves the built SPA with history fallback via `serve -s` and disables silent port switching.
+- **Verification** — sprint unit verification reached 218/218 passing tests (77 core / 119 app / 22 web) with typecheck clean. The final e2e continuation verified web build plus 5/5 Playwright smoke tests against static `dist`.
 
 ### 2026-05-11 rev 4 (invite acceptance + EVV aggregator config + VMUR upgrade + HHAeXchange/Sandata admin surface)
 - **Caregiver invite acceptance flow** — public `GET`/`POST /api/invites/accept/:token` endpoints (mounted before `authContext` so a logged-out caregiver can hit them). Access-code comparison is case- and dash-insensitive, password is bcrypt-cost-12, creates `caregivers` + `users` rows in a transaction, marks invite accepted, returns an 8h bearer. Failed access-code attempts emit a new `invite.access_code_failed` audit event. Web page at `/accept/:token` (`AcceptInvitePage.tsx`) handles expired/revoked/already-used cases. 13 tests.
