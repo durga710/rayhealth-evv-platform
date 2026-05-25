@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { requestClockReminderPermission } from '../../services/clockReminderService';
+import { checkLocationIntegrity } from '../../services/locationIntegrityService';
 
 export default function ClockInScreen() {
   const router = useRouter();
@@ -33,17 +34,31 @@ export default function ClockInScreen() {
     }
 
     try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      
+      const integrity = await checkLocationIntegrity();
+
+      if (integrity.isMocked) {
+        Alert.alert(
+          'Location Integrity Violation',
+          `Mock location detected: ${integrity.reason ?? 'unknown reason'}.\n\nEVV clock-in requires real GPS. Please disable any mock location apps and try again.`,
+          [{ text: 'OK' }],
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (!integrity.position) {
+        Alert.alert('GPS Error', 'Could not obtain your location. Please check GPS settings and try again.');
+        setIsLoading(false);
+        return;
+      }
+
       const payload = {
         assignmentId,
         location: {
-          lat: location.coords.latitude,
-          lng: location.coords.longitude,
-          accuracy: location.coords.accuracy,
-        }
+          lat: integrity.position.coords.latitude,
+          lng: integrity.position.coords.longitude,
+          accuracy: integrity.position.coords.accuracy,
+        },
       };
 
       const { data } = await apiClient.post('/api/evv/clock-in', payload);
