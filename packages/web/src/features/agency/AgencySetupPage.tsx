@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { getJson, putJson } from '../../lib/api-client.js';
 
 interface Agency {
   id: string;
@@ -31,9 +31,10 @@ export function AgencySetupPage() {
     e.preventDefault();
     setMessage('');
     try {
-      // Stubbing the POST request since it might not be implemented in app package yet
-      // await postJson('/api/agencies/current', { name });
-      setMessage('Agency updated successfully (Stub)');
+      const updated = await putJson<Agency>('/api/agencies/current', { name });
+      setAgency(updated);
+      setName(updated.name);
+      setMessage('Agency updated successfully');
     } catch (err) {
       setMessage('Failed to update agency');
     }

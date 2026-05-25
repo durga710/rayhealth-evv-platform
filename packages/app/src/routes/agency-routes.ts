@@ -1,7 +1,9 @@
 import { Router, type Request, type Response } from 'express'
 import type { Knex } from 'knex'
 import {
+  agencyProfileUpdateSchema,
   agencyEvvConfigUpdateSchema,
+  AgencyRepository,
   AgencyEvvConfigRepository,
   AgencyHhaexchangeConfigRepository,
   AgencySandataConfigRepository,
@@ -17,8 +19,73 @@ import { requireCapability } from '../middleware/require-capability.js'
 
 const router = Router()
 
-router.get('/current', requireCapability('agency.read'), (req: Request, res: Response) => {
-  res.json({ id: req.auth.agencyId, name: 'Keystone Care', state: 'PA' })
+router.get('/current', requireCapability('agency.read'), async (req: Request, res: Response) => {
+  try {
+    const db = req.app.get('db') as Knex | undefined
+    if (!db) {
+      res.status(500).json({ message: 'database missing' })
+      return
+    }
+
+    const agency = await new AgencyRepository(db).findById(req.auth.agencyId)
+    if (!agency) {
+      res.status(404).json({ message: 'Agency not found' })
+      return
+    }
+
+    res.json(agency)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unexpected error'
+    res.status(500).json({ message })
+  }
+})
+
+router.put('/current', requireCapability('agency.write'), async (req: Request, res: Response) => {
+  try {
+    const parsed = agencyProfileUpdateSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({
+        message: 'Agency name failed validation',
+        details: parsed.error.issues,
+      })
+      return
+    }
+
+    const db = req.app.get('db') as Knex | undefined
+    if (!db) {
+      res.status(500).json({ message: 'database missing' })
+      return
+    }
+
+    const agency = await new AgencyRepository(db).updateProfile(req.auth.agencyId, parsed.data)
+    if (!agency) {
+      res.status(404).json({ message: 'Agency not found' })
+      return
+    }
+
+    try {
+      await new AuditEventRepository(db).create({
+        agencyId: req.auth.agencyId,
+        actorId: req.auth.userId,
+        actorType: 'user',
+        eventType: 'agency.profile.changed',
+        entityType: 'agency',
+        entityId: req.auth.agencyId,
+        outcome: 'success',
+        payload: parsed.data,
+      })
+    } catch (auditErr: unknown) {
+      process.stderr.write(
+        `[audit-write-failed] agency.profile.changed agency=${req.auth.agencyId} ` +
+          `err=${auditErr instanceof Error ? auditErr.message : 'unknown'}\n`,
+      )
+    }
+
+    res.json(agency)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unexpected error'
+    res.status(500).json({ message })
+  }
 })
 
 /**

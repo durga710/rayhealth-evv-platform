@@ -14,6 +14,7 @@ export const auditEventTypes = [
   'permission.denied',
   'learning.override',
   'learning.course.completed',
+  'agency.profile.changed',
   'agency.feature.changed',
   'agency.evv-config.changed',
   'copilot.query',

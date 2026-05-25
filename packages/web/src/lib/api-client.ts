@@ -28,10 +28,10 @@ async function parseBody(response: Response): Promise<unknown> {
   }
 }
 
-export async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function sendJson<T>(method: 'POST' | 'PUT', path: string, body: unknown): Promise<T> {
   const csrfToken = getCsrfToken();
   const response = await fetch(path, {
-    method: 'POST',
+    method,
     credentials: 'include',
     headers: {
       'content-type': 'application/json',
@@ -46,6 +46,14 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+export async function postJson<T>(path: string, body: unknown): Promise<T> {
+  return sendJson<T>('POST', path, body);
+}
+
+export async function putJson<T>(path: string, body: unknown): Promise<T> {
+  return sendJson<T>('PUT', path, body);
 }
 
 export async function getJson<T>(path: string): Promise<T> {

@@ -1,11 +1,11 @@
 import type { Knex } from 'knex';
-import type { Agency } from '../domain/agency.js';
+import type { Agency, AgencyProfileUpdate } from '../domain/agency.js';
 
 export interface AgencyRow {
   id: string;
   name: string;
   state: string;
-  operating_tracks: string;
+  operating_tracks: string | Agency['operatingTracks'];
   medicaid_provider_number?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -32,12 +32,26 @@ export class AgencyRepository {
     return row ? this.mapRowToAgency(row) : null;
   }
 
+  async updateProfile(id: string, update: AgencyProfileUpdate): Promise<Agency | null> {
+    const [row] = await this.db<AgencyRow>('agencies')
+      .where({ id })
+      .update({
+        name: update.name,
+        updated_at: this.db.fn.now()
+      })
+      .returning('*');
+
+    return row ? this.mapRowToAgency(row) : null;
+  }
+
   private mapRowToAgency(row: AgencyRow): Agency {
     return {
       id: row.id,
       name: row.name,
       state: row.state as 'PA',
-      operatingTracks: typeof row.operating_tracks === 'string' ? JSON.parse(row.operating_tracks) : row.operating_tracks,
+      operatingTracks: typeof row.operating_tracks === 'string'
+        ? JSON.parse(row.operating_tracks)
+        : row.operating_tracks,
       medicaidProviderNumber: row.medicaid_provider_number
     };
   }

@@ -1,6 +1,6 @@
 # RayHealth EVV — Project Status
 
-**Last updated:** 2026-05-24 (rev 5 — mobile EVV backlog execution + Playwright smoke CI scaffold)
+**Last updated:** 2026-05-24 (rev 6 — agency profile persistence + mobile EVV backlog execution + Playwright smoke CI scaffold)
 **Maintained by:** Durga Ghimeray, Founder
 **Replaces:** `AGENT_HANDOFF_2026-05-08.md`, `HANDOFF.md`, `HANDOFF_CLAUDE_SECURITY_PHASE_1_2026-05-08.md`, `HANDOFF_CODEX.md`, `docs/SESSION_HANDOFF_2026-05-09.md`
 
@@ -12,7 +12,7 @@ When updating: bump the timestamp, do not delete prior status — move it to the
 
 ## TL;DR
 
-RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. The 2026-05-24 sprint closed key caregiver-mobile backlog gaps: today's schedule now has a dedicated endpoint, missing mobile screens are routable, first clock-in requests reminder permission, mock-location detection blocks suspect clock-ins, and web has a Playwright smoke scaffold in CI. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. The 2026-05-24 sprint closed key caregiver-mobile backlog gaps: today's schedule now has a dedicated endpoint, missing mobile screens are routable, first clock-in requests reminder permission, mock-location detection blocks suspect clock-ins, web has a Playwright smoke scaffold in CI, and Agency Setup now persists agency profile edits through a real audited API instead of a UI stub. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
 
 ---
 
@@ -128,6 +128,7 @@ These changes are committed to the worktree at `/rayhealth-fresh` and need to be
 | `docs/sandata-onboarding.md` | First-pilot-agency runbook | Used during first pilot onboarding |
 | `packages/web/src/features/evv/VisitReviewPage.tsx` | Disabled state + auto-clearing success message | Already in this monorepo |
 | `packages/web/src/features/landing/LandingPage.tsx` | FAQ added to nav | Already in this monorepo |
+| `packages/app/src/routes/agency-routes.ts`, `packages/core/src/repositories/agency-repository.ts`, `packages/web/src/features/agency/AgencySetupPage.tsx` | Real audited Agency Setup read/update flow replacing the previous UI-only save stub | This repo + deployed platform repo |
 | `packages/core/src/repositories/schedule-repository.ts`, `packages/app/src/routes/evv-routes.ts`, `packages/mobile/src/features/evv/DashboardScreen.tsx` | Today-schedule endpoint and caregiver dashboard refactor | This repo + deployed app/mobile repos |
 | `packages/mobile/src/features/evv/VisitDetailScreen.tsx`, `CorrectionScreen.tsx`, `NotificationScreen.tsx`, `ProfileScreen.tsx` | Missing mobile routes made tappable; correction screen posts to existing caregiver correction API | Mobile repo |
 | `packages/mobile/src/services/clockReminderService.ts` | Deferred notification permission request after first clock-in | Mobile repo |
@@ -228,6 +229,12 @@ What's still required for spots: VO recording, music license (~$15 Artlist/Epide
 ---
 
 ## Changelog
+
+### 2026-05-24 rev 6 (agency profile persistence)
+- **Agency Setup persistence** — replaced the UI-only save stub with `PUT /api/agencies/current`, backed by `AgencyRepository.updateProfile()` and `agencyProfileUpdateSchema`.
+- **Audit taxonomy** — added `agency.profile.changed` and writes a structured audit event on successful profile updates.
+- **Web admin wiring** — added `putJson()` and updated `AgencySetupPage` to persist changes, refresh local state, and show the non-stub success state.
+- **Tests** — added app route tests for agency read/update validation/authorization/audit behavior and a web test for the real save call. Full repo gate and Playwright smoke verified.
 
 ### 2026-05-24 rev 5 (mobile EVV backlog execution + Playwright smoke CI scaffold)
 - **Git hygiene** — `.claude/worktrees/` was removed from tracking and added to `.gitignore` so agent worktree placeholders stop leaking into commits.

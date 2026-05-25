@@ -11,3 +11,9 @@ export const agencySchema = z.object({
 });
 
 export type Agency = z.infer<typeof agencySchema>;
+
+export const agencyProfileUpdateSchema = z.object({
+  name: z.string().trim().min(1, 'Agency name is required').max(120, 'Agency name must be 120 characters or fewer')
+});
+
+export type AgencyProfileUpdate = z.infer<typeof agencyProfileUpdateSchema>;
