@@ -1,6 +1,6 @@
 # GitHub repo hardening — rulesets
 
-These JSON files are the canonical branch and tag protection rules for `github.com/durga710/rayhealth-evv-platform`. They protect the `main` branch from accidental or malicious destruction, enforce code review, and gate merges on CI signal.
+These JSON files are the canonical branch and tag protection rules for `github.com/durga710/rayhealth-source-monorepo`. They protect the `main` branch from accidental or malicious destruction, enforce code review, and gate merges on CI signal.
 
 ## What's protected
 
@@ -14,7 +14,7 @@ Applies to `refs/heads/main`. Active enforcement, **no bypass actors** — even 
 | `non_fast_forward` | force-push to `main` is blocked |
 | `required_linear_history` | merge commits forbidden — squash or rebase only |
 | `pull_request` (1 approval, code-owner review, dismiss stale, last-push approval, thread resolution) | every change comes through a PR with a fresh review of the latest commit and all comments resolved |
-| `required_status_checks` (strict) | merge blocked until `typecheck`, `lint`, `security-scan`, `test-core`, `test-app`, `test-web` all pass on the latest commit |
+| `required_status_checks` (strict) | merge blocked until typecheck, lint, unit tests, web/mobile smoke E2E, gitleaks, dependency review, and CodeQL all pass on the latest commit |
 | `commit_message_pattern` | enforces Conventional Commits format on every commit |
 
 ### `tags-protection.json`
@@ -24,7 +24,7 @@ Applies to all tags. No deletion, no force-push, no update — once a release ta
 ## Apply via `gh` CLI (recommended)
 
 ```bash
-cd "/Users/durgaghimeray/Desktop/rayhealthevv-fresh/rayhealth-fresh"
+cd "/Users/durgaghimeray/Projects/rayhealth-source-monorepo"
 
 # Make sure you're authed as the repo owner
 gh auth status
@@ -34,28 +34,28 @@ gh api \
   --method POST \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  /repos/durga710/rayhealth-evv-platform/rulesets \
+  /repos/durga710/rayhealth-source-monorepo/rulesets \
   --input .github/rulesets/main-branch-protection.json
 
 gh api \
   --method POST \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  /repos/durga710/rayhealth-evv-platform/rulesets \
+  /repos/durga710/rayhealth-source-monorepo/rulesets \
   --input .github/rulesets/tags-protection.json
 ```
 
 To list/inspect existing rulesets:
 
 ```bash
-gh api /repos/durga710/rayhealth-evv-platform/rulesets
+gh api /repos/durga710/rayhealth-source-monorepo/rulesets
 ```
 
 To update one in place (replace `RULESET_ID`):
 
 ```bash
 gh api --method PUT \
-  /repos/durga710/rayhealth-evv-platform/rulesets/RULESET_ID \
+  /repos/durga710/rayhealth-source-monorepo/rulesets/RULESET_ID \
   --input .github/rulesets/main-branch-protection.json
 ```
 
@@ -63,7 +63,7 @@ gh api --method PUT \
 
 If you prefer point-and-click:
 
-1. https://github.com/durga710/rayhealth-evv-platform/settings/rules → **New ruleset** → **New branch ruleset**
+1. https://github.com/durga710/rayhealth-source-monorepo/settings/rules -> **New ruleset** -> **New branch ruleset**
 2. Name: `main branch protection`
 3. Enforcement status: **Active**
 4. Target branches: **Include default branch**
@@ -80,7 +80,7 @@ If you prefer point-and-click:
      - Require conversation resolution before merging
    - Require status checks to pass
      - Require branches to be up to date before merging
-     - Add: `typecheck`, `lint`, `security-scan`, `test-core`, `test-app`, `test-web`
+     - Add: `typecheck`, `lint`, `security-scan`, `test-core`, `test-app`, `test-web`, `e2e-smoke`, `mobile-e2e-smoke`, `gitleaks`, `dependency-review`, `analyze (javascript-typescript)`
    - Restrict commit metadata (optional but recommended):
      - Pattern: `^(feat|fix|chore|docs|refactor|perf|test|build|ci|revert)(\(.+\))?: .+`
 7. **Create**

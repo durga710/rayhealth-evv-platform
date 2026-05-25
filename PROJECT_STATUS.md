@@ -1,6 +1,6 @@
 # RayHealth EVV — Project Status
 
-**Last updated:** 2026-05-24 (rev 6 — agency profile persistence + mobile EVV backlog execution + Playwright smoke CI scaffold)
+**Last updated:** 2026-05-24 (rev 7 — mobile E2E smoke + GitHub security gate hardening)
 **Maintained by:** Durga Ghimeray, Founder
 **Replaces:** `AGENT_HANDOFF_2026-05-08.md`, `HANDOFF.md`, `HANDOFF_CLAUDE_SECURITY_PHASE_1_2026-05-08.md`, `HANDOFF_CODEX.md`, `docs/SESSION_HANDOFF_2026-05-09.md`
 
@@ -12,7 +12,7 @@ When updating: bump the timestamp, do not delete prior status — move it to the
 
 ## TL;DR
 
-RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. The 2026-05-24 sprint closed key caregiver-mobile backlog gaps: today's schedule now has a dedicated endpoint, missing mobile screens are routable, first clock-in requests reminder permission, mock-location detection blocks suspect clock-ins, web has a Playwright smoke scaffold in CI, and Agency Setup now persists agency profile edits through a real audited API instead of a UI stub. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
+RayHealth EVV is live at `rayhealthevv.com`. The platform handles caregiver mobile clock-in/out with GPS geofence verification, web admin for agencies, audit-event persistence, and Sandata-aggregator CSV export. **The Learning Hub and AI Copilot are now complete end-to-end** — coordinators have analytics + drill-down + bulk enrollment + compliance-gated assignments, and the Gemini-backed Copilot ships behind a private-billing add-on flag. The 2026-05-24 sprint closed key caregiver-mobile backlog gaps: today's schedule now has a dedicated endpoint, missing mobile screens are routable, first clock-in requests reminder permission, mock-location detection blocks suspect clock-ins, web and mobile have Playwright smoke scaffolds in CI, and Agency Setup now persists agency profile edits through a real audited API instead of a UI stub. **No real PHI flows yet** — production is gated on enabling Neon HIPAA mode + signing BAAs with Vercel/Neon/AWS/Resend/Firebase. Pen test pending. Once those owner-action items close, the platform is ready for its first pilot agency.
 
 ---
 
@@ -25,10 +25,13 @@ Completed in this source monorepo:
 - `requestClockReminderPermission()` wired after successful first clock-in
 - Mock-location/geofence integrity guard added before clock-in submission
 - Web Playwright smoke scaffold added with CI `e2e-smoke` job
+- Mobile Expo web Playwright smoke scaffold added with CI `mobile-e2e-smoke` job
+- GitHub branch-protection ruleset updated to require web/mobile E2E plus gitleaks, Dependency Review, and CodeQL checks
 
 Verification:
 - Earlier sprint verification: 218/218 unit tests passing (77 core / 119 app / 22 web) and all package typechecks clean
 - Continuation verification: `npm run build --workspace=@rayhealth/web` passing; static build served with `serve -s`; 5/5 Playwright smoke tests passing
+- Final continuation verification: `npm run check` passing; web Playwright smoke 5/5 passing; mobile Playwright smoke 5/5 passing; high-severity production dependency audit passing with 15 remaining moderate Expo-chain advisories requiring a breaking Expo upgrade to fully clear
 
 Still future work:
 - Full authenticated caregiver clock-in/out Playwright scenario against a seeded test DB
@@ -134,6 +137,7 @@ These changes are committed to the worktree at `/rayhealth-fresh` and need to be
 | `packages/mobile/src/services/clockReminderService.ts` | Deferred notification permission request after first clock-in | Mobile repo |
 | `packages/mobile/src/services/locationIntegrityService.ts` | Android mock-location detection + zero-accuracy heuristic before EVV clock-in | Mobile repo |
 | `packages/web/e2e/smoke.spec.ts`, `packages/web/playwright.config.ts`, `.github/workflows/ci.yml` | Playwright smoke tests and CI `e2e-smoke` job for static web build routing/login sanity | This repo CI |
+| `packages/mobile/e2e/smoke.spec.ts`, `packages/mobile/playwright.config.ts`, `packages/mobile/metro.config.js`, `.github/workflows/ci.yml` | Expo web mobile smoke tests, React resolver hardening for monorepo exports, and CI `mobile-e2e-smoke` job | This repo CI + Mobile repo |
 
 ---
 
@@ -229,6 +233,15 @@ What's still required for spots: VO recording, music license (~$15 Artlist/Epide
 ---
 
 ## Changelog
+
+### 2026-05-24 rev 7 (mobile E2E smoke + GitHub security gate hardening)
+- **Mobile E2E** — added a Playwright smoke suite for the Expo web export covering login, today's schedule, dashboard-to-clock-in navigation, no-visit recovery, and caregiver support routes.
+- **Mobile export stability** — fixed the blank Expo web export by removing the experimental React compiler flag and pinning the root React/React DOM runtime to Expo SDK 54-compatible `19.1.0`; added a Metro resolver guard so the mobile bundle does not mix React runtimes in the monorepo.
+- **Mobile TypeScript gate** — added `typecheck` to `@rayhealth/mobile` and fixed `clockReminderService` permission-status typing so mobile TS is now part of the standard package verification path.
+- **GitHub hardening** — added CI `mobile-e2e-smoke` and updated the canonical main-branch ruleset to require web/mobile E2E, gitleaks, Dependency Review, and CodeQL.
+- **Secret hygiene** — redacted AWS access key IDs from the HIPAA security policy review log; exact identifiers belong only in the private incident vault.
+- **GitHub live check** — authenticated `gh` verification shows remote `origin/main` checks passing on its latest SHA, but the private repo's live rulesets/branch protection and Dependabot alerts require GitHub Pro/public visibility before they can be enforced through GitHub's native controls.
+- **Verification** — `npm run check`, web Playwright smoke, mobile Playwright smoke, local security surface scan, high-confidence secret pattern scan, and high-severity production dependency audit pass locally. `npm audit` still reports moderate Expo-chain advisories (`postcss`, `qs`, `uuid`) whose automated fix jumps to a breaking Expo 56 line.
 
 ### 2026-05-24 rev 6 (agency profile persistence)
 - **Agency Setup persistence** — replaced the UI-only save stub with `PUT /api/agencies/current`, backed by `AgencyRepository.updateProfile()` and `agencyProfileUpdateSchema`.

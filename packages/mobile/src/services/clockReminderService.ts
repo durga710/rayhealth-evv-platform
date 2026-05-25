@@ -37,6 +37,8 @@ export async function requestClockReminderPermission(): Promise<PermissionOutcom
       allowBadge: true,
     },
   });
+  // Expo 54's type surface omits inherited permission fields in this workspace.
+  const permissionStatus = result as typeof result & { granted?: boolean; status?: string };
 
-  return result.granted ? 'granted' : 'denied';
+  return permissionStatus.granted || permissionStatus.status === 'granted' ? 'granted' : 'denied';
 }

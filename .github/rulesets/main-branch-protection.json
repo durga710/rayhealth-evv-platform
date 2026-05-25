@@ -33,7 +33,12 @@
           { "context": "security-scan" },
           { "context": "test-core" },
           { "context": "test-app" },
-          { "context": "test-web" }
+          { "context": "test-web" },
+          { "context": "e2e-smoke" },
+          { "context": "mobile-e2e-smoke" },
+          { "context": "gitleaks" },
+          { "context": "dependency-review" },
+          { "context": "analyze (javascript-typescript)" }
         ]
       }
     },

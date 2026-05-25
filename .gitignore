@@ -9,6 +9,8 @@ coverage/
 ui-screenshots-personas/
 packages/web/playwright-report/
 packages/web/test-results/
+packages/mobile/playwright-report/
+packages/mobile/test-results/
 
 # Environment files — never commit. Values belong in Vercel project env or local-only files.
 .env

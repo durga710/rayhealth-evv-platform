@@ -160,3 +160,31 @@ jobs:
           name: playwright-report
           path: packages/web/playwright-report/
           retention-days: 7
+
+  mobile-e2e:
+    name: mobile-e2e-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [typecheck, lint]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund
+      - name: Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+        working-directory: packages/mobile
+      - name: Run mobile Expo web smoke
+        run: npm run e2e --workspace=@rayhealth/mobile
+      - name: Upload mobile Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-playwright-report
+          path: packages/mobile/playwright-report/
+          retention-days: 7
