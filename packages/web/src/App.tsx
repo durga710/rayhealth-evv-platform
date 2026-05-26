@@ -41,6 +41,14 @@ import { InterviewPage } from './features/onboarding/InterviewPage.js';
 import { OnboardingHubPage } from './features/onboarding/OnboardingHubPage.js';
 import { ApplicantDetailPage } from './features/onboarding/ApplicantDetailPage.js';
 import { ProfilePage } from './features/profile/ProfilePage.js';
+import { ComplianceOverviewPage } from './features/compliance-engine/ComplianceOverviewPage.js';
+import { AuditDefensePage } from './features/compliance-engine/AuditDefensePage.js';
+import { ExceptionResolutionPage } from './features/compliance-engine/ExceptionResolutionPage.js';
+import { AuthorizationOversightPage } from './features/compliance-engine/AuthorizationOversightPage.js';
+import { MedicaidWorkflowPage } from './features/compliance-engine/MedicaidWorkflowPage.js';
+import { PayrollReconciliationPage } from './features/compliance-engine/PayrollReconciliationPage.js';
+import { ClaimMatchingPage } from './features/compliance-engine/ClaimMatchingPage.js';
+import { CredentialsPage } from './features/compliance-engine/CredentialsPage.js';
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
 
@@ -241,6 +249,20 @@ const navGroupDefs: NavGroupDef[] = [
     ],
   },
   {
+    label: 'Compliance Engine',
+    allowedRoles: ['admin'],
+    items: [
+      { to: '/admin/compliance-engine', end: true, label: 'Overview', icon: icons.dashboard },
+      { to: '/admin/compliance-engine/audit-defense', label: 'Audit Defense', icon: icons.audit },
+      { to: '/admin/compliance-engine/exceptions', label: 'Exceptions', icon: icons.visit },
+      { to: '/admin/compliance-engine/authorizations', label: 'Authorizations', icon: icons.auth },
+      { to: '/admin/compliance-engine/medicaid', label: 'Medicaid', icon: icons.clients },
+      { to: '/admin/compliance-engine/payroll', label: 'Payroll', icon: icons.archive },
+      { to: '/admin/compliance-engine/claims', label: 'Claims', icon: icons.templates },
+      { to: '/admin/compliance-engine/credentials', label: 'Credentials', icon: icons.staff },
+    ],
+  },
+  {
     label: 'Audit',
     allowedRoles: ['admin'],
     items: [
@@ -411,6 +433,14 @@ export function App() {
           <Route path="onboarding" element={<OnboardingHubPage />} />
           <Route path="onboarding/:id" element={<ApplicantDetailPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="compliance-engine" element={<ComplianceOverviewPage />} />
+          <Route path="compliance-engine/audit-defense" element={<AuditDefensePage />} />
+          <Route path="compliance-engine/exceptions" element={<ExceptionResolutionPage />} />
+          <Route path="compliance-engine/authorizations" element={<AuthorizationOversightPage />} />
+          <Route path="compliance-engine/medicaid" element={<MedicaidWorkflowPage />} />
+          <Route path="compliance-engine/payroll" element={<PayrollReconciliationPage />} />
+          <Route path="compliance-engine/claims" element={<ClaimMatchingPage />} />
+          <Route path="compliance-engine/credentials" element={<CredentialsPage />} />
           <Route index element={<DashboardPage />} />
         </Route>
       </Route>

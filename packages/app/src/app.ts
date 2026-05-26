@@ -34,6 +34,7 @@ import profileRoutes from './routes/profile-routes.js';
 import agencySandataConfigRoutes from './routes/agency-sandata-config-routes.js';
 import agencyHhaexchangeConfigRoutes from './routes/agency-hhaexchange-config-routes.js';
 import copilotRoutes from './routes/copilot-routes.js';
+import complianceEngineRoutes from './routes/compliance-engine-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -206,6 +207,7 @@ export function createApp() {
     app.use(`${prefix}/billing`, billingRoutes);
     app.use(`${prefix}/admin/onboarding`, onboardingAdminRoutes);
     app.use(`${prefix}/profile`, profileRoutes);
+    app.use(`${prefix}/compliance-engine`, complianceEngineRoutes);
   }
 
   return app;

@@ -22,6 +22,7 @@ export * from './repositories/evv-exception-repository.js';
 export * from './repositories/audit-event-repository.js';
 export * from './repositories/audit-repository.js';
 export * from './repositories/visit-maintenance-repository.js';
+export * from './repositories/compliance-engine-repository.js';
 export * from './services/credential-policy-service.js';
 export * from './services/credential-compliance-service.js';
 export * from './services/assignment-eligibility-service.js';
