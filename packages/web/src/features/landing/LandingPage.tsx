@@ -1,5 +1,16 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowRight,
+  ChevronDown,
+  ExternalLink,
+  ShieldCheck,
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+
+/* ------------------------------------------------------------------ */
+/* Content                                                             */
+/* ------------------------------------------------------------------ */
 
 const stats = [
   { value: '100%', label: 'PA DHS aligned' },
@@ -171,341 +182,586 @@ const faqs = [
   },
 ];
 
-const sectionEyebrow: React.CSSProperties = {
-  fontSize: '0.875rem',
-  fontWeight: 700,
-  letterSpacing: '3px',
-  textTransform: 'uppercase',
-  color: 'var(--color-accent)',
-  margin: 0,
-};
+/* ------------------------------------------------------------------ */
+/* Small composable pieces                                             */
+/* ------------------------------------------------------------------ */
 
-const sectionHeading: React.CSSProperties = {
-  fontSize: '2.25rem',
-  lineHeight: 1.15,
-  color: 'var(--color-primary-dark)',
-  margin: '0.75rem auto 1rem',
-  maxWidth: '720px',
-};
+function SectionEyebrow({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <p className={`text-sm font-bold uppercase tracking-[0.25em] text-accent ${className}`}>
+      {children}
+    </p>
+  );
+}
 
-const sectionLead: React.CSSProperties = {
-  fontSize: '1.125rem',
-  color: 'var(--color-text-muted)',
-  lineHeight: 1.6,
-  maxWidth: '720px',
-  margin: '0 auto',
-};
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="mx-auto mt-3 mb-4 max-w-2xl text-balance font-display text-4xl font-bold leading-[1.15] text-primary md:text-[2.75rem]">
+      {children}
+    </h2>
+  );
+}
 
-const cardBase: React.CSSProperties = {
-  backgroundColor: 'white',
-  borderRadius: '16px',
-  padding: '2rem',
-  boxShadow: '0 6px 20px rgba(26, 95, 168, 0.08)',
-  textAlign: 'left',
-};
+function SectionLead({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mx-auto max-w-2xl text-balance text-base leading-relaxed text-muted-foreground md:text-lg">
+      {children}
+    </p>
+  );
+}
+
+function BrandWordmark() {
+  return (
+    <span className="inline-flex items-center gap-2 font-display text-2xl font-black tracking-tight text-primary">
+      RayHealth
+      <span className="rounded-full bg-accent px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.2em] text-white">
+        EVV
+      </span>
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Sections                                                            */
+/* ------------------------------------------------------------------ */
+
+function Header() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-primary/10 bg-background/85 backdrop-blur-lg">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3 md:px-8">
+        <a href="#main" className="focus-visible:outline-2 focus-visible:outline-ring">
+          <BrandWordmark />
+        </a>
+        <nav aria-label="Primary" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-bold">
+          <a href="#how" className="text-secondary-foreground transition-colors hover:text-primary">How it works</a>
+          <a href="#roles" className="text-secondary-foreground transition-colors hover:text-primary">Roles</a>
+          <a href="#compliance" className="text-secondary-foreground transition-colors hover:text-primary">Compliance</a>
+          <a href="#resources" className="text-secondary-foreground transition-colors hover:text-primary">Resources</a>
+          <a href="#roadmap" className="text-secondary-foreground transition-colors hover:text-primary">Roadmap</a>
+          <a href="#faq" className="text-secondary-foreground transition-colors hover:text-primary">FAQ</a>
+          <Button asChild size="sm">
+            <Link to="/login">Log in</Link>
+          </Button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section
+      className="relative overflow-hidden"
+      style={{
+        background:
+          'radial-gradient(circle at 12% 8%, rgba(249, 115, 22, 0.12), transparent 28rem), linear-gradient(180deg, #f6fbff 0%, #eef5fb 34%, #f8fbfd 100%)',
+      }}
+    >
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:grid-cols-[0.92fr_1.08fr] md:gap-16 md:px-8 md:py-24">
+        <div className="flex flex-col items-start gap-5 text-center md:text-left">
+          <SectionEyebrow>Pennsylvania Home Care Platform</SectionEyebrow>
+          <h1 className="text-balance font-display text-5xl font-black leading-[0.97] tracking-tight text-primary md:text-[clamp(3rem,6.1vw,5.65rem)]">
+            EVV operations that prove the visit happened.
+          </h1>
+          <p className="text-pretty max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+            RayHealth EVV turns scheduling, authorization units, caregiver credentials, GPS capture, and visit exceptions into one audit-ready workflow for Pennsylvania agencies.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Button asChild size="lg" variant="accent">
+              <Link to="/login">
+                Access admin portal
+                <ArrowRight className="ml-1" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <a href="#resources">Browse resources</a>
+            </Button>
+          </div>
+          <ul aria-label="Implementation status" className="flex flex-wrap gap-2">
+            {['CSRF web sessions', 'PA task library', 'EVV exception queue'].map((label) => (
+              <li
+                key={label}
+                className="rounded-full border border-primary/15 bg-background/70 px-3 py-1.5 text-xs font-bold text-secondary-foreground"
+              >
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <ProductPreview />
+      </div>
+    </section>
+  );
+}
+
+function ProductPreview() {
+  return (
+    <div
+      aria-label="Live visit command center"
+      className="relative overflow-hidden rounded-3xl border border-white/20 p-5 text-white shadow-2xl md:p-6"
+      style={{
+        background:
+          'radial-gradient(circle at 20% 0%, rgba(91, 168, 245, 0.26), transparent 18rem), linear-gradient(145deg, #083a83 0%, #0f5da6 58%, #083161 100%)',
+      }}
+    >
+      <div className="relative z-10 mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.15em] text-sky-300">
+            Live visit command center
+          </p>
+          <strong className="mt-1 block text-xl font-display">Wednesday field operations</strong>
+        </div>
+        <span className="whitespace-nowrap rounded-full bg-accent px-3 py-1.5 text-xs font-black text-white">
+          PA DHS mode
+        </span>
+      </div>
+
+      <div className="relative z-10 grid grid-cols-[1.2fr_0.9fr] gap-3">
+        <div className="row-span-2 min-h-[12rem] rounded-2xl border border-white/15 bg-white/15 p-4">
+          <span className="text-[0.7rem] font-black uppercase tracking-[0.16em] text-sky-300">
+            Visit exceptions
+          </span>
+          <strong className="mt-2 block text-lg font-display">7 need coordinator review</strong>
+          <p className="mt-2 text-sm leading-relaxed text-sky-100">
+            2 GPS drift, 3 late clock-outs, 2 missing task attestations
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+          <span className="text-[0.7rem] font-black uppercase tracking-[0.16em] text-sky-300">
+            Credential gate
+          </span>
+          <strong className="mt-2 block text-base font-display">Blocked assignment</strong>
+          <p className="mt-2 text-xs leading-relaxed text-sky-100">
+            TB screening expires before scheduled visit window.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+          <span className="text-[0.7rem] font-black uppercase tracking-[0.16em] text-sky-300">
+            Authorization burn
+          </span>
+          <strong className="mt-2 block text-base font-display">68% units used</strong>
+          <div aria-hidden="true" className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
+            <span
+              className="block h-full rounded-[inherit]"
+              style={{
+                width: '68%',
+                background: 'linear-gradient(90deg, #22c55e, #f97316)',
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-4 flex items-center justify-between gap-4 rounded-2xl bg-[#f8fbff] p-4 text-primary">
+        <div>
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-accent">
+            Caregiver mobile
+          </span>
+          <strong className="mt-1 block text-base font-display">Clock-in packet ready</strong>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Client, service code, GPS accuracy, task checklist, and offline retry state.
+          </p>
+        </div>
+        <span className="whitespace-nowrap rounded-full bg-accent px-3 py-1.5 text-xs font-black text-white">
+          Ready
+        </span>
+      </div>
+
+      <div className="relative z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-black/15 px-3 py-2 text-sm text-sky-100">
+        <span>Audit event:</span>
+        <code className="font-bold text-white">visit.exception.created</code>
+        <span>actor, agency, entity, payload</span>
+      </div>
+    </div>
+  );
+}
+
+function StatsStrip() {
+  return (
+    <section className="px-4 md:px-8" aria-label="Platform metrics">
+      <div className="mx-auto grid max-w-5xl grid-cols-2 overflow-hidden rounded-2xl border border-border bg-border shadow-md md:grid-cols-4 md:gap-px">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-card p-6 text-center md:p-8">
+            <div className="font-display text-4xl font-black leading-none text-primary md:text-5xl">
+              {s.value}
+            </div>
+            <div className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section id="how" className="px-4 py-24 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>How it works</SectionEyebrow>
+          <SectionHeading>From authorization to audit-ready visit in four steps.</SectionHeading>
+          <SectionLead>
+            Every step pushes data into the next, so coordinators stop reconciling spreadsheets and start clearing exceptions.
+          </SectionLead>
+        </div>
+        <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step) => (
+            <li
+              key={step.n}
+              className="relative rounded-2xl bg-card p-7 pt-10 shadow-md transition-transform hover:-translate-y-1"
+            >
+              <div className="absolute -top-4 left-6 rounded-full bg-accent px-3 py-1 font-display text-xs font-black tracking-widest text-white">
+                STEP {step.n}
+              </div>
+              <h3 className="mb-2 font-display text-xl font-semibold text-primary">{step.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function Roles() {
+  return (
+    <section id="roles" className="bg-card px-4 py-20 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>Who it's for</SectionEyebrow>
+          <SectionHeading>One platform, four very different jobs to do.</SectionHeading>
+          <SectionLead>
+            Capabilities are scoped per role, so each user only sees what their work actually requires.
+          </SectionLead>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {roles.map((role) => (
+            <article
+              key={role.title}
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-background p-7"
+            >
+              <h3 className="font-display text-xl font-semibold text-primary">{role.title}</h3>
+              <p className="text-sm leading-relaxed text-foreground/80">{role.body}</p>
+              <ul className="mt-2 flex flex-col gap-2">
+                {role.points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <ArrowRight className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Compliance() {
+  return (
+    <section id="compliance" className="px-4 py-24 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>Compliance</SectionEyebrow>
+          <SectionHeading>Built for the framework auditors actually use.</SectionHeading>
+          <SectionLead>
+            Compliance isn't a feature toggle — it's the schema, the validation layer, and the audit trail.
+          </SectionLead>
+        </div>
+        <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {compliance.map((c) => (
+            <li
+              key={c.name}
+              className="flex gap-4 rounded-2xl bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div aria-hidden="true" className="w-2 shrink-0 rounded-full bg-accent" />
+              <div>
+                <h3 className="font-display text-base font-semibold text-primary">{c.name}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Resources() {
+  return (
+    <section
+      id="resources"
+      className="px-4 py-24 md:px-8"
+      style={{ background: 'linear-gradient(180deg, #ffffff 0%, #edf5fb 100%)' }}
+    >
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>Resource Library</SectionEyebrow>
+          <SectionHeading>Give agencies the receipts, not just the pitch.</SectionHeading>
+          <SectionLead>
+            These are the source materials and internal readiness notes we use to keep the product honest while we harden the workflows.
+          </SectionLead>
+        </div>
+        <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {resources.map((resource) => {
+            const isExternal = resource.href.startsWith('http');
+            return (
+              <li key={resource.title}>
+                <a
+                  href={resource.href}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noreferrer' : undefined}
+                  className="group flex h-full flex-col rounded-2xl border border-primary/10 bg-card/80 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-accent">
+                    {resource.type}
+                  </span>
+                  <strong className="mt-3 inline-flex items-center gap-1.5 font-display text-lg text-primary">
+                    {resource.title}
+                    {isExternal && (
+                      <ExternalLink
+                        className="size-4 shrink-0 opacity-50 transition-opacity group-hover:opacity-100"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </strong>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{resource.body}</p>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Operations() {
+  return (
+    <section id="operations" className="bg-card px-4 py-20 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>Operational proof</SectionEyebrow>
+          <SectionHeading>Built around the messy handoffs agencies fight every week.</SectionHeading>
+          <SectionLead>
+            RayHealth EVV connects compliance checkpoints to the actual work: hiring, scheduling, field documentation, billing support, and audit response.
+          </SectionLead>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {operations.map((item) => (
+            <article
+              key={item.title}
+              className="rounded-2xl border border-border bg-background p-6 transition-colors hover:border-accent/30"
+            >
+              <h3 className="mb-2 font-display text-lg font-semibold text-primary">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Roadmap() {
+  return (
+    <section
+      id="roadmap"
+      className="relative overflow-hidden px-4 py-24 text-white md:px-8"
+      style={{
+        background:
+          'radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.22), transparent 24rem), radial-gradient(circle at 88% 8%, rgba(91, 168, 245, 0.22), transparent 26rem), linear-gradient(135deg, #062b61 0%, #073f8e 46%, #021a3f 100%)',
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 opacity-[0.14]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px)',
+          backgroundSize: '42px 42px',
+        }}
+      />
+      <div className="relative z-10 mx-auto grid max-w-6xl gap-8 md:grid-cols-[0.78fr_1.22fr]">
+        <div className="flex flex-col justify-between gap-8 rounded-3xl border border-white/15 bg-white/[0.08] p-8 shadow-2xl backdrop-blur-lg">
+          <div>
+            <SectionEyebrow className="!text-orange-300">Implementation Roadmap</SectionEyebrow>
+            <h2 className="mt-3 font-display text-4xl font-black leading-[0.95] tracking-tight md:text-5xl">
+              Roadmap cockpit for launch risk.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-sky-100">
+              The sequence is simple: keep the Pennsylvania demo dependable, close the caregiver mobile loop, then harden aggregator submission with evidence packets agencies can actually hand to an auditor.
+            </p>
+          </div>
+          <ul className="grid gap-2">
+            {['Updated landing UI', 'Resource library added', 'Production deployed'].map((label) => (
+              <li
+                key={label}
+                className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold"
+              >
+                <ShieldCheck className="size-4 text-orange-300" aria-hidden="true" />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {roadmap.map((item) => (
+            <article
+              key={item.phase}
+              className="flex flex-col rounded-3xl border border-white/15 bg-white/[0.08] p-6 shadow-xl backdrop-blur-lg"
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+                  {item.phase}
+                </span>
+                <strong className="whitespace-nowrap rounded-full bg-emerald-400/15 px-3 py-1 text-xs text-emerald-200">
+                  {item.status}
+                </strong>
+              </div>
+              <h3 className="mb-2 font-display text-lg leading-tight">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-sky-100">{item.detail}</p>
+              <ul className="mt-auto grid gap-1.5 pt-4">
+                {item.proof.map((proof) => (
+                  <li key={proof} className="flex items-center gap-2 text-sm font-bold">
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-orange-400" />
+                    {proof}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/15 bg-white/[0.08] p-6 shadow-xl backdrop-blur-lg md:col-span-2">
+            <div className="min-w-0 flex-1">
+              <SectionEyebrow className="!text-orange-300">Launch resources</SectionEyebrow>
+              <strong className="mt-2 block font-display text-lg">
+                Use the resource library to validate every roadmap claim.
+              </strong>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-sky-100">
+                CMS EVV, Pennsylvania DHS EVV, PA FAQ, Sandata training, and HIPAA Security Rule references are now linked directly on the page.
+              </p>
+            </div>
+            <Button asChild variant="default" className="bg-white text-primary hover:bg-white/90">
+              <a href="#resources">
+                Jump to resources
+                <ArrowRight />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQ() {
+  return (
+    <section id="faq" className="bg-card px-4 py-20 md:px-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-12 text-center">
+          <SectionEyebrow>FAQ</SectionEyebrow>
+          <SectionHeading>Common questions.</SectionHeading>
+        </div>
+        <div className="flex flex-col gap-3">
+          {faqs.map((f) => (
+            <details
+              key={f.q}
+              className="group cursor-pointer rounded-2xl bg-background p-5 transition-colors hover:bg-background/80"
+            >
+              <summary className="flex items-center justify-between gap-4 font-display text-base font-bold text-primary [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <ChevronDown
+                  className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA() {
+  return (
+    <section className="bg-primary px-4 py-20 text-white md:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+        <h2 className="font-display text-4xl font-black leading-[1.15] md:text-5xl">
+          Ready to retire the spreadsheets?
+        </h2>
+        <p className="max-w-xl text-base leading-relaxed text-sky-100 md:text-lg">
+          Get a live walkthrough of the admin portal and the caregiver mobile flow. We'll bring sample data — bring your hardest workflow.
+        </p>
+        <div className="mt-2 flex flex-wrap justify-center gap-3">
+          <Button asChild size="lg" variant="accent">
+            <Link to="/login">Access admin portal</Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          >
+            <a href="mailto:hello@rayhealthevv.com">Request a demo</a>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-white/10 bg-primary px-4 py-8 text-sm text-sky-200 md:px-8">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+        <span>&copy; {new Date().getFullYear()} RayHealth EVV. All rights reserved.</span>
+        <span>Pennsylvania-only • HIPAA-aware • 21st Century Cures Act aligned</span>
+      </div>
+    </footer>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 export function LandingPage() {
   return (
-    <div className="landing-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg)' }}>
-      {/* Header */}
-      <header className="landing-header">
-        <div className="landing-brand">
-          RayHealth <span>EVV</span>
-        </div>
-        <nav className="landing-nav">
-          <a href="#how">How it works</a>
-          <a href="#roles">Roles</a>
-          <a href="#compliance">Compliance</a>
-          <a href="#resources">Resources</a>
-          <a href="#roadmap">Roadmap</a>
-          <a href="#faq">FAQ</a>
-          <Link to="/login" className="landing-login-link">Log In</Link>
-        </nav>
-      </header>
-
-      {/* Hero */}
-      <section className="landing-hero">
-        <div className="hero-copy">
-          <div className="hero-eyebrow">
-            Pennsylvania Home Care Platform
-          </div>
-          <h1>
-            EVV operations that prove the visit happened.
-          </h1>
-          <p>
-            RayHealth EVV turns scheduling, authorization units, caregiver credentials, GPS capture, and visit exceptions into one audit-ready workflow for Pennsylvania agencies.
-          </p>
-          <div className="hero-actions">
-            <Link to="/login" className="primary-cta">
-              Access Admin Portal
-            </Link>
-            <a href="#resources" className="secondary-cta">
-              Browse resources
-            </a>
-          </div>
-          <div className="hero-proof-strip" aria-label="Implementation status">
-            <span>CSRF web sessions</span>
-            <span>PA task library</span>
-            <span>EVV exception queue</span>
-          </div>
-        </div>
-
-        <div className="hero-product-preview" aria-label="Live visit command center">
-          <div className="preview-topbar">
-            <div>
-              <p>Live visit command center</p>
-              <strong>Wednesday field operations</strong>
-            </div>
-            <span>PA DHS mode</span>
-          </div>
-          <div className="preview-grid">
-            <div className="preview-card preview-card-strong">
-              <span className="preview-label">Visit exceptions</span>
-              <strong>7 need coordinator review</strong>
-              <p>2 GPS drift, 3 late clock-outs, 2 missing task attestations</p>
-            </div>
-            <div className="preview-card">
-              <span className="preview-label">Credential gate</span>
-              <strong>Blocked assignment</strong>
-              <p>TB screening expires before scheduled visit window.</p>
-            </div>
-            <div className="preview-card">
-              <span className="preview-label">Authorization burn</span>
-              <strong>68% units used</strong>
-              <div className="burn-meter" aria-hidden="true"><span /></div>
-            </div>
-          </div>
-          <div className="mobile-visit-card">
-            <div>
-              <span>Caregiver mobile</span>
-              <strong>Clock-in packet ready</strong>
-              <p>Client, service code, GPS accuracy, task checklist, and offline retry state.</p>
-            </div>
-            <div className="mobile-status">Ready</div>
-          </div>
-          <div className="audit-ribbon">
-            <span>Audit event:</span>
-            <code>visit.exception.created</code>
-            <span>actor, agency, entity, payload</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats strip */}
-      <section style={{ padding: '0 2rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1px', backgroundColor: '#c9d8e8', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(26, 95, 168, 0.08)' }}>
-          {stats.map((s) => (
-            <div key={s.label} style={{ backgroundColor: 'white', padding: '2rem 1rem', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.5rem', fontWeight: 900, color: 'var(--color-primary-dark)', lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 600 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how" style={{ padding: '6rem 2rem 4rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <p style={sectionEyebrow}>How it works</p>
-            <h2 style={sectionHeading}>From authorization to audit-ready visit in four steps.</h2>
-            <p style={sectionLead}>
-              Every step pushes data into the next, so coordinators stop reconciling spreadsheets and start clearing exceptions.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-            {steps.map((step) => (
-              <div key={step.n} style={{ ...cardBase, position: 'relative', paddingTop: '2.5rem' }}>
-                <div style={{ position: 'absolute', top: '-18px', left: '24px', backgroundColor: 'var(--color-accent)', color: 'white', borderRadius: '999px', padding: '0.4rem 0.9rem', fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '0.875rem', letterSpacing: '1px' }}>
-                  STEP {step.n}
-                </div>
-                <h3 style={{ color: 'var(--color-primary)', marginTop: 0, marginBottom: '0.75rem', fontSize: '1.25rem' }}>{step.title}</h3>
-                <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.55, margin: 0, fontSize: '0.95rem' }}>{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Roles */}
-      <section id="roles" style={{ padding: '4rem 2rem', backgroundColor: 'white' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <p style={sectionEyebrow}>Who it's for</p>
-            <h2 style={sectionHeading}>One platform, four very different jobs to do.</h2>
-            <p style={sectionLead}>Capabilities are scoped per role, so each user only sees what their work actually requires.</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
-            {roles.map((role) => (
-              <div key={role.title} style={{ ...cardBase, backgroundColor: 'var(--color-bg)', boxShadow: 'none', border: '1px solid #c9d8e8' }}>
-                <h3 style={{ color: 'var(--color-primary-dark)', marginTop: 0, marginBottom: '0.75rem', fontSize: '1.35rem' }}>{role.title}</h3>
-                <p style={{ color: 'var(--color-text)', lineHeight: 1.55, fontSize: '0.95rem', margin: '0 0 1rem' }}>{role.body}</p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {role.points.map((p) => (
-                    <li key={p} style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                      <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>›</span>
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Compliance */}
-      <section id="compliance" style={{ padding: '6rem 2rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <p style={sectionEyebrow}>Compliance</p>
-            <h2 style={sectionHeading}>Built for the framework auditors actually use.</h2>
-            <p style={sectionLead}>Compliance isn't a feature toggle — it's the schema, the validation layer, and the audit trail.</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            {compliance.map((c) => (
-              <div key={c.name} style={{ ...cardBase, padding: '1.5rem', display: 'flex', gap: '1rem' }}>
-                <div style={{ width: '8px', flexShrink: 0, backgroundColor: 'var(--color-accent)', borderRadius: '4px' }} />
-                <div>
-                  <h3 style={{ margin: 0, color: 'var(--color-primary-dark)', fontSize: '1.05rem' }}>{c.name}</h3>
-                  <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.5, margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{c.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Resources */}
-      <section id="resources" className="resources-section">
-        <div className="resources-inner">
-          <div className="resources-heading">
-            <p style={sectionEyebrow}>Resource Library</p>
-            <h2 style={sectionHeading}>Give agencies the receipts, not just the pitch.</h2>
-            <p style={sectionLead}>
-              These are the source materials and internal readiness notes we use to keep the product honest while we harden the workflows.
-            </p>
-          </div>
-          <div className="resource-grid">
-            {resources.map((resource) => (
-              <a key={resource.title} className="resource-card" href={resource.href} target={resource.href.startsWith('http') ? '_blank' : undefined} rel={resource.href.startsWith('http') ? 'noreferrer' : undefined}>
-                <span>{resource.type}</span>
-                <strong>{resource.title}</strong>
-                <p>{resource.body}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Operations */}
-      <section id="operations" style={{ padding: '4rem 2rem', backgroundColor: 'white' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <p style={sectionEyebrow}>Operational proof</p>
-            <h2 style={sectionHeading}>Built around the messy handoffs agencies fight every week.</h2>
-            <p style={sectionLead}>
-              RayHealth EVV connects compliance checkpoints to the actual work: hiring, scheduling, field documentation, billing support, and audit response.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
-            {operations.map((item) => (
-              <div key={item.title} style={{ ...cardBase, backgroundColor: 'var(--color-bg)', boxShadow: 'none', border: '1px solid #c9d8e8' }}>
-                <h3 style={{ color: 'var(--color-primary-dark)', marginTop: 0, marginBottom: '0.75rem', fontSize: '1.2rem' }}>{item.title}</h3>
-                <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.55, margin: 0, fontSize: '0.95rem' }}>{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Roadmap */}
-      <section id="roadmap" className="roadmap-section">
-        <div className="roadmap-shell">
-          <div className="roadmap-intro-card">
-            <p style={{ ...sectionEyebrow, color: '#fb923c' }}>Implementation Roadmap</p>
-            <h2>Roadmap cockpit for launch risk.</h2>
-            <p>
-              The sequence is simple: keep the Pennsylvania demo dependable, close the caregiver mobile loop, then harden aggregator submission with evidence packets agencies can actually hand to an auditor.
-            </p>
-            <div className="roadmap-signal-grid">
-              <span>Updated landing UI</span>
-              <span>Resource library added</span>
-              <span>Production deployed</span>
-            </div>
-          </div>
-
-          <div className="roadmap-stage-grid">
-            {roadmap.map((item) => (
-              <article key={item.phase} className="roadmap-card">
-                <div className="roadmap-card-topline">
-                  <span>{item.phase}</span>
-                  <strong>{item.status}</strong>
-                </div>
-                <h3>{item.title}</h3>
-                <p>{item.detail}</p>
-                <ul>
-                  {item.proof.map((proof) => (
-                    <li key={proof}>{proof}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-
-          <div className="roadmap-resource-callout">
-            <div>
-              <span>Launch resources</span>
-              <strong>Use the resource library to validate every roadmap claim.</strong>
-              <p>CMS EVV, Pennsylvania DHS EVV, PA FAQ, Sandata training, and HIPAA Security Rule references are now linked directly on the page.</p>
-            </div>
-            <a href="#resources">Jump to resources</a>
-          </div>
-        </div>
-      </section>
-
-      <section id="faq" style={{ padding: '4rem 2rem', backgroundColor: 'white' }}>
-        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <p style={sectionEyebrow}>FAQ</p>
-            <h2 style={sectionHeading}>Common questions.</h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {faqs.map((f) => (
-              <details key={f.q} style={{ backgroundColor: 'var(--color-bg)', borderRadius: '12px', padding: '1.25rem 1.5rem', cursor: 'pointer' }}>
-                <summary style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--color-primary-dark)', fontSize: '1.05rem', listStyle: 'none' }}>{f.q}</summary>
-                <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.55, margin: '0.75rem 0 0', fontSize: '0.95rem' }}>{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section style={{ padding: '5rem 2rem', backgroundColor: 'var(--color-primary-dark)' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
-          <h2 style={{ color: 'white', fontSize: '2.25rem', margin: 0, lineHeight: 1.15 }}>Ready to retire the spreadsheets?</h2>
-          <p style={{ color: '#bdd3f0', fontSize: '1.125rem', lineHeight: 1.6, maxWidth: '640px', margin: 0 }}>
-            Get a live walkthrough of the admin portal and the caregiver mobile flow. We'll bring sample data — bring your hardest workflow.
-          </p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
-            <Link to="/login" style={{ backgroundColor: 'var(--color-accent)', color: 'white', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.05rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
-              Access Admin Portal
-            </Link>
-            <a href="mailto:hello@rayhealthevv.com" style={{ backgroundColor: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.3)', textDecoration: 'none', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 700, fontSize: '1.05rem' }}>
-              Request a demo
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ padding: '2.5rem 2rem', backgroundColor: 'var(--color-primary-dark)', color: '#9bb0c8', fontSize: '0.875rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <span>&copy; {new Date().getFullYear()} RayHealth EVV. All rights reserved.</span>
-          <span>Pennsylvania-only • HIPAA-aware • 21st Century Cures Act aligned</span>
-        </div>
-      </footer>
+    <div className="min-h-screen bg-background font-sans text-foreground">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+      >
+        Skip to main content
+      </a>
+      <Header />
+      <main id="main">
+        <Hero />
+        <StatsStrip />
+        <HowItWorks />
+        <Roles />
+        <Compliance />
+        <Resources />
+        <Operations />
+        <Roadmap />
+        <FAQ />
+        <FinalCTA />
+      </main>
+      <Footer />
     </div>
   );
 }
