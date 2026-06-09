@@ -172,7 +172,10 @@ form {
   gap: 1rem;
 }
 
-label {
+/* Legacy bare-element styling for not-yet-migrated admin pages.
+ * Scoped with :not([data-slot]) so shadcn/ui primitives (which carry a
+ * data-slot attribute) opt out and render with their own Tailwind classes. */
+label:not([data-slot]) {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--color-text-muted);
@@ -180,7 +183,7 @@ label {
   letter-spacing: 1px;
 }
 
-input {
+input:not([data-slot]) {
   padding: 0.75rem 1rem;
   border: 1px solid #c9d8e8;
   border-radius: 8px;
@@ -190,13 +193,13 @@ input {
   transition: border-color 0.2s;
 }
 
-input:focus {
+input:not([data-slot]):focus {
   outline: none;
   border-color: var(--color-primary-light);
   box-shadow: 0 0 0 3px rgba(45, 125, 210, 0.1);
 }
 
-button {
+button:not([data-slot]) {
   background-color: var(--color-accent);
   color: white;
   border: none;
@@ -211,7 +214,7 @@ button {
   margin-top: 1rem;
 }
 
-button:hover {
+button:not([data-slot]):hover {
   background-color: #ea580c;
 }
 

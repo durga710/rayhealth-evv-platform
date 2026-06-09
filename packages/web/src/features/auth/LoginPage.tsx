@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext.js';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -25,35 +36,63 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg)' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px', margin: '2rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            RayHealth <span className="evv-badge" style={{ backgroundColor: 'var(--color-accent)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', letterSpacing: '2px', fontWeight: 800 }}>EVV</span>
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', letterSpacing: '1px' }}>Electronic Visit Verification</p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_12%_8%,rgba(249,115,22,0.10),transparent_28rem),linear-gradient(180deg,#f6fbff_0%,#eef5fb_40%,#f8fbfd_100%)] p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="items-center text-center">
+          <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <ShieldCheck className="size-6" aria-hidden />
+          </div>
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+            RayHealth
+            <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-extrabold tracking-[0.18em] text-accent-foreground">
+              EVV
+            </span>
+          </CardTitle>
+          <CardDescription>Electronic Visit Verification · Admin Console</CardDescription>
+        </CardHeader>
 
-        {error && (
-          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1rem', color: '#b91c1c', fontSize: '0.875rem' }}>
-            {error}
-          </div>
-        )}
+        <CardContent>
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>{error}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleLogin}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="email">Email</label>
-            <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" required />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-            <label htmlFor="password">Password</label>
-            <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
-          </div>
-          <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '2rem', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Signing in…' : 'Log In to Admin'}
-          </button>
-        </form>
-      </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <Button type="submit" size="lg" disabled={loading} className="w-full">
+              {loading ? 'Signing in…' : 'Log In to Admin'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

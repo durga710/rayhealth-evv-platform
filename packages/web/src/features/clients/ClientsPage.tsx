@@ -1,5 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { UserPlus, Search, Users } from 'lucide-react';
 import { getJson, postJson } from '../../lib/api-client.js';
+import { PageHeader } from '@/components/PageHeader';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Client {
   id: string;
@@ -15,91 +36,196 @@ export function ClientsPage() {
   const [lastName, setLastName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [medicaidNumber, setMedicaidNumber] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     getJson<Client[]>('/api/clients')
-      .then(data => setClients(data || []))
-      .catch(console.error);
+      .then((data) => setClients(data || []))
+      .catch(() => setClients([]));
   }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter((c) =>
+      `${c.firstName} ${c.lastName} ${c.medicaidNumber ?? ''}`.toLowerCase().includes(q),
+    );
+  }, [clients, query]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
+    setMessage(null);
+    setSubmitting(true);
     try {
-      const newClient = await postJson<Client>('/api/clients', { 
-        firstName, 
-        lastName, 
-        dateOfBirth, 
-        medicaidNumber 
+      const newClient = await postJson<Client>('/api/clients', {
+        firstName,
+        lastName,
+        dateOfBirth,
+        medicaidNumber,
       });
-      setClients(prev => [...prev, newClient]);
+      setClients((prev) => [...prev, newClient]);
       setFirstName('');
       setLastName('');
       setDateOfBirth('');
       setMedicaidNumber('');
-      setMessage('Client added successfully');
-    } catch (err) {
-      setMessage('Failed to add client');
+      setMessage({ kind: 'ok', text: 'Client added successfully.' });
+    } catch {
+      setMessage({ kind: 'error', text: 'Failed to add client. Please try again.' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div>
-      <h2>Client Management</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>Manage your clients and their demographic information.</p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <h3>Add New Client</h3>
-          <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="firstName">First Name</label>
-                <input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="lastName">Last Name</label>
-                <input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="dob">Date of Birth</label>
-              <input id="dob" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required />
-            </div>
+      <PageHeader
+        title="Client Management"
+        description="Manage your clients and their demographic information."
+      />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-              <label htmlFor="medicaid">Medicaid Number (Optional)</label>
-              <input id="medicaid" value={medicaidNumber} onChange={e => setMedicaidNumber(e.target.value)} />
-            </div>
-            
-            <button type="submit">Add Client</button>
-          </form>
-          {message && <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '8px' }}>{message}</div>}
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="size-5 text-primary" aria-hidden />
+              Add New Client
+            </CardTitle>
+            <CardDescription>Create a client record for scheduling and EVV.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="medicaid">Medicaid Number (optional)</Label>
+                <Input
+                  id="medicaid"
+                  value={medicaidNumber}
+                  onChange={(e) => setMedicaidNumber(e.target.value)}
+                />
+              </div>
+              <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+                {submitting ? 'Adding…' : 'Add Client'}
+              </Button>
+            </form>
 
-        <div>
-          <h3>Client Roster</h3>
-          {clients.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b', marginTop: '1rem' }}>
-              No clients found. Add one to get started.
+            {message && (
+              <div
+                role="status"
+                className={
+                  message.kind === 'ok'
+                    ? 'mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800'
+                    : 'mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                }
+              >
+                {message.text}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="size-5 text-primary" aria-hidden />
+                Client Roster
+              </CardTitle>
+              <CardDescription>
+                {clients.length} {clients.length === 1 ? 'client' : 'clients'} on record
+              </CardDescription>
             </div>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {clients.map(c => (
-                <li key={c.id} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong>{c.firstName} {c.lastName}</strong>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>DOB: {c.dateOfBirth}</div>
-                  </div>
-                  {c.medicaidNumber && <div style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#e0f2fe', color: '#0284c7', borderRadius: '4px' }}>Medicaid: {c.medicaidNumber}</div>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            <div className="relative w-full sm:w-56">
+              <Search
+                className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
+                aria-hidden
+              />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search clients…"
+                className="pl-9"
+                aria-label="Search clients"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {clients.length === 0 ? (
+              <EmptyState message="No clients found. Add one to get started." />
+            ) : filtered.length === 0 ? (
+              <EmptyState message={`No clients match “${query}”.`} />
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Name</TableHead>
+                      <TableHead>Date of Birth</TableHead>
+                      <TableHead className="text-right">Medicaid</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">
+                          {c.firstName} {c.lastName}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{c.dateOfBirth}</TableCell>
+                        <TableCell className="text-right">
+                          {c.medicaidNumber ? (
+                            <Badge variant="secondary">{c.medicaidNumber}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+      <Users className="size-8 text-muted-foreground/60" aria-hidden />
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }

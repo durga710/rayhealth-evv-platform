@@ -1,5 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { UserPlus, Users, MailCheck, MailWarning, Copy, Check, Search } from 'lucide-react';
 import { getJson, postJson, HttpError } from '../../lib/api-client.js';
+import { PageHeader } from '@/components/PageHeader';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface StaffMember {
   id: string;
@@ -40,7 +62,9 @@ export function StaffPage(): React.ReactElement {
   const [latestInvite, setLatestInvite] = useState<InvitePublic | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -54,12 +78,19 @@ export function StaffPage(): React.ReactElement {
     void load();
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return staff;
+    return staff.filter((s) => `${s.email} ${s.role}`.toLowerCase().includes(q));
+  }, [staff, query]);
+
   const handleInvite = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
     setLatestInvite(null);
     setEmailSent(null);
     setCopyState('idle');
+    setSubmitting(true);
     try {
       const response = await postJson<InviteCreateResponse>('/api/invites', {
         email,
@@ -85,6 +116,8 @@ export function StaffPage(): React.ReactElement {
       } else {
         setError(err instanceof Error ? err.message : 'Failed to send invite');
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -101,211 +134,186 @@ export function StaffPage(): React.ReactElement {
 
   return (
     <div>
-      <h2>Staff Management</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>
-        Manage caregivers, coordinators, and invite new staff members.
-      </p>
+      <PageHeader
+        title="Staff Management"
+        description="Manage caregivers, coordinators, and invite new staff members."
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <h3>Invite Staff Member</h3>
-          <form onSubmit={(e) => void handleInvite(e)} style={{ marginTop: '1rem' }}>
-            <div style={fieldStyle}>
-              <label htmlFor="email">Email Address</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="staff@example.com"
-              />
-            </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="size-5 text-primary" aria-hidden />
+              Invite Staff Member
+            </CardTitle>
+            <CardDescription>Send a single-use invite link to onboard a teammate.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => void handleInvite(e)} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="staff@example.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First Name (optional)</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Maria"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="role">Role</Label>
+                <Select id="role" value={role} onChange={(e) => setRole(e.target.value)}>
+                  <option value="caregiver">Caregiver</option>
+                  <option value="coordinator">Coordinator</option>
+                  <option value="admin">Admin</option>
+                </Select>
+              </div>
+              <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+                {submitting ? 'Creating…' : 'Create Invite'}
+              </Button>
+            </form>
 
-            <div style={{ ...fieldStyle, marginTop: '1rem' }}>
-              <label htmlFor="firstName">First Name (optional)</label>
-              <input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Maria"
-              />
-            </div>
-
-            <div style={{ ...fieldStyle, marginTop: '1rem' }}>
-              <label htmlFor="role">Role</label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
+            {error && (
+              <div
+                role="alert"
+                className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
               >
-                <option value="caregiver">Caregiver</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <button type="submit" style={{ marginTop: '1rem' }}>Create Invite</button>
-          </form>
-
-          {error && (
-            <div role="alert" style={errorBoxStyle}>{error}</div>
-          )}
-
-          {latestInvite && (
-            <div style={inviteCardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                {emailSent === true && (
-                  <span style={emailBadgeOkStyle}>✓ Email sent</span>
-                )}
-                {emailSent === false && (
-                  <span style={emailBadgeFailStyle}>⚠ Email not sent</span>
-                )}
+                {error}
               </div>
-              <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem' }}>
-                <strong>Invite created for {latestInvite.email}</strong>
-                {emailSent === false && ' — copy the link below and share it with them.'}
-              </p>
-              {emailSent === false && (
-                <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#7c2d12' }}>
-                  Email delivery is not currently configured. Set <code>RESEND_API_KEY</code> in Vercel,
-                  then future invites will email automatically.
+            )}
+
+            {latestInvite && (
+              <div className="mt-4 space-y-3 rounded-lg border border-border bg-muted/40 p-4">
+                <div className="flex items-center gap-2">
+                  {emailSent === true && (
+                    <Badge variant="success" className="gap-1">
+                      <MailCheck className="size-3" aria-hidden /> Email sent
+                    </Badge>
+                  )}
+                  {emailSent === false && (
+                    <Badge variant="warning" className="gap-1">
+                      <MailWarning className="size-3" aria-hidden /> Email not sent
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm">
+                  <strong>Invite created for {latestInvite.email}</strong>
+                  {emailSent === false && ' — copy the link below and share it with them.'}
                 </p>
-              )}
-              <div style={linkRowStyle}>
-                <code style={linkCodeStyle}>{latestInvite.acceptanceUrl}</code>
-                <button onClick={() => void handleCopy()} style={copyBtnStyle}>
-                  {copyState === 'copied' ? '✓ Copied' : 'Copy link'}
-                </button>
+                {emailSent === false && (
+                  <p className="text-xs text-amber-700">
+                    Email delivery is not currently configured. Set <code className="rounded bg-amber-100 px-1">RESEND_API_KEY</code> in
+                    Vercel, then future invites will email automatically.
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-border bg-card px-3 py-2 text-xs">
+                    {latestInvite.acceptanceUrl}
+                  </code>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void handleCopy()}
+                  >
+                    {copyState === 'copied' ? (
+                      <>
+                        <Check className="size-3.5" aria-hidden /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="size-3.5" aria-hidden /> Copy link
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Expires {new Date(latestInvite.expiresAt).toLocaleString()} · Single-use — once
+                  they accept, the link stops working.
+                </p>
               </div>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                Expires {new Date(latestInvite.expiresAt).toLocaleString()} ·
-                Single-use — once they accept, the link stops working.
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <div>
-          <h3>Active Staff Directory</h3>
-          {staff.length === 0 ? (
-            <div style={emptyStateStyle}>No staff found. Send an invite to add one.</div>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {staff.map((s) => (
-                <li key={s.id} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong>{s.email}</strong>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Role: {s.role}</div>
-                  </div>
-                  <div style={statusPillStyle(s.status)}>
-                    {s.status}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Card>
+          <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="size-5 text-primary" aria-hidden />
+                Active Staff Directory
+              </CardTitle>
+              <CardDescription>
+                {staff.length} {staff.length === 1 ? 'member' : 'members'}
+              </CardDescription>
+            </div>
+            <div className="relative w-full sm:w-56">
+              <Search
+                className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
+                aria-hidden
+              />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search staff…"
+                className="pl-9"
+                aria-label="Search staff"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {staff.length === 0 ? (
+              <EmptyState message="No staff found. Send an invite to add one." />
+            ) : filtered.length === 0 ? (
+              <EmptyState message={`No staff match “${query}”.`} />
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead className="text-right">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium">{s.email}</TableCell>
+                        <TableCell className="capitalize text-muted-foreground">{s.role}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={s.status === 'pending' ? 'warning' : 'secondary'}>
+                            {s.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-// ---------- Styles ----------
-
-const fieldStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.5rem',
-};
-
-const errorBoxStyle: React.CSSProperties = {
-  marginTop: '1rem',
-  padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
-  borderRadius: '8px',
-};
-
-const inviteCardStyle: React.CSSProperties = {
-  marginTop: '1rem',
-  padding: '1rem 1.1rem',
-  border: '1px solid #cbd5e1',
-  borderRadius: '8px',
-  backgroundColor: '#f8fafc',
-};
-
-const emailBadgeOkStyle: React.CSSProperties = {
-  fontSize: '0.7rem',
-  padding: '0.15rem 0.55rem',
-  borderRadius: '999px',
-  backgroundColor: '#E1F5EE',
-  color: '#085041',
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const emailBadgeFailStyle: React.CSSProperties = {
-  fontSize: '0.7rem',
-  padding: '0.15rem 0.55rem',
-  borderRadius: '999px',
-  backgroundColor: '#FAEEDA',
-  color: '#633806',
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const linkRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  marginTop: '0.4rem',
-};
-
-const linkCodeStyle: React.CSSProperties = {
-  flex: 1,
-  padding: '0.5rem 0.75rem',
-  fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
-  fontSize: '0.8rem',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
-  borderRadius: '6px',
-  overflowX: 'auto',
-  whiteSpace: 'nowrap',
-};
-
-const copyBtnStyle: React.CSSProperties = {
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
-  border: 'none',
-  padding: '0.5rem 0.85rem',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-};
-
-const emptyStateStyle: React.CSSProperties = {
-  padding: '2rem',
-  textAlign: 'center',
-  backgroundColor: '#f8fafc',
-  borderRadius: '8px',
-  color: '#64748b',
-  marginTop: '1rem',
-};
-
-function statusPillStyle(status: string): React.CSSProperties {
-  const isPending = status === 'pending';
-  return {
-    fontSize: '0.75rem',
-    padding: '0.25rem 0.5rem',
-    backgroundColor: isPending ? '#fef3c7' : '#e0f2fe',
-    color: isPending ? '#d97706' : '#0284c7',
-    borderRadius: '4px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  };
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+      <Users className="size-8 text-muted-foreground/60" aria-hidden />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
 }
