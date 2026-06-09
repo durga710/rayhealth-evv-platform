@@ -13,7 +13,20 @@
  */
 
 import React, { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ClipboardCheck, Inbox } from 'lucide-react';
 import { getJson, postJson, HttpError } from '../../lib/api-client.js';
+import { PageHeader } from '@/components/PageHeader';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 type VmurStatus = 'pending' | 'approved' | 'rejected';
 type VmurOriginator = 'caregiver' | 'coordinator' | 'admin';
@@ -149,48 +162,68 @@ export function VisitCorrectionsQueuePage(): React.JSX.Element {
 
   return (
     <div>
-      <header style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Visit corrections review</h2>
-        <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
-          Pending VMUR submissions awaiting coordinator review. Caregiver-filed corrections
-          from the mobile app land here alongside coordinator-filed ones.
-        </p>
-      </header>
+      <PageHeader
+        title="Visit corrections review"
+        description="Pending VMUR submissions awaiting coordinator review. Caregiver-filed corrections from the mobile app land here alongside coordinator-filed ones."
+      />
 
       {error && (
-        <div role="alert" style={errorBoxStyle}>
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <strong>Could not complete the request.</strong> {error}
         </div>
       )}
 
       {toast && (
-        <div role="status" style={toastStyle}>{toast}</div>
-      )}
-
-      {loading && <p>Loading queue…</p>}
-
-      {!loading && items.length === 0 && (
-        <div style={emptyStateStyle}>
-          <strong>Queue is clear.</strong>
-          <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
-            No pending visit corrections for your agency right now.
-          </div>
+        <div
+          role="status"
+          className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+        >
+          {toast}
         </div>
       )}
 
-      {!loading && items.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {items.map((item) => (
-            <CorrectionRow
-              key={item.id ?? item.visitId}
-              item={item}
-              acting={actingId === item.id}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          ))}
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardCheck className="size-5 text-primary" aria-hidden />
+            Pending corrections
+          </CardTitle>
+          <CardDescription>
+            {items.length} {items.length === 1 ? 'correction' : 'corrections'} awaiting review
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading queue…</p>
+          ) : items.length === 0 ? (
+            <EmptyState message="Queue is clear. No pending visit corrections for your agency right now." />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {items.map((item) => (
+                <CorrectionRow
+                  key={item.id ?? item.visitId}
+                  item={item}
+                  acting={actingId === item.id}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }): React.JSX.Element {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+      <Inbox className="size-8 text-muted-foreground/60" aria-hidden />
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }
@@ -211,6 +244,9 @@ function CorrectionRow({ item, acting, onApprove, onReject }: CorrectionRowProps
   const [rejectReason, setRejectReason] = useState('');
 
   const id = item.id ?? '';
+  const startInputId = `adjusted-start-${id || item.visitId}`;
+  const endInputId = `adjusted-end-${id || item.visitId}`;
+  const reasonInputId = `reject-reason-${id || item.visitId}`;
   const reasonLabel = item.reasonCategoryCode
     ? `${item.reasonCategoryCode} — ${REASON_CODE_LABELS[item.reasonCategoryCode] ?? 'unknown reason code'}`
     : 'No reason code on file';
@@ -235,111 +271,116 @@ function CorrectionRow({ item, acting, onApprove, onReject }: CorrectionRowProps
   };
 
   return (
-    <div style={rowCardStyle}>
-      <div style={rowHeaderStyle}>
-        <div>
-          <div style={{ fontWeight: 600 }}>
-            Visit <code style={codeStyle}>{item.visitId}</code>
+    <Card className="border-border">
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="font-semibold">
+              Visit <code className="rounded bg-muted px-1 font-mono text-xs">{item.visitId}</code>
+            </div>
+            <div className="mt-0.5 text-sm text-muted-foreground">
+              Originator: <strong>{item.originatorRole ?? 'unknown'}</strong>
+              {' · Requested by '}
+              <code className="rounded bg-muted px-1 font-mono text-xs">{item.requesterId}</code>
+            </div>
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.1rem' }}>
-            Originator: <strong>{item.originatorRole ?? 'unknown'}</strong>
-            {' · Requested by '}
-            <code style={codeStyle}>{item.requesterId}</code>
-          </div>
+          <Badge variant="warning" className="uppercase">Pending</Badge>
         </div>
-        <span style={pendingBadgeStyle}>Pending</span>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.75rem' }}>
-        <Field label="Reason">{reasonLabel}</Field>
-        <Field label="Correction">{correctionLabel}</Field>
-        {item.originalStartTime && (
-          <Field label="Original start">{formatTimestamp(item.originalStartTime)}</Field>
-        )}
-        {item.originalEndTime && (
-          <Field label="Original end">{formatTimestamp(item.originalEndTime)}</Field>
-        )}
-        {item.adjustedStartTime && (
-          <Field label="Proposed start">{formatTimestamp(item.adjustedStartTime)}</Field>
-        )}
-        {item.adjustedEndTime && (
-          <Field label="Proposed end">{formatTimestamp(item.adjustedEndTime)}</Field>
-        )}
-      </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Field label="Reason">{reasonLabel}</Field>
+          <Field label="Correction">{correctionLabel}</Field>
+          {item.originalStartTime && (
+            <Field label="Original start">{formatTimestamp(item.originalStartTime)}</Field>
+          )}
+          {item.originalEndTime && (
+            <Field label="Original end">{formatTimestamp(item.originalEndTime)}</Field>
+          )}
+          {item.adjustedStartTime && (
+            <Field label="Proposed start">{formatTimestamp(item.adjustedStartTime)}</Field>
+          )}
+          {item.adjustedEndTime && (
+            <Field label="Proposed end">{formatTimestamp(item.adjustedEndTime)}</Field>
+          )}
+        </div>
 
-      <div style={{ marginTop: '0.6rem', fontSize: '0.85rem' }}>
-        <strong>Notes:</strong> {item.reason}
-      </div>
+        <div className="mt-3 text-sm">
+          <strong>Notes:</strong> {item.reason}
+        </div>
 
-      <SignatureBlock item={item} />
+        <SignatureBlock item={item} />
 
-      {!rejectMode ? (
-        <form onSubmit={submitApprove} style={{ marginTop: '0.85rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Adjusted start (ISO, optional)</span>
-              <input
-                type="text"
-                value={adjustedStart}
-                onChange={(e) => setAdjustedStart(e.target.value)}
-                placeholder="2026-05-10T09:00:00.000Z"
-                style={inputStyle}
+        {!rejectMode ? (
+          <form onSubmit={submitApprove} className="mt-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor={startInputId}>Adjusted start (ISO, optional)</Label>
+                <Input
+                  id={startInputId}
+                  type="text"
+                  value={adjustedStart}
+                  onChange={(e) => setAdjustedStart(e.target.value)}
+                  placeholder="2026-05-10T09:00:00.000Z"
+                  className="font-mono"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={endInputId}>Adjusted end (ISO, optional)</Label>
+                <Input
+                  id={endInputId}
+                  type="text"
+                  value={adjustedEnd}
+                  onChange={(e) => setAdjustedEnd(e.target.value)}
+                  placeholder="2026-05-10T17:30:00.000Z"
+                  className="font-mono"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button type="submit" disabled={acting} aria-busy={acting}>
+                {acting ? 'Approving…' : 'Approve correction'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRejectMode(true)}
+                disabled={acting}
+              >
+                Reject…
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={submitReject} className="mt-4">
+            <div className="space-y-1.5">
+              <Label htmlFor={reasonInputId}>Rejection reason (required)</Label>
+              <textarea
+                id={reasonInputId}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={2}
+                placeholder="e.g. insufficient documentation — please re-file with the visit logs attached."
+                className="flex w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                required
               />
-            </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Adjusted end (ISO, optional)</span>
-              <input
-                type="text"
-                value={adjustedEnd}
-                onChange={(e) => setAdjustedEnd(e.target.value)}
-                placeholder="2026-05-10T17:30:00.000Z"
-                style={inputStyle}
-              />
-            </label>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-            <button type="submit" disabled={acting} style={approveButtonStyle}>
-              {acting ? 'Approving…' : 'Approve correction'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setRejectMode(true)}
-              disabled={acting}
-              style={rejectButtonStyle}
-            >
-              Reject…
-            </button>
-          </div>
-        </form>
-      ) : (
-        <form onSubmit={submitReject} style={{ marginTop: '0.85rem' }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Rejection reason (required)</span>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              rows={2}
-              placeholder="e.g. insufficient documentation — please re-file with the visit logs attached."
-              style={{ ...inputStyle, resize: 'vertical' }}
-              required
-            />
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="submit" disabled={acting || !rejectReason.trim()} style={rejectButtonStyle}>
-              {acting ? 'Rejecting…' : 'Confirm rejection'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setRejectMode(false)}
-              disabled={acting}
-              style={cancelButtonStyle}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button type="submit" variant="destructive" disabled={acting || !rejectReason.trim()} aria-busy={acting}>
+                {acting ? 'Rejecting…' : 'Confirm rejection'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setRejectMode(false)}
+                disabled={acting}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -363,14 +404,14 @@ function SignatureBlock({ item }: SignatureBlockProps): React.JSX.Element | null
   const cl = item.clientSignaturePresent;
 
   return (
-    <div style={signatureBlockStyle}>
-      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>Signatures</div>
-      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem', fontSize: '0.85rem' }}>
+    <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2.5">
+      <div className="text-xs font-semibold text-muted-foreground">Signatures</div>
+      <div className="mt-1 flex gap-3 text-sm">
         <SigPill label="Caregiver" present={cg} />
         <SigPill label="Client" present={cl} />
       </div>
       {item.incompleteSignatureReason && (
-        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>
+        <div className="mt-1.5 text-sm">
           <strong>Justification:</strong> {item.incompleteSignatureReason}
         </div>
       )}
@@ -384,12 +425,12 @@ interface SigPillProps {
 }
 function SigPill({ label, present }: SigPillProps): React.JSX.Element {
   if (present === undefined) {
-    return <span style={sigPillStyle('#e2e8f0', '#334155')}>{label}: unknown</span>;
+    return <Badge variant="secondary">{label}: unknown</Badge>;
   }
   if (present) {
-    return <span style={sigPillStyle('#dcfce7', '#166534')}>{label}: ✓ present</span>;
+    return <Badge variant="success">{label}: ✓ present</Badge>;
   }
-  return <span style={sigPillStyle('#fee2e2', '#991b1b')}>{label}: ✗ missing</span>;
+  return <Badge variant="destructive">{label}: ✗ missing</Badge>;
 }
 
 interface FieldProps {
@@ -399,10 +440,8 @@ interface FieldProps {
 function Field({ label, children }: FieldProps): React.JSX.Element {
   return (
     <div>
-      <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {label}
-      </div>
-      <div style={{ fontSize: '0.9rem', marginTop: '0.1rem' }}>{children}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-sm">{children}</div>
     </div>
   );
 }
@@ -414,117 +453,3 @@ function formatTimestamp(iso: string): string {
     return iso;
   }
 }
-
-// ----- Styles (kept inline to match the surrounding pages' convention) -----
-
-const rowCardStyle: React.CSSProperties = {
-  padding: '1rem 1.25rem',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
-  borderRadius: '12px',
-};
-
-const rowHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  gap: '0.75rem',
-};
-
-const pendingBadgeStyle: React.CSSProperties = {
-  fontSize: '0.7rem',
-  padding: '0.2rem 0.6rem',
-  borderRadius: '999px',
-  backgroundColor: '#FEF3C7',
-  color: '#92400E',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: '0.4rem 0.55rem',
-  border: '1px solid #cbd5e1',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  fontFamily: 'SF Mono, Menlo, monospace',
-};
-
-const approveButtonStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  backgroundColor: '#0B5FB1',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '6px',
-  fontWeight: 500,
-  cursor: 'pointer',
-};
-
-const rejectButtonStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  backgroundColor: '#fff',
-  color: '#b91c1c',
-  border: '1px solid #fca5a5',
-  borderRadius: '6px',
-  fontWeight: 500,
-  cursor: 'pointer',
-};
-
-const cancelButtonStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  backgroundColor: '#fff',
-  color: '#475569',
-  border: '1px solid #cbd5e1',
-  borderRadius: '6px',
-  fontWeight: 500,
-  cursor: 'pointer',
-};
-
-const errorBoxStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
-  borderRadius: '6px',
-  marginBottom: '1rem',
-};
-
-const toastStyle: React.CSSProperties = {
-  padding: '0.6rem 1rem',
-  backgroundColor: '#dcfce7',
-  color: '#166534',
-  borderRadius: '6px',
-  marginBottom: '1rem',
-  fontSize: '0.9rem',
-};
-
-const emptyStateStyle: React.CSSProperties = {
-  padding: '1.5rem',
-  border: '1px dashed #cbd5e1',
-  borderRadius: '12px',
-  textAlign: 'center',
-  color: '#475569',
-};
-
-const codeStyle: React.CSSProperties = {
-  fontFamily: 'SF Mono, Menlo, monospace',
-  fontSize: '0.8rem',
-  backgroundColor: '#f1f5f9',
-  padding: '0 0.25rem',
-  borderRadius: '4px',
-};
-
-const signatureBlockStyle: React.CSSProperties = {
-  marginTop: '0.75rem',
-  padding: '0.6rem 0.75rem',
-  backgroundColor: '#f8fafc',
-  borderRadius: '8px',
-};
-
-const sigPillStyle = (bg: string, fg: string): React.CSSProperties => ({
-  backgroundColor: bg,
-  color: fg,
-  padding: '0.15rem 0.5rem',
-  borderRadius: '999px',
-  fontSize: '0.78rem',
-  fontWeight: 500,
-});

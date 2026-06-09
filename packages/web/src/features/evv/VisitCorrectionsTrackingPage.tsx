@@ -12,7 +12,27 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { History, Filter } from 'lucide-react';
 import { getJson } from '../../lib/api-client.js';
+import { PageHeader } from '@/components/PageHeader';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 type VmurStatus = 'pending' | 'approved' | 'rejected';
 type VmurOriginator = 'caregiver' | 'coordinator' | 'admin';
@@ -94,53 +114,62 @@ export function VisitCorrectionsTrackingPage(): React.JSX.Element {
 
   return (
     <div>
-      <header style={{ marginBottom: '1.25rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Visit corrections tracking</h2>
-        <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
-          Full history of VMUR corrections for your agency — every status, every originator.
-          Read-only. Pending items can be approved or rejected from the Corrections Queue page.
-        </p>
-      </header>
+      <PageHeader
+        title="Visit corrections tracking"
+        description="Full history of VMUR corrections for your agency — every status, every originator. Read-only. Pending items can be approved or rejected from the Corrections Queue page."
+      />
 
       <FilterBar filters={filters} onChange={updateFilter} />
 
       {error && (
-        <div role="alert" style={errorBoxStyle}>
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <strong>Could not load history.</strong> {error}
         </div>
       )}
 
-      {loading && <p>Loading history…</p>}
-
-      {!loading && items.length === 0 && (
-        <div style={emptyStateStyle}>
-          <strong>No corrections match the current filters.</strong>
-        </div>
-      )}
-
-      {!loading && items.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <Th>Status</Th>
-                <Th>Originator</Th>
-                <Th>Visit</Th>
-                <Th>Reason</Th>
-                <Th>Correction</Th>
-                <Th>Signatures</Th>
-                <Th>Filed by</Th>
-                <Th>Approved by</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <Row key={item.id ?? item.visitId} item={item} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="size-5 text-primary" aria-hidden />
+            Corrections History
+          </CardTitle>
+          <CardDescription>
+            {items.length} {items.length === 1 ? 'correction' : 'corrections'} matching the current filters
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading history…</p>
+          ) : items.length === 0 ? (
+            <EmptyState message="No corrections match the current filters." />
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Status</TableHead>
+                    <TableHead>Originator</TableHead>
+                    <TableHead>Visit</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Correction</TableHead>
+                    <TableHead>Signatures</TableHead>
+                    <TableHead>Filed by</TableHead>
+                    <TableHead>Approved by</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => (
+                    <Row key={item.id ?? item.visitId} item={item} />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -153,47 +182,58 @@ interface FilterBarProps {
 }
 function FilterBar({ filters, onChange }: FilterBarProps): React.JSX.Element {
   return (
-    <div style={filterBarStyle}>
-      <label style={filterLabelStyle}>
-        <span style={filterLegendStyle}>Status</span>
-        <select
-          value={filters.status}
-          onChange={(e) => onChange('status', e.target.value as Filters['status'])}
-          style={selectStyle}
-        >
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </label>
-      <label style={filterLabelStyle}>
-        <span style={filterLegendStyle}>Originator</span>
-        <select
-          value={filters.originator}
-          onChange={(e) => onChange('originator', e.target.value as Filters['originator'])}
-          style={selectStyle}
-        >
-          <option value="">All</option>
-          <option value="caregiver">Caregiver</option>
-          <option value="coordinator">Coordinator</option>
-          <option value="admin">Admin</option>
-        </select>
-      </label>
-      <label style={filterLabelStyle}>
-        <span style={filterLegendStyle}>Reason code</span>
-        <select
-          value={filters.reasonCode}
-          onChange={(e) => onChange('reasonCode', e.target.value)}
-          style={selectStyle}
-        >
-          <option value="">All</option>
-          {REASON_CODES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </label>
-    </div>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Filter className="size-5 text-primary" aria-hidden />
+          Filters
+        </CardTitle>
+        <CardDescription>Narrow the history by status, originator, or reason code.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-status">Status</Label>
+            <Select
+              id="filter-status"
+              value={filters.status}
+              onChange={(e) => onChange('status', e.target.value as Filters['status'])}
+            >
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-originator">Originator</Label>
+            <Select
+              id="filter-originator"
+              value={filters.originator}
+              onChange={(e) => onChange('originator', e.target.value as Filters['originator'])}
+            >
+              <option value="">All</option>
+              <option value="caregiver">Caregiver</option>
+              <option value="coordinator">Coordinator</option>
+              <option value="admin">Admin</option>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-reason">Reason code</Label>
+            <Select
+              id="filter-reason"
+              value={filters.reasonCode}
+              onChange={(e) => onChange('reasonCode', e.target.value)}
+            >
+              <option value="">All</option>
+              {REASON_CODES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -204,27 +244,33 @@ interface RowProps {
 }
 function Row({ item }: RowProps): React.JSX.Element {
   return (
-    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-      <Td>
+    <TableRow>
+      <TableCell>
         <StatusBadge status={item.status} />
-      </Td>
-      <Td>{item.originatorRole ?? '—'}</Td>
-      <Td><code style={codeStyle}>{item.visitId.slice(0, 8)}…</code></Td>
-      <Td>{item.reasonCategoryCode ?? '—'}</Td>
-      <Td>{item.correctionCode ?? '—'}</Td>
-      <Td>
+      </TableCell>
+      <TableCell className="text-muted-foreground">{item.originatorRole ?? '—'}</TableCell>
+      <TableCell>
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{item.visitId.slice(0, 8)}…</code>
+      </TableCell>
+      <TableCell>{item.reasonCategoryCode ?? '—'}</TableCell>
+      <TableCell>{item.correctionCode ?? '—'}</TableCell>
+      <TableCell>
         <SignaturePair
           caregiver={item.caregiverSignaturePresent}
           client={item.clientSignaturePresent}
         />
-      </Td>
-      <Td><code style={codeStyle}>{item.requesterId.slice(0, 8)}…</code></Td>
-      <Td>
-        {item.approverId
-          ? <code style={codeStyle}>{item.approverId.slice(0, 8)}…</code>
-          : '—'}
-      </Td>
-    </tr>
+      </TableCell>
+      <TableCell>
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{item.requesterId.slice(0, 8)}…</code>
+      </TableCell>
+      <TableCell>
+        {item.approverId ? (
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{item.approverId.slice(0, 8)}…</code>
+        ) : (
+          '—'
+        )}
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -232,9 +278,9 @@ interface StatusBadgeProps {
   status: VmurStatus;
 }
 function StatusBadge({ status }: StatusBadgeProps): React.JSX.Element {
-  if (status === 'approved') return <span style={badgeStyle('#dcfce7', '#166534')}>Approved</span>;
-  if (status === 'rejected') return <span style={badgeStyle('#fee2e2', '#991b1b')}>Rejected</span>;
-  return <span style={badgeStyle('#FEF3C7', '#92400E')}>Pending</span>;
+  if (status === 'approved') return <Badge variant="success">Approved</Badge>;
+  if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
+  return <Badge variant="warning">Pending</Badge>;
 }
 
 interface SignaturePairProps {
@@ -243,7 +289,7 @@ interface SignaturePairProps {
 }
 function SignaturePair({ caregiver, client }: SignaturePairProps): React.JSX.Element {
   return (
-    <span style={{ display: 'inline-flex', gap: '0.35rem', fontSize: '0.78rem' }}>
+    <span className="inline-flex gap-1.5">
       <SigDot label="CG" present={caregiver} />
       <SigDot label="CL" present={client} />
     </span>
@@ -256,118 +302,19 @@ interface SigDotProps {
 }
 function SigDot({ label, present }: SigDotProps): React.JSX.Element {
   if (present === undefined) {
-    return <span style={badgeStyle('#e2e8f0', '#475569')}>{label}?</span>;
+    return <Badge variant="secondary">{label}?</Badge>;
   }
-  if (present) return <span style={badgeStyle('#dcfce7', '#166534')}>{label} ✓</span>;
-  return <span style={badgeStyle('#fee2e2', '#991b1b')}>{label} ✗</span>;
+  if (present) return <Badge variant="success">{label} ✓</Badge>;
+  return <Badge variant="destructive">{label} ✗</Badge>;
 }
 
-// ----- Small helpers -----
+// ----- Empty state -----
 
-interface ThProps {
-  children: React.ReactNode;
-}
-function Th({ children }: ThProps): React.JSX.Element {
+function EmptyState({ message }: { message: string }): React.JSX.Element {
   return (
-    <th style={{
-      textAlign: 'left',
-      padding: '0.5rem 0.75rem',
-      fontSize: '0.75rem',
-      color: '#475569',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      borderBottom: '1px solid #cbd5e1',
-    }}>
-      {children}
-    </th>
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+      <History className="size-8 text-muted-foreground/60" aria-hidden />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
   );
 }
-
-interface TdProps {
-  children: React.ReactNode;
-}
-function Td({ children }: TdProps): React.JSX.Element {
-  return (
-    <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', verticalAlign: 'middle' }}>
-      {children}
-    </td>
-  );
-}
-
-// ----- Styles -----
-
-const filterBarStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '0.75rem',
-  flexWrap: 'wrap',
-  marginBottom: '1rem',
-  padding: '0.75rem 1rem',
-  backgroundColor: '#f8fafc',
-  borderRadius: '8px',
-};
-
-const filterLabelStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.2rem',
-};
-
-const filterLegendStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  color: '#64748b',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const selectStyle: React.CSSProperties = {
-  padding: '0.4rem 0.55rem',
-  border: '1px solid #cbd5e1',
-  borderRadius: '6px',
-  backgroundColor: '#fff',
-  fontSize: '0.85rem',
-  minWidth: '8rem',
-};
-
-const tableStyle: React.CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  backgroundColor: '#fff',
-  border: '1px solid #e2e8f0',
-  borderRadius: '8px',
-};
-
-const errorBoxStyle: React.CSSProperties = {
-  padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
-  borderRadius: '6px',
-  marginBottom: '1rem',
-};
-
-const emptyStateStyle: React.CSSProperties = {
-  padding: '1.5rem',
-  border: '1px dashed #cbd5e1',
-  borderRadius: '12px',
-  textAlign: 'center',
-  color: '#475569',
-};
-
-const codeStyle: React.CSSProperties = {
-  fontFamily: 'SF Mono, Menlo, monospace',
-  fontSize: '0.78rem',
-  backgroundColor: '#f1f5f9',
-  padding: '0 0.25rem',
-  borderRadius: '4px',
-};
-
-const badgeStyle = (bg: string, fg: string): React.CSSProperties => ({
-  display: 'inline-block',
-  backgroundColor: bg,
-  color: fg,
-  padding: '0.15rem 0.5rem',
-  borderRadius: '999px',
-  fontSize: '0.72rem',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.4px',
-});

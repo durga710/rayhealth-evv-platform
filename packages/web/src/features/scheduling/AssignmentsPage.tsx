@@ -1,6 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CalendarPlus, CalendarClock, Search, ShieldAlert } from 'lucide-react';
 import { getJson, HttpError, postJson } from '../../lib/api-client.js';
+import { PageHeader } from '@/components/PageHeader';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Template {
   id: string;
@@ -70,6 +92,7 @@ export function AssignmentsPage() {
   const [visitTemplateId, setVisitTemplateId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+  const [query, setQuery] = useState('');
 
   // Compliance-gate state
   const [blockers, setBlockers] = useState<ComplianceBlocker[]>([]);
@@ -163,6 +186,16 @@ export function AssignmentsPage() {
     return clientNameById[id] ?? `${id.slice(0, 6)}…`;
   };
 
+  const filteredAssignments = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return assignments;
+    return assignments.filter((a) =>
+      `${displayCaregiver(a.caregiverId)} ${displayClient(a.clientId)} ${a.visitDate ?? ''}`
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [assignments, query, caregiverNameById, clientNameById]);
+
   const resetForm = (): void => {
     setClientId('');
     setCaregiverId('');
@@ -232,162 +265,215 @@ export function AssignmentsPage() {
 
   return (
     <div>
-      <h2>Caregiver Assignments</h2>
-      <p style={{ marginBottom: '2rem', color: 'var(--color-text-muted)' }}>
-        Schedule and assign caregivers to client visits.
-      </p>
+      <PageHeader
+        title="Caregiver Assignments"
+        description="Schedule and assign caregivers to client visits."
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div>
-          <h3>New Assignment</h3>
-          <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-            <div style={fieldStyle}>
-              <label htmlFor="clientId">Client</label>
-              {clients.length > 0 ? (
-                <select
-                  id="clientId"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  required
-                  style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
-                >
-                  <option value="">Select a client</option>
-                  {clients
-                    .slice()
-                    .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.lastName}, {c.firstName}
-                      </option>
-                    ))}
-                </select>
-              ) : (
-                <input id="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="Client ID" required />
-              )}
-            </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarPlus className="size-5 text-primary" aria-hidden />
+              New Assignment
+            </CardTitle>
+            <CardDescription>Assign a caregiver to a client visit template.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="clientId">Client</Label>
+                {clients.length > 0 ? (
+                  <Select
+                    id="clientId"
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a client</option>
+                    {clients
+                      .slice()
+                      .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.lastName}, {c.firstName}
+                        </option>
+                      ))}
+                  </Select>
+                ) : (
+                  <Input
+                    id="clientId"
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    placeholder="Client ID"
+                    required
+                  />
+                )}
+              </div>
 
-            <div style={{ ...fieldStyle, marginTop: '1rem' }}>
-              <label htmlFor="caregiverPicker">Caregiver</label>
-              {caregivers.length > 0 ? (
-                <select
-                  id="caregiverPicker"
-                  value={caregiverId}
-                  onChange={(e) => setCaregiverId(e.target.value)}
+              <div className="space-y-1.5">
+                <Label htmlFor="caregiverPicker">Caregiver</Label>
+                {caregivers.length > 0 ? (
+                  <Select
+                    id="caregiverPicker"
+                    value={caregiverId}
+                    onChange={(e) => setCaregiverId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a caregiver</option>
+                    {caregivers
+                      .filter((c) => c.status === 'active')
+                      .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.lastName}, {c.firstName} · {c.email}
+                        </option>
+                      ))}
+                  </Select>
+                ) : (
+                  <Input
+                    id="caregiverPicker"
+                    value={caregiverId}
+                    onChange={(e) => setCaregiverId(e.target.value)}
+                    placeholder="Caregiver ID"
+                    required
+                  />
+                )}
+                {preflightLoading && (
+                  <span className="text-xs text-muted-foreground">Checking training compliance…</span>
+                )}
+                {!preflightLoading && preflight && preflight.compliant && (
+                  <span className="text-xs text-emerald-700">✓ Caregiver is training-compliant</span>
+                )}
+                {!preflightLoading && preflight && !preflight.compliant && (
+                  <span className="text-xs text-destructive">
+                    ⚠ {preflight.blockers.length} training blocker{preflight.blockers.length === 1 ? '' : 's'} — submit will require override
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="templateId">Visit Template</Label>
+                <Select
+                  id="templateId"
+                  value={visitTemplateId}
+                  onChange={(e) => setVisitTemplateId(e.target.value)}
                   required
-                  style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
                 >
-                  <option value="">Select a caregiver</option>
-                  {caregivers
-                    .filter((c) => c.status === 'active')
-                    .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.lastName}, {c.firstName} · {c.email}
-                      </option>
-                    ))}
-                </select>
-              ) : (
-                <input
-                  id="caregiverPicker"
-                  value={caregiverId}
-                  onChange={(e) => setCaregiverId(e.target.value)}
-                  placeholder="Caregiver ID"
-                  required
+                  <option value="">Select a template</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} — {displayClient(t.clientId)}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="visitDate">Visit Date</Label>
+                <Input
+                  id="visitDate"
+                  type="date"
+                  value={visitDate}
+                  onChange={(e) => setVisitDate(e.target.value)}
                 />
-              )}
-              {preflightLoading && (
-                <span style={preflightHintStyle}>Checking training compliance…</span>
-              )}
-              {!preflightLoading && preflight && preflight.compliant && (
-                <span style={{ ...preflightHintStyle, color: '#085041' }}>
-                  ✓ Caregiver is training-compliant
-                </span>
-              )}
-              {!preflightLoading && preflight && !preflight.compliant && (
-                <span style={{ ...preflightHintStyle, color: '#791F1F' }}>
-                  ⚠ {preflight.blockers.length} training blocker{preflight.blockers.length === 1 ? '' : 's'} — submit will require override
-                </span>
-              )}
-            </div>
+              </div>
 
-            <div style={{ ...fieldStyle, marginTop: '1rem' }}>
-              <label htmlFor="templateId">Visit Template</label>
-              <select
-                id="templateId"
-                value={visitTemplateId}
-                onChange={(e) => setVisitTemplateId(e.target.value)}
-                required
-                style={{ padding: '0.75rem 1rem', border: '1px solid #c9d8e8', borderRadius: '8px', fontFamily: 'inherit', fontSize: '1rem' }}
+              <Button
+                type="submit"
+                disabled={submitting}
+                aria-busy={submitting}
+                className="w-full sm:w-auto"
               >
-                <option value="">Select a template</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} — {displayClient(t.clientId)}
-                  </option>
-                ))}
-              </select>
+                {submitting ? 'Creating…' : 'Create Assignment'}
+              </Button>
+            </form>
+
+            {blockers.length > 0 && blockedDraft && (
+              <ComplianceBlockerBanner
+                blockers={blockers}
+                caregiverId={blockedDraft.caregiverId}
+                onOverride={handleOverride}
+                onCancel={handleClearBlockers}
+                submitting={submitting}
+              />
+            )}
+
+            {message && (
+              <div
+                role={message.kind === 'error' ? 'alert' : 'status'}
+                className={
+                  message.kind === 'error'
+                    ? 'mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                    : 'mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800'
+                }
+              >
+                {message.text}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <CalendarClock className="size-5 text-primary" aria-hidden />
+                Upcoming Assignments
+              </CardTitle>
+              <CardDescription>
+                {assignments.length} {assignments.length === 1 ? 'assignment' : 'assignments'}
+              </CardDescription>
             </div>
-
-            <div style={{ ...fieldStyle, marginTop: '1rem' }}>
-              <label htmlFor="visitDate">Visit Date</label>
-              <input id="visitDate" type="date" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+            <div className="relative w-full sm:w-56">
+              <Search
+                className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
+                aria-hidden
+              />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search assignments…"
+                className="pl-9"
+                aria-label="Search assignments"
+              />
             </div>
-
-            <button type="submit" disabled={submitting} aria-busy={submitting} style={{ marginTop: '1rem' }}>
-              {submitting ? 'Creating…' : 'Create Assignment'}
-            </button>
-          </form>
-
-          {blockers.length > 0 && blockedDraft && (
-            <ComplianceBlockerBanner
-              blockers={blockers}
-              caregiverId={blockedDraft.caregiverId}
-              onOverride={handleOverride}
-              onCancel={handleClearBlockers}
-              submitting={submitting}
-            />
-          )}
-
-          {message && (
-            <div
-              role={message.kind === 'error' ? 'alert' : 'status'}
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: message.kind === 'error' ? '#fef2f2' : '#ecfdf5',
-                color: message.kind === 'error' ? '#991b1b' : '#065f46',
-                borderRadius: '8px',
-              }}
-            >
-              {message.text}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h3>Upcoming Assignments</h3>
-          {assignments.length === 0 ? (
-            <div style={emptyAssignmentsStyle}>No assignments found.</div>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {assignments.map((a) => (
-                <li key={a.id} style={assignmentRowStyle}>
-                  <div>
-                    <strong>{displayCaregiver(a.caregiverId)}</strong>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                      Client: {displayClient(a.clientId)}
-                    </div>
-                  </div>
-                  {a.visitDate && (
-                    <div style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: '#fef3c7', color: '#047857', borderRadius: '4px' }}>
-                      Date: {a.visitDate}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          </CardHeader>
+          <CardContent>
+            {assignments.length === 0 ? (
+              <EmptyState message="No assignments found." />
+            ) : filteredAssignments.length === 0 ? (
+              <EmptyState message={`No assignments match “${query}”.`} />
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Caregiver</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead className="text-right">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAssignments.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">{displayCaregiver(a.caregiverId)}</TableCell>
+                        <TableCell className="text-muted-foreground">{displayClient(a.clientId)}</TableCell>
+                        <TableCell className="text-right">
+                          {a.visitDate ? (
+                            <Badge variant="secondary">{a.visitDate}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -411,108 +497,51 @@ function ComplianceBlockerBanner({
   submitting,
 }: ComplianceBlockerBannerProps) {
   return (
-    <div role="alert" style={bannerStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <strong style={{ color: '#791F1F' }}>Caregiver not training-compliant</strong>
-        <span style={{ fontSize: '0.8rem', color: '#791F1F', opacity: 0.85 }}>
+    <div
+      role="alert"
+      className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive"
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <ShieldAlert className="size-4" aria-hidden />
+        <strong>Caregiver not training-compliant</strong>
+        <Badge variant="destructive">
           {blockers.length} blocker{blockers.length === 1 ? '' : 's'}
-        </span>
+        </Badge>
       </div>
-      <ul style={{ margin: '0 0 0.75rem', padding: '0 0 0 1.2rem', fontSize: '0.9rem', color: '#791F1F' }}>
+      <ul className="mb-3 list-disc space-y-1 pl-5 text-sm">
         {blockers.map((b) => (
           <li key={b.enrollmentId}>
             <strong>{b.courseTitle}</strong> ({b.courseCode}) — {b.reason}
           </li>
         ))}
       </ul>
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <Link to={`/admin/learning/caregivers/${caregiverId}`} style={resolveLinkStyle}>
-          Resolve training →
-        </Link>
-        <button
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild size="sm" variant="destructive">
+          <Link to={`/admin/learning/caregivers/${caregiverId}`}>Resolve training →</Link>
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant="outline"
           onClick={() => void onOverride()}
           disabled={submitting}
           aria-busy={submitting}
-          style={overrideButtonStyle}
         >
           Override (record reason)
-        </button>
-        <button type="button" onClick={onCancel} disabled={submitting} style={cancelButtonStyle}>
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel} disabled={submitting}>
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-// ---------- Styles ----------
-
-const fieldStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.5rem',
-};
-
-const emptyAssignmentsStyle: React.CSSProperties = {
-  padding: '2rem',
-  textAlign: 'center',
-  backgroundColor: '#f8fafc',
-  borderRadius: '8px',
-  color: '#64748b',
-  marginTop: '1rem',
-};
-
-const assignmentRowStyle: React.CSSProperties = {
-  padding: '1rem',
-  border: '1px solid #e2e8f0',
-  borderRadius: '8px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-};
-
-const bannerStyle: React.CSSProperties = {
-  marginTop: '1rem',
-  padding: '1rem 1.25rem',
-  backgroundColor: '#FCEBEB',
-  borderLeft: '4px solid #E24B4A',
-  borderRadius: '8px',
-};
-
-const resolveLinkStyle: React.CSSProperties = {
-  textDecoration: 'none',
-  backgroundColor: '#791F1F',
-  color: '#ffffff',
-  padding: '0.5rem 0.85rem',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  fontWeight: 500,
-};
-
-const overrideButtonStyle: React.CSSProperties = {
-  backgroundColor: 'transparent',
-  color: '#791F1F',
-  border: '1px solid #791F1F',
-  padding: '0.5rem 0.85rem',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  cursor: 'pointer',
-  fontWeight: 500,
-};
-
-const cancelButtonStyle: React.CSSProperties = {
-  backgroundColor: 'transparent',
-  color: '#475569',
-  border: '1px solid #cbd5e1',
-  padding: '0.5rem 0.85rem',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  cursor: 'pointer',
-};
-
-const preflightHintStyle: React.CSSProperties = {
-  fontSize: '0.8rem',
-  color: 'var(--color-text-muted)',
-  marginTop: '0.25rem',
-};
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+      <CalendarClock className="size-8 text-muted-foreground/60" aria-hidden />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
