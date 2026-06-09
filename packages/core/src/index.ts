@@ -28,5 +28,6 @@ export * from './services/assignment-eligibility-service.js';
 export * from './services/evv-compliance-service.js';
 export * from './services/sandata-mapping.js';
 export * from './services/audit-retention-sweep.js';
+export * from './services/mock-location-detector.js';
 export * from './domain/learning.js';
 export * from './repositories/learning-repository.js';

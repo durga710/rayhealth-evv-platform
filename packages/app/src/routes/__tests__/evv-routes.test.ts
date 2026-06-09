@@ -72,6 +72,59 @@ describe('EVV routes', () => {
     expect(createVisit).not.toHaveBeenCalled();
   });
 
+  it('rejects clock-in when the Android OS reports a mock-location provider', async () => {
+    const createVisit = vi.fn();
+    vi.spyOn(core, 'EvvRepository').mockImplementation(function EvvRepositoryMock() {
+      return { createVisit } as unknown as core.EvvRepository;
+    } as unknown as typeof core.EvvRepository);
+
+    const response = await request(createApp())
+      .post('/api/evv/clock-in')
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({
+        assignmentId,
+        location: { ...location, integrity: { isMock: true, provider: 'mock' } }
+      });
+
+    expect(response.status).toBe(422);
+    expect(response.body.code).toBe('LOCATION_INTEGRITY_REJECTED');
+    expect(response.body.reasons).toContain('platform_mock_provider');
+    expect(createVisit).not.toHaveBeenCalled();
+  });
+
+  it('persists a suspect clock-in with status "flagged"', async () => {
+    const getAssignmentForCaregiver = vi.fn().mockResolvedValue({
+      id: assignmentId,
+      caregiverId,
+      visitTemplateId: 'template-1'
+    });
+    const createVisit = vi.fn().mockImplementation((input) =>
+      Promise.resolve({
+        id: visitId,
+        ...input
+      })
+    );
+
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(function ScheduleRepositoryMock() {
+      return { getAssignmentForCaregiver } as unknown as core.ScheduleRepository;
+    } as unknown as typeof core.ScheduleRepository);
+    vi.spyOn(core, 'EvvRepository').mockImplementation(function EvvRepositoryMock() {
+      return { createVisit } as unknown as core.EvvRepository;
+    } as unknown as typeof core.EvvRepository);
+
+    const flaggedLocation = { ...location, accuracy: 0 };
+    const response = await request(createApp())
+      .post('/api/evv/clock-in')
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({ assignmentId, location: flaggedLocation });
+
+    expect(response.status).toBe(201);
+    expect(response.headers['x-rayhealth-visit-flagged']).toMatch(/zero_accuracy/);
+    expect(createVisit).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'flagged' })
+    );
+  });
+
   it('does not clock out a visit owned by another caregiver', async () => {
     const getVisitById = vi.fn().mockResolvedValue({
       id: visitId,

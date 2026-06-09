@@ -1,6 +1,6 @@
 # RayHealth EVV — Project Status
 
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-31
 **Maintained by:** Durga Ghimeray, Founder
 **Replaces:** `AGENT_HANDOFF_2026-05-08.md`, `HANDOFF.md`, `HANDOFF_CLAUDE_SECURITY_PHASE_1_2026-05-08.md`, `HANDOFF_CODEX.md`, `docs/SESSION_HANDOFF_2026-05-09.md`
 
@@ -110,7 +110,7 @@ These changes are committed to the worktree at `/rayhealth-fresh` and need to be
 **Engineering — medium impact:**
 
 - [ ] First-agency Sandata test transmission once Provider ID is issued
-- [ ] Add a mock-location detector if PA DHS audit flags geofence integrity
+- [x] Mock-location detector (server-side, packages/core + evv-routes) — landed 2026-05-31
 - [ ] CodeQL / Dependabot on `rayhealth-evv-platform` and `rayhealth-evv-mobile`
 - [ ] Playwright e2e in CI for caregiver clock-in/out
 
@@ -173,7 +173,14 @@ What's still required for spots: VO recording, music license (~$15 Artlist/Epide
 
 ## Changelog
 
-### 2026-05-24 (this update)
+### 2026-05-31 (this update)
+- Mock-location detector landed in `packages/core/src/services/mock-location-detector.ts` with a clean / suspect / rejected verdict model combining platform attestation (Android `isMock`, iOS simulator) with heuristics (zero/sub-meter accuracy, synthetic motion signature).
+- `evvClockLocationSchema` extended with an optional `integrity` payload (`isMock`, `isSimulator`, `provider`, `altitude`, `speed`, `heading`) so the mobile client can attest GPS source metadata. Backward compatible — existing clients keep working.
+- `/api/evv/clock-in` and `/api/evv/clock-out` now (a) hard-reject `rejected` readings with HTTP 422 `LOCATION_INTEGRITY_REJECTED`, (b) persist `suspect` visits with status `flagged` and an `X-RayHealth-Visit-Flagged` reason header for the coordinator queue, (c) accept `clean` readings normally. `EVV_ALLOW_SIMULATOR=1` env flag lets engineers test from the iOS Simulator locally.
+- 10 new detector unit tests + 2 new route integration tests. Full app + core suites green (49 core + 46 app = 95 tests).
+- Status update doc bumped; gap-analysis item "Mock-location detector" closed.
+
+### 2026-05-24 (prior)
 - Caregiver Mobile app cockpit redesigned with premium branding, dashboard welcome metrics (KPI grids), and offline actions queue inspector.
 - Integrated GPS Yandex static maps in EVVMapView to compute real-time caregiver distance from client and enforce a 150-meter geofence.
 - Implemented PA duty task checklists as a mandatory attestation during the mobile clock-out sequence.
