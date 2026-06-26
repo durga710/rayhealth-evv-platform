@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A caregiver or administrator in the system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "role": { "type": "string", "enum": ["caregiver", "admin"] },
+        "organizationId": { "type": "string" }
+      },
+      "required": ["id", "email", "firstName", "lastName", "role", "organizationId"]
+    },
+    "Visit": {
+      "title": "Visit",
+      "description": "Ascheduled or recorded patient visit",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caregiverId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientAddress": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "scheduledStartTime": { "type": "string" },
+        "scheduledEndTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "active", "completed", "missed"] }
+      },
+      "required": ["id", "caregiverId", "patientName", "patientAddress", "scheduledStartTime", "scheduledEndTime", "status"]
+    },
+    "Correction": {
+      "title": "Correction",
+      "description": "A request to fix a missed punch",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "visitId": { "type": "string" },
+        "caregiverId": { "type": "string" },
+        "clockInTime": { "type": "string" },
+        "clockOutTime": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string" },
+        "reviewedBy": { "type": "string" },
+        "reviewComment": { "type": "string" }
+      },
+      "required": ["id", "visitId", "caregiverId", "clockInTime", "clockOutTime", "reason", "status", "createdAt"]
+    },
+    "Earnings": {
+      "title": "Earnings",
+      "description": "Earning statistics for a caregiver",
+      "type": "object",
+      "properties": {
+        "daily": { "type": "number" },
+        "weekly": { "type": "number" },
+        "monthly": { "type": "number" },
+        "currency": { "type": "string" },
+        "completedVisits": { "type": "number" },
+        "totalHours": { "type": "number" }
+      },
+      "required": ["daily", "weekly", "monthly", "currency", "completedVisits", "totalHours"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/visits/{visitId}": {
+      "schema": "Visit",
+      "description": "Patient visits"
+    },
+    "/corrections/{correctionId}": {
+      "schema": "Correction",
+      "description": "Missed punch corrections"
+    },
+    "/earnings/{caregiverId}": {
+      "schema": "Earnings",
+      "description": "Caregiver earnings data"
+    }
+  }
+}

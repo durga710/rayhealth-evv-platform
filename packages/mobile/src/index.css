@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Nunito", sans-serif;
+  
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2.5rem;
+
+  --color-medical-50: #f0f4f8;
+  --color-medical-100: #eef3fa;
+  --color-medical-200: #9bb0c8;
+  --color-medical-300: #7a9cbf;
+  --color-medical-500: #1a5fa8;
+  --color-medical-600: #1248a0;
+  --color-medical-700: #0d1f3c;
+  
+  --color-pulse-orange: #f97316;
+  --color-pulse-secondary: #fb923c;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.018); }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes ecg-heartbeat {
+    0% { transform: scale(1); opacity: 0.8; }
+    5% { transform: scale(1.1); opacity: 1; }
+    10% { transform: scale(1); opacity: 0.8; }
+    15% { transform: scale(1.3); opacity: 1; }
+    25% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 0.8; }
+  }
+}
+
+:root {
+  --background: 210 20% 98%;
+  --foreground: 220 30% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 30% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 30% 10%;
+  --primary: 217 80% 35%; /* #1248a0 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 220 30% 10%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 25 95% 53%; /* #f97316 */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 20% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 217 80% 35%;
+  --radius: 1.25rem;
+}
+
+.dark {
+  --background: 220 60% 8%; /* #0d1f3c base */
+  --foreground: 210 20% 98%;
+  --card: 220 65% 5%; /* #091529 darker base */
+  --card-foreground: 210 20% 98%;
+  --primary: 210 20% 98%;
+  --primary-foreground: 220 60% 8%;
+  --accent: 25 95% 53%;
+}
+
+.animate-breathe {
+  animation: breathe 5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4.5s ease-in-out infinite;
+}
+
+.ecg-pulse {
+  animation: ecg-heartbeat 2s infinite ease-in-out;
+}
+
+.mobile-container {
+  @apply max-w-md mx-auto min-h-screen bg-medical-50 relative flex flex-col antialiased font-sans;
+  /* iOS WebView: prevent rubber-band drag pulling the whole page off-anchor.
+     Inner scroll regions opt back in by setting overflow-y: auto and
+     overscroll-behavior-y: contain on themselves. */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Body-level lock so the document itself never bounces — combined with
+   `#root { overflow-y: auto }` below, this gives us full control of
+   what scrolls (only inner scroll regions). Without this, the iOS
+   WebView rubber-bands the entire page on touch-drag and the header
+   visually drifts under the dynamic island. */
+html, body {
+  overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.medical-card {
+  @apply bg-white border border-medical-100 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] rounded-3xl transition-all duration-500;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-br from-medical-600 to-medical-500;
+}
+
+.button-primary {
+  @apply bg-medical-600 hover:bg-medical-500 text-white font-heading font-extrabold rounded-2xl shadow-[0_10px_20px_-5px_rgba(18,72,160,0.3)] transition-all active:scale-95;
+}
+
+.button-accent {
+  @apply bg-pulse-orange hover:bg-pulse-secondary text-white font-heading font-extrabold rounded-2xl shadow-[0_10px_20px_-5px_rgba(249,115,22,0.3)] transition-all active:scale-95;
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 12px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}

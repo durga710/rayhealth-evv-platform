@@ -1,50 +1,84 @@
-# Welcome to your Expo app 👋
+# RayHealth EVV Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+RayHealth EVV Mobile is the caregiver-facing Capacitor app that Google AI Studio started and Android Studio/Xcode can continue. This repo contains the shared Vite app plus native shells for Android and iOS.
 
-## Get started
+## Native entry points
 
-1. Install dependencies
+- Android Studio project: `android/`
+- Xcode project: `ios/App/App.xcodeproj`
 
+## What is already in this repo
+
+- Capacitor Android shell under `android/`
+- Capacitor iOS shell under `ios/`
+- Firebase client bootstrap in `firebase-applet-config.json` for future push/messaging work
+- Firestore rules drafts in `DRAFT_firestore.rules` and `firestore.rules`
+- Caregiver-facing UI under `src/`
+- RayHealth API-backed mobile auth/onboarding/visit sync under `src/services/`
+
+## Bootstrap the project
+
+1. Install dependencies:
    ```bash
    npm install
    ```
-
-2. Start the app
-
+2. Copy `.env.example` to `.env.local` and set the needed secrets.
+3. Build the web bundle:
    ```bash
-   npx expo start
+   npm run build
+   ```
+4. Sync Capacitor:
+   ```bash
+   npm run cap:sync
    ```
 
-In the output, you'll find options to open the app in a
+## Environment
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Minimum local values:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```env
+VITE_GEMINI_API_KEY=your_gemini_key
+APP_URL=http://localhost:3000
+VITE_PARENT_API_URL=https://rayhealthevv.com/api
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Android Studio handoff
 
-## Learn more
+1. Make sure the Gradle wrapper is executable:
+   ```bash
+   chmod +x android/gradlew
+   ```
+2. Sync Android assets:
+   ```bash
+   npm run cap:sync:android
+   ```
+3. Open the native project:
+   ```bash
+   npm run android:open
+   ```
+   Or open the `android/` folder directly in Android Studio.
+4. Let Android Studio generate `android/local.properties` from your installed SDK if it is missing.
 
-To learn more about developing your project with Expo, look at the following resources:
+## iOS handoff
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Sync iOS assets:
+   ```bash
+   npm run cap:sync:ios
+   ```
+2. Open:
+   ```bash
+   npm run ios:open
+   ```
+   Or open `ios/App/App.xcodeproj` directly in Xcode.
 
-## Join the community
+## Firebase notes
 
-Join our community of developers creating universal apps.
+- Web Firebase config lives in `firebase-applet-config.json`, but mobile login/schedule sync now use the RayHealth API as the system of record.
+- If native Firebase services are added later, Android Studio will expect `android/app/google-services.json`.
+- Xcode will expect `ios/App/App/GoogleService-Info.plist`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Current status
+
+This repo now runs the real RayHealth invite, login, schedule, visit, task, and sync contract instead of the earlier demo/Firebase auth flow. Native session persistence uses Capacitor Preferences on device builds, and Android Studio can continue from the synced native shell.
+
+See `ANDROID_STUDIO_HANDOFF.md` for the focused continuation brief.

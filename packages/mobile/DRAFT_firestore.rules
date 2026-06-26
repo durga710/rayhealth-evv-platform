@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Blueprints ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'firstName', 'lastName', 'role', 'organizationId']) &&
+             data.keys().size() == 6 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.email is string && data.email.size() <= 255 &&
+             data.firstName is string && data.firstName.size() <= 100 &&
+             data.lastName is string && data.lastName.size() <= 100 &&
+             data.role in ['caregiver', 'admin'] &&
+             data.organizationId is string;
+    }
+
+    function isValidVisit(data) {
+      return data.keys().hasAll(['id', 'caregiverId', 'patientName', 'patientAddress', 'scheduledStartTime', 'scheduledEndTime', 'status']) &&
+             data.id is string && data.caregiverId is string &&
+             data.status in ['scheduled', 'active', 'completed', 'missed'] &&
+             data.caregiverId == request.auth.uid;
+    }
+
+    function isValidCorrection(data) {
+      return data.keys().hasAll(['id', 'visitId', 'caregiverId', 'clockInTime', 'clockOutTime', 'reason', 'status', 'createdAt']) &&
+             data.caregiverId == request.auth.uid &&
+             data.status == 'pending';
+    }
+
+    // --- Rules ---
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().role == 'caregiver';
+      allow update: if isOwner(userId) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['firstName', 'lastName']) &&
+                      incoming().role == existing().role;
+    }
+
+    match /visits/{visitId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.caregiverId == request.auth.uid);
+      allow create: if isSignedIn() && isValidVisit(incoming());
+      allow update: if isSignedIn() && existing().caregiverId == request.auth.uid && 
+                      isValidVisit(incoming()) &&
+                      incoming().caregiverId == existing().caregiverId;
+      allow delete: if false;
+    }
+
+    match /corrections/{correctionId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.caregiverId == request.auth.uid);
+      allow create: if isSignedIn() && isValidCorrection(incoming());
+      allow update: if false; // Only system/admin can update state
+      allow delete: if false;
+    }
+
+    match /earnings/{caregiverId} {
+      allow read: if isOwner(caregiverId);
+      allow write: if false; // System only
+    }
+  }
+}

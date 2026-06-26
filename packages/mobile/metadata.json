@@ -1,0 +1,6 @@
+{
+  "name": "RayHealth EVV Mobile",
+  "description": "Professional caregiver app for home-care operations, field workflow, and EVV missed-punch correction.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
