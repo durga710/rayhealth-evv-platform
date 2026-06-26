@@ -152,16 +152,21 @@ export default function ProfileScreen() {
                 </Button>
 
                 <Dialog open={isChangingPass} onOpenChange={setIsChangingPass}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" className="w-full h-16 flex items-center justify-between px-6 hover:bg-medical-50 rounded-none cursor-pointer">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-medical-50 rounded-xl text-medical-600">
-                          <Lock className="w-5 h-5" />
-                        </div>
-                        <span className="font-bold text-sm text-medical-700 font-heading">Change Password</span>
+                  <DialogTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        className="w-full h-16 flex items-center justify-between px-6 hover:bg-medical-50 rounded-none cursor-pointer"
+                      />
+                    }
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-medical-50 rounded-xl text-medical-600">
+                        <Lock className="w-5 h-5" />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-medical-200" />
-                    </Button>
+                      <span className="font-bold text-sm text-medical-700 font-heading">Change Password</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-medical-200" />
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md rounded-3xl border-none">
                     <DialogHeader>
