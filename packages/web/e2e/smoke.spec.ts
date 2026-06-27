@@ -15,9 +15,9 @@ test.describe('Unauthenticated entry points', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { name: /EVV operations that prove the visit happened/i }),
+      page.getByRole('heading', { name: /Care, finally on the same page/i }),
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: /Access Admin Portal/i }).first()).toHaveAttribute(
+    await expect(page.getByRole('link', { name: /log in/i }).first()).toHaveAttribute(
       'href',
       '/login',
     );
