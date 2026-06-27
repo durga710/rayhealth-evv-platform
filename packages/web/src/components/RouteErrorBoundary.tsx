@@ -27,7 +27,7 @@ export class RouteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    // eslint-disable-next-line no-console -- surface the crash in dev; swap for the app logger when one lands.
+    // Surface the crash in dev; swap for the app logger when one lands.
     console.error('Route render error:', error, info.componentStack);
   }
 
