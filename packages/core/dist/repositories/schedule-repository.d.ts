@@ -30,6 +30,15 @@ export declare class ScheduleRepository {
     createTemplate(template: any): Promise<any>;
     getTemplates(agencyId: string): Promise<any[]>;
     createAssignment(assignment: AssignmentInput): Promise<any>;
+    /** Resolve the client a visit template belongs to, scoped to the agency. */
+    getTemplateClient(visitTemplateId: string, agencyId: string): Promise<{
+        clientId: string;
+    } | null>;
+    /** Existing (template, date) pairs for a caregiver — for duplicate detection. */
+    getCaregiverScheduleForConflict(caregiverId: string, agencyId: string): Promise<Array<{
+        visitTemplateId: string;
+        visitDate?: string;
+    }>>;
     getAssignments(agencyId: string): Promise<any[]>;
     getAssignmentsByCaregiver(caregiverId: string, agencyId?: string): Promise<any[]>;
     getAssignmentForCaregiver(assignmentId: string, caregiverId: string, agencyId?: string): Promise<any | null>;

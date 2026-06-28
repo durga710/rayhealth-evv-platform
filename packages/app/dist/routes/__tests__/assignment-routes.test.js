@@ -15,11 +15,23 @@ describe('assignment routes', () => {
             visitTemplateId: 'template-1'
         });
         vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
-            createAssignment: mockCreateAssignment
+            createAssignment: mockCreateAssignment,
+            getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+            getCaregiverScheduleForConflict: vi.fn().mockResolvedValue([])
         }));
         // The route now verifies caregiver belongs to the agency before creating.
         vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
             findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' })
+        }));
+        // Conflict-gate dependencies (authorizations, billed units, audit).
+        vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+            getAuthorizations: vi.fn().mockResolvedValue([])
+        }));
+        vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+            getBilledLineUnits: vi.fn().mockResolvedValue([])
+        }));
+        vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({
+            create: vi.fn().mockResolvedValue({})
         }));
         const response = await request(createApp())
             .post('/assignments')

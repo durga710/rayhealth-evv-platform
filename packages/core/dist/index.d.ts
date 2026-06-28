@@ -28,6 +28,7 @@ export * from './repositories/claim-repository.js';
 export * from './services/credential-policy-service.js';
 export * from './services/credential-compliance-service.js';
 export * from './services/assignment-eligibility-service.js';
+export * from './services/schedule-conflict-service.js';
 export * from './services/evv-compliance-service.js';
 export * from './services/evv-exception-service.js';
 export * from './services/claim-generation-service.js';

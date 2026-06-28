@@ -84,6 +84,39 @@ export class ScheduleRepository {
     };
   }
 
+  /** Resolve the client a visit template belongs to, scoped to the agency. */
+  async getTemplateClient(
+    visitTemplateId: string,
+    agencyId: string,
+  ): Promise<{ clientId: string } | null> {
+    const row = await this.db('visit_templates')
+      .join('clients', 'visit_templates.client_id', 'clients.id')
+      .where('visit_templates.id', visitTemplateId)
+      .andWhere('clients.agency_id', agencyId)
+      .select('clients.id as client_id')
+      .first();
+    return row ? { clientId: row.client_id as string } : null;
+  }
+
+  /** Existing (template, date) pairs for a caregiver — for duplicate detection. */
+  async getCaregiverScheduleForConflict(
+    caregiverId: string,
+    agencyId: string,
+  ): Promise<Array<{ visitTemplateId: string; visitDate?: string }>> {
+    const rows = await this.db('assignments')
+      .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
+      .join('clients', 'visit_templates.client_id', 'clients.id')
+      .where('assignments.caregiver_id', caregiverId)
+      .andWhere('clients.agency_id', agencyId)
+      .select('assignments.visit_template_id', 'assignments.scheduled_start_time');
+    return rows.map((row) => ({
+      visitTemplateId: row.visit_template_id as string,
+      visitDate: row.scheduled_start_time
+        ? new Date(row.scheduled_start_time as string | Date).toISOString().slice(0, 10)
+        : undefined,
+    }));
+  }
+
   async getAssignments(agencyId: string): Promise<any[]> {
     const rows = await this.db('assignments')
       .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
