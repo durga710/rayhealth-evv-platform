@@ -51,8 +51,15 @@ export class AINotConfiguredError extends Error {
 }
 
 export interface AskAIInput {
-  /** The user's question / instruction. */
-  prompt: string;
+  /** The user's question / instruction. Used for single-turn calls. */
+  prompt?: string;
+  /**
+   * Multi-turn conversation history (oldest first, last entry must be the
+   * current user turn). When provided, takes precedence over `prompt` so
+   * chat surfaces (e.g. the marketing support chat) keep context. Either
+   * `prompt` or `messages` must be set.
+   */
+  messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   /** System prompt anchoring the assistant's role + guardrails. */
   systemInstruction: string;
   /** 'pro' routes to a stronger model when one is configured. */
@@ -89,7 +96,8 @@ export async function askAI(input: AskAIInput): Promise<AskAIOutput> {
     const result = await generateText({
       model,
       system: input.systemInstruction,
-      prompt: input.prompt,
+      // Multi-turn history when provided, else the single prompt.
+      ...(input.messages ? { messages: input.messages } : { prompt: input.prompt ?? '' }),
       maxOutputTokens,
       temperature: 0.4,
     });
@@ -106,8 +114,15 @@ export async function askAI(input: AskAIInput): Promise<AskAIOutput> {
   if (isGeminiConfigured()) {
     const geminiModel: GeminiModel =
       input.tier === 'pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+    // Gemini fallback is single-prompt; flatten any multi-turn history into a
+    // labelled transcript so context is preserved across the provider switch.
+    const geminiPrompt = input.messages
+      ? input.messages
+          .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+          .join('\n\n')
+      : (input.prompt ?? '');
     const r = await askGemini({
-      prompt: input.prompt,
+      prompt: geminiPrompt,
       systemInstruction: input.systemInstruction,
       model: geminiModel,
       maxOutputTokens,

@@ -22,8 +22,18 @@ export declare class AINotConfiguredError extends Error {
     constructor();
 }
 export interface AskAIInput {
-    /** The user's question / instruction. */
-    prompt: string;
+    /** The user's question / instruction. Used for single-turn calls. */
+    prompt?: string;
+    /**
+     * Multi-turn conversation history (oldest first, last entry must be the
+     * current user turn). When provided, takes precedence over `prompt` so
+     * chat surfaces (e.g. the marketing support chat) keep context. Either
+     * `prompt` or `messages` must be set.
+     */
+    messages?: Array<{
+        role: 'user' | 'assistant';
+        content: string;
+    }>;
     /** System prompt anchoring the assistant's role + guardrails. */
     systemInstruction: string;
     /** 'pro' routes to a stronger model when one is configured. */

@@ -35,6 +35,7 @@ import profileRoutes from './routes/profile-routes.js';
 import agencySandataConfigRoutes from './routes/agency-sandata-config-routes.js';
 import agencyHhaexchangeConfigRoutes from './routes/agency-hhaexchange-config-routes.js';
 import copilotRoutes from './routes/copilot-routes.js';
+import supportRoutes from './routes/support-routes.js';
 import complianceEngineRoutes from './routes/compliance-engine-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
@@ -69,6 +70,21 @@ const copilotLimiter = rateLimit({
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+/**
+ * Public marketing support chat is unauthenticated and calls a paid model on
+ * every turn, so it's the most abusable surface. 20 messages per 15-min window
+ * per IP is plenty for a genuine pre-sales conversation but caps cost/abuse
+ * from an anonymous scripted client.
+ */
+const supportChatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many messages. Please try again in a few minutes.' },
   skip: () => process.env.NODE_ENV === 'test',
 });
 
@@ -177,6 +193,10 @@ export function createApp() {
     app.use(`${prefix}/health`, healthLimiter, healthRoutes);
     app.use(`${prefix}/marketing`, marketingRoutes);
     app.use(`${prefix}/onboarding`, onboardingRoutes);
+    // Public marketing-site support chat ("RayHealthAssist"). Mounted before
+    // authContext so the anonymous widget reaches it without a session; behind
+    // its own tighter rate limit since each turn calls a paid model.
+    app.use(`${prefix}/support`, supportChatLimiter, supportRoutes);
   }
 
   // ---------- Authenticated surface ----------
