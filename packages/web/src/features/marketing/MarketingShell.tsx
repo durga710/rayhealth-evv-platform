@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { SupportChat } from '../support/SupportChat.js';
+import { BrandLogo } from '../../components/brand/BrandLogo.js';
 
 /**
  * Shared header / hero / footer chrome for marketing routes
@@ -37,13 +38,8 @@ export function MarketingShell({
           zIndex: 10
         }}
       >
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-primary-dark)' }}>
-            RayHealth
-          </span>
-          <span style={{ backgroundColor: 'var(--color-accent)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', letterSpacing: '2px', fontWeight: 800 }}>
-            EVV
-          </span>
+        <Link to="/" aria-label="RayHealthEVV home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <BrandLogo height={34} />
         </Link>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <Link to="/" style={navLink}>Home</Link>

@@ -374,12 +374,12 @@ const CSS = `
 .rh-res{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
 .rh-rescard{border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--paper); display:flex; flex-direction:column; transition:box-shadow .2s ease, transform .2s ease;}
 .rh-rescard:hover{box-shadow:0 18px 40px -28px rgba(10,30,20,.4); transform:translateY(-3px);}
-.rh-restop{height:8px; background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.rh-restop{height:8px; background:linear-gradient(90deg,var(--accent),var(--accent-deep));}
 .rh-resbody{padding:24px; display:flex; flex-direction:column; flex:1;}
 .rh-restag{font-size:.7rem; font-weight:650; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep);}
 .rh-rescard h3{margin-top:10px; font-size:1.05rem; line-height:1.3; letter-spacing:-.01em; color:var(--ink);}
 .rh-rescard p{margin-top:8px; font-size:.9rem; line-height:1.55; color:var(--body); flex:1;}
-.rh-reslink{margin-top:16px; font-size:.875rem; font-weight:600; color:var(--accent2-deep);}
+.rh-reslink{margin-top:16px; font-size:.875rem; font-weight:600; color:var(--accent-deep);}
 @media(max-width:880px){.rh-res{grid-template-columns:1fr;}}
 
 /* mission */

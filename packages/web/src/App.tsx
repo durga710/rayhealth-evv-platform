@@ -22,7 +22,7 @@ import { CaregiverTrainingPage } from './features/caregiver/CaregiverTrainingPag
 import { CourseDetailPage } from './features/caregiver/CourseDetailPage.js';
 import { LandingPage } from './features/landing/LandingPage.js';
 import { VisitReviewPage } from './features/evv/VisitReviewPage.js';
-import { PricingPage } from './features/marketing/PricingPage.js';
+import { PricingPage } from './features/marketing/site/PricingPage.js';
 import { ContactPage } from './features/marketing/ContactPage.js';
 import { DemoPage } from './features/marketing/DemoPage.js';
 import { LaunchPage } from './features/marketing/LaunchPage.js';
