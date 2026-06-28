@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+import { BrandLogo } from '../../components/brand/BrandLogo.js';
 
 /**
  * Hidden platform super-admin command center for Durga Ghimeray (Founder & CEO).
@@ -311,11 +312,11 @@ export function SuperAdminPage() {
     return (
       <div style={{ minHeight: '100vh', background: C.sidebar, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, system-ui, sans-serif', padding: '1rem' }}>
         <form onSubmit={handleLogin} style={{ background: C.surface, borderRadius: 16, padding: '2.25rem', width: 400, display: 'flex', flexDirection: 'column', gap: '1.05rem', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="shield" size={20} /></div>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.1rem', color: C.ink, letterSpacing: '-0.01em' }}>Platform Command</h1>
-              <p style={{ margin: 0, color: C.ink3, fontSize: '0.8rem' }}>RayHealth · restricted access</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            <BrandLogo variant="full" height={30} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: C.ink2, fontSize: '0.82rem', fontWeight: 600 }}>
+              <span style={{ color: C.accent, display: 'flex' }}><Icon name="shield" size={15} /></span>
+              Platform Command · restricted access
             </div>
           </div>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem', color: C.ink2, fontWeight: 600 }}>
@@ -366,9 +367,11 @@ export function SuperAdminPage() {
     <div style={{ minHeight: '100vh', background: C.canvas, color: C.ink, fontFamily: 'Inter, -apple-system, system-ui, sans-serif', display: 'flex' }}>
       {/* sidebar */}
       <aside style={{ width: 244, flexShrink: 0, background: C.sidebar, color: '#fff', padding: '1.3rem 0.85rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.5rem 1.3rem', borderBottom: `1px solid ${C.sidebarPanel}` }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="shield" size={16} /></div>
-          <div style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '-0.01em' }}>RayHealth</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.4rem 1.3rem', borderBottom: `1px solid ${C.sidebarPanel}` }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+            <BrandLogo variant="mark" height={24} />
+          </div>
+          <div style={{ fontWeight: 700, fontSize: '0.92rem', letterSpacing: '-0.01em' }}>RayHealth</div>
           <span style={{ marginLeft: 'auto', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: SIDE_INK_DIM, border: `1px solid ${C.sidebarPanel}`, borderRadius: 5, padding: '0.1rem 0.35rem' }}>ADMIN</span>
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', marginTop: '1rem' }}>
