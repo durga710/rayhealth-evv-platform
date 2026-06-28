@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { SupportChat } from '../../support/SupportChat.js';
 import { BrandLogo } from '../../../components/brand/BrandLogo.js';
 
@@ -67,7 +67,15 @@ export const SITE_CSS = `
 .mk-navmid a:hover{color:var(--ink);background:var(--surface);}
 .mk-navend{display:flex;align-items:center;gap:.6rem;}
 .mk-navend .si{font-size:.9rem;font-weight:550;color:var(--ink);padding:.5rem .4rem;}
-@media(max-width:860px){.mk-navmid{display:none;}.mk-navend .si{display:none;}}
+.mk-burger{display:none;width:42px;height:42px;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer;padding:0;transition:border-color .15s,background .15s;}
+.mk-burger:hover{border-color:var(--ink);background:var(--surface);}
+.mk-mobile{display:none;border-top:1px solid var(--line);background:var(--paper);}
+.mk-mobile-in{max-width:var(--maxw);margin:0 auto;padding:6px 24px 18px;display:flex;flex-direction:column;}
+.mk-mobile a{padding:14px 4px;font-size:1rem;font-weight:500;color:var(--ink);border-bottom:1px solid var(--line);}
+.mk-mobile a:hover{color:var(--accent-deep);}
+.mk-mobile .mk-btn{margin-top:16px;width:100%;border-bottom:none;color:#fff;}
+@media(max-width:860px){.mk-navmid{display:none;}.mk-navend .si{display:none;}.mk-burger{display:inline-flex;}.mk-mobile.open{display:block;}}
+@media(max-width:420px){.mk-navend .mk-pri{display:none;}}
 /* hero */
 .mk-hero{position:relative;overflow:hidden;background:var(--warm);border-bottom:1px solid var(--line);}
 .mk-hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;opacity:.45;-webkit-mask-image:radial-gradient(ellipse 80% 70% at 30% 6%,#000 6%,transparent 64%);mask-image:radial-gradient(ellipse 80% 70% at 30% 6%,#000 6%,transparent 64%);}
@@ -175,8 +183,23 @@ export const SITE_CSS = `
 @media(max-width:760px){.mk-footgrid{grid-template-columns:1fr 1fr;}}
 `;
 
+const MOBILE_LINKS: readonly { label: string; to: string }[] = [
+  { label: 'Scheduling', to: '/solutions/scheduling' },
+  { label: 'Electronic visit verification', to: '/solutions/electronic-visit-verification' },
+  { label: 'Billing & payroll', to: '/solutions/billing-payroll' },
+  { label: 'Workforce & training', to: '/solutions/workforce-training' },
+  { label: 'AI automation', to: '/platform/ai-automation' },
+  { label: 'Compliance', to: '/platform/compliance' },
+  { label: 'Pricing', to: '/pricing' },
+  { label: 'Sign in', to: '/login' },
+];
+
 export function SiteLayout({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  // Close the mobile menu on route change.
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
   return (
     <div className="mk">
       <style dangerouslySetInnerHTML={{ __html: SITE_CSS }} />
@@ -193,6 +216,26 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
           <div className="mk-navend">
             <Link to="/login" className="si">Sign in</Link>
             <Link to="/demo" className="mk-btn mk-pri">Book a demo</Link>
+            <button
+              type="button"
+              className="mk-burger"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="mk-mobile-menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              {menuOpen
+                ? mkic(<path d="M18 6 6 18M6 6l12 12" />)
+                : mkic(<><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /></>)}
+            </button>
+          </div>
+        </div>
+        <div id="mk-mobile-menu" className={`mk-mobile${menuOpen ? ' open' : ''}`} hidden={!menuOpen}>
+          <div className="mk-mobile-in">
+            {MOBILE_LINKS.map((l) => (
+              <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)}>{l.label}</Link>
+            ))}
+            <Link to="/demo" className="mk-btn mk-pri" onClick={() => setMenuOpen(false)}>Book a demo</Link>
           </div>
         </div>
       </nav>

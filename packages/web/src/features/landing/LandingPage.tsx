@@ -205,7 +205,15 @@ html{scroll-behavior:smooth;}
 .rh-navmid a:hover{color:var(--ink); background:var(--surface);}
 .rh-navend{display:flex; align-items:center; gap:.6rem;}
 .rh-navend .signin{font-size:.9rem; font-weight:550; color:var(--ink); padding:.5rem .4rem;}
-@media(max-width:860px){ .rh-navmid{display:none;} .rh-navend .signin{display:none;} }
+.rh-burger{display:none; width:42px; height:42px; align-items:center; justify-content:center; border:1px solid var(--line-2); border-radius:10px; background:var(--paper); color:var(--ink); cursor:pointer; padding:0; transition:border-color .15s ease, background .15s ease;}
+.rh-burger:hover{border-color:var(--ink); background:var(--surface);}
+.rh-mobile{display:none; border-top:1px solid var(--line); background:var(--paper);}
+.rh-mobile-in{max-width:var(--maxw); margin:0 auto; padding:6px 24px 18px; display:flex; flex-direction:column;}
+.rh-mobile a{padding:14px 4px; font-size:1rem; font-weight:500; color:var(--ink); border-bottom:1px solid var(--line);}
+.rh-mobile a:hover{color:var(--accent-deep);}
+.rh-mobile .rh-btn-pri{margin-top:16px; width:100%; border-bottom:none;}
+@media(max-width:860px){ .rh-navmid{display:none;} .rh-navend .signin{display:none;} .rh-burger{display:inline-flex;} .rh-mobile.open{display:block;} }
+@media(max-width:420px){ .rh-navend .rh-btn-pri{display:none;} }
 
 /* hero */
 .rh-hero{position:relative; overflow:hidden; background:var(--warm); border-bottom:1px solid var(--line);}
@@ -485,6 +493,7 @@ html{scroll-behavior:smooth;}
 export function LandingPage() {
   const root = useRef<HTMLDivElement>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const els = root.current?.querySelectorAll('.rh-rv');
@@ -514,6 +523,30 @@ export function LandingPage() {
           <div className="rh-navend">
             <Link to="/login" className="signin">Sign in</Link>
             <Link to="/demo" className="rh-btn rh-btn-pri">Book a demo</Link>
+            <button
+              type="button"
+              className="rh-burger"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="rh-mobile-menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              {menuOpen
+                ? ic(<path d="M18 6 6 18M6 6l12 12" />)
+                : ic(<><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /></>)}
+            </button>
+          </div>
+        </div>
+        <div id="rh-mobile-menu" className={`rh-mobile${menuOpen ? ' open' : ''}`} hidden={!menuOpen}>
+          <div className="rh-mobile-in">
+            <Link to="/solutions/scheduling" onClick={() => setMenuOpen(false)}>Scheduling</Link>
+            <Link to="/solutions/electronic-visit-verification" onClick={() => setMenuOpen(false)}>Electronic visit verification</Link>
+            <Link to="/solutions/workforce-training" onClick={() => setMenuOpen(false)}>Workforce & training</Link>
+            <Link to="/platform/ai-automation" onClick={() => setMenuOpen(false)}>AI automation</Link>
+            <Link to="/platform/compliance" onClick={() => setMenuOpen(false)}>Compliance</Link>
+            <Link to="/pricing" onClick={() => setMenuOpen(false)}>Pricing</Link>
+            <Link to="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
+            <Link to="/demo" className="rh-btn rh-btn-pri" onClick={() => setMenuOpen(false)}>Book a demo</Link>
           </div>
         </div>
       </nav>
