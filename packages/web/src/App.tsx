@@ -29,6 +29,15 @@ import { LaunchPage } from './features/marketing/LaunchPage.js';
 import { AdsPage } from './features/marketing/AdsPage.js';
 import { StatusPage } from './features/marketing/StatusPage.js';
 import { PrivacyPage } from './features/marketing/PrivacyPage.js';
+import { SchedulingPage } from './features/marketing/site/SchedulingPage.js';
+import { EvvSolutionPage } from './features/marketing/site/EvvSolutionPage.js';
+import { BillingPayrollPage } from './features/marketing/site/BillingPayrollPage.js';
+import { WorkforceTrainingPage } from './features/marketing/site/WorkforceTrainingPage.js';
+import { AiAutomationPage } from './features/marketing/site/AiAutomationPage.js';
+import { CompliancePlatformPage } from './features/marketing/site/CompliancePlatformPage.js';
+import { EvvGuidePage } from './features/marketing/site/EvvGuidePage.js';
+import { TaskCodesPage } from './features/marketing/site/TaskCodesPage.js';
+import { AuditChecklistPage } from './features/marketing/site/AuditChecklistPage.js';
 import { AdminAssistant } from './features/support/AdminAssistant.js';
 import { AuditRetentionPage } from './features/audit/AuditRetentionPage.js';
 import { DashboardPage } from './features/admin/DashboardPage.js';
@@ -394,6 +403,16 @@ export function App() {
       <Route path="/ads" element={<AdsPage />} />
       <Route path="/status" element={<StatusPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      {/* Marketing site — Platform / Solutions / Resources content pages */}
+      <Route path="/platform/ai-automation" element={<AiAutomationPage />} />
+      <Route path="/platform/compliance" element={<CompliancePlatformPage />} />
+      <Route path="/solutions/scheduling" element={<SchedulingPage />} />
+      <Route path="/solutions/electronic-visit-verification" element={<EvvSolutionPage />} />
+      <Route path="/solutions/billing-payroll" element={<BillingPayrollPage />} />
+      <Route path="/solutions/workforce-training" element={<WorkforceTrainingPage />} />
+      <Route path="/resources/evv-guide" element={<EvvGuidePage />} />
+      <Route path="/resources/task-codes" element={<TaskCodesPage />} />
+      <Route path="/resources/audit-checklist" element={<AuditChecklistPage />} />
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />

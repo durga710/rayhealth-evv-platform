@@ -115,12 +115,12 @@ const workflow = [
 const integrations = ['Sandata aggregator', 'PA PROMISe', 'Telephony / IVR', 'Payroll export', 'iOS & Android', 'Secure messaging'];
 
 const resources = [
-  { tag: 'Guide', t: 'Everything PA agencies need to know about EVV', b: 'The six federal elements, aggregator submission, and the mistakes that trigger denials.' },
-  { tag: 'Reference', t: 'PA DHS task codes 106–256, explained', b: 'A plain-English map of personal-assistance duty codes and how to use them in care plans.' },
-  { tag: 'Checklist', t: 'Preparing for a DHS audit', b: 'What auditors actually ask for — and how an immutable trail answers it in minutes.' },
-  { tag: 'Playbook', t: 'Cutting claim denials in your first quarter', b: 'The exception-resolution workflow that turns rejected claims into paid ones.' },
-  { tag: 'Guide', t: 'Onboarding caregivers onto GPS clock-in', b: 'A rollout plan that gets your field team verifying visits in days, not weeks.' },
-  { tag: 'Article', t: 'Telephony & offline EVV: covering every home', b: 'How RayHealth verifies visits where there is no signal — and stays compliant.' },
+  { tag: 'Guide', t: 'Everything PA agencies need to know about EVV', b: 'The six federal elements, aggregator submission, and the mistakes that trigger denials.', to: '/resources/evv-guide' },
+  { tag: 'Reference', t: 'PA DHS task codes 106–256, explained', b: 'A plain-English map of personal-assistance duty codes and how to use them in care plans.', to: '/resources/task-codes' },
+  { tag: 'Checklist', t: 'Preparing for a DHS audit', b: 'What auditors actually ask for — and how an immutable trail answers it in minutes.', to: '/resources/audit-checklist' },
+  { tag: 'Playbook', t: 'Cutting claim denials in your first quarter', b: 'The exception-resolution workflow that turns rejected claims into paid ones.', to: '/solutions/billing-payroll' },
+  { tag: 'Guide', t: 'Onboarding caregivers onto GPS clock-in', b: 'A rollout plan that gets your field team verifying visits in days, not weeks.', to: '/solutions/electronic-visit-verification' },
+  { tag: 'Article', t: 'Telephony & offline EVV: covering every home', b: 'How RayHealth verifies visits where there is no signal — and stays compliant.', to: '/solutions/electronic-visit-verification' },
 ];
 
 const spotlights = [
@@ -505,9 +505,10 @@ export function LandingPage() {
         <div className="rh-navin">
           <Link to="/"><Logo /></Link>
           <div className="rh-navmid">
-            <a href="#platform">Platform</a>
-            <a href="#automation">AI automation</a>
-            <a href="#compliance">Compliance</a>
+            <Link to="/solutions/scheduling">Scheduling</Link>
+            <Link to="/solutions/electronic-visit-verification">EVV</Link>
+            <Link to="/platform/ai-automation">AI automation</Link>
+            <Link to="/platform/compliance">Compliance</Link>
             <Link to="/pricing">Pricing</Link>
           </div>
           <div className="rh-navend">
@@ -844,7 +845,7 @@ export function LandingPage() {
         </div>
         <div className="rh-res">
           {resources.map((r) => (
-            <Link to="/launch" className="rh-rescard rh-rv" key={r.t}>
+            <Link to={r.to} className="rh-rescard rh-rv" key={r.t}>
               <div className="rh-restop" />
               <div className="rh-resbody">
                 <span className="rh-restag">{r.tag}</span>
@@ -941,22 +942,22 @@ export function LandingPage() {
           <div className="rh-footcol">
             <h4>Platform</h4>
             <a href="#platform">Overview</a>
-            <a href="#automation">AI automation</a>
-            <a href="#compliance">Compliance</a>
+            <Link to="/platform/ai-automation">AI automation</Link>
+            <Link to="/platform/compliance">Compliance</Link>
             <Link to="/pricing">Pricing</Link>
           </div>
           <div className="rh-footcol">
             <h4>Solutions</h4>
-            <a href="#platform">Scheduling</a>
-            <a href="#platform">Electronic visit verification</a>
-            <a href="#platform">Billing &amp; payroll</a>
-            <a href="#platform">Workforce &amp; training</a>
+            <Link to="/solutions/scheduling">Scheduling</Link>
+            <Link to="/solutions/electronic-visit-verification">Electronic visit verification</Link>
+            <Link to="/solutions/billing-payroll">Billing &amp; payroll</Link>
+            <Link to="/solutions/workforce-training">Workforce &amp; training</Link>
           </div>
           <div className="rh-footcol">
             <h4>Resources</h4>
-            <Link to="/launch">EVV guide</Link>
-            <Link to="/launch">Task code reference</Link>
-            <Link to="/launch">Audit checklist</Link>
+            <Link to="/resources/evv-guide">EVV guide</Link>
+            <Link to="/resources/task-codes">Task code reference</Link>
+            <Link to="/resources/audit-checklist">Audit checklist</Link>
             <Link to="/launch">What’s new</Link>
           </div>
           <div className="rh-footcol">
