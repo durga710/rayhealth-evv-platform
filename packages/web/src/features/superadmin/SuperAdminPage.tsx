@@ -10,7 +10,7 @@ import { startRegistration, startAuthentication, browserSupportsWebAuthn } from 
 
 const TOKEN_KEY = 'rayhealth_platform_token';
 const CEO_NAME = 'Durga Ghimeray';
-const CEO_TITLE = 'Founder & Chief Executive Officer';
+const CEO_TITLE = 'Founder & CEO';
 const CEO_INITIALS = 'DG';
 
 interface AgencyRow {
@@ -68,22 +68,27 @@ interface AgencyDetail extends AgencyRow {
   recentActivity: ActivityRow[];
 }
 
+// High-contrast light palette. Text is slate-900 on white for maximum
+// legibility; accent colors are the darker AA-contrast variants.
 const C = {
-  bg: '#070b14',
-  bg2: '#0b1220',
-  card: '#111a2c',
-  cardHi: '#16223a',
-  border: '#1f2c45',
-  text: '#eef3fb',
-  muted: '#8595b2',
-  faint: '#5a6987',
-  accent: '#6366f1',
-  accent2: '#8b5cf6',
-  cyan: '#22d3ee',
-  green: '#10b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
-  pink: '#ec4899',
+  appBg: '#eef1f6',
+  card: '#ffffff',
+  cardAlt: '#f8fafc',
+  border: '#e2e8f0',
+  borderStrong: '#cbd5e1',
+  text: '#0f172a',
+  muted: '#475569',
+  faint: '#94a3b8',
+  sidebarFrom: '#4338ca',
+  sidebarTo: '#7c3aed',
+  accent: '#4f46e5',
+  accentSoft: '#eef2ff',
+  green: '#059669', greenSoft: '#ecfdf5',
+  amber: '#b45309', amberSoft: '#fffbeb',
+  red: '#dc2626', redSoft: '#fef2f2',
+  cyan: '#0e7490', cyanSoft: '#ecfeff',
+  pink: '#be185d', pinkSoft: '#fdf2f8',
+  violet: '#7c3aed', violetSoft: '#f5f3ff',
 };
 
 const money = (cents: number): string =>
@@ -132,51 +137,104 @@ async function api<T>(path: string, token: string, init?: RequestInit): Promise<
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
-// ---------------- Small presentational pieces ----------------
+// ---------------- presentational pieces ----------------
+
+const SHADOW = '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)';
 
 function StatusBadge({ status }: { status: AgencyRow['reviewStatus'] }) {
-  const c = status === 'approved' ? C.green : status === 'rejected' ? C.red : C.amber;
+  const map = {
+    approved: { fg: C.green, bg: C.greenSoft, label: 'Approved' },
+    rejected: { fg: C.red, bg: C.redSoft, label: 'Rejected' },
+    pending: { fg: C.amber, bg: C.amberSoft, label: 'Pending' },
+  }[status];
   return (
-    <span style={{ color: c, background: `${c}1a`, border: `1px solid ${c}55`, borderRadius: 999, padding: '0.12rem 0.6rem', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-      {status}
+    <span style={{ color: map.fg, background: map.bg, border: `1px solid ${map.fg}33`, borderRadius: 999, padding: '0.18rem 0.65rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+      {map.label}
     </span>
   );
 }
 
-function KpiCard({ label, value, sub, tone, glow }: { label: string; value: string; sub?: string; tone: string; glow?: boolean }) {
+function KpiCard({ label, value, sub, tone, soft, icon }: { label: string; value: string; sub?: string; tone: string; soft: string; icon: string }) {
   return (
-    <div style={{
-      background: glow ? `linear-gradient(160deg, ${tone}22, ${C.card})` : C.card,
-      border: `1px solid ${glow ? `${tone}55` : C.border}`,
-      borderRadius: 16, padding: '1.1rem 1.2rem', position: 'relative', overflow: 'hidden',
-    }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: tone }} />
-      <div style={{ color: C.muted, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
-      <div style={{ color: C.text, fontSize: '1.9rem', fontWeight: 800, marginTop: '0.3rem', lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ color: C.faint, fontSize: '0.76rem', marginTop: '0.35rem' }}>{sub}</div>}
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '1.1rem', boxShadow: SHADOW }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.7rem' }}>
+        <div style={{ width: 38, height: 38, borderRadius: 11, background: soft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem' }}>{icon}</div>
+        <div style={{ color: C.muted, fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+      </div>
+      <div style={{ color: C.text, fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ color: C.faint, fontSize: '0.78rem', marginTop: '0.4rem' }}>{sub}</div>}
+      <div style={{ height: 3, background: tone, borderRadius: 3, marginTop: '0.85rem', opacity: 0.85 }} />
     </div>
   );
 }
 
-const btn = (bg: string, ghost?: boolean): React.CSSProperties => ({
-  background: ghost ? 'transparent' : bg, color: ghost ? bg : '#fff',
-  border: ghost ? `1px solid ${bg}66` : 'none', borderRadius: 9,
-  padding: '0.45rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem',
+const btn = (bg: string, variant?: 'ghost' | 'soft'): React.CSSProperties => ({
+  background: variant === 'ghost' ? 'transparent' : variant === 'soft' ? `${bg}14` : bg,
+  color: variant ? bg : '#fff',
+  border: variant === 'ghost' ? `1px solid ${C.borderStrong}` : variant === 'soft' ? `1px solid ${bg}33` : 'none',
+  borderRadius: 9, padding: '0.45rem 0.85rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem',
 });
+
+const rowCard: React.CSSProperties = {
+  background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: SHADOW,
+  padding: '0.85rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+};
+
+function Panel({ title, action, children, scroll }: { title: string; action?: React.ReactNode; children: React.ReactNode; scroll?: boolean }) {
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, boxShadow: SHADOW, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', borderBottom: `1px solid ${C.border}` }}>
+        <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: C.text }}>{title}</h3>
+        {action}
+      </div>
+      <div style={{ padding: '1rem 1.2rem', ...(scroll ? { maxHeight: 520, overflowY: 'auto' } : {}) }}>{children}</div>
+    </div>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <div style={{ color: C.faint, fontSize: '0.86rem', padding: '0.6rem 0' }}>{children}</div>;
+}
+
+function ActivityItem({ ev }: { ev: ActivityRow }) {
+  const tone = eventTone(ev.eventType);
+  return (
+    <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'flex-start', padding: '0.6rem 0', borderBottom: `1px solid ${C.border}` }}>
+      <span style={{ width: 9, height: 9, borderRadius: 99, background: tone, marginTop: 5, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.83rem', fontWeight: 600, color: C.text }}>{ev.eventType}</div>
+        <div style={{ color: C.muted, fontSize: '0.74rem' }}>{ev.agencyName ?? '—'} · {ev.actorType} · {ev.outcome}</div>
+      </div>
+      <span style={{ color: C.faint, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.occurredAt)}</span>
+    </div>
+  );
+}
+
+function UserRowView({ u, busy, onToggle }: { u: UserRow; busy: boolean; onToggle: () => void }) {
+  return (
+    <div style={{ ...rowCard, padding: '0.7rem 1rem' }}>
+      <div>
+        <div style={{ fontWeight: 600, color: C.text }}>
+          {u.email} {u.suspendedAt && <span style={{ color: C.red, fontSize: '0.68rem', fontWeight: 800, background: C.redSoft, padding: '0.05rem 0.4rem', borderRadius: 5 }}>SUSPENDED</span>}
+        </div>
+        <div style={{ color: C.muted, fontSize: '0.78rem', marginTop: '0.18rem', textTransform: 'capitalize' }}>{u.role} · {u.agencyName ?? u.agencyId.slice(0, 8)} · joined {timeAgo(u.createdAt)}</div>
+      </div>
+      <button type="button" disabled={busy} onClick={onToggle} style={btn(u.suspendedAt ? C.green : C.red, u.suspendedAt ? undefined : 'soft')}>{u.suspendedAt ? 'Reactivate' : 'Suspend'}</button>
+    </div>
+  );
+}
 
 // ============================================================
 
 export function SuperAdminPage() {
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
 
-  // login state
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
   const [bioStatus, setBioStatus] = useState<string | null>(null);
 
-  // dashboard state
   const [stats, setStats] = useState<Stats | null>(null);
   const [agencies, setAgencies] = useState<AgencyRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -213,8 +271,6 @@ export function SuperAdminPage() {
   }, [logout]);
 
   useEffect(() => { if (token) void load(token); }, [token, load]);
-
-  // live clock + auto-refresh every 30s
   useEffect(() => {
     const c = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(c);
@@ -227,7 +283,6 @@ export function SuperAdminPage() {
     return () => clearInterval(r);
   }, [token, load]);
 
-  // ---------- login (password + WebAuthn) ----------
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoggingIn(true); setLoginErr(null); setBioStatus(null);
@@ -264,7 +319,6 @@ export function SuperAdminPage() {
     }
   };
 
-  // ---------- actions ----------
   const reviewAgency = async (id: string, action: 'approve' | 'reject') => {
     if (!token) return;
     setBusy(id);
@@ -285,34 +339,34 @@ export function SuperAdminPage() {
     catch (err) { setLoadErr((err as Error).message); }
   };
 
-  // ===================== LOGIN SCREEN =====================
+  // ===================== LOGIN =====================
   if (!token) {
     return (
-      <div style={{ minHeight: '100vh', background: `radial-gradient(1200px 600px at 70% -10%, ${C.accent}22, ${C.bg})`, color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', padding: '1rem' }}>
-        <form onSubmit={handleLogin} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '2.25rem', width: 380, display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
+      <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${C.sidebarFrom}, ${C.sidebarTo})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', padding: '1rem' }}>
+        <form onSubmit={handleLogin} style={{ background: C.card, borderRadius: 20, padding: '2.25rem', width: 390, display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 30px 80px rgba(0,0,0,0.35)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${C.accent}, ${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem' }}>{CEO_INITIALS}</div>
+            <div style={{ width: 46, height: 46, borderRadius: 13, background: `linear-gradient(135deg, ${C.sidebarFrom}, ${C.sidebarTo})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.05rem', color: '#fff' }}>{CEO_INITIALS}</div>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.15rem' }}>Command Center</h1>
-              <p style={{ margin: 0, color: C.muted, fontSize: '0.78rem' }}>RayHealth Platform · restricted</p>
+              <h1 style={{ margin: 0, fontSize: '1.2rem', color: C.text }}>Command Center</h1>
+              <p style={{ margin: 0, color: C.muted, fontSize: '0.8rem' }}>RayHealth Platform · restricted</p>
             </div>
           </div>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem', color: C.muted }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem', color: C.muted, fontWeight: 600 }}>
             Username
             <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required
-              style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, padding: '0.6rem 0.75rem', fontSize: '0.95rem' }} />
+              style={{ background: '#fff', border: `1px solid ${C.borderStrong}`, color: C.text, borderRadius: 9, padding: '0.65rem 0.8rem', fontSize: '0.95rem' }} />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem', color: C.muted }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem', color: C.muted, fontWeight: 600 }}>
             Password
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required
-              style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, padding: '0.6rem 0.75rem', fontSize: '0.95rem' }} />
+              style={{ background: '#fff', border: `1px solid ${C.borderStrong}`, color: C.text, borderRadius: 9, padding: '0.65rem 0.8rem', fontSize: '0.95rem' }} />
           </label>
-          {bioStatus && <div role="status" style={{ color: C.cyan, fontSize: '0.82rem' }}>{bioStatus}</div>}
-          {loginErr && <div role="alert" style={{ color: C.red, fontSize: '0.82rem' }}>{loginErr}</div>}
-          <button type="submit" disabled={loggingIn} style={{ ...btn(C.accent), opacity: loggingIn ? 0.6 : 1, padding: '0.7rem', fontSize: '0.9rem' }}>
+          {bioStatus && <div role="status" style={{ color: C.accent, fontSize: '0.82rem', background: C.accentSoft, padding: '0.55rem 0.75rem', borderRadius: 8 }}>{bioStatus}</div>}
+          {loginErr && <div role="alert" style={{ color: C.red, fontSize: '0.82rem', background: C.redSoft, padding: '0.55rem 0.75rem', borderRadius: 8 }}>{loginErr}</div>}
+          <button type="submit" disabled={loggingIn} style={{ ...btn(C.accent), opacity: loggingIn ? 0.6 : 1, padding: '0.75rem', fontSize: '0.92rem' }}>
             {loggingIn ? 'Verifying…' : 'Sign in'}
           </button>
-          <p style={{ margin: 0, color: C.faint, fontSize: '0.7rem', textAlign: 'center' }}>Password + device biometric (Face ID / Windows Hello).</p>
+          <p style={{ margin: 0, color: C.faint, fontSize: '0.72rem', textAlign: 'center' }}>Password + device biometric (Face ID / Windows Hello).</p>
         </form>
       </div>
     );
@@ -320,115 +374,123 @@ export function SuperAdminPage() {
 
   // ===================== DASHBOARD =====================
   const pending = agencies.filter((a) => a.reviewStatus === 'pending');
-  const fmtTime = clock.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const fmtDate = clock.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const fmtTime = clock.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const fmtDate = clock.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const navItem = (key: typeof tab, label: string, icon: string, badge?: number) => {
+    const active = tab === key;
+    return (
+      <button key={key} type="button" onClick={() => { setTab(key); setDetail(null); }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.7rem', width: '100%', textAlign: 'left',
+          background: active ? 'rgba(255,255,255,0.18)' : 'transparent', color: '#fff',
+          border: 'none', borderRadius: 10, padding: '0.65rem 0.8rem', cursor: 'pointer',
+          fontSize: '0.9rem', fontWeight: active ? 700 : 500,
+        }}>
+        <span style={{ fontSize: '1.05rem', width: 20, textAlign: 'center' }}>{icon}</span>
+        <span style={{ flex: 1 }}>{label}</span>
+        {badge ? <span style={{ background: '#fff', color: C.sidebarFrom, borderRadius: 999, fontSize: '0.7rem', fontWeight: 800, padding: '0.05rem 0.45rem' }}>{badge}</span> : null}
+      </button>
+    );
+  };
 
   return (
-    <div style={{ minHeight: '100vh', background: `radial-gradient(900px 500px at 100% -5%, ${C.accent}14, ${C.bg})`, color: C.text, fontFamily: 'Inter, system-ui, sans-serif', padding: '1.5rem' }}>
-      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.appBg, color: C.text, fontFamily: 'Inter, system-ui, sans-serif', display: 'flex' }}>
+      {/* sidebar */}
+      <aside style={{ width: 248, flexShrink: 0, background: `linear-gradient(180deg, ${C.sidebarFrom}, ${C.sidebarTo})`, color: '#fff', padding: '1.4rem 1rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0 0.4rem', marginBottom: '1.6rem' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.1rem' }}>{CEO_INITIALS}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CEO_NAME}</div>
+            <div style={{ fontSize: '0.74rem', opacity: 0.85 }}>{CEO_TITLE}</div>
+          </div>
+        </div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {navItem('overview', 'Overview', '◎')}
+          {navItem('agencies', 'Agencies', '▦', pending.length || undefined)}
+          {navItem('users', 'Users', '◔')}
+        </nav>
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.74rem', opacity: 0.9, padding: '0 0.4rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: 99, background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+            Live · auto-refresh 30s
+          </div>
+          <button type="button" onClick={logout} style={{ background: 'rgba(255,255,255,0.14)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, padding: '0.6rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Sign out</button>
+        </div>
+      </aside>
 
-        {/* personalized header */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: `linear-gradient(135deg, ${C.accent}, ${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.25rem', boxShadow: `0 8px 24px ${C.accent}55` }}>{CEO_INITIALS}</div>
-            <div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.1 }}>{greeting()}, Durga</div>
-              <div style={{ color: C.muted, fontSize: '0.85rem', marginTop: '0.15rem' }}>{CEO_NAME} · {CEO_TITLE}</div>
-            </div>
+      {/* main */}
+      <main style={{ flex: 1, minWidth: 0, padding: '1.6rem 2rem' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <div>
+            <div style={{ fontSize: '1.55rem', fontWeight: 800, color: C.text, lineHeight: 1.1 }}>{greeting()}, Durga</div>
+            <div style={{ color: C.muted, fontSize: '0.88rem', marginTop: '0.25rem' }}>Here's everything happening across the platform right now.</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontVariantNumeric: 'tabular-nums', fontSize: '1.35rem', fontWeight: 700, color: C.cyan }}>{fmtTime}</div>
-            <div style={{ color: C.faint, fontSize: '0.78rem' }}>{fmtDate}</div>
-            <button type="button" onClick={logout} style={{ ...btn(C.border, true), marginTop: '0.4rem', color: C.muted }}>Sign out</button>
+            <div style={{ fontVariantNumeric: 'tabular-nums', fontSize: '1.3rem', fontWeight: 800, color: C.text }}>{fmtTime}</div>
+            <div style={{ color: C.muted, fontSize: '0.8rem' }}>{fmtDate}{lastSync ? ` · synced ${timeAgo(lastSync.toISOString())}` : ''}</div>
           </div>
         </header>
 
-        {/* alert bar for pending reviews */}
         {pending.length > 0 && (
-          <div style={{ background: `${C.amber}14`, border: `1px solid ${C.amber}55`, borderRadius: 12, padding: '0.7rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.88rem' }}>
-            <span style={{ fontSize: '1.1rem' }}>⚠️</span>
-            <span style={{ color: C.text, fontWeight: 600 }}>{pending.length} agenc{pending.length === 1 ? 'y' : 'ies'} awaiting your review.</span>
-            <button type="button" onClick={() => setTab('agencies')} style={{ ...btn(C.amber, true), marginLeft: 'auto' }}>Review now →</button>
+          <div style={{ background: C.amberSoft, border: `1px solid ${C.amber}44`, borderRadius: 12, padding: '0.8rem 1.1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.7rem', fontSize: '0.9rem' }}>
+            <span style={{ fontSize: '1.15rem' }}>⚠️</span>
+            <span style={{ color: C.text, fontWeight: 700 }}>{pending.length} agenc{pending.length === 1 ? 'y' : 'ies'} awaiting your review</span>
+            <button type="button" onClick={() => setTab('agencies')} style={{ ...btn(C.amber, 'soft'), marginLeft: 'auto' }}>Review now →</button>
           </div>
         )}
 
+        {loadErr && <div role="alert" style={{ color: C.red, background: C.redSoft, border: `1px solid ${C.red}33`, borderRadius: 10, padding: '0.7rem 1rem', marginBottom: '1rem' }}>{loadErr}</div>}
+
         {/* KPI grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem', marginBottom: '1.25rem' }}>
-          <KpiCard label="Agencies" value={String(stats?.agencies.total ?? '—')} sub={`${stats?.agencies.approved ?? 0} active · ${stats?.agencies.pending ?? 0} pending`} tone={C.accent} glow />
-          <KpiCard label="Users" value={String(stats?.users.total ?? '—')} sub={`${stats?.users.suspended ?? 0} suspended`} tone={C.cyan} />
-          <KpiCard label="Clients" value={String(stats?.clients ?? '—')} sub="across all agencies" tone={C.pink} />
-          <KpiCard label="Caregivers" value={String(stats?.caregivers.total ?? '—')} sub={`${stats?.caregivers.active ?? 0} active`} tone={C.green} />
-          <KpiCard label="Visits today" value={String(stats?.visits.today ?? '—')} sub={`${stats?.visits.last7d ?? 0} in 7d · ${stats?.visits.total ?? 0} all-time`} tone={C.accent2} />
-          <KpiCard label="Open exceptions" value={String(stats?.exceptions.open ?? '—')} sub="need resolution" tone={(stats?.exceptions.open ?? 0) > 0 ? C.amber : C.green} />
-          <KpiCard label="Claims" value={String(stats?.claims.total ?? '—')} sub={`${money(stats?.claims.chargedCents ?? 0)} billed`} tone={C.cyan} />
-          <KpiCard label="Collected" value={money(stats?.claims.paidCents ?? 0)} sub="payer remittances posted" tone={C.green} glow />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.9rem', marginBottom: '1.5rem' }}>
+          <KpiCard label="Agencies" icon="🏢" value={String(stats?.agencies.total ?? '—')} sub={`${stats?.agencies.approved ?? 0} active · ${stats?.agencies.pending ?? 0} pending`} tone={C.accent} soft={C.accentSoft} />
+          <KpiCard label="Users" icon="👥" value={String(stats?.users.total ?? '—')} sub={`${stats?.users.suspended ?? 0} suspended`} tone={C.cyan} soft={C.cyanSoft} />
+          <KpiCard label="Clients" icon="🧑" value={String(stats?.clients ?? '—')} sub="across all agencies" tone={C.pink} soft={C.pinkSoft} />
+          <KpiCard label="Caregivers" icon="🩺" value={String(stats?.caregivers.total ?? '—')} sub={`${stats?.caregivers.active ?? 0} active`} tone={C.green} soft={C.greenSoft} />
+          <KpiCard label="Visits today" icon="📍" value={String(stats?.visits.today ?? '—')} sub={`${stats?.visits.last7d ?? 0} in 7d · ${stats?.visits.total ?? 0} all-time`} tone={C.violet} soft={C.violetSoft} />
+          <KpiCard label="Open exceptions" icon="⚠️" value={String(stats?.exceptions.open ?? '—')} sub="need resolution" tone={(stats?.exceptions.open ?? 0) > 0 ? C.amber : C.green} soft={(stats?.exceptions.open ?? 0) > 0 ? C.amberSoft : C.greenSoft} />
+          <KpiCard label="Claims" icon="🧾" value={String(stats?.claims.total ?? '—')} sub={`${money(stats?.claims.chargedCents ?? 0)} billed`} tone={C.cyan} soft={C.cyanSoft} />
+          <KpiCard label="Collected" icon="💰" value={money(stats?.claims.paidCents ?? 0)} sub="remittances posted" tone={C.green} soft={C.greenSoft} />
         </div>
 
-        {/* tabs */}
-        <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1rem', alignItems: 'center' }}>
-          {(['overview', 'agencies', 'users'] as const).map((t) => (
-            <button key={t} type="button" onClick={() => { setTab(t); setDetail(null); }} style={{ ...btn(tab === t ? C.accent : C.card, tab !== t), textTransform: 'capitalize', color: tab === t ? '#fff' : C.muted }}>{t}</button>
-          ))}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.6rem', color: C.faint, fontSize: '0.74rem' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: 7, height: 7, borderRadius: 99, background: C.green, boxShadow: `0 0 8px ${C.green}` }} />
-              live · auto-refresh 30s
-            </span>
-            {lastSync && <span>synced {timeAgo(lastSync.toISOString())}</span>}
-            {token && <button type="button" onClick={() => void load(token)} style={{ ...btn(C.border, true), color: C.muted }}>Refresh</button>}
-          </div>
-        </div>
-
-        {loadErr && <div role="alert" style={{ color: C.red, marginBottom: '1rem' }}>{loadErr}</div>}
-
-        {/* ---------- OVERVIEW ---------- */}
+        {/* OVERVIEW */}
         {tab === 'overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(0, 1fr)', gap: '1.1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
               <Panel title="Needs your attention">
-                {pending.length === 0 ? (
-                  <Empty>All clear — no agencies awaiting review.</Empty>
-                ) : pending.map((a) => (
-                  <div key={a.id} style={rowCard}>
+                {pending.length === 0 ? <Empty>All clear — no agencies awaiting review.</Empty> : pending.map((a) => (
+                  <div key={a.id} style={{ ...rowCard, boxShadow: 'none', marginBottom: '0.5rem' }}>
                     <div>
-                      <div style={{ fontWeight: 700 }}>{a.name}</div>
+                      <div style={{ fontWeight: 700, color: C.text }}>{a.name}</div>
                       <div style={{ color: C.muted, fontSize: '0.8rem' }}>{a.adminEmails.join(', ') || 'no admin email'} · signed up {timeAgo(a.createdAt)}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem' }}>
                       <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'approve')} style={btn(C.green)}>Approve</button>
-                      <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'reject')} style={btn(C.red, true)}>Reject</button>
+                      <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'reject')} style={btn(C.red, 'soft')}>Reject</button>
                     </div>
                   </div>
                 ))}
               </Panel>
-              <Panel title="Role distribution">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <Panel title="Team by role">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem' }}>
                   {stats && Object.entries(stats.users.byRole).map(([role, n]) => (
-                    <div key={role} style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '0.5rem 0.8rem' }}>
-                      <span style={{ fontWeight: 800, fontSize: '1.1rem' }}>{n}</span>
-                      <span style={{ color: C.muted, fontSize: '0.78rem', marginLeft: '0.4rem', textTransform: 'capitalize' }}>{role}</span>
+                    <div key={role} style={{ background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, padding: '0.55rem 0.85rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '1.1rem', color: C.text }}>{n}</span>
+                      <span style={{ color: C.muted, fontSize: '0.8rem', marginLeft: '0.4rem', textTransform: 'capitalize' }}>{role}</span>
                     </div>
                   ))}
                   {(!stats || Object.keys(stats.users.byRole).length === 0) && <Empty>No users yet.</Empty>}
                 </div>
               </Panel>
             </div>
-            <Panel title="Live activity" scroll>
-              {activity.length === 0 ? <Empty>No recent activity.</Empty> : activity.map((ev) => (
-                <div key={ev.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: `1px solid ${C.border}` }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 99, background: eventTone(ev.eventType), marginTop: 6, flexShrink: 0, boxShadow: `0 0 6px ${eventTone(ev.eventType)}` }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{ev.eventType}</div>
-                    <div style={{ color: C.faint, fontSize: '0.72rem' }}>{ev.agencyName ?? '—'} · {ev.actorType} · {ev.outcome}</div>
-                  </div>
-                  <span style={{ color: C.faint, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.occurredAt)}</span>
-                </div>
-              ))}
+            <Panel title="Live activity" action={<span style={{ color: C.faint, fontSize: '0.72rem' }}>{activity.length} events</span>} scroll>
+              {activity.length === 0 ? <Empty>No recent activity.</Empty> : activity.map((ev) => <ActivityItem key={ev.id} ev={ev} />)}
             </Panel>
           </div>
         )}
 
-        {/* ---------- AGENCIES ---------- */}
+        {/* AGENCIES */}
         {tab === 'agencies' && (detail ? (
           <AgencyDetailView detail={detail} busy={busy} onBack={() => setDetail(null)} onReview={reviewAgency} onToggleSuspend={toggleSuspend} />
         ) : (
@@ -437,64 +499,32 @@ export function SuperAdminPage() {
             {agencies.map((a) => (
               <div key={a.id} style={{ ...rowCard, borderColor: a.reviewStatus === 'pending' ? `${C.amber}66` : C.border, cursor: 'pointer' }} onClick={() => openDetail(a.id)}>
                 <div>
-                  <div style={{ fontWeight: 700 }}>{a.name} <span style={{ color: C.faint, fontWeight: 400, fontSize: '0.8rem' }}>· {a.state}</span></div>
+                  <div style={{ fontWeight: 700, color: C.text }}>{a.name} <span style={{ color: C.faint, fontWeight: 400, fontSize: '0.8rem' }}>· {a.state}</span></div>
                   <div style={{ color: C.muted, fontSize: '0.8rem', marginTop: '0.2rem' }}>{a.adminEmails.join(', ') || 'no admin email'} · {a.userCount} users · {a.clientCount} clients · signed up {timeAgo(a.createdAt)}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
                   <StatusBadge status={a.reviewStatus} />
                   {a.reviewStatus !== 'approved' && <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'approve')} style={btn(C.green)}>Approve</button>}
-                  {a.reviewStatus !== 'rejected' && <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'reject')} style={btn(C.red, true)}>Reject</button>}
-                  <span style={{ color: C.faint, fontSize: '1.1rem' }}>›</span>
+                  {a.reviewStatus !== 'rejected' && <button type="button" disabled={busy === a.id} onClick={() => reviewAgency(a.id, 'reject')} style={btn(C.red, 'soft')}>Reject</button>}
+                  <span style={{ color: C.faint, fontSize: '1.15rem' }}>›</span>
                 </div>
               </div>
             ))}
           </div>
         ))}
 
-        {/* ---------- USERS ---------- */}
+        {/* USERS */}
         {tab === 'users' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {users.length === 0 && <Empty>No users yet.</Empty>}
             {users.map((u) => <UserRowView key={u.id} u={u} busy={busy === u.id} onToggle={() => toggleSuspend(u)} />)}
           </div>
         )}
 
-        <footer style={{ marginTop: '2rem', textAlign: 'center', color: C.faint, fontSize: '0.72rem' }}>
-          RayHealth Platform Command Center · for {CEO_NAME} only · all actions are audit-logged
+        <footer style={{ marginTop: '2.5rem', textAlign: 'center', color: C.faint, fontSize: '0.74rem' }}>
+          RayHealth Platform Command Center · for {CEO_NAME} only · every action is audit-logged
         </footer>
-      </div>
-    </div>
-  );
-}
-
-// ---------------- sub-components ----------------
-
-const rowCard: React.CSSProperties = {
-  background: C.card, border: `1px solid ${C.border}`, borderRadius: 12,
-  padding: '0.85rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
-};
-
-function Panel({ title, children, scroll }: { title: string; children: React.ReactNode; scroll?: boolean }) {
-  return (
-    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '1.1rem 1.2rem' }}>
-      <h3 style={{ margin: '0 0 0.9rem', fontSize: '0.95rem', fontWeight: 800 }}>{title}</h3>
-      <div style={scroll ? { maxHeight: 520, overflowY: 'auto' } : undefined}>{children}</div>
-    </div>
-  );
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return <div style={{ color: C.faint, fontSize: '0.85rem', padding: '0.5rem 0' }}>{children}</div>;
-}
-
-function UserRowView({ u, busy, onToggle }: { u: UserRow; busy: boolean; onToggle: () => void }) {
-  return (
-    <div style={{ ...rowCard, padding: '0.7rem 1rem' }}>
-      <div>
-        <div style={{ fontWeight: 600 }}>{u.email} {u.suspendedAt && <span style={{ color: C.red, fontSize: '0.7rem', fontWeight: 800 }}>· SUSPENDED</span>}</div>
-        <div style={{ color: C.muted, fontSize: '0.78rem', marginTop: '0.15rem' }}>{u.role} · {u.agencyName ?? u.agencyId.slice(0, 8)} · joined {timeAgo(u.createdAt)}</div>
-      </div>
-      <button type="button" disabled={busy} onClick={onToggle} style={btn(u.suspendedAt ? C.green : C.red, !u.suspendedAt)}>{u.suspendedAt ? 'Reactivate' : 'Suspend'}</button>
+      </main>
     </div>
   );
 }
@@ -504,43 +534,34 @@ function AgencyDetailView({ detail, busy, onBack, onReview, onToggleSuspend }: {
   onReview: (id: string, a: 'approve' | 'reject') => void; onToggleSuspend: (u: UserRow) => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-        <button type="button" onClick={onBack} style={btn(C.border, true)}>← All agencies</button>
-        <h2 style={{ margin: 0, fontSize: '1.3rem' }}>{detail.name}</h2>
+        <button type="button" onClick={onBack} style={btn(C.accent, 'ghost')}>← All agencies</button>
+        <h2 style={{ margin: 0, fontSize: '1.3rem', color: C.text }}>{detail.name}</h2>
         <StatusBadge status={detail.reviewStatus} />
-        <span style={{ color: C.faint, fontSize: '0.8rem' }}>{detail.state} · signed up {timeAgo(detail.createdAt)}{detail.reviewedBy ? ` · reviewed by ${detail.reviewedBy}` : ''}</span>
+        <span style={{ color: C.muted, fontSize: '0.82rem' }}>{detail.state} · signed up {timeAgo(detail.createdAt)}{detail.reviewedBy ? ` · reviewed by ${detail.reviewedBy}` : ''}</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.45rem' }}>
           {detail.reviewStatus !== 'approved' && <button type="button" disabled={busy === detail.id} onClick={() => onReview(detail.id, 'approve')} style={btn(C.green)}>Approve</button>}
-          {detail.reviewStatus !== 'rejected' && <button type="button" disabled={busy === detail.id} onClick={() => onReview(detail.id, 'reject')} style={btn(C.red, true)}>Reject</button>}
+          {detail.reviewStatus !== 'rejected' && <button type="button" disabled={busy === detail.id} onClick={() => onReview(detail.id, 'reject')} style={btn(C.red, 'soft')}>Reject</button>}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.7rem' }}>
-        <KpiCard label="Users" value={String(detail.userCount)} tone={C.cyan} />
-        <KpiCard label="Clients" value={String(detail.clientCount)} tone={C.pink} />
-        <KpiCard label="Caregivers" value={String(detail.caregiverCount)} tone={C.green} />
-        <KpiCard label="Visits" value={String(detail.visitCount)} tone={C.accent2} />
-        <KpiCard label="Claims" value={String(detail.claimCount)} sub={money(detail.chargedCents)} tone={C.accent} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.8rem' }}>
+        <KpiCard label="Users" icon="👥" value={String(detail.userCount)} tone={C.cyan} soft={C.cyanSoft} />
+        <KpiCard label="Clients" icon="🧑" value={String(detail.clientCount)} tone={C.pink} soft={C.pinkSoft} />
+        <KpiCard label="Caregivers" icon="🩺" value={String(detail.caregiverCount)} tone={C.green} soft={C.greenSoft} />
+        <KpiCard label="Visits" icon="📍" value={String(detail.visitCount)} tone={C.violet} soft={C.violetSoft} />
+        <KpiCard label="Claims" icon="🧾" value={String(detail.claimCount)} sub={money(detail.chargedCents)} tone={C.accent} soft={C.accentSoft} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.1rem' }}>
         <Panel title={`Users (${detail.users.length})`} scroll>
           {detail.users.length === 0 ? <Empty>No users.</Empty> : detail.users.map((u) => (
-            <UserRowView key={u.id} u={u} busy={busy === u.id} onToggle={() => onToggleSuspend(u)} />
+            <div key={u.id} style={{ marginBottom: '0.5rem' }}><UserRowView u={u} busy={busy === u.id} onToggle={() => onToggleSuspend(u)} /></div>
           ))}
         </Panel>
         <Panel title="Recent activity" scroll>
-          {detail.recentActivity.length === 0 ? <Empty>No activity.</Empty> : detail.recentActivity.map((ev) => (
-            <div key={ev.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: `1px solid ${C.border}` }}>
-              <span style={{ width: 8, height: 8, borderRadius: 99, background: eventTone(ev.eventType), marginTop: 6, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{ev.eventType}</div>
-                <div style={{ color: C.faint, fontSize: '0.72rem' }}>{ev.actorType} · {ev.outcome}</div>
-              </div>
-              <span style={{ color: C.faint, fontSize: '0.7rem' }}>{timeAgo(ev.occurredAt)}</span>
-            </div>
-          ))}
+          {detail.recentActivity.length === 0 ? <Empty>No activity.</Empty> : detail.recentActivity.map((ev) => <ActivityItem key={ev.id} ev={ev} />)}
         </Panel>
       </div>
     </div>
