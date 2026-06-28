@@ -101,7 +101,7 @@ const CSS = `
 .rh-herogrid{display:grid;grid-template-columns:1.05fr 1fr;gap:3.5rem;align-items:center;}
 @media(max-width:900px){.rh-herogrid{grid-template-columns:1fr;gap:2.5rem;}}
 .rh-eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .8rem;border-radius:999px;background:#eef0fe;color:var(--brand);font-size:.76rem;font-weight:700;letter-spacing:.02em;}
-.rh-h1{font-size:clamp(2.4rem,5vw,3.6rem);line-height:1.05;letter-spacing:-.03em;font-weight:800;margin:1.2rem 0 0;}
+.rh-h1{font-size:clamp(2rem,4vw,2.9rem);line-height:1.12;letter-spacing:-.025em;font-weight:700;margin:1.2rem 0 0;text-wrap:balance;}
 .rh-lead{font-size:1.15rem;line-height:1.6;margin:1.2rem 0 0;max-width:560px;}
 .rh-heroactions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.8rem;}
 .rh-rating{display:flex;align-items:center;gap:.75rem;margin-top:1.6rem;flex-wrap:wrap;}
@@ -116,7 +116,7 @@ const CSS = `
 .rh-sec-pad{padding:5rem 0;}
 .rh-alt{background:var(--alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
 .rh-kick{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);}
-.rh-h2{font-size:clamp(1.8rem,3.6vw,2.6rem);letter-spacing:-.025em;font-weight:800;margin:.7rem 0 0;line-height:1.12;}
+.rh-h2{font-size:clamp(1.5rem,3vw,2.15rem);letter-spacing:-.02em;font-weight:700;margin:.7rem 0 0;line-height:1.15;}
 .rh-h2sub{color:var(--body);font-size:1.05rem;line-height:1.6;margin:.9rem 0 0;max-width:620px;}
 .rh-center{text-align:center;}.rh-center .rh-h2sub{margin-left:auto;margin-right:auto;}
 .rh-logos{padding:2.5rem 0;border-bottom:1px solid var(--line);}
@@ -152,7 +152,7 @@ const CSS = `
 .rh-cbadge{display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.1em;color:var(--brand);background:#eef0fe;padding:.25rem .55rem;border-radius:6px;}
 .rh-faq{max-width:760px;margin:3rem auto 0;}
 .rh-faqitem{border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.5rem;margin-bottom:.9rem;background:#fff;}
-.rh-final{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:24px;padding:4rem 2rem;text-align:center;color:#fff;margin:5rem 0;}
+.rh-final{background:linear-gradient(135deg,#1e293b,#334155);border-radius:24px;padding:4rem 2rem;text-align:center;color:#fff;margin:5rem 0;}
 .rh-final h2{color:#fff;}
 .rh-white{background:#fff!important;color:var(--brand)!important;}
 .rh-white:hover{background:#f1f3f7!important;}
@@ -197,7 +197,7 @@ export function LandingPage() {
         <div className="rh-wrap rh-herogrid">
           <div>
             <span className="rh-eyebrow">★ Trusted by 200+ Pennsylvania agencies</span>
-            <h1 className="rh-h1">Save 12 hours a week<br />on EVV compliance.</h1>
+            <h1 className="rh-h1">Save 12 hours a week on EVV compliance.</h1>
             <p className="rh-lead">RayHealth is the all-in-one platform Pennsylvania home-care agencies use to schedule visits, verify EVV, and get claims paid — without the spreadsheets.</p>
             <div className="rh-heroactions">
               <Link to="/demo" className="rh-btn rh-primary">Get a demo →</Link>
