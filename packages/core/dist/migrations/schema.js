@@ -417,7 +417,8 @@ export async function up(knex) {
             'copilot.reminder.sent',
             'claim.generated','claim.validated','claim.submitted','claim.status-changed',
             'payroll.exported',
-            'evv.sandata.submitted','evv.sandata.reconciled'
+            'evv.sandata.submitted','evv.sandata.reconciled',
+            'data.imported'
           ));
       END IF;
     END$$;
@@ -1069,6 +1070,31 @@ export async function up(knex) {
             table.index(['started_at']);
             table.index(['status']);
         });
+    }
+    // ── R17 — Import / migration source keys ───────────────────────────────────
+    // Onboarding an agency off another platform (HHAeXchange, Sandata, etc.)
+    // means bulk-importing their clients, caregivers, and authorizations. To make
+    // re-imports idempotent and to link related rows across files, every
+    // importable entity carries the SOURCE SYSTEM's id in `external_id`. We can't
+    // dedupe on PHI columns (medicaid_number / npi use random-IV encryption, so
+    // the same plaintext encrypts differently each time), so external_id is the
+    // stable upsert key. Postgres treats NULLs as distinct in a unique index, so
+    // manually-created rows (no external_id) never collide.
+    //
+    // clients + caregivers have agency_id → UNIQUE(agency_id, external_id).
+    // authorizations scope through clients (no agency_id) → UNIQUE(client_id,
+    // external_id).
+    for (const tbl of ['clients', 'caregivers', 'authorizations']) {
+        if (!(await knex.schema.hasTable(tbl)))
+            continue;
+        if (!(await knex.schema.hasColumn(tbl, 'external_id'))) {
+            await knex.schema.alterTable(tbl, (t) => {
+                t.string('external_id', 128).nullable();
+            });
+        }
+        const scope = tbl === 'authorizations' ? 'client_id' : 'agency_id';
+        await knex.raw(`create unique index if not exists ${tbl}_external_id_uniq
+       on ${tbl} (${scope}, external_id)`);
     }
 }
 export async function down(knex) {

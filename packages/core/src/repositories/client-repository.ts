@@ -1,6 +1,9 @@
 import type { Knex } from 'knex';
 import type { Client, Authorization } from '../domain/client.js';
+import type { ImportClientRow, ImportAuthorizationRow } from '../services/import-service.js';
 import { decryptCell, encryptCell } from '../security/cell-cipher.js';
+
+export type ImportAction = 'created' | 'updated';
 
 export class ClientRepository {
   constructor(private readonly db: Knex) {}
@@ -98,6 +101,94 @@ export class ClientRepository {
     }).returning('*');
 
     return this.mapRowToAuthorization(inserted);
+  }
+
+  /** Resolve a client's id from the source-system external_id (import linking). */
+  async findIdByExternalId(agencyId: string, externalId: string): Promise<string | null> {
+    const row = await this.db('clients')
+      .where({ agency_id: agencyId, external_id: externalId })
+      .first('id');
+    return row ? (row.id as string) : null;
+  }
+
+  /**
+   * Idempotent client upsert for the migration importer. Writes the full column
+   * set (incl. address + geofence anchor + encrypted medicaid number). When
+   * `externalId` is present and already known for this agency, the existing row
+   * is updated; otherwise a new row is inserted. The CSV is treated as the
+   * source of truth, so blank optional fields overwrite to null.
+   */
+  async upsertClientForImport(
+    agencyId: string,
+    row: ImportClientRow,
+  ): Promise<{ id: string; action: ImportAction }> {
+    const cols = {
+      agency_id: agencyId,
+      first_name: row.firstName,
+      last_name: row.lastName,
+      date_of_birth: row.dateOfBirth,
+      medicaid_number: row.medicaidNumber !== undefined ? encryptCell(row.medicaidNumber) : null,
+      address_line_1: row.addressLine1 ?? null,
+      address_line_2: row.addressLine2 ?? null,
+      city: row.city ?? null,
+      state: row.state ?? null,
+      postal_code: row.postalCode ?? null,
+      latitude: row.latitude ?? null,
+      longitude: row.longitude ?? null,
+      geofence_radius_m: row.geofenceRadiusM ?? 150,
+      external_id: row.externalId,
+    };
+    if (row.externalId) {
+      const existing = await this.db('clients')
+        .where({ agency_id: agencyId, external_id: row.externalId })
+        .first('id');
+      if (existing) {
+        await this.db('clients')
+          .where({ id: existing.id })
+          .update({ ...cols, updated_at: this.db.fn.now() });
+        return { id: existing.id as string, action: 'updated' };
+      }
+    }
+    const [inserted] = await this.db('clients')
+      .insert({ id: crypto.randomUUID(), ...cols })
+      .returning('id');
+    return { id: inserted.id as string, action: 'created' };
+  }
+
+  /**
+   * Idempotent authorization upsert for the migration importer. The caller has
+   * already resolved `clientId` from the row's client_external_id. When the
+   * row's own `externalId` is present and already known for this client, the
+   * existing authorization is updated; otherwise a new one is inserted.
+   */
+  async upsertAuthorizationForImport(
+    clientId: string,
+    row: ImportAuthorizationRow,
+  ): Promise<{ id: string; action: ImportAction }> {
+    const cols = {
+      client_id: clientId,
+      payer_id: row.payerId,
+      units_authorized: row.unitsAuthorized,
+      service_code: row.serviceCode,
+      start_date: row.startDate,
+      end_date: row.endDate,
+      external_id: row.externalId,
+    };
+    if (row.externalId) {
+      const existing = await this.db('authorizations')
+        .where({ client_id: clientId, external_id: row.externalId })
+        .first('id');
+      if (existing) {
+        await this.db('authorizations')
+          .where({ id: existing.id })
+          .update({ ...cols, updated_at: this.db.fn.now() });
+        return { id: existing.id as string, action: 'updated' };
+      }
+    }
+    const [inserted] = await this.db('authorizations')
+      .insert({ id: crypto.randomUUID(), ...cols })
+      .returning('id');
+    return { id: inserted.id as string, action: 'created' };
   }
 
   async getAuthorizations(agencyId: string): Promise<Authorization[]> {

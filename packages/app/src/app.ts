@@ -38,6 +38,7 @@ import copilotRoutes from './routes/copilot-routes.js';
 import supportRoutes from './routes/support-routes.js';
 import complianceEngineRoutes from './routes/compliance-engine-routes.js';
 import exportRoutes from './routes/export-routes.js';
+import importRoutes from './routes/import-routes.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -221,6 +222,7 @@ export function createApp() {
     app.use(`${prefix}/evv`, evvRoutes);
     app.use(`${prefix}/maintenance`, maintenanceRoutes);
     app.use(`${prefix}/exports`, exportRoutes);
+    app.use(`${prefix}/import`, importRoutes);
     app.use(`${prefix}/tasks`, taskRoutes);
     app.use(`${prefix}/admin/audit-retention`, adminAuditLimiter, auditRetentionRoutes);
     app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);

@@ -1,5 +1,7 @@
 import type { Knex } from 'knex';
 import type { Client, Authorization } from '../domain/client.js';
+import type { ImportClientRow, ImportAuthorizationRow } from '../services/import-service.js';
+export type ImportAction = 'created' | 'updated';
 export declare class ClientRepository {
     private readonly db;
     constructor(db: Knex);
@@ -39,6 +41,29 @@ export declare class ClientRepository {
      */
     clientBelongsToAgency(clientId: string, agencyId: string): Promise<boolean>;
     createAuthorization(authorization: Authorization): Promise<Authorization>;
+    /** Resolve a client's id from the source-system external_id (import linking). */
+    findIdByExternalId(agencyId: string, externalId: string): Promise<string | null>;
+    /**
+     * Idempotent client upsert for the migration importer. Writes the full column
+     * set (incl. address + geofence anchor + encrypted medicaid number). When
+     * `externalId` is present and already known for this agency, the existing row
+     * is updated; otherwise a new row is inserted. The CSV is treated as the
+     * source of truth, so blank optional fields overwrite to null.
+     */
+    upsertClientForImport(agencyId: string, row: ImportClientRow): Promise<{
+        id: string;
+        action: ImportAction;
+    }>;
+    /**
+     * Idempotent authorization upsert for the migration importer. The caller has
+     * already resolved `clientId` from the row's client_external_id. When the
+     * row's own `externalId` is present and already known for this client, the
+     * existing authorization is updated; otherwise a new one is inserted.
+     */
+    upsertAuthorizationForImport(clientId: string, row: ImportAuthorizationRow): Promise<{
+        id: string;
+        action: ImportAction;
+    }>;
     getAuthorizations(agencyId: string): Promise<Authorization[]>;
     private mapRowToClient;
     private mapRowToAuthorization;

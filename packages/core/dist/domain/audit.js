@@ -39,6 +39,8 @@ export const auditEventTypes = [
     // batch as sent to the aggregator; `reconciled` records the aggregator's
     // accept/reject response written back onto each visit.
     'evv.sandata.submitted', 'evv.sandata.reconciled',
+    // Bulk migration import (clients / caregivers / authorizations CSV load).
+    'data.imported',
 ];
 export const auditOutcomes = ['success', 'failure', 'denied'];
 export const auditActorTypes = ['user', 'service', 'system'];

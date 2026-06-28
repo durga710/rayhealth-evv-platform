@@ -16,6 +16,7 @@ const AgencySetupPage = lazy(() => import('./features/agency/AgencySetupPage.js'
 const StaffPage = lazy(() => import('./features/staff/StaffPage.js').then((m) => ({ default: m.StaffPage })));
 const ClientsPage = lazy(() => import('./features/clients/ClientsPage.js').then((m) => ({ default: m.ClientsPage })));
 const AuthorizationsPage = lazy(() => import('./features/authorizations/AuthorizationsPage.js').then((m) => ({ default: m.AuthorizationsPage })));
+const ImportPage = lazy(() => import('./features/import/ImportPage.js').then((m) => ({ default: m.ImportPage })));
 const TemplatesPage = lazy(() => import('./features/scheduling/TemplatesPage.js').then((m) => ({ default: m.TemplatesPage })));
 const AssignmentsPage = lazy(() => import('./features/scheduling/AssignmentsPage.js').then((m) => ({ default: m.AssignmentsPage })));
 const LoginPage = lazy(() => import('./features/auth/LoginPage.js').then((m) => ({ default: m.LoginPage })));
@@ -267,6 +268,7 @@ const navGroupDefs: NavGroupDef[] = [
       { to: '/admin/staff', label: 'Staff', icon: icons.staff },
       { to: '/admin/clients', label: 'Clients', icon: icons.clients },
       { to: '/admin/authorizations', label: 'Authorizations', icon: icons.auth },
+      { to: '/admin/import', label: 'Data Import', icon: icons.agency },
     ],
   },
   {
@@ -487,6 +489,7 @@ export function App() {
           <Route path="staff" element={<StaffPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="authorizations" element={<AuthorizationsPage />} />
+          <Route path="import" element={<ImportPage />} />
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
           <Route path="review" element={<VisitReviewPage />} />
