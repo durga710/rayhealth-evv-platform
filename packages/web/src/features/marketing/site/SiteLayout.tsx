@@ -50,7 +50,7 @@ export const SITE_CSS = `
   font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--body);background:var(--paper);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
 .mk *{box-sizing:border-box;}
 .mk h1,.mk h2,.mk h3,.mk h4{color:var(--ink);margin:0;font-weight:600;letter-spacing:-.02em;}
-.mk p{margin:0;} .mk a{text-decoration:none;color:inherit;}
+.mk p{margin:0;} .mk :where(a){text-decoration:none;color:inherit;}
 .mk-wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;width:100%;}
 .mk-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:44px;padding:0 1.25rem;border-radius:10px;font-size:.9375rem;font-weight:550;transition:background .16s,box-shadow .16s,transform .16s,border-color .16s;}
 .mk-pri{background:var(--accent);color:#fff;box-shadow:0 8px 24px -12px rgba(16,116,128,.6);}

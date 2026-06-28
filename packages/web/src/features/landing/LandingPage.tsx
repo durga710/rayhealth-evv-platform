@@ -179,7 +179,7 @@ const CSS = `
 .rh *{box-sizing:border-box;}
 .rh h1,.rh h2,.rh h3,.rh h4{color:var(--ink); margin:0; font-weight:600; letter-spacing:-0.02em;}
 .rh p{margin:0;}
-.rh a{text-decoration:none; color:inherit;}
+.rh :where(a){text-decoration:none; color:inherit;}
 .rh-wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
 
 /* buttons */
