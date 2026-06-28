@@ -20,6 +20,12 @@ export interface PasswordResetEmailParams {
     to: string;
     resetUrl: string;
 }
+export interface ReminderEmailParams {
+    to: string;
+    caregiverName: string;
+    message: string;
+    agencyName: string;
+}
 export type SendEmailResult = {
     ok: true;
     id: string;
@@ -30,6 +36,7 @@ export type SendEmailResult = {
 export interface EmailClient {
     sendInviteEmail(params: InviteEmailParams): Promise<SendEmailResult>;
     sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<SendEmailResult>;
+    sendReminderEmail(params: ReminderEmailParams): Promise<SendEmailResult>;
 }
 /**
  * Construct the email client from environment variables.

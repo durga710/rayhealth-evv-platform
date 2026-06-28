@@ -36,6 +36,31 @@ export const paServiceCodes = [
     'T1004', // Services of a qualified nursing aide, up to 15 minutes
     'T1021' // Home health aide or certified nurse assistant, per visit
 ];
+/**
+ * Billable units-of-measure per PA service code, used by claim generation to
+ * convert a GPS-verified visit duration into Medicaid billing units.
+ *
+ *   - 15-minute codes (T1019/S5125/T1004): one unit = 15 minutes of service.
+ *   - T1021 is billed per-visit (encoded as 0 → one unit per completed visit,
+ *     independent of duration).
+ *
+ * These are HCPCS units of measure, not dollar rates. RayHealth is the
+ * verification + claim-assembly layer; the payer's fee schedule determines the
+ * paid amount per unit, so we deliberately do NOT hardcode dollar rates here.
+ */
+export const paServiceCodeUnitMinutes = {
+    T1019: 15,
+    S5125: 15,
+    T1004: 15,
+    T1021: 0,
+};
+/** Human-readable HCPCS descriptions for each supported PA service code. */
+export const paServiceCodeDescriptions = {
+    T1019: 'Personal care services, per 15 minutes',
+    S5125: 'Attendant care services, per 15 minutes',
+    T1004: 'Services of a qualified nursing aide, per 15 minutes',
+    T1021: 'Home health aide or certified nurse assistant, per visit',
+};
 const ROLE_CAPABILITIES = {
     admin: [
         'agency.read', 'agency.write',
@@ -45,7 +70,8 @@ const ROLE_CAPABILITIES = {
         'evv.read', 'evv.write',
         'auth.read', 'auth.write',
         'audit.read', 'audit.write',
-        'learning.read', 'learning.write'
+        'learning.read', 'learning.write',
+        'billing.read', 'billing.write'
     ],
     coordinator: [
         'agency.read',
@@ -53,7 +79,10 @@ const ROLE_CAPABILITIES = {
         'client.read', 'client.write',
         'schedule.read', 'schedule.write',
         'evv.read',
-        'learning.read', 'learning.write'
+        'learning.read', 'learning.write',
+        // Coordinators can review claim/payroll readiness but not generate or
+        // change claim status — those stay admin-only (billing.write).
+        'billing.read'
     ],
     caregiver: [
         // EVV write lets caregivers record their own visits without granting

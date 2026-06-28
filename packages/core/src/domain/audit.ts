@@ -31,6 +31,11 @@ export const auditEventTypes = [
   'auth.password_reset.requested', 'auth.password_reset.completed',
   'agency.evv-config.changed',
   'copilot.query', 'copilot.action.confirmed', 'copilot.action.declined',
+  // Copilot reminder dispatch (now wired to the real email pipeline).
+  'copilot.reminder.sent',
+  // Billing / claims lifecycle.
+  'claim.generated', 'claim.validated', 'claim.submitted', 'claim.status-changed',
+  'payroll.exported',
 ] as const;
 
 export const auditOutcomes = ['success', 'failure', 'denied'] as const;

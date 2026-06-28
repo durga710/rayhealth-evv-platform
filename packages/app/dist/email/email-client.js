@@ -12,6 +12,7 @@ import { Resend } from 'resend';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { renderInviteEmail } from './templates/invite-email.js';
 import { renderPasswordResetEmail } from './templates/password-reset-email.js';
+import { renderReminderEmail } from './templates/reminder-email.js';
 import { safeError } from '../security/safe-log.js';
 const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
 function createSmtpClient(user, pass) {
@@ -47,6 +48,14 @@ function createSmtpClient(user, pass) {
             const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
             return smtpSend(params.to, subject, html, text);
         },
+        async sendReminderEmail(params) {
+            const { subject, html, text } = renderReminderEmail({
+                caregiverName: params.caregiverName,
+                message: params.message,
+                agencyName: params.agencyName,
+            });
+            return smtpSend(params.to, subject, html, text);
+        },
     };
 }
 function createNoopClient() {
@@ -55,6 +64,9 @@ function createNoopClient() {
             return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
         },
         async sendPasswordResetEmail() {
+            return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
+        },
+        async sendReminderEmail() {
             return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
         },
     };
@@ -94,6 +106,14 @@ function createResendClient(apiKey, from) {
         },
         async sendPasswordResetEmail(params) {
             const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
+            return resendSend(params.to, subject, html, text);
+        },
+        async sendReminderEmail(params) {
+            const { subject, html, text } = renderReminderEmail({
+                caregiverName: params.caregiverName,
+                message: params.message,
+                agencyName: params.agencyName,
+            });
             return resendSend(params.to, subject, html, text);
         },
     };
@@ -162,6 +182,14 @@ function createSesClient(client, from) {
         },
         async sendPasswordResetEmail(params) {
             const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
+            return sesSend(params.to, subject, html, text);
+        },
+        async sendReminderEmail(params) {
+            const { subject, html, text } = renderReminderEmail({
+                caregiverName: params.caregiverName,
+                message: params.message,
+                agencyName: params.agencyName,
+            });
             return sesSend(params.to, subject, html, text);
         },
     };

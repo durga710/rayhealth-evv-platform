@@ -13,6 +13,7 @@ import { Resend } from 'resend';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { renderInviteEmail } from './templates/invite-email.js';
 import { renderPasswordResetEmail } from './templates/password-reset-email.js';
+import { renderReminderEmail } from './templates/reminder-email.js';
 import { safeError } from '../security/safe-log.js';
 
 export interface InviteEmailParams {
@@ -30,6 +31,13 @@ export interface PasswordResetEmailParams {
   resetUrl: string;
 }
 
+export interface ReminderEmailParams {
+  to: string;
+  caregiverName: string;
+  message: string;
+  agencyName: string;
+}
+
 export type SendEmailResult =
   | { ok: true; id: string }
   | { ok: false; error: string };
@@ -37,6 +45,7 @@ export type SendEmailResult =
 export interface EmailClient {
   sendInviteEmail(params: InviteEmailParams): Promise<SendEmailResult>;
   sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<SendEmailResult>;
+  sendReminderEmail(params: ReminderEmailParams): Promise<SendEmailResult>;
 }
 
 const DEFAULT_FROM = 'RayHealth <onboarding@www.rayhealthevv.com>';
@@ -75,6 +84,14 @@ function createSmtpClient(user: string, pass: string): EmailClient {
       const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
       return smtpSend(params.to, subject, html, text);
     },
+    async sendReminderEmail(params: ReminderEmailParams): Promise<SendEmailResult> {
+      const { subject, html, text } = renderReminderEmail({
+        caregiverName: params.caregiverName,
+        message: params.message,
+        agencyName: params.agencyName,
+      });
+      return smtpSend(params.to, subject, html, text);
+    },
   };
 }
 
@@ -84,6 +101,9 @@ function createNoopClient(): EmailClient {
       return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
     },
     async sendPasswordResetEmail(): Promise<SendEmailResult> {
+      return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
+    },
+    async sendReminderEmail(): Promise<SendEmailResult> {
       return { ok: false, error: 'EMAIL_NOT_CONFIGURED' };
     },
   };
@@ -125,6 +145,14 @@ function createResendClient(apiKey: string, from: string): EmailClient {
     },
     async sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<SendEmailResult> {
       const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
+      return resendSend(params.to, subject, html, text);
+    },
+    async sendReminderEmail(params: ReminderEmailParams): Promise<SendEmailResult> {
+      const { subject, html, text } = renderReminderEmail({
+        caregiverName: params.caregiverName,
+        message: params.message,
+        agencyName: params.agencyName,
+      });
       return resendSend(params.to, subject, html, text);
     },
   };
@@ -194,6 +222,14 @@ function createSesClient(client: SESv2Client, from: string): EmailClient {
     },
     async sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<SendEmailResult> {
       const { subject, html, text } = renderPasswordResetEmail({ resetUrl: params.resetUrl });
+      return sesSend(params.to, subject, html, text);
+    },
+    async sendReminderEmail(params: ReminderEmailParams): Promise<SendEmailResult> {
+      const { subject, html, text } = renderReminderEmail({
+        caregiverName: params.caregiverName,
+        message: params.message,
+        agencyName: params.agencyName,
+      });
       return sesSend(params.to, subject, html, text);
     },
   };

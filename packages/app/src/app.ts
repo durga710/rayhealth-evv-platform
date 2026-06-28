@@ -28,6 +28,7 @@ import learningRoutes from './routes/learning-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
 import marketingRoutes from './routes/marketing-routes.js';
 import billingRoutes from './routes/billing-routes.js';
+import billingClaimsRoutes from './routes/billing-claims-routes.js';
 import onboardingRoutes from './routes/onboarding-routes.js';
 import onboardingAdminRoutes from './routes/onboarding-admin-routes.js';
 import profileRoutes from './routes/profile-routes.js';
@@ -205,6 +206,7 @@ export function createApp() {
     app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
     app.use(`${prefix}/copilot`, copilotLimiter, copilotRoutes);
     app.use(`${prefix}/billing`, billingRoutes);
+    app.use(`${prefix}/billing`, billingClaimsRoutes);
     app.use(`${prefix}/admin/onboarding`, onboardingAdminRoutes);
     app.use(`${prefix}/profile`, profileRoutes);
     app.use(`${prefix}/compliance-engine`, complianceEngineRoutes);

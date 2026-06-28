@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export declare const auditEventTypes: readonly ["visit.created", "visit.clock-out", "visit.approved", "visit.flagged", "credential.created", "credential.expired", "credential.renewed", "caregiver.created", "caregiver.status-changed", "assignment.created", "assignment.cancelled", "exception.filed", "exception.approved", "auth.login.success", "auth.login.failure", "auth.logout", "session.created", "session.revoked", "csrf.failure", "phi.read", "phi.create", "phi.update", "phi.delete", "phi.export", "request.write", "permission.denied", "invite.created", "invite.accepted", "invite.access_code_failed", "invite.email.sent", "invite.email.failed", "invite.revoked", "invite.revoked_all", "auth.password_reset.requested", "auth.password_reset.completed", "agency.evv-config.changed", "copilot.query", "copilot.action.confirmed", "copilot.action.declined"];
+export declare const auditEventTypes: readonly ["visit.created", "visit.clock-out", "visit.approved", "visit.flagged", "credential.created", "credential.expired", "credential.renewed", "caregiver.created", "caregiver.status-changed", "assignment.created", "assignment.cancelled", "exception.filed", "exception.approved", "auth.login.success", "auth.login.failure", "auth.logout", "session.created", "session.revoked", "csrf.failure", "phi.read", "phi.create", "phi.update", "phi.delete", "phi.export", "request.write", "permission.denied", "invite.created", "invite.accepted", "invite.access_code_failed", "invite.email.sent", "invite.email.failed", "invite.revoked", "invite.revoked_all", "auth.password_reset.requested", "auth.password_reset.completed", "agency.evv-config.changed", "copilot.query", "copilot.action.confirmed", "copilot.action.declined", "copilot.reminder.sent", "claim.generated", "claim.validated", "claim.submitted", "claim.status-changed", "payroll.exported"];
 export declare const auditOutcomes: readonly ["success", "failure", "denied"];
 export declare const auditActorTypes: readonly ["user", "service", "system"];
 export declare const auditEventSchema: z.ZodObject<{
@@ -51,6 +51,12 @@ export declare const auditEventSchema: z.ZodObject<{
         "copilot.query": "copilot.query";
         "copilot.action.confirmed": "copilot.action.confirmed";
         "copilot.action.declined": "copilot.action.declined";
+        "copilot.reminder.sent": "copilot.reminder.sent";
+        "claim.generated": "claim.generated";
+        "claim.validated": "claim.validated";
+        "claim.submitted": "claim.submitted";
+        "claim.status-changed": "claim.status-changed";
+        "payroll.exported": "payroll.exported";
     }>;
     entityType: z.ZodString;
     entityId: z.ZodString;

@@ -26,10 +26,25 @@ export type PaAggregator = typeof paAggregators[number];
 /** Pennsylvania PCS / HCPCS service codes RayHealth supports for billing + Cures-Act #1. */
 export declare const paServiceCodes: readonly ["T1019", "S5125", "T1004", "T1021"];
 export type PaServiceCode = typeof paServiceCodes[number];
+/**
+ * Billable units-of-measure per PA service code, used by claim generation to
+ * convert a GPS-verified visit duration into Medicaid billing units.
+ *
+ *   - 15-minute codes (T1019/S5125/T1004): one unit = 15 minutes of service.
+ *   - T1021 is billed per-visit (encoded as 0 → one unit per completed visit,
+ *     independent of duration).
+ *
+ * These are HCPCS units of measure, not dollar rates. RayHealth is the
+ * verification + claim-assembly layer; the payer's fee schedule determines the
+ * paid amount per unit, so we deliberately do NOT hardcode dollar rates here.
+ */
+export declare const paServiceCodeUnitMinutes: Record<PaServiceCode, number>;
+/** Human-readable HCPCS descriptions for each supported PA service code. */
+export declare const paServiceCodeDescriptions: Record<PaServiceCode, string>;
 export type PaCredentialType = typeof paCredentialTypes[number];
 export type PaExceptionType = typeof paExceptionTypes[number];
 export type AppRole = 'admin' | 'coordinator' | 'caregiver' | 'family';
-export type Capability = 'agency.read' | 'agency.write' | 'staff.read' | 'staff.write' | 'client.read' | 'client.write' | 'schedule.read' | 'schedule.write' | 'evv.read' | 'evv.write' | 'auth.read' | 'auth.write' | 'audit.read' | 'audit.write' | 'learning.read' | 'learning.write';
+export type Capability = 'agency.read' | 'agency.write' | 'staff.read' | 'staff.write' | 'client.read' | 'client.write' | 'schedule.read' | 'schedule.write' | 'evv.read' | 'evv.write' | 'auth.read' | 'auth.write' | 'audit.read' | 'audit.write' | 'learning.read' | 'learning.write' | 'billing.read' | 'billing.write';
 export declare function hasCapability(role: AppRole, capability: Capability): boolean;
 /** Pennsylvania PCS geofence base radius (meters). 55 Pa. Code §52.32. */
 export declare const PA_GEOFENCE_BASE_METERS = 100;

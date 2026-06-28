@@ -1,0 +1,391 @@
+/**
+ * Billing — claims + payroll routes.
+ *
+ * Mounted at /api/billing alongside the Stripe billing-routes (distinct
+ * subpaths: /claims/*, /payroll/*). Turns GPS-verified EVV visits into Medicaid
+ * claims, generates the X12 837P, scores denial risk, tracks claim status, and
+ * exports payroll. Every endpoint is agency-scoped and capability-gated:
+ *   - billing.read  → list / view / 837 download / payroll export
+ *   - billing.write → generate / validate / change status
+ *
+ * Honesty: claim generation, 837 file creation, denial scoring and payroll
+ * export run here in full. Actually transmitting the 837 to a payer needs a
+ * clearinghouse trading-partner account (external credential) — the file this
+ * produces is what the agency uploads there, or what an automated connector
+ * would send once configured.
+ */
+import { Router } from 'express';
+import { z } from 'zod';
+import { AuditEventRepository, ClaimRepository, buildPayrollExport, canTransitionClaim, claimStatuses, generate837P, generateClaims, paServiceCodeDescriptions, } from '@rayhealth/core';
+import { requireCapability } from '../middleware/require-capability.js';
+const router = Router();
+const datePattern = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD');
+const generateBodySchema = z.object({
+    periodStart: datePattern,
+    periodEnd: datePattern,
+});
+const statusBodySchema = z.object({
+    status: z.enum(claimStatuses),
+    statusReason: z.string().max(500).optional(),
+    payerClaimId: z.string().max(100).optional(),
+});
+function startOfDayIso(d) {
+    return new Date(`${d}T00:00:00.000Z`).toISOString();
+}
+function endOfDayIso(d) {
+    return new Date(`${d}T23:59:59.999Z`).toISOString();
+}
+/**
+ * Reconstruct units already billed per authorization id, by matching each
+ * prior billed line to its authorization (client + service code + date window).
+ * Keeps remaining-authorization checks accurate across generation runs.
+ */
+function priorUnitsByAuth(billed, authorizations) {
+    const out = {};
+    for (const line of billed) {
+        const auth = authorizations.find((a) => a.clientId === line.clientId &&
+            a.serviceCode === line.serviceCode &&
+            a.startDate <= line.serviceDate &&
+            a.endDate >= line.serviceDate);
+        if (auth)
+            out[auth.id] = (out[auth.id] ?? 0) + line.units;
+    }
+    return out;
+}
+async function audit(db, req, eventType, entityId, payload) {
+    try {
+        await new AuditEventRepository(db).create({
+            agencyId: req.auth.agencyId,
+            actorId: req.auth.userId,
+            actorType: 'user',
+            eventType,
+            entityType: 'claim',
+            entityId,
+            outcome: 'success',
+            payload,
+        });
+    }
+    catch (err) {
+        process.stderr.write(`[audit-write-failed] ${eventType} err=${err instanceof Error ? err.message : 'unknown'}\n`);
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /billing/claims/generate — generate draft claims for a period
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/claims/generate', requireCapability('billing.write'), async (req, res) => {
+    const parsed = generateBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        res.status(400).json({ message: 'periodStart and periodEnd (YYYY-MM-DD) are required' });
+        return;
+    }
+    const { periodStart, periodEnd } = parsed.data;
+    if (periodStart > periodEnd) {
+        res.status(400).json({ message: 'periodStart must be on or before periodEnd' });
+        return;
+    }
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const agencyId = req.auth.agencyId;
+        const [allVisits, alreadyBilled, authorizations, billedUnits] = await Promise.all([
+            repo.getBillableVisits(agencyId, startOfDayIso(periodStart), endOfDayIso(periodEnd)),
+            repo.getActiveClaimVisitIds(agencyId),
+            repo.getAgencyAuthorizations(agencyId),
+            repo.getBilledLineUnits(agencyId),
+        ]);
+        const visits = allVisits.filter((v) => !alreadyBilled.has(v.visitId));
+        const result = generateClaims({
+            agencyId,
+            periodStart,
+            periodEnd,
+            visits,
+            authorizations,
+            priorUnitsByAuth: priorUnitsByAuth(billedUnits, authorizations),
+        });
+        const created = await repo.createClaims(result.claims);
+        await audit(db, req, 'claim.generated', agencyId, {
+            periodStart,
+            periodEnd,
+            claimsGenerated: created.length,
+            visitsConsidered: visits.length,
+            visitsAlreadyBilled: allVisits.length - visits.length,
+            unbillable: result.unbillable.length,
+            highRiskClaims: created.filter((c) => c.denialRisk === 'high').length,
+        });
+        res.status(201).json({
+            generated: created.length,
+            claims: created.map(toClaimResponse),
+            unbillable: result.unbillable,
+        });
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /billing/claims — list claims (optional status filter)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/claims', requireCapability('billing.read'), async (req, res) => {
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const statusParam = req.query.status;
+        const status = statusParam && claimStatuses.includes(statusParam)
+            ? statusParam
+            : undefined;
+        const limit = Math.min(Number(req.query.limit ?? 100) || 100, 500);
+        const offset = Number(req.query.offset ?? 0) || 0;
+        const { rows, total } = await repo.listClaims(req.auth.agencyId, { status, limit, offset });
+        res.json({ total, claims: rows.map(toClaimResponse) });
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /billing/claims/:id — claim detail with lines
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/claims/:id', requireCapability('billing.read'), async (req, res) => {
+    try {
+        const db = req.app.get('db');
+        const claim = await new ClaimRepository(db).getClaim(req.auth.agencyId, String(req.params.id));
+        if (!claim) {
+            res.status(404).json({ message: 'Claim not found' });
+            return;
+        }
+        res.json(toClaimDetailResponse(claim));
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /billing/claims/:id/validate — gate draft → ready
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/claims/:id/validate', requireCapability('billing.write'), async (req, res) => {
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const claim = await repo.getClaim(req.auth.agencyId, String(req.params.id));
+        if (!claim) {
+            res.status(404).json({ message: 'Claim not found' });
+            return;
+        }
+        if (claim.status !== 'draft' && claim.status !== 'rejected' && claim.status !== 'denied') {
+            res.status(422).json({ message: `Claim in status "${claim.status}" cannot be validated` });
+            return;
+        }
+        const blocking = claim.lines
+            .filter((l) => l.denialRisk === 'high')
+            .flatMap((l) => l.denialReasons);
+        if (blocking.length > 0) {
+            await audit(db, req, 'claim.validated', claim.id, {
+                outcome: 'blocked',
+                blockingReasons: blocking.length,
+            });
+            res.status(422).json({
+                message: 'Claim has high-risk lines and cannot be marked ready',
+                denialRisk: claim.denialRisk,
+                blockingReasons: [...new Set(blocking)],
+            });
+            return;
+        }
+        const updated = await repo.updateStatus(req.auth.agencyId, claim.id, { status: 'ready' });
+        await audit(db, req, 'claim.validated', claim.id, { newStatus: 'ready', denialRisk: claim.denialRisk });
+        res.json(toClaimDetailResponse(updated));
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /billing/claims/:id/status — manual status transition
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/claims/:id/status', requireCapability('billing.write'), async (req, res) => {
+    const parsed = statusBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        res.status(400).json({ message: 'A valid status is required', details: parsed.error.issues });
+        return;
+    }
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const claim = await repo.getClaim(req.auth.agencyId, String(req.params.id));
+        if (!claim) {
+            res.status(404).json({ message: 'Claim not found' });
+            return;
+        }
+        const next = parsed.data.status;
+        if (!canTransitionClaim(claim.status, next)) {
+            res.status(422).json({ message: `Cannot transition claim from "${claim.status}" to "${next}"` });
+            return;
+        }
+        const submittedAt = next === 'submitted' ? new Date().toISOString() : undefined;
+        const updated = await repo.updateStatus(req.auth.agencyId, claim.id, {
+            status: next,
+            statusReason: parsed.data.statusReason ?? null,
+            payerClaimId: parsed.data.payerClaimId ?? undefined,
+            submittedAt,
+        });
+        await audit(db, req, next === 'submitted' ? 'claim.submitted' : 'claim.status-changed', claim.id, { from: claim.status, to: next });
+        res.json(toClaimDetailResponse(updated));
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /billing/claims/:id/837 — download the X12 837P for one claim
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/claims/:id/837', requireCapability('billing.read'), async (req, res) => {
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const claim = await repo.getClaim(req.auth.agencyId, String(req.params.id));
+        if (!claim) {
+            res.status(404).json({ message: 'Claim not found' });
+            return;
+        }
+        const [profile, clientInfo, renderingProviders] = await Promise.all([
+            repo.getAgencyBillingProfile(req.auth.agencyId),
+            repo.getClientBillingInfo(req.auth.agencyId, [claim.clientId]),
+            repo.getVisitRenderingProviders(claim.lines.map((l) => l.visitId)),
+        ]);
+        if (!profile) {
+            res.status(404).json({ message: 'Agency billing profile not found' });
+            return;
+        }
+        const client = clientInfo.get(claim.clientId);
+        const submitterId = profile.clearinghouseId || profile.medicaidProviderNumber || 'RAYHEALTH';
+        const edi837Claim = {
+            controlNumber: claim.controlNumber ?? claim.id.slice(0, 12),
+            subscriber: {
+                firstName: client?.firstName ?? '',
+                lastName: client?.lastName ?? '',
+                memberId: client?.medicaidNumber ?? '',
+                dateOfBirth: client?.dateOfBirth,
+                gender: 'U',
+                payerName: claim.payerId,
+                payerId: claim.payerId,
+            },
+            placeOfService: '12',
+            lines: claim.lines.map((l) => {
+                const rp = renderingProviders.get(l.visitId);
+                return {
+                    serviceCode: l.serviceCode,
+                    chargeCents: l.chargeCents,
+                    units: l.units,
+                    serviceDate: l.serviceDate,
+                    renderingProviderNpi: rp?.npi || undefined,
+                    renderingProviderLastName: rp?.lastName,
+                    renderingProviderFirstName: rp?.firstName,
+                };
+            }),
+        };
+        const result = generate837P({
+            submitter: { name: profile.name, id: submitterId, contactPhone: '' },
+            receiver: { name: claim.payerId, id: profile.clearinghouseId || claim.payerId },
+            billingProvider: {
+                organizationName: profile.name,
+                npi: profile.npi,
+                taxId: profile.taxId,
+                address1: profile.address1,
+                city: profile.city,
+                state: profile.state,
+                postalCode: profile.postalCode,
+                taxonomyCode: profile.taxonomyCode,
+            },
+            claims: [edi837Claim],
+            control: {
+                usageIndicator: 'T',
+                interchangeControlNumber: claim.controlNumber?.replace(/\D/g, '').slice(0, 9) || '1',
+            },
+        });
+        // 837 contains member ids + names + DOB → a PHI export.
+        await audit(db, req, 'phi.export', claim.id, {
+            artifact: '837P',
+            claimControlNumber: claim.controlNumber,
+            lineCount: claim.lines.length,
+        });
+        res.setHeader('Content-Type', 'application/edi-x12');
+        res.setHeader('Content-Disposition', `attachment; filename="claim-${claim.controlNumber ?? claim.id}.837.txt"`);
+        res.send(result.edi);
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /billing/payroll/export?from=&to= — payroll CSV from verified hours
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/payroll/export', requireCapability('billing.read'), async (req, res) => {
+    const from = req.query.from;
+    const to = req.query.to;
+    if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+        res.status(400).json({ message: 'from and to (YYYY-MM-DD) query params are required' });
+        return;
+    }
+    if (from > to) {
+        res.status(400).json({ message: 'from must be on or before to' });
+        return;
+    }
+    try {
+        const db = req.app.get('db');
+        const repo = new ClaimRepository(db);
+        const visits = await repo.getPayrollVisits(req.auth.agencyId, startOfDayIso(from), endOfDayIso(to));
+        const result = buildPayrollExport(visits, { periodStart: from, periodEnd: to });
+        await audit(db, req, 'payroll.exported', req.auth.agencyId, {
+            from,
+            to,
+            caregivers: result.rows.length,
+            totalHours: result.totalHours,
+            excludedVisits: result.excludedVisits,
+        });
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="payroll-${from}_to_${to}.csv"`);
+        res.send(result.csv);
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+// ── response shaping ─────────────────────────────────────────────────────────
+function toClaimResponse(claim) {
+    return {
+        id: claim.id,
+        clientId: claim.clientId,
+        payerId: claim.payerId,
+        periodStart: claim.periodStart,
+        periodEnd: claim.periodEnd,
+        status: claim.status,
+        totalUnits: claim.totalUnits,
+        totalChargeCents: claim.totalChargeCents,
+        denialRisk: claim.denialRisk,
+        controlNumber: claim.controlNumber,
+        lineCount: 'lineCount' in claim ? claim.lineCount : claim.lines?.length ?? 0,
+        createdAt: claim.createdAt,
+        updatedAt: claim.updatedAt,
+    };
+}
+function toClaimDetailResponse(claim) {
+    return {
+        ...toClaimResponse(claim),
+        payerClaimId: claim.payerClaimId,
+        statusReason: claim.statusReason,
+        submittedAt: claim.submittedAt,
+        lines: claim.lines.map((l) => ({
+            id: l.id,
+            visitId: l.visitId,
+            serviceCode: l.serviceCode,
+            serviceDescription: paServiceCodeDescriptions[l.serviceCode],
+            serviceDate: l.serviceDate,
+            units: l.units,
+            minutes: l.minutes,
+            chargeCents: l.chargeCents,
+            denialRisk: l.denialRisk,
+            denialReasons: l.denialReasons,
+        })),
+    };
+}
+export default router;
+//# sourceMappingURL=billing-claims-routes.js.map

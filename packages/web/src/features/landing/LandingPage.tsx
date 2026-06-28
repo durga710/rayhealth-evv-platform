@@ -24,7 +24,7 @@ const capabilities = [
   {
     span: 'wide', live: true, kicker: 'AI copilot',
     title: 'An AI copilot that proposes — you approve',
-    body: 'Ask in plain language. The Gemini-powered copilot answers with your agency context and proposes the action — enroll a caregiver in required training, surface what needs attention — then waits for a human to confirm. Every query and action is audit-logged.',
+    body: 'Ask in plain language. The Claude-powered copilot answers with your agency context and proposes the action — enroll a caregiver in required training, surface what needs attention — then waits for a human to confirm. Every query and action is audit-logged.',
     icon: ic(<><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" /></>),
   },
   {

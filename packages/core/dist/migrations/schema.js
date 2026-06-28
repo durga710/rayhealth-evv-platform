@@ -383,9 +383,13 @@ export async function up(knex) {
       END$$;
     `);
     }
-    // Expand audit_events_event_type_check to include invite and email event
-    // types emitted by invite-routes. DROP IF EXISTS + ADD is idempotent:
-    // safe whether the old narrow constraint exists or the new wide one does.
+    // Keep audit_events_event_type_check in lock-step with the domain
+    // `auditEventTypes` enum (packages/core/src/domain/audit.ts). The previous
+    // version of this constraint omitted the copilot.* events, so copilot audit
+    // writes were silently rejected at the DB layer (caught by the route's
+    // try/catch). This DROP IF EXISTS + ADD is idempotent and now lists the full
+    // enum, including copilot.*, claim.*, and payroll.export. Any change to the
+    // domain enum must update this list in the same PR.
     await knex.raw(`
     DO $$
     BEGIN
@@ -395,12 +399,24 @@ export async function up(knex) {
           DROP CONSTRAINT IF EXISTS audit_events_event_type_check;
         ALTER TABLE audit_events
           ADD CONSTRAINT audit_events_event_type_check CHECK (event_type IN (
+            'visit.created','visit.clock-out','visit.approved','visit.flagged',
+            'credential.created','credential.expired','credential.renewed',
+            'caregiver.created','caregiver.status-changed',
+            'assignment.created','assignment.cancelled',
+            'exception.filed','exception.approved',
             'auth.login.success','auth.login.failure','auth.logout',
             'session.created','session.revoked','csrf.failure',
             'phi.read','phi.create','phi.update','phi.delete','phi.export',
             'request.write','permission.denied',
             'invite.created','invite.email.sent','invite.email.failed',
-            'invite.accepted','invite.access_code_failed'
+            'invite.accepted','invite.access_code_failed',
+            'invite.revoked','invite.revoked_all',
+            'auth.password_reset.requested','auth.password_reset.completed',
+            'agency.evv-config.changed',
+            'copilot.query','copilot.action.confirmed','copilot.action.declined',
+            'copilot.reminder.sent',
+            'claim.generated','claim.validated','claim.submitted','claim.status-changed',
+            'payroll.exported'
           ));
       END IF;
     END$$;
@@ -885,8 +901,107 @@ export async function up(knex) {
             });
         }
     }
+    // ── R13 — Claims & billing ───────────────────────────────────────────────
+    // Medicaid claim generation. A `claims` row aggregates one client's verified
+    // visits over a service period for one payer; each `claim_lines` row bills a
+    // single immutable evv_visits row (one date of service). Money is stored in
+    // integer cents. agency_id scopes every claim; claim_lines cascade-delete
+    // with their claim, and reference evv_visits with ON DELETE RESTRICT so a
+    // visit that has been billed cannot be deleted out from under a claim.
+    if (!(await knex.schema.hasTable('claims'))) {
+        await knex.schema.createTable('claims', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable().onDelete('CASCADE');
+            table.uuid('client_id').references('id').inTable('clients').notNullable().onDelete('RESTRICT');
+            table.string('payer_id').notNullable();
+            table.date('period_start').notNullable();
+            table.date('period_end').notNullable();
+            table.string('status', 20).notNullable().defaultTo('draft');
+            table.integer('total_units').notNullable().defaultTo(0);
+            table.integer('total_charge_cents').notNullable().defaultTo(0);
+            table.string('denial_risk', 10).notNullable().defaultTo('low');
+            table.string('control_number', 20);
+            table.text('payer_claim_id');
+            table.text('status_reason');
+            table.timestamp('submitted_at', { useTz: true });
+            table.timestamps(true, true);
+            table.index(['agency_id', 'status']);
+            table.index(['client_id']);
+        });
+    }
+    await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='claims')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                         WHERE table_schema='public'
+                           AND table_name='claims'
+                           AND constraint_name='claims_status_check') THEN
+        ALTER TABLE claims
+          ADD CONSTRAINT claims_status_check CHECK (
+            status IN ('draft','ready','submitted','accepted','rejected','denied','paid','void')
+          );
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='claims')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                         WHERE table_schema='public'
+                           AND table_name='claims'
+                           AND constraint_name='claims_denial_risk_check') THEN
+        ALTER TABLE claims
+          ADD CONSTRAINT claims_denial_risk_check CHECK (
+            denial_risk IN ('low','medium','high')
+          );
+      END IF;
+    END$$;
+  `);
+    if (!(await knex.schema.hasTable('claim_lines'))) {
+        await knex.schema.createTable('claim_lines', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('claim_id').references('id').inTable('claims').notNullable().onDelete('CASCADE');
+            table.uuid('visit_id').references('id').inTable('evv_visits').notNullable().onDelete('RESTRICT');
+            table.string('service_code').notNullable();
+            table.date('service_date').notNullable();
+            table.integer('units').notNullable().defaultTo(0);
+            table.integer('minutes').notNullable().defaultTo(0);
+            table.integer('charge_cents').notNullable().defaultTo(0);
+            table.string('denial_risk', 10).notNullable().defaultTo('low');
+            table.jsonb('denial_reasons').notNullable().defaultTo('[]');
+            table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+            // One line per visit per claim — a visit can't appear twice on a claim.
+            table.unique(['claim_id', 'visit_id']);
+            table.index(['claim_id']);
+            table.index(['visit_id']);
+        });
+    }
+    // ── R14 — Agency billing identity (837 billing-provider profile) ──────────
+    // The 837P billing-provider loop (2010AA) needs the agency's NPI, tax id and
+    // service address; the agency's clearinghouse interchange id labels the
+    // receiver. These are nullable: a 837 still generates without them, but the
+    // claim route flags an incomplete billing profile so an agency knows what to
+    // fill before a clearinghouse will accept the file.
+    if (await knex.schema.hasTable('agencies')) {
+        const billingIdentityCols = [
+            ['billing_npi', (t) => t.string('billing_npi', 10).nullable()],
+            ['billing_tax_id', (t) => t.string('billing_tax_id', 20).nullable()],
+            ['billing_address1', (t) => t.string('billing_address1', 200).nullable()],
+            ['billing_city', (t) => t.string('billing_city', 100).nullable()],
+            ['billing_state', (t) => t.specificType('billing_state', 'char(2)').nullable()],
+            ['billing_postal_code', (t) => t.string('billing_postal_code', 10).nullable()],
+            ['billing_taxonomy', (t) => t.string('billing_taxonomy', 20).nullable()],
+            ['clearinghouse_id', (t) => t.string('clearinghouse_id', 40).nullable()],
+        ];
+        for (const [col, build] of billingIdentityCols) {
+            if (!(await knex.schema.hasColumn('agencies', col))) {
+                await knex.schema.alterTable('agencies', build);
+            }
+        }
+    }
 }
 export async function down(knex) {
+    await knex.schema.dropTableIfExists('claim_lines');
+    await knex.schema.dropTableIfExists('claims');
     await knex.schema.dropTableIfExists('password_reset_tokens');
     await knex.schema.dropTableIfExists('onboarding_documents');
     await knex.schema.dropTableIfExists('onboarding_interviews');

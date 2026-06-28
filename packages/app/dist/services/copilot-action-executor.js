@@ -13,7 +13,8 @@
  * executor itself never writes audit. Keeps the executor pure-ish and the
  * route in charge of side-effect logging.
  */
-import { CaregiverRepository, LearningRepository, } from '@rayhealth/core';
+import { AgencyRepository, CaregiverRepository, LearningRepository, } from '@rayhealth/core';
+import { createEmailClient } from '../email/email-client.js';
 export class ActionAuthorizationError extends Error {
     constructor(message) {
         super(message);
@@ -81,8 +82,9 @@ async function executeEnrollCaregiver(action, ctx) {
     };
 }
 // ---------- send_reminder ----------
-// Stub for v2 — logs the intent + returns a synthetic outcome. Real send
-// (email/push) wires up when the notification service exists.
+// Dispatches a real reminder. Email delivery is live (via the configured email
+// provider — SMTP/Resend/SES). Push delivery is not built yet, so a push-only
+// request is declined honestly rather than silently "queued".
 async function executeSendReminder(action, ctx) {
     if (ctx.actorRole !== 'admin' && ctx.actorRole !== 'coordinator') {
         throw new ActionAuthorizationError('Only admins and coordinators can send caregiver reminders.');
@@ -95,18 +97,44 @@ async function executeSendReminder(action, ctx) {
     if (caregiver.agencyId !== ctx.agencyId) {
         throw new ActionAuthorizationError('Caregiver belongs to a different agency.');
     }
-    // v2 STUB: notification service is not yet wired. We record the intent
-    // and audit it; v3 will dispatch through the real notification pipeline.
-    process.stderr.write(`[copilot-action-stub] send_reminder caregiver=${action.caregiverId} ` +
-        `channel=${action.channel} length=${action.message.length}\n`);
+    const wantsEmail = action.channel === 'email' || action.channel === 'both';
+    const wantsPush = action.channel === 'push' || action.channel === 'both';
+    const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+    // Push delivery isn't wired yet. Be explicit instead of pretending.
+    if (action.channel === 'push') {
+        throw new ActionExecutionError('Push reminders are not available yet. Ask me to send an email reminder instead.');
+    }
+    let emailMessageId;
+    if (wantsEmail) {
+        if (!caregiver.email) {
+            throw new ActionExecutionError(`${caregiverName} has no email address on file.`);
+        }
+        const agency = await new AgencyRepository(ctx.db).findById(ctx.agencyId);
+        const result = await createEmailClient().sendReminderEmail({
+            to: caregiver.email,
+            caregiverName,
+            message: action.message,
+            agencyName: agency?.name ?? 'Your agency',
+        });
+        if (!result.ok) {
+            throw new ActionExecutionError(result.error === 'EMAIL_NOT_CONFIGURED'
+                ? 'Email delivery is not configured for this environment.'
+                : `Email delivery failed (${result.error}).`);
+        }
+        emailMessageId = result.id;
+    }
     return {
         action,
         outcome: {
-            simulated: true,
-            caregiverName: `${caregiver.firstName} ${caregiver.lastName}`,
+            caregiverName,
             channel: action.channel,
+            emailDelivered: wantsEmail,
+            emailMessageId,
+            // 'both' delivers the email now; push portion is noted as pending.
+            pushPending: wantsPush,
         },
-        summary: `Queued ${action.channel} reminder for ${caregiver.firstName} ${caregiver.lastName} (notification service v3)`,
+        summary: `Emailed a reminder to ${caregiverName}` +
+            (wantsPush ? ' (push delivery is coming soon)' : ''),
     };
 }
 //# sourceMappingURL=copilot-action-executor.js.map

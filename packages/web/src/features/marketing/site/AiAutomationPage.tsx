@@ -4,12 +4,13 @@ import { SiteLayout, mkic, MK_CHECK } from './SiteLayout.js';
 /**
  * Platform › AI automation.
  * ACCURATE framing: the RayHealth copilot is a SHIPPED, LIVE feature — a
- * Gemini-powered conversational assistant for admins and coordinators. It
+ * Claude-powered conversational assistant for admins and coordinators. It
  * runs human-in-the-loop by design: the model only *proposes* a structured
  * action; a person reviews and confirms before anything happens. Today it can
  * enroll a caregiver into a training course. Every interaction is audit-logged
  * (prompts are hashed, not stored in plaintext). It is opt-in per agency via a
- * plan flag (Gemini 2.5 Flash on Starter, 2.5 Pro on Pro).
+ * plan flag (Claude on Amazon Bedrock; a faster model on Starter, a more
+ * capable model on Pro).
  *
  * Honestly scoped as "coming soon" / roadmap and clearly labeled as such:
  * automated reminder dispatch (wired but the notification pipeline isn't
@@ -51,6 +52,11 @@ const capabilities: readonly Capability[] = [
     i: mkic(<><path d="M22 10 12 5 2 10l10 5 10-5z" /><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" /></>),
   },
   {
+    title: 'Send a caregiver reminder',
+    body: 'Ask the copilot to remind a caregiver — a lapsing credential, an upcoming visit, a required course — and after you confirm, it sends a branded email to the caregiver on file. Email delivery is live today; push and SMS are next.',
+    i: mkic(<><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></>),
+  },
+  {
     title: 'Grounded in your agency',
     body: 'The copilot is given your agency context — active caregivers and available courses — so its suggestions are tied to real records in your account, not generic guesses.',
     i: mkic(<><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" /><rect x="13" y="7" width="3" height="10" /></>),
@@ -67,7 +73,7 @@ const capabilities: readonly Capability[] = [
   },
   {
     title: 'Opt-in per agency',
-    body: 'The copilot is off until you turn it on. Each agency enables it through its plan — Gemini 2.5 Flash on Starter, Gemini 2.5 Pro on Pro — so you decide whether AI is part of your workflow.',
+    body: 'The copilot is off until you turn it on. Each agency enables it through its plan — a fast model on Starter, a more capable model on Pro, running on Claude via Amazon Bedrock — so you decide whether AI is part of your workflow.',
     i: mkic(<><path d="M12 2 4 5v6c0 6 8 10 8 10s8-4 8-10V5z" /><path d="M9 12l2 2 4-4" /></>),
   },
 ];
@@ -93,8 +99,8 @@ const trustPoints: readonly TrustPoint[] = [
 const roadmap: readonly RoadmapItem[] = [
   {
     status: 'Coming soon',
-    title: 'Automated reminder dispatch',
-    body: 'The copilot can already recognize a “send a reminder” intent and log it for review. Actually dispatching the notification is wired up but the delivery pipeline isn’t connected yet — so this is coming soon, not live.',
+    title: 'Push & SMS reminders',
+    body: 'Email reminder dispatch is live today — the copilot sends a branded email after you confirm. Push and SMS are the next delivery channels: the intent, confirmation, and audit trail are already wired; we’re connecting the push/SMS providers.',
   },
   {
     status: 'On the roadmap',
@@ -115,7 +121,7 @@ const faqs: readonly Faq[] = [
   },
   {
     q: 'What can it actually do right now versus later?',
-    a: 'Live today: a conversational copilot that answers questions grounded in your agency context, and an enroll-a-caregiver action that adds a caregiver to a training course after you confirm it. Coming soon: automated reminder dispatch — the intent and audit are wired, but the notification pipeline isn’t connected yet. On the roadmap: schedule drafting and claim-readiness triage. We label what’s live and what isn’t so you’re never counting on something that hasn’t shipped.',
+    a: 'Live today: a conversational copilot that answers questions grounded in your agency context, an enroll-a-caregiver action that adds a caregiver to a training course after you confirm it, and a send-reminder action that emails a caregiver after you confirm it. Coming soon: push and SMS reminder channels (email is live). On the roadmap: schedule drafting and claim-readiness triage. We label what’s live and what isn’t so you’re never counting on something that hasn’t shipped.',
   },
   {
     q: 'Does the AI ever act on its own?',
@@ -123,7 +129,7 @@ const faqs: readonly Faq[] = [
   },
   {
     q: 'How do I turn it on?',
-    a: 'The copilot is opt-in per agency and requires enabling the AI plan. It’s powered by Google Gemini — 2.5 Flash on the Starter plan and 2.5 Pro on the Pro plan. Until your agency’s plan enables it, the copilot stays off. See pricing for the plan details.',
+    a: 'The copilot is opt-in per agency and requires enabling the AI plan. It’s powered by Claude on Amazon Bedrock — a fast model on the Starter plan and a more capable model on the Pro plan. Until your agency’s plan enables it, the copilot stays off. See pricing for the plan details.',
   },
   {
     q: 'What does it know about my agency, and what gets stored?',
@@ -196,7 +202,7 @@ function CopilotVisual() {
 
 const loopSteps: readonly { n: string; t: string; b: string }[] = [
   { n: '01', t: 'You ask', b: 'A coordinator types a request in natural language. The copilot has your agency context to ground its answer.' },
-  { n: '02', t: 'It proposes', b: 'Gemini answers and, when there’s an action to take, returns a structured proposal — validated against your agency first.' },
+  { n: '02', t: 'It proposes', b: 'Claude answers and, when there’s an action to take, returns a structured proposal — validated against your agency first.' },
   { n: '03', t: 'You approve', b: 'You review the proposed action and confirm or decline. Nothing runs until a person says yes.' },
   { n: '04', t: 'It’s recorded', b: 'The question and your decision are written to the audit log, with the prompt stored as a hash.' },
 ];
@@ -220,7 +226,7 @@ export function AiAutomationPage() {
             RayHealth&rsquo;s copilot is live in the app today. Ask it in plain language and it answers,
             grounded in your agency&rsquo;s caregivers and courses — then proposes a structured action for a
             person to review. It&rsquo;s <strong>human-in-the-loop by design</strong>: the AI never acts on its
-            own, and every interaction is audit-logged. Powered by Google Gemini.
+            own, and every interaction is audit-logged. Powered by Claude on Amazon Bedrock.
           </p>
           <div className="mk-herocta">
             <Link to="/demo" className="mk-btn mk-pri">See it in a demo</Link>
@@ -237,7 +243,7 @@ export function AiAutomationPage() {
               <p className="mk-eylabel">The loop</p>
               <h3>Ask in plain language. Approve the action.</h3>
               <p>
-                The copilot is conversational. A coordinator asks a question; Gemini answers and, when there&rsquo;s
+                The copilot is conversational. A coordinator asks a question; Claude answers and, when there&rsquo;s
                 something to do, returns a proposed action. A person confirms it before anything happens — and the
                 whole exchange is written to the audit trail.
               </p>
