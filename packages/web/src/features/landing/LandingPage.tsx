@@ -116,7 +116,7 @@ const resources = [
   { tag: 'Checklist', t: 'Preparing for a DHS audit', b: 'What auditors actually ask for — and how an immutable trail answers it in minutes.' },
   { tag: 'Playbook', t: 'Cutting claim denials in your first quarter', b: 'The exception-resolution workflow that turns rejected claims into paid ones.' },
   { tag: 'Guide', t: 'Onboarding caregivers onto GPS clock-in', b: 'A rollout plan that gets your field team verifying visits in days, not weeks.' },
-  { tag: 'Article', t: 'Telephony &amp; offline EVV: covering every home', b: 'How RayHealth verifies visits where there is no signal — and stays compliant.' },
+  { tag: 'Article', t: 'Telephony & offline EVV: covering every home', b: 'How RayHealth verifies visits where there is no signal — and stays compliant.' },
 ];
 
 const spotlights = [
