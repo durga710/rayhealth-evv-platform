@@ -237,10 +237,6 @@ const groupHeading: React.CSSProperties = {
   margin: 0
 };
 
-const trowCell: React.CSSProperties = { color: 'var(--ink-soft)' };
-
-const controlCell: React.CSSProperties = { fontWeight: 600, color: 'var(--accent-deep)' };
-
 const linkStyle: React.CSSProperties = { color: 'var(--accent-deep)', fontWeight: 600 };
 
 const outScopeItem: React.CSSProperties = {
@@ -248,9 +244,6 @@ const outScopeItem: React.CSSProperties = {
   lineHeight: 1.55,
   fontSize: '.97rem'
 };
-
-const controlsCols = '32% 1fr';
-const subprocCols = '1fr 1.4fr 1fr 1.6fr';
 
 export function HipaaCompliancePage() {
   return (
@@ -345,18 +338,22 @@ export function HipaaCompliancePage() {
                 <div key={group.safeguard} style={{ marginTop: 32 }}>
                   <h3 style={groupHeading}>{group.safeguard}</h3>
                   <p className="mk-eylabel" style={{ marginTop: 6 }}>{group.cfr}</p>
-                  <div className="mk-table" style={{ marginTop: 14 }}>
-                    <div className="mk-trow" style={{ gridTemplateColumns: controlsCols }}>
-                      <div>Control</div>
-                      <div>How RayHealth implements it</div>
-                    </div>
-                    {group.rows.map((row) => (
-                      <div className="mk-trow" key={row.control} style={{ gridTemplateColumns: controlsCols }}>
-                        <div style={controlCell}>{row.control}</div>
-                        <div style={trowCell}>{row.implementation}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <table className="mk-tbl" style={{ marginTop: 14 }}>
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '32%' }}>Control</th>
+                        <th scope="col">How RayHealth implements it</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.rows.map((row) => (
+                        <tr key={row.control}>
+                          <td>{row.control}</td>
+                          <td>{row.implementation}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ))}
             </section>
@@ -408,22 +405,26 @@ export function HipaaCompliancePage() {
                 customer data. Customers may request the current
                 authoritative list at any time.
               </p>
-              <div className="mk-table">
-                <div className="mk-trow" style={{ gridTemplateColumns: subprocCols }}>
-                  <div>Name</div>
-                  <div>Role</div>
-                  <div>Region</div>
-                  <div>Data class</div>
-                </div>
-                {subprocessors.map((s) => (
-                  <div className="mk-trow" key={s.name} style={{ gridTemplateColumns: subprocCols }}>
-                    <div style={controlCell}>{s.name}</div>
-                    <div style={trowCell}>{s.role}</div>
-                    <div style={trowCell}>{s.region}</div>
-                    <div style={trowCell}>{s.dataClass}</div>
-                  </div>
-                ))}
-              </div>
+              <table className="mk-tbl">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Region</th>
+                    <th scope="col">Data class</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subprocessors.map((s) => (
+                    <tr key={s.name}>
+                      <td>{s.name}</td>
+                      <td>{s.role}</td>
+                      <td>{s.region}</td>
+                      <td>{s.dataClass}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </section>
 
             {/* Third-party attestation */}

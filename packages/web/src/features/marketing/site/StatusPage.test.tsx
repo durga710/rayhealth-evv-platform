@@ -6,7 +6,7 @@ import { StatusPage } from './StatusPage.js';
 
 /**
  * StatusPage polls three real backend probes on mount and re-renders the
- * cards into the marketing chrome. The chrome itself (header, footer,
+ * cards into the SiteLayout chrome. The chrome itself (nav, footer,
  * SupportChat) depends on react-router's Link, so we wrap the tree in a
  * MemoryRouter.
  */
@@ -66,8 +66,6 @@ describe('StatusPage', () => {
       </MemoryRouter>,
     );
 
-    // The first probe is async (Promise.all). Wait for the overall title
-    // to flip from the loading placeholder to "All systems operational."
     await waitFor(() =>
       expect(screen.getByText(/all systems operational/i)).toBeInTheDocument(),
     );

@@ -32,8 +32,8 @@ interface AuthContextType {
 
 function applyAgencyTheme(theme?: AgencyTheme | null) {
   const root = document.documentElement;
-  const primary = theme?.primaryColor ?? '#7c3aed';
-  const primaryDark = theme?.primaryDark ?? '#6d28d9';
+  const primary = theme?.primaryColor ?? '#107480';
+  const primaryDark = theme?.primaryDark ?? '#0c5d66';
   root.style.setProperty('--color-primary', primary);
   root.style.setProperty('--color-primary-dark', primaryDark);
   // Derive a low-opacity bg tint from the primary color for hover/active states.

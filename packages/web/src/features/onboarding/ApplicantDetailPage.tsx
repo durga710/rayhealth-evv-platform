@@ -78,7 +78,7 @@ const DOCUMENT_TYPES: { value: string; label: string }[] = [
 ];
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  applied: { bg: '#EEF2FF', text: '#6d28d9' },
+  applied: { bg: '#EEF2FF', text: '#0c5d66' },
   interviewing: { bg: '#FFF7ED', text: '#C2410C' },
   interview_complete: { bg: '#F0FDF4', text: '#15803D' },
   under_review: { bg: '#FEF9C3', text: '#A16207' },
@@ -599,7 +599,7 @@ export function ApplicantDetailPage() {
                         style={{
                           padding: '0.2rem 0.6rem',
                           backgroundColor: '#EEF2FF',
-                          color: '#6d28d9',
+                          color: '#0c5d66',
                           border: '1px solid #ddd6fe',
                           borderRadius: '5px',
                           fontSize: '0.7rem',
@@ -645,7 +645,7 @@ export function ApplicantDetailPage() {
                     margin: 0,
                     fontSize: '0.875rem',
                     fontWeight: 600,
-                    color: '#6d28d9',
+                    color: '#0c5d66',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -770,7 +770,7 @@ export function ApplicantDetailPage() {
                           m.role === 'user'
                             ? '12px 12px 3px 12px'
                             : '12px 12px 12px 3px',
-                        backgroundColor: m.role === 'user' ? '#6d28d9' : 'white',
+                        backgroundColor: m.role === 'user' ? '#0c5d66' : 'white',
                         color: m.role === 'user' ? 'white' : '#0F172A',
                         fontSize: '0.875rem',
                         lineHeight: 1.5,

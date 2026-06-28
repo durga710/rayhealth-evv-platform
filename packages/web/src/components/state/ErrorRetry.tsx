@@ -52,9 +52,9 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
         onClick={onRetry}
         style={{
           marginTop: '0.5rem',
-          backgroundColor: '#7c3aed',
+          backgroundColor: '#107480',
           color: 'white',
-          border: '1px solid #7c3aed',
+          border: '1px solid #107480',
           padding: '0.5rem 1.1rem',
           borderRadius: '8px',
           fontWeight: 500,

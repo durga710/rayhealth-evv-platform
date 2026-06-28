@@ -44,7 +44,7 @@ interface StaffMember { id: string; email: string; role: string; }
 const severityColors: Record<string, { bg: string; text: string; border: string }> = {
   critical: { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' },
   warning: { bg: '#FFFBEB', text: '#B45309', border: '#FCD34D' },
-  info: { bg: 'rgba(124, 58, 237, 0.08)', text: '#6d28d9', border: 'rgba(124, 58, 237, 0.25)' },
+  info: { bg: 'rgba(16, 116, 128, 0.08)', text: '#0c5d66', border: 'rgba(16, 116, 128, 0.25)' },
 };
 
 const cadenceLabel: Record<string, string> = {

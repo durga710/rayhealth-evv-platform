@@ -143,7 +143,7 @@ export function AuthorizationsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card" style={{ borderTop: '3px solid #8B5CF6' }}>
+        <div className="form-card" style={{ borderTop: '3px solid #1690a0' }}>
           <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>Add authorization</h3>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -238,9 +238,9 @@ export function AuthorizationsPage() {
                 style={{
                   fontSize: '0.7rem',
                   fontWeight: 700,
-                  color: '#8B5CF6',
-                  background: 'rgba(139,92,246,0.1)',
-                  border: '1px solid rgba(139,92,246,0.2)',
+                  color: '#1690a0',
+                  background: 'rgba(22, 144, 160,0.1)',
+                  border: '1px solid rgba(22, 144, 160,0.2)',
                   borderRadius: '999px',
                   padding: '0.2rem 0.65rem',
                   letterSpacing: '0.04em',

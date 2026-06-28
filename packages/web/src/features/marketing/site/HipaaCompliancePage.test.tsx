@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { HipaaCompliancePage } from '../HipaaCompliancePage.js';
+import { HipaaCompliancePage } from './HipaaCompliancePage.js';
 
 describe('HipaaCompliancePage', () => {
   function renderPage() {
@@ -22,7 +22,6 @@ describe('HipaaCompliancePage', () => {
 
   it('does not use the prohibited phrase "HIPAA certified"', () => {
     renderPage();
-    // The string "certified" must never appear on this page.
     expect(screen.queryByText(/HIPAA[\s-]?certified/i)).not.toBeInTheDocument();
   });
 
@@ -37,8 +36,6 @@ describe('HipaaCompliancePage', () => {
     expect(
       screen.getByRole('heading', { name: /Physical safeguards/i })
     ).toBeInTheDocument();
-    // Use getAllByRole because "Privacy Rule controls" matches both the
-    // safeguard group heading and may appear in body copy.
     expect(
       screen.getAllByRole('heading', { name: /Privacy Rule controls/i }).length
     ).toBeGreaterThan(0);
@@ -46,8 +43,6 @@ describe('HipaaCompliancePage', () => {
 
   it('cites the relevant CFR sections', () => {
     renderPage();
-    // CFR § 164.308 appears in both the lead paragraph and the
-    // Administrative safeguards subhead, so use getAllByText.
     expect(screen.getAllByText(/45 CFR § 164\.308/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/45 CFR § 164\.312/i)).toBeInTheDocument();
     expect(screen.getByText(/45 CFR § 164\.310/i)).toBeInTheDocument();

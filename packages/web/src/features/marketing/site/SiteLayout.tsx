@@ -135,6 +135,13 @@ export const SITE_CSS = `
 .mk-trow>div:last-child{border-right:none;}
 .mk-trow:first-child>div{font-weight:600;color:var(--ink);font-size:.82rem;letter-spacing:.02em;text-transform:uppercase;}
 .mk-trow .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent-deep);font-weight:600;}
+/* semantic table — same look as mk-table, real <table>/<th>/<td> for a11y */
+.mk-tbl{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.92rem;}
+.mk-tbl thead th{text-align:left;background:var(--surface);color:var(--ink);font-weight:600;font-size:.78rem;letter-spacing:.02em;text-transform:uppercase;padding:14px 20px;border-bottom:1px solid var(--line);}
+.mk-tbl td{padding:14px 20px;border-top:1px solid var(--line);color:var(--ink-soft);vertical-align:top;}
+.mk-tbl tbody tr:first-child td{border-top:none;}
+.mk-tbl td:first-child{color:var(--ink);font-weight:550;}
+.mk-tbl .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent-deep);font-weight:600;}
 /* callout / cta */
 .mk-callout{position:relative;overflow:hidden;background:var(--ink-bg);border-radius:24px;padding:64px 40px;text-align:center;color:#fff;}
 .mk-callout::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 100% at 50% 0%,rgba(16,116,128,.22),transparent 70%);}

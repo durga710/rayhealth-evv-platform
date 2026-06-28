@@ -97,7 +97,7 @@ const board: BoardColumn[] = [
     { t: '1:00 PM', who: 'R. Vance', bg: '#eef3fb', bar: '#3b82f6' },
   ] },
   { day: 'Tue', cards: [
-    { t: '9:30 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#8b5cf6' },
+    { t: '9:30 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#1690a0' },
   ] },
   { day: 'Wed', cards: [
     { t: '8:00 AM', who: 'M. Santos', bg: '#e7f3f4', bar: '#107480' },
@@ -107,7 +107,7 @@ const board: BoardColumn[] = [
     { t: '10:00 AM', who: 'R. Vance', bg: '#eef3fb', bar: '#3b82f6' },
   ] },
   { day: 'Fri', cards: [
-    { t: '8:00 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#8b5cf6' },
+    { t: '8:00 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#1690a0' },
     { t: '2:00 PM', who: 'M. Santos', bg: '#e7f3f4', bar: '#107480' },
   ] },
 ];

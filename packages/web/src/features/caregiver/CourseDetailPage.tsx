@@ -68,7 +68,7 @@ function formatDate(iso: string | null) {
 const backBtnStyle: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#7c3aed',
+  color: '#107480',
   fontWeight: 600,
   fontSize: '0.875rem',
   cursor: 'pointer',
@@ -114,7 +114,7 @@ function VideoPlayer({ videoUrl, onPlay }: { videoUrl: string; onPlay?: () => vo
         }}>
           <div style={{
             width: '64px', height: '64px', borderRadius: '50%',
-            background: 'rgba(124, 58, 237,0.9)',
+            background: 'rgba(16, 116, 128,0.9)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="white" aria-hidden="true">
@@ -187,7 +187,7 @@ function Quiz({ questions, onPass }: QuizProps) {
     <div style={{ marginBottom: '1.5rem' }}>
       <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden' }}>
         <div style={{
-          background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+          background: 'linear-gradient(135deg, #107480 0%, #0c5d66 100%)',
           padding: '1rem 1.5rem',
           display: 'flex', alignItems: 'center', gap: '0.75rem',
         }}>
@@ -283,7 +283,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                             checked={isSelected}
                             disabled={quizState !== 'active'}
                             onChange={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
-                            style={{ marginTop: '2px', flexShrink: 0, accentColor: '#7c3aed' }}
+                            style={{ marginTop: '2px', flexShrink: 0, accentColor: '#107480' }}
                           />
                           <span>{opt}</span>
                         </label>
@@ -302,7 +302,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                   onClick={handleSubmit}
                   style={{
                     padding: '0.65rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem',
-                    color: '#fff', background: allAnswered ? '#7c3aed' : '#CBD5E1',
+                    color: '#fff', background: allAnswered ? '#107480' : '#CBD5E1',
                     border: 'none', borderRadius: '8px', cursor: allAnswered ? 'pointer' : 'not-allowed',
                   }}
                 >
@@ -315,7 +315,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                   onClick={handleRetry}
                   style={{
                     padding: '0.65rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem',
-                    color: '#fff', background: '#7c3aed',
+                    color: '#fff', background: '#107480',
                     border: 'none', borderRadius: '8px', cursor: 'pointer',
                   }}
                 >
@@ -416,7 +416,7 @@ export function CourseDetailPage() {
 
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+        background: 'linear-gradient(135deg, #107480 0%, #0c5d66 100%)',
         borderRadius: '14px',
         padding: '1.75rem 2rem',
         color: '#fff',
@@ -508,7 +508,7 @@ export function CourseDetailPage() {
             <button
               type="button"
               onClick={() => setOpenSection(openSection === null ? 0 : null)}
-              style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: '#7c3aed', fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: '#107480', fontWeight: 600, cursor: 'pointer' }}
             >
               {openSection !== null ? 'Collapse all' : 'Expand all'}
             </button>
@@ -526,7 +526,7 @@ export function CourseDetailPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{
                         width: '26px', height: '26px', borderRadius: '50%',
-                        background: isOpen ? 'var(--color-primary, #7c3aed)' : '#F1F5F9',
+                        background: isOpen ? 'var(--color-primary, #107480)' : '#F1F5F9',
                         color: isOpen ? '#fff' : '#64748B',
                         fontSize: '0.75rem', fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -620,7 +620,7 @@ export function CourseDetailPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               padding: '0.6rem 1.4rem', fontWeight: 700, fontSize: '0.9375rem',
-              color: '#fff', background: completing ? '#94A3B8' : 'var(--color-primary, #7c3aed)',
+              color: '#fff', background: completing ? '#94A3B8' : 'var(--color-primary, #107480)',
               border: 'none', borderRadius: '8px', cursor: completing ? 'wait' : 'pointer', whiteSpace: 'nowrap',
             }}
           >
