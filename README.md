@@ -1,97 +1,112 @@
-# RayHealth EVV
+<div align="center">
 
-Electronic Visit Verification platform for home-care agencies. Live at https://rayhealthevv.com.
+<img src="packages/web/public/brand/rayhealthevv-logo.png" alt="RayHealthEVV" width="460" />
 
-RayHealth combines mobile clock-in/out with GPS geofence verification, web admin for agencies (scheduling, compliance, billing readiness), Sandata + HHAeXchange aggregator export for state Medicaid submission, an audit-grade event log, and a per-agency AI workflow Copilot. Designed to support HIPAA-grade privacy controls and 21st-Century Cures Act EVV mandates.
+<h3>Electronic Visit Verification for home-care agencies</h3>
 
-## What's in this repo
+<p>GPS-verified mobile clock-in &middot; scheduling &amp; compliance &middot; billing &amp; claims &middot; Medicaid aggregator submission</p>
 
-This is a Turbo-managed npm monorepo. The four workspaces are:
+<p>
+  <a href="https://rayhealthevv.com"><strong>rayhealthevv.com&nbsp;&rarr;</strong></a>
+</p>
 
-| Package | What it is |
+<p>
+  <a href="https://github.com/durga710/rayhealth-evv-platform/actions/workflows/ci.yml"><img src="https://github.com/durga710/rayhealth-evv-platform/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/license-proprietary-red" alt="License: Proprietary" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Capacitor-119EFF?logo=capacitor&logoColor=white" alt="Capacitor" />
+</p>
+
+</div>
+
+---
+
+RayHealthEVV is a **21st-Century Cures Act–aligned** Electronic Visit Verification platform for
+home-care agencies. Caregivers clock in and out from a mobile app with GPS geofence verification;
+agencies run scheduling, compliance, billing, and claims from a web console; and verified visits are
+submitted to state Medicaid aggregators (**Sandata**, **HHAeXchange**) — all on an append-only,
+audit-grade event log designed for HIPAA-grade privacy controls.
+
+## Features
+
+| | |
 |---|---|
-| `packages/core` | Shared domain entities (Zod-validated), repositories, migrations, state-strategy registry (PA, NJ, …), and the per-aggregator export contracts (Sandata, HHAeXchange) |
-| `packages/app` | Express backend — REST API, auth, audit middleware, AI Copilot runtime, EVV export endpoints |
-| `packages/web` | React + Vite admin UI for agency owners and coordinators |
-| `packages/mobile-capacitor` | Capacitor iOS/Android caregiver app (subtree from the production mobile repo) |
+| 📍 **GPS-verified EVV** | Mobile clock-in/out with Haversine geofence anchoring against the client's service address. |
+| 🗓️ **Scheduling & assignments** | Recurring schedules, conflict gating, and caregiver–client assignment with eligibility checks. |
+| ✅ **Compliance engine** | Credential tracking, visit-maintenance exceptions, and a Go-Live readiness checklist. |
+| 💵 **Billing & claims** | 837P claim generation, 835 remittance posting, denial scoring, and payroll export. |
+| 🛰️ **Aggregator submission** | Real Sandata Alternate-EVV (async POST → poll) and HHAeXchange transport, per-agency configured. |
+| 🔒 **Audit defense** | Append-only `audit_events` enforced by a DB trigger, with a compliant retention sweep. |
+| 🤖 **AI surfaces** | A caregiver support assistant and an agency workflow Copilot that emits typed, reviewable actions. |
 
-Top-level surface:
+## Monorepo
 
-| Path | Purpose |
+Turbo-managed npm workspaces:
+
+| Workspace | Description |
 |---|---|
-| `docs/` | Compliance, onboarding runbooks, deeper architecture notes |
-| `scripts/` | Build/deploy/migration helpers (`deploy.sh`, `run-migrations-prompted.sh`, `security-surface-scan.ts`, …) |
-| `marketing/` | Video production pipeline (six 30-second spots) |
-| `deliverables/app-icon/` | App Store / Play Store icon set, 1024×1024 master + iOS/Android sizes |
-| `.github/` | CI workflows, branch-protection rulesets, CODEOWNERS, PR / issue templates |
-| `vercel.json` | Production deploy config |
-| `PROJECT_STATUS.md` | Single source of truth for current state, recent work, and open items |
-| `SECURITY.md` | Vulnerability disclosure policy |
-| `DEPLOY_NOW.md` | Step-by-step deploy runbook |
+| [`packages/core`](packages/core) | Domain entities (Zod-validated), repositories, migrations, the state-strategy registry (PA, NJ, …), and aggregator integration contracts. |
+| [`packages/app`](packages/app) | Express REST API — auth, capability RBAC, audit middleware, billing, EVV export/submission, AI runtimes. |
+| [`packages/web`](packages/web) | React + Vite admin console for agency owners and coordinators. |
+| [`packages/mobile`](packages/mobile) | Capacitor iOS/Android caregiver app. |
 
-## Quickstart for developers
+## Quickstart
 
 ```bash
-# 1. Clone + install
-git clone git@github.com:durga710/rayhealth-evv-platform.git
-cd rayhealth-evv-platform
+# 1. Install (postinstall runs patch-package)
 npm install
-# Note: if you ever need to regenerate package-lock.json from scratch,
-# run `./scripts/sync-lockfile.sh` (Docker-backed). Doing it via plain
-# `npm install` on macOS silently strips Linux native bindings and
-# breaks CI — see docs/LOCKFILE.md.
 
-# 2. Set up local Postgres (or use a Neon dev branch). Set DATABASE_URL.
-cp .env.example .env   # if present
-export DATABASE_URL='postgres://localhost/rayhealth_dev'
+# 2. Bring up local Postgres + set env
+npm run docker:up
+cp .env.example .env            # then edit DATABASE_URL / JWT_SECRET
 export JWT_SECRET="$(openssl rand -hex 32)"
 
-# 3. Run migrations
+# 3. Migrate the schema
 npm run db:migrate
 
-# 4. Run all the quality gates (this is what CI runs on every PR)
-npm run typecheck
-npm run lint
-npm run security:scan
-(cd packages/core && npx vitest run)
-(cd packages/app && npx vitest run)
-(cd packages/web && npx vitest run)
-
-# 5. Boot the stack locally
-npm run dev         # if a root-level dev script exists; otherwise per-workspace
+# 4. Run the full quality gate (mirrors CI)
+npm run check                   # typecheck · lint · security:scan · all workspace tests
 ```
 
-## Architecture mental model
+> **Lockfile note:** regenerate `package-lock.json` only via the Docker-backed helper — a plain
+> `npm install` on macOS strips Linux native bindings and breaks CI. See [`docs/LOCKFILE.md`](docs/LOCKFILE.md).
 
-- **Web auth.** HttpOnly `rayhealth_session` cookie + CSRF token. No bearer tokens in browser storage — `scripts/security-surface-scan.ts` fails CI if any `localStorage.setItem('rayhealth_…')` or `localStorage.setItem('rayhealth.…')` pattern reappears.
-- **Mobile auth.** JWT from `/auth/mobile/login`, stored in `@aparajita/capacitor-secure-storage` (iOS Keychain / Android Keystore).
-- **Server auth context.** Session cookies first, bearer fallback. Every protected route uses `requireCapability(...)` middleware.
-- **Audit persistence.** `audit_events` is append-only via the `audit_events_block_mutation_trg` trigger. The retention sweep bypasses the trigger inside a transaction via `SET LOCAL session_replication_role = 'replica'` and writes its own audit row to `audit_retention_runs`.
-- **Aggregator transmission.** Sandata and HHAeXchange both implemented. Per-agency config split into three tables: `agency_evv_config` (which aggregator), `agency_sandata_config` (Sandata identity + JSONB mappings), `agency_hhaexchange_config` (HHAeXchange identity + JSONB mappings). The state registry's `aggregatorChoice` flag decides whether the agency can pick (PA, yes; NJ, no — forced HHAeXchange).
-- **AI surfaces.** Claude Haiku 3.5 on AWS Bedrock for the caregiver `/api/support/chat`. Google Gemini for the agency-level workflow Copilot at `/api/copilot/*`, with per-request context injection so the model can emit typed action proposals against real UUIDs.
+## Architecture
+
+- **Web auth** — HttpOnly `rayhealth_session` cookie + CSRF token. No bearer tokens in browser storage; `scripts/security-surface-scan.ts` fails CI if a `localStorage` session pattern reappears.
+- **Mobile auth** — JWT from `/auth/mobile/login`, stored in iOS Keychain / Android Keystore via `@aparajita/capacitor-secure-storage`.
+- **Server auth** — session cookie first, bearer fallback; every protected route is gated by `requireCapability(...)`.
+- **Audit immutability** — `audit_events` is append-only via a mutation-blocking trigger; the retention sweep writes its own `audit_retention_runs` record inside a transaction.
+- **Aggregator transmission** — per-agency config split across `agency_evv_config` (which aggregator), `agency_sandata_config`, and `agency_hhaexchange_config`; the state registry decides whether an agency may choose (PA: yes; NJ: forced HHAeXchange).
 
 ## Compliance posture
 
-The architectural controls expected of a HIPAA Business Associate are in place — audit immutability, encryption in transit, parameterized SQL, capability RBAC, password complexity, rate limiting on public auth surfaces, secret rotation discipline. **The operational HIPAA work** (Neon HIPAA mode, BAAs with Vercel/Neon/Resend/Google, signed risk analysis, pen test, cyber-liability insurance) is intentionally deferred until first real-agency onboarding. Until those items close, do **not** onboard any real PHI — use the fixture caregiver (`test-caregiver-fixture@rayhealthevv.local`) for any live validation.
-
-See `docs/compliance/hipaa/RISK_ANALYSIS_2026.md` for the full risk register and `docs/sandata-onboarding.md` for the first-agency onboarding runbook.
+The architectural controls expected of a HIPAA Business Associate are in place — audit immutability,
+encryption in transit, parameterized SQL, capability RBAC, auth-surface rate limiting, and secret-rotation
+discipline. The **operational** HIPAA work (HIPAA-mode database, signed BAAs, risk analysis, penetration
+test, cyber-liability insurance) is deferred until first real-agency onboarding. **Until those close, do
+not onboard real PHI** — use the fixture caregiver for live validation. See [`docs/compliance/`](docs/compliance).
 
 ## Contributing
 
-Read `PROJECT_STATUS.md` for current state, then `DEPLOY_NOW.md` if you're shipping. Every PR must:
+`main` is protected: no direct pushes, no force-pushes, linear history. Every PR must
 
-1. Pass the six required CI checks: `typecheck`, `lint`, `security-scan`, `test-core`, `test-app`, `test-web`.
-2. Get a Code Owner review (see `.github/CODEOWNERS`).
-3. Use Conventional Commit format (`feat:`, `fix:`, `chore:`, …) — enforced by the branch ruleset.
-4. Resolve every review conversation.
-5. Tick the compliance/security checklist in the PR template.
+1. pass the required CI checks (`typecheck`, `lint`, `security-scan`, `test-core`, `test-app`, `test-web`, `analyze`),
+2. earn a Code Owner review ([`.github/CODEOWNERS`](.github/CODEOWNERS)),
+3. use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, …), and
+4. resolve every review thread.
 
-Direct pushes to `main` are blocked. Force-pushes and deletions are blocked. Linear history is required (squash or rebase, no merge commits).
+Shipping to production? Follow [`docs/RUNBOOK_DEPLOY.md`](docs/RUNBOOK_DEPLOY.md).
 
-## Vulnerability reports
+## Security
 
-See `SECURITY.md`. Do not file security issues as public GitHub issues — use https://github.com/durga710/rayhealth-evv-platform/security/advisories/new or email `durga@rayhealthevv.com` with subject `[SECURITY]`.
+Please **do not** open public issues for vulnerabilities. Report via a
+[private security advisory](https://github.com/durga710/rayhealth-evv-platform/security/advisories/new)
+or email `durga@rayhealthevv.com` with the subject `[SECURITY]`. See [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-Proprietary. © Durga Ghimeray / RayHealth EVV. All rights reserved.
+Proprietary — © 2026 RayHealth. All rights reserved. See [`LICENSE`](LICENSE).
