@@ -20,6 +20,15 @@ export interface PostJsonOptions {
     timeoutMs?: number;
 }
 export declare function postJson(url: string, payload: unknown, options?: PostJsonOptions): Promise<HttpJsonResponse>;
+export interface GetJsonOptions {
+    headers?: Record<string, string>;
+    timeoutMs?: number;
+}
+/**
+ * GET a JSON resource. Like `postJson`, never throws on a non-2xx status — the
+ * caller inspects `ok`/`status`. Only a network/abort failure rejects.
+ */
+export declare function getJson(url: string, options?: GetJsonOptions): Promise<HttpJsonResponse>;
 /** Build an HTTP Basic auth header value from a username/password pair. */
 export declare function basicAuth(username: string, password: string): string;
 //# sourceMappingURL=http.d.ts.map

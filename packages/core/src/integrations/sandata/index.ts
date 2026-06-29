@@ -8,3 +8,5 @@
 export * from './types.js';
 export * from './mapper.js';
 export * from './validator.js';
+export * from './api-client.js';
+export * from './state-repository.js';

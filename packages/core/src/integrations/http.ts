@@ -50,6 +50,38 @@ export async function postJson(
   }
 }
 
+export interface GetJsonOptions {
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+}
+
+/**
+ * GET a JSON resource. Like `postJson`, never throws on a non-2xx status — the
+ * caller inspects `ok`/`status`. Only a network/abort failure rejects.
+ */
+export async function getJson(url: string, options: GetJsonOptions = {}): Promise<HttpJsonResponse> {
+  const { headers = {}, timeoutMs = 20_000 } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { accept: 'application/json', ...headers },
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let body: unknown;
+    try {
+      body = text ? JSON.parse(text) : undefined;
+    } catch {
+      body = undefined;
+    }
+    return { status: res.status, ok: res.ok, body, text };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Build an HTTP Basic auth header value from a username/password pair. */
 export function basicAuth(username: string, password: string): string {
   return `Basic ${Buffer.from(`${username}:${password}`, 'utf8').toString('base64')}`;
