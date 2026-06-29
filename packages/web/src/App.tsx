@@ -74,6 +74,7 @@ const MedicaidWorkflowPage = lazy(() => import('./features/compliance-engine/Med
 const PayrollReconciliationPage = lazy(() => import('./features/compliance-engine/PayrollReconciliationPage.js').then((m) => ({ default: m.PayrollReconciliationPage })));
 const ClaimMatchingPage = lazy(() => import('./features/compliance-engine/ClaimMatchingPage.js').then((m) => ({ default: m.ClaimMatchingPage })));
 const RemittancePage = lazy(() => import('./features/compliance-engine/RemittancePage.js').then((m) => ({ default: m.RemittancePage })));
+const EvvSubmissionPage = lazy(() => import('./features/compliance-engine/EvvSubmissionPage.js').then((m) => ({ default: m.EvvSubmissionPage })));
 const CredentialsPage = lazy(() => import('./features/compliance-engine/CredentialsPage.js').then((m) => ({ default: m.CredentialsPage })));
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
@@ -335,6 +336,7 @@ const navGroupDefs: NavGroupDef[] = [
       { to: '/admin/compliance-engine/payroll', label: 'Payroll', icon: icons.archive },
       { to: '/admin/compliance-engine/claims', label: 'Claims', icon: icons.templates },
       { to: '/admin/compliance-engine/remittances', label: 'Remittance (ERA)', icon: icons.archive },
+      { to: '/admin/compliance-engine/evv-submission', label: 'EVV Submission', icon: icons.visit },
       { to: '/admin/compliance-engine/credentials', label: 'Credentials', icon: icons.staff },
     ],
   },
@@ -566,6 +568,7 @@ export function App() {
           <Route path="compliance-engine/payroll" element={<PayrollReconciliationPage />} />
           <Route path="compliance-engine/claims" element={<ClaimMatchingPage />} />
           <Route path="compliance-engine/remittances" element={<RemittancePage />} />
+          <Route path="compliance-engine/evv-submission" element={<EvvSubmissionPage />} />
           <Route path="compliance-engine/credentials" element={<CredentialsPage />} />
           <Route index element={<CommandCenterPage />} />
           <Route path="today" element={<TodayBoardPage />} />
