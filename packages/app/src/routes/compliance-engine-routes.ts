@@ -439,7 +439,7 @@ router.get(
  */
 router.get(
   '/claims/overview',
-  requireCapability('audit.read'),
+  requireCapability('billing.read'),
   async (req, res) => {
     try {
       if (!req.auth.agencyId) {
@@ -466,6 +466,32 @@ router.get(
 );
 
 /**
+ * GET /api/compliance-engine/claims/blockers
+ *
+ * The ACTIONABLE list behind the claim-readiness counts: which visits are not
+ * billable yet (open / flagged / pending) and why, so an owner can clear them
+ * before generating claims. Capability `billing.read` (admin + coordinator).
+ */
+router.get(
+  '/claims/blockers',
+  requireCapability('billing.read'),
+  async (req, res) => {
+    try {
+      if (!req.auth.agencyId) {
+        return res.status(403).json({ message: 'Agency context required' });
+      }
+      const db = req.app.get('db');
+      const repo = new ComplianceEngineRepository(db);
+      const result = await repo.getClaimReadinessBlockers(req.auth.agencyId);
+      res.json({ asOf: new Date().toISOString(), ...result });
+    } catch (error) {
+      console.error('Claim readiness blockers failed:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
  * GET /api/compliance-engine/payroll/overview
  *
  * Payroll Reconciliation snapshot derived from EVV-verified clock events:
@@ -474,7 +500,7 @@ router.get(
  */
 router.get(
   '/payroll/overview',
-  requireCapability('audit.read'),
+  requireCapability('billing.read'),
   async (req, res) => {
     try {
       if (!req.auth.agencyId) {

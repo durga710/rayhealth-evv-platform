@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { getJson, postJson, putJson, deleteJson, ApiError } from '../../lib/api-client.js';
 import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
 interface Client { id: string; firstName: string; lastName: string; }
@@ -19,7 +19,14 @@ interface Assignment {
   visitTemplateId: string;
 }
 
-type Banner = { kind: 'success' | 'error'; text: string } | null;
+// The POST /api/assignments route returns the created assignment plus any
+// soft scheduling warnings (no covering authorization, units exhausted,
+// non-active caregiver credentials). The UI must surface these, not drop them.
+interface AssignmentCreated extends Assignment {
+  warnings?: string[];
+}
+
+type Banner = { kind: 'success' | 'warning' | 'error'; text: string; details?: string[] } | null;
 
 // Select fields use the global .select-field class for consistency.
 
@@ -38,6 +45,9 @@ export function AssignmentsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState<Banner>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   const loadAll = useCallback(() => {
     setLoading(true);
@@ -79,25 +89,85 @@ export function AssignmentsPage() {
 
   const focusAdd = () => document.getElementById('assignClientId')?.focus();
 
+  const resetForm = () => {
+    setClientId('');
+    setCaregiverId('');
+    setVisitTemplateId('');
+    setVisitDate('');
+  };
+
+  const startEdit = (a: Assignment) => {
+    setEditingId(a.id);
+    setBanner(null);
+    setConfirmDeleteId(null);
+    setClientId(a.clientId);
+    setCaregiverId(a.caregiverId);
+    setVisitTemplateId(a.visitTemplateId);
+    setVisitDate(a.visitDate ?? '');
+    document.getElementById('assignClientId')?.focus();
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    resetForm();
+    setBanner(null);
+  };
+
+  const handleDelete = async (a: Assignment) => {
+    setRowError(null);
+    try {
+      await deleteJson(`/api/assignments/${a.id}`);
+      setAssignments(prev => prev.filter(x => x.id !== a.id));
+      setConfirmDeleteId(null);
+      setExpandedId(null);
+      if (editingId === a.id) cancelEdit();
+      setBanner({ kind: 'success', text: `Assignment removed for ${clientName(a.clientId)}.` });
+    } catch (err) {
+      setRowError(err instanceof ApiError ? err.message : (err as Error).message || 'Failed to delete assignment.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBanner(null);
     setSubmitting(true);
     try {
-      const newAssign = await postJson<Assignment>('/api/assignments', {
-        clientId,
-        caregiverId,
-        visitTemplateId,
-        visitDate: visitDate || undefined,
-      });
-      setAssignments(prev => [...prev, newAssign]);
-      setClientId('');
-      setCaregiverId('');
-      setVisitTemplateId('');
-      setVisitDate('');
-      setBanner({ kind: 'success', text: `Assignment created for ${caregiverLabel(newAssign.caregiverId)} → ${clientName(newAssign.clientId)}.` });
+      if (editingId) {
+        // Reschedule / reassign. The client is derived from the template, so we
+        // send caregiver, template, and date — the server re-validates tenancy.
+        const { warnings, ...updated } = await putJson<AssignmentCreated>(`/api/assignments/${editingId}`, {
+          caregiverId,
+          visitTemplateId,
+          visitDate: visitDate || null,
+        });
+        setAssignments(prev => prev.map(a => (a.id === editingId ? { ...a, ...updated } : a)));
+        setEditingId(null);
+        resetForm();
+        const updatedSummary = `Assignment updated for ${caregiverLabel(updated.caregiverId)} → ${clientName(updated.clientId ?? clientId)}.`;
+        setBanner(
+          warnings && warnings.length > 0
+            ? { kind: 'warning', text: `${updatedSummary} Review these before the visit:`, details: warnings }
+            : { kind: 'success', text: updatedSummary },
+        );
+      } else {
+        const newAssign = await postJson<AssignmentCreated>('/api/assignments', {
+          clientId,
+          caregiverId,
+          visitTemplateId,
+          visitDate: visitDate || undefined,
+        });
+        const { warnings, ...assignment } = newAssign;
+        setAssignments(prev => [...prev, assignment]);
+        resetForm();
+        const summary = `Assignment created for ${caregiverLabel(assignment.caregiverId)} → ${clientName(assignment.clientId)}.`;
+        setBanner(
+          warnings && warnings.length > 0
+            ? { kind: 'warning', text: `${summary} Review these before the visit:`, details: warnings }
+            : { kind: 'success', text: summary },
+        );
+      }
     } catch (err) {
-      setBanner({ kind: 'error', text: (err as Error).message || 'Failed to create assignment.' });
+      setBanner({ kind: 'error', text: (err as Error).message || 'Failed to save assignment.' });
     } finally {
       setSubmitting(false);
     }
@@ -116,7 +186,7 @@ export function AssignmentsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <div className="form-card">
-          <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>New assignment</h3>
+          <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>{editingId ? 'Edit assignment' : 'New assignment'}</h3>
           <form onSubmit={handleSubmit}>
             <div
               style={{
@@ -161,17 +231,35 @@ export function AssignmentsPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={submitting} className="btn-primary" style={{ marginTop: '1.25rem' }}>
-              {submitting ? 'Saving…' : 'Create Assignment'}
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1.25rem' }}>
+              <button type="submit" disabled={submitting} className="btn-primary">
+                {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Create Assignment'}
+              </button>
+              {editingId && (
+                <button type="button" onClick={cancelEdit} className="btn-ghost btn-sm">Cancel</button>
+              )}
+            </div>
           </form>
           {banner && (
             <div
               role={banner.kind === 'error' ? 'alert' : 'status'}
-              className={`info-banner ${banner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+              className={`info-banner ${
+                banner.kind === 'success'
+                  ? 'banner-success'
+                  : banner.kind === 'warning'
+                    ? 'banner-warning'
+                    : 'banner-error'
+              }`}
               style={{ marginTop: '1rem' }}
             >
               {banner.text}
+              {banner.details && banner.details.length > 0 && (
+                <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
+                  {banner.details.map((d, i) => (
+                    <li key={i} style={{ marginTop: i === 0 ? 0 : '0.2rem' }}>{d}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
@@ -194,6 +282,7 @@ export function AssignmentsPage() {
               cta={{ label: 'Add an assignment', onClick: focusAdd }}
             />
           ) : (
+            <div className="table-scroll">
             <table className="data-table">
               <thead>
                 <tr>
@@ -241,6 +330,22 @@ export function AssignmentsPage() {
                               <div style={{ fontWeight: 600 }}>Visit date</div>
                               <div>{a.visitDate || <em style={{ color: '#94A3B8' }}>not set</em>}</div>
                             </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
+                              <button type="button" className="btn-ghost btn-sm" onClick={() => startEdit(a)}>Edit</button>
+                              {confirmDeleteId === a.id ? (
+                                <>
+                                  <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this assignment?</span>
+                                  <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(a)}>Confirm delete</button>
+                                  <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>Cancel</button>
+                                </>
+                              ) : (
+                                <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(a.id); setRowError(null); }}>Delete</button>
+                              )}
+                            </div>
+                            {rowError && confirmDeleteId === a.id && (
+                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: '#BE123C' }}>{rowError}</div>
+                            )}
                           </td>
                         </tr>
                       )}
@@ -249,6 +354,7 @@ export function AssignmentsPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

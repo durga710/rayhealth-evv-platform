@@ -1,5 +1,6 @@
 import type { Knex } from 'knex';
 import type { Caregiver, CaregiverCredential, PersistedStaffInvite, StaffInvite } from '../domain/caregiver.js';
+import type { ImportCaregiverRow } from '../services/import-service.js';
 import { decryptCell, encryptCell } from '../security/cell-cipher.js';
 
 export class CaregiverRepository {
@@ -40,6 +41,62 @@ export class CaregiverRepository {
   async updateStatus(id: string, agencyId: string, status: 'active' | 'inactive' | 'terminated'): Promise<void> {
     const updated = await this.db('caregivers').where({ id, agency_id: agencyId }).update({ status });
     if (updated === 0) throw new Error('caregiver not found in agency');
+  }
+
+  /**
+   * Set a caregiver's NPI (rendering-provider id for the 837 service line).
+   * Stored encrypted via the cell cipher. Returns false if the caregiver is
+   * not in the agency.
+   */
+  async updateNpi(id: string, agencyId: string, npi: string): Promise<boolean> {
+    const updated = await this.db('caregivers')
+      .where({ id, agency_id: agencyId })
+      .update({ npi: encryptCell(npi) });
+    return updated > 0;
+  }
+
+  /**
+   * Idempotent caregiver upsert for the migration importer. Matches an existing
+   * row first on (agency_id, external_id), then on (agency_id, email) — the
+   * latter has a DB unique constraint, so this also prevents a duplicate-email
+   * insert from a re-run that omitted external_id. NPI is encrypted at write.
+   */
+  async upsertCaregiverForImport(
+    agencyId: string,
+    row: ImportCaregiverRow,
+  ): Promise<{ id: string; action: 'created' | 'updated' }> {
+    const cols = {
+      agency_id: agencyId,
+      first_name: row.firstName,
+      last_name: row.lastName,
+      email: row.email,
+      phone: row.phone ?? null,
+      npi: row.npi !== undefined ? encryptCell(row.npi) : null,
+      hire_date: row.hireDate ?? null,
+      status: row.status,
+      external_id: row.externalId,
+    };
+    let existing: { id: string } | undefined;
+    if (row.externalId) {
+      existing = await this.db('caregivers')
+        .where({ agency_id: agencyId, external_id: row.externalId })
+        .first('id');
+    }
+    if (!existing) {
+      existing = await this.db('caregivers')
+        .where({ agency_id: agencyId, email: row.email })
+        .first('id');
+    }
+    if (existing) {
+      await this.db('caregivers')
+        .where({ id: existing.id })
+        .update({ ...cols, updated_at: this.db.fn.now() });
+      return { id: existing.id, action: 'updated' };
+    }
+    const [inserted] = await this.db('caregivers')
+      .insert({ id: this.db.raw('gen_random_uuid()'), ...cols })
+      .returning('id');
+    return { id: inserted.id as string, action: 'created' };
   }
 
   async saveCredential(credential: Omit<CaregiverCredential, 'id'>): Promise<CaregiverCredential> {

@@ -1,5 +1,6 @@
 import type { Knex } from 'knex';
 import type { Caregiver, CaregiverCredential, PersistedStaffInvite, StaffInvite } from '../domain/caregiver.js';
+import type { ImportCaregiverRow } from '../services/import-service.js';
 export declare class CaregiverRepository {
     private readonly db;
     constructor(db: Knex);
@@ -8,6 +9,22 @@ export declare class CaregiverRepository {
     findByAgency(agencyId: string): Promise<Caregiver[]>;
     findByEmail(email: string, agencyId: string): Promise<Caregiver | undefined>;
     updateStatus(id: string, agencyId: string, status: 'active' | 'inactive' | 'terminated'): Promise<void>;
+    /**
+     * Set a caregiver's NPI (rendering-provider id for the 837 service line).
+     * Stored encrypted via the cell cipher. Returns false if the caregiver is
+     * not in the agency.
+     */
+    updateNpi(id: string, agencyId: string, npi: string): Promise<boolean>;
+    /**
+     * Idempotent caregiver upsert for the migration importer. Matches an existing
+     * row first on (agency_id, external_id), then on (agency_id, email) — the
+     * latter has a DB unique constraint, so this also prevents a duplicate-email
+     * insert from a re-run that omitted external_id. NPI is encrypted at write.
+     */
+    upsertCaregiverForImport(agencyId: string, row: ImportCaregiverRow): Promise<{
+        id: string;
+        action: 'created' | 'updated';
+    }>;
     saveCredential(credential: Omit<CaregiverCredential, 'id'>): Promise<CaregiverCredential>;
     getCredentials(caregiverId: string, agencyId: string): Promise<CaregiverCredential[]>;
     expireCredential(id: string, agencyId: string): Promise<void>;

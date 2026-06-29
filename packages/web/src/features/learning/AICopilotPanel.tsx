@@ -41,10 +41,12 @@ export function AICopilotPanel({ userRole }: AICopilotPanelProps): ReactElement 
     let cancelled = false;
     (async () => {
       try {
-        const response = await getJson<ApiResponse<AgencyFeatures>>('/api/agencies/me/features');
+        // Source of truth for the copilot add-on flag is the copilot status
+        // endpoint (returns { enabled, plan }); map it into the feature shape.
+        const response = await getJson<ApiResponse<AiCopilotFlag>>('/api/copilot/status');
         if (cancelled) return;
         if (response.success && response.data) {
-          setFeatures(response.data);
+          setFeatures({ aiCopilot: { enabled: response.data.enabled, plan: response.data.plan } });
         } else {
           // Failed to load — assume off (safe default).
           setFeatures({ aiCopilot: { enabled: false, plan: 'off' } });
@@ -79,7 +81,12 @@ function LockedPanel({ userRole }: { userRole?: string }): ReactElement {
     <section style={lockedSectionStyle}>
       <div style={lockedInnerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-          <span aria-hidden style={{ fontSize: '1.1rem' }}>🔒</span>
+          <span aria-hidden style={{ display: 'inline-flex', color: '#475569' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>AI Workflow Copilot</h3>
           <span style={addonBadgeStyle}>Add-on</span>
         </div>
@@ -123,7 +130,11 @@ function UnlockedPanel({ plan }: { plan: 'starter' | 'pro' | 'off' }): ReactElem
     <section style={unlockedSectionStyle}>
       <div style={lockedInnerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-          <span aria-hidden style={{ fontSize: '1.1rem' }}>✦</span>
+          <span aria-hidden style={{ display: 'inline-flex', color: '#534AB7' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
+            </svg>
+          </span>
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>AI Workflow Copilot</h3>
           <span style={planBadgeStyle}>{plan === 'pro' ? 'Pro' : 'Starter'}</span>
         </div>

@@ -12,7 +12,17 @@ export class ClientRepository {
             date_of_birth: client.dateOfBirth,
             // Encrypt PHI Medicaid ID at write. Output is `v1:<base64>` ciphertext;
             // mapRowToClient decrypts on the way out.
-            medicaid_number: encryptCell(client.medicaidNumber)
+            medicaid_number: encryptCell(client.medicaidNumber),
+            // Service address + EVV geofence anchor. Undefined fields are dropped by
+            // knex so the DB defaults (e.g. geofence_radius_m = 150) still apply.
+            address_line_1: client.addressLine1,
+            address_line_2: client.addressLine2,
+            city: client.city,
+            state: client.state,
+            postal_code: client.postalCode,
+            latitude: client.latitude,
+            longitude: client.longitude,
+            geofence_radius_m: client.geofenceRadiusM
         }).returning('*');
         return this.mapRowToClient(inserted);
     }
@@ -64,6 +74,17 @@ export class ClientRepository {
                 : Number(row.geofence_radius_m)
         };
     }
+    /**
+     * True when the client exists and belongs to the given agency. Used to guard
+     * cross-tenant writes (e.g. creating an authorization for a clientId that
+     * belongs to another agency).
+     */
+    async clientBelongsToAgency(clientId, agencyId) {
+        const row = await this.db('clients')
+            .where({ id: clientId, agency_id: agencyId })
+            .first('id');
+        return Boolean(row);
+    }
     async createAuthorization(authorization) {
         const [inserted] = await this.db('authorizations').insert({
             id: authorization.id ?? crypto.randomUUID(),
@@ -76,6 +97,85 @@ export class ClientRepository {
         }).returning('*');
         return this.mapRowToAuthorization(inserted);
     }
+    /** Resolve a client's id from the source-system external_id (import linking). */
+    async findIdByExternalId(agencyId, externalId) {
+        const row = await this.db('clients')
+            .where({ agency_id: agencyId, external_id: externalId })
+            .first('id');
+        return row ? row.id : null;
+    }
+    /**
+     * Idempotent client upsert for the migration importer. Writes the full column
+     * set (incl. address + geofence anchor + encrypted medicaid number). When
+     * `externalId` is present and already known for this agency, the existing row
+     * is updated; otherwise a new row is inserted. The CSV is treated as the
+     * source of truth, so blank optional fields overwrite to null.
+     */
+    async upsertClientForImport(agencyId, row) {
+        const cols = {
+            agency_id: agencyId,
+            first_name: row.firstName,
+            last_name: row.lastName,
+            date_of_birth: row.dateOfBirth,
+            medicaid_number: row.medicaidNumber !== undefined ? encryptCell(row.medicaidNumber) : null,
+            address_line_1: row.addressLine1 ?? null,
+            address_line_2: row.addressLine2 ?? null,
+            city: row.city ?? null,
+            state: row.state ?? null,
+            postal_code: row.postalCode ?? null,
+            latitude: row.latitude ?? null,
+            longitude: row.longitude ?? null,
+            geofence_radius_m: row.geofenceRadiusM ?? 150,
+            external_id: row.externalId,
+        };
+        if (row.externalId) {
+            const existing = await this.db('clients')
+                .where({ agency_id: agencyId, external_id: row.externalId })
+                .first('id');
+            if (existing) {
+                await this.db('clients')
+                    .where({ id: existing.id })
+                    .update({ ...cols, updated_at: this.db.fn.now() });
+                return { id: existing.id, action: 'updated' };
+            }
+        }
+        const [inserted] = await this.db('clients')
+            .insert({ id: crypto.randomUUID(), ...cols })
+            .returning('id');
+        return { id: inserted.id, action: 'created' };
+    }
+    /**
+     * Idempotent authorization upsert for the migration importer. The caller has
+     * already resolved `clientId` from the row's client_external_id. When the
+     * row's own `externalId` is present and already known for this client, the
+     * existing authorization is updated; otherwise a new one is inserted.
+     */
+    async upsertAuthorizationForImport(clientId, row) {
+        const cols = {
+            client_id: clientId,
+            payer_id: row.payerId,
+            units_authorized: row.unitsAuthorized,
+            service_code: row.serviceCode,
+            start_date: row.startDate,
+            end_date: row.endDate,
+            external_id: row.externalId,
+        };
+        if (row.externalId) {
+            const existing = await this.db('authorizations')
+                .where({ client_id: clientId, external_id: row.externalId })
+                .first('id');
+            if (existing) {
+                await this.db('authorizations')
+                    .where({ id: existing.id })
+                    .update({ ...cols, updated_at: this.db.fn.now() });
+                return { id: existing.id, action: 'updated' };
+            }
+        }
+        const [inserted] = await this.db('authorizations')
+            .insert({ id: crypto.randomUUID(), ...cols })
+            .returning('id');
+        return { id: inserted.id, action: 'created' };
+    }
     async getAuthorizations(agencyId) {
         const rows = await this.db('authorizations')
             .join('clients', 'authorizations.client_id', 'clients.id')
@@ -83,7 +183,108 @@ export class ClientRepository {
             .select('authorizations.*');
         return rows.map(row => this.mapRowToAuthorization(row));
     }
+    /**
+     * Tenant-scoped partial update of a client. Only provided fields are written
+     * (address + geofence anchor included), so an edit that omits the Medicaid
+     * number leaves it untouched. Returns the updated client, or null when the id
+     * does not exist in this agency.
+     */
+    async updateClient(clientId, agencyId, patch) {
+        const cols = {};
+        if (patch.firstName !== undefined)
+            cols.first_name = patch.firstName;
+        if (patch.lastName !== undefined)
+            cols.last_name = patch.lastName;
+        if (patch.dateOfBirth !== undefined)
+            cols.date_of_birth = patch.dateOfBirth;
+        if (patch.medicaidNumber !== undefined)
+            cols.medicaid_number = encryptCell(patch.medicaidNumber);
+        if (patch.addressLine1 !== undefined)
+            cols.address_line_1 = patch.addressLine1;
+        if (patch.addressLine2 !== undefined)
+            cols.address_line_2 = patch.addressLine2;
+        if (patch.city !== undefined)
+            cols.city = patch.city;
+        if (patch.state !== undefined)
+            cols.state = patch.state;
+        if (patch.postalCode !== undefined)
+            cols.postal_code = patch.postalCode;
+        if (patch.latitude !== undefined)
+            cols.latitude = patch.latitude;
+        if (patch.longitude !== undefined)
+            cols.longitude = patch.longitude;
+        if (patch.geofenceRadiusM !== undefined)
+            cols.geofence_radius_m = patch.geofenceRadiusM;
+        if (Object.keys(cols).length > 0) {
+            cols.updated_at = this.db.fn.now();
+            await this.db('clients').where({ id: clientId, agency_id: agencyId }).update(cols);
+        }
+        const row = await this.db('clients').where({ id: clientId, agency_id: agencyId }).first();
+        return row ? this.mapRowToClient(row) : null;
+    }
+    /**
+     * Delete a client, tenant-scoped. Refuses ('has_dependencies') when
+     * authorizations or visit templates still reference the client, since those
+     * carry billing / scheduling history a hard delete would orphan — the owner
+     * must remove dependents first. 'not_found' for an unknown or cross-tenant id.
+     */
+    async deleteClient(clientId, agencyId) {
+        const row = await this.db('clients').where({ id: clientId, agency_id: agencyId }).first('id');
+        if (!row)
+            return 'not_found';
+        const [auth, tmpl] = await Promise.all([
+            this.db('authorizations').where({ client_id: clientId }).first('id'),
+            this.db('visit_templates').where({ client_id: clientId }).first('id')
+        ]);
+        if (auth || tmpl)
+            return 'has_dependencies';
+        await this.db('clients').where({ id: clientId }).del();
+        return 'deleted';
+    }
+    /**
+     * Tenant-scoped (via client join) authorization update. clientId is not
+     * reassignable. Returns null when unknown or cross-tenant.
+     */
+    async updateAuthorization(authId, agencyId, patch) {
+        const owned = await this.db('authorizations')
+            .join('clients', 'authorizations.client_id', 'clients.id')
+            .where('authorizations.id', authId)
+            .andWhere('clients.agency_id', agencyId)
+            .first('authorizations.id');
+        if (!owned)
+            return null;
+        const cols = {};
+        if (patch.payerId !== undefined)
+            cols.payer_id = patch.payerId;
+        if (patch.unitsAuthorized !== undefined)
+            cols.units_authorized = patch.unitsAuthorized;
+        if (patch.serviceCode !== undefined)
+            cols.service_code = patch.serviceCode;
+        if (patch.startDate !== undefined)
+            cols.start_date = patch.startDate;
+        if (patch.endDate !== undefined)
+            cols.end_date = patch.endDate;
+        if (Object.keys(cols).length > 0) {
+            cols.updated_at = this.db.fn.now();
+            await this.db('authorizations').where({ id: authId }).update(cols);
+        }
+        const row = await this.db('authorizations').where({ id: authId }).first();
+        return row ? this.mapRowToAuthorization(row) : null;
+    }
+    /** Tenant-scoped authorization delete. false when not found / cross-tenant. */
+    async deleteAuthorization(authId, agencyId) {
+        const owned = await this.db('authorizations')
+            .join('clients', 'authorizations.client_id', 'clients.id')
+            .where('authorizations.id', authId)
+            .andWhere('clients.agency_id', agencyId)
+            .first('authorizations.id');
+        if (!owned)
+            return false;
+        await this.db('authorizations').where({ id: authId }).del();
+        return true;
+    }
     mapRowToClient(row) {
+        const num = (v) => v === null || v === undefined ? undefined : Number(v);
         return {
             id: row.id,
             firstName: row.first_name,
@@ -91,7 +292,17 @@ export class ClientRepository {
             dateOfBirth: row.date_of_birth instanceof Date ? row.date_of_birth.toISOString().split('T')[0] : row.date_of_birth,
             // Decrypt at read. Legacy plaintext values round-trip; v1: ciphertext
             // returns the original Medicaid ID. Throws if ENCRYPTION_KEY is missing.
-            medicaidNumber: decryptCell(row.medicaid_number) ?? undefined
+            medicaidNumber: decryptCell(row.medicaid_number) ?? undefined,
+            // Address + geofence anchor. pg returns decimal columns as strings, so
+            // coerce lat/long/radius back to numbers for the typed Client.
+            addressLine1: row.address_line_1 ?? undefined,
+            addressLine2: row.address_line_2 ?? undefined,
+            city: row.city ?? undefined,
+            state: row.state ?? undefined,
+            postalCode: row.postal_code ?? undefined,
+            latitude: num(row.latitude),
+            longitude: num(row.longitude),
+            geofenceRadiusM: num(row.geofence_radius_m)
         };
     }
     mapRowToAuthorization(row) {

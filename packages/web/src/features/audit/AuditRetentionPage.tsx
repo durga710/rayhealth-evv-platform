@@ -95,13 +95,17 @@ export function AuditRetentionPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
           <div
             style={{
-              fontSize: '1.75rem',
               lineHeight: 1,
               marginTop: '0.1rem',
-              flexShrink: 0
+              flexShrink: 0,
+              color: '#0ea5e9'
             }}
           >
-            🗄️
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect width="20" height="5" x="2" y="3" rx="1" />
+              <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+              <path d="M10 12h4" />
+            </svg>
           </div>
           <div>
             <h1
@@ -135,7 +139,7 @@ export function AuditRetentionPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: 'rgba(124, 58, 237,0.2)',
+            background: 'rgba(16, 116, 128,0.2)',
             color: '#ddd6fe',
             borderRadius: '6px',
             padding: '0.3rem 0.75rem',
@@ -192,7 +196,7 @@ export function AuditRetentionPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-            <div style={{ ...card, borderTop: '3px solid #7c3aed' }}>
+            <div style={{ ...card, borderTop: '3px solid #107480' }}>
               <div style={stat}>
                 <div style={statLabel}>Total events</div>
                 <div style={statValue}>{formatNumber(status.totalRows)}</div>
@@ -206,7 +210,7 @@ export function AuditRetentionPage() {
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>recent activity</div>
               </div>
             </div>
-            <div style={{ ...card, borderTop: '3px solid #8b5cf6' }}>
+            <div style={{ ...card, borderTop: '3px solid #1690a0' }}>
               <div style={stat}>
                 <div style={statLabel}>Oldest event</div>
                 <div style={statValue}>

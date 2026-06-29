@@ -36,6 +36,57 @@ export class CaregiverRepository {
         if (updated === 0)
             throw new Error('caregiver not found in agency');
     }
+    /**
+     * Set a caregiver's NPI (rendering-provider id for the 837 service line).
+     * Stored encrypted via the cell cipher. Returns false if the caregiver is
+     * not in the agency.
+     */
+    async updateNpi(id, agencyId, npi) {
+        const updated = await this.db('caregivers')
+            .where({ id, agency_id: agencyId })
+            .update({ npi: encryptCell(npi) });
+        return updated > 0;
+    }
+    /**
+     * Idempotent caregiver upsert for the migration importer. Matches an existing
+     * row first on (agency_id, external_id), then on (agency_id, email) — the
+     * latter has a DB unique constraint, so this also prevents a duplicate-email
+     * insert from a re-run that omitted external_id. NPI is encrypted at write.
+     */
+    async upsertCaregiverForImport(agencyId, row) {
+        const cols = {
+            agency_id: agencyId,
+            first_name: row.firstName,
+            last_name: row.lastName,
+            email: row.email,
+            phone: row.phone ?? null,
+            npi: row.npi !== undefined ? encryptCell(row.npi) : null,
+            hire_date: row.hireDate ?? null,
+            status: row.status,
+            external_id: row.externalId,
+        };
+        let existing;
+        if (row.externalId) {
+            existing = await this.db('caregivers')
+                .where({ agency_id: agencyId, external_id: row.externalId })
+                .first('id');
+        }
+        if (!existing) {
+            existing = await this.db('caregivers')
+                .where({ agency_id: agencyId, email: row.email })
+                .first('id');
+        }
+        if (existing) {
+            await this.db('caregivers')
+                .where({ id: existing.id })
+                .update({ ...cols, updated_at: this.db.fn.now() });
+            return { id: existing.id, action: 'updated' };
+        }
+        const [inserted] = await this.db('caregivers')
+            .insert({ id: this.db.raw('gen_random_uuid()'), ...cols })
+            .returning('id');
+        return { id: inserted.id, action: 'created' };
+    }
     async saveCredential(credential) {
         const [row] = await this.db('caregiver_credentials').insert({
             id: this.db.raw('gen_random_uuid()'),

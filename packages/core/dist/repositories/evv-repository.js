@@ -61,6 +61,18 @@ export class EvvRepository {
             .select('v.*');
         return rows.map((row) => this.mapRowToVisit(row));
     }
+    /**
+     * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
+     * (PHI-bearing) visit row across the wire just to read `.length`.
+     */
+    async countVisitsForAgency(agencyId) {
+        const row = await this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .count('v.id as count')
+            .first();
+        return Number(row?.count ?? 0);
+    }
     /** Single visit within an agency; returns null without leaking cross-tenant existence. */
     async getVisitByIdForAgency(id, agencyId) {
         const row = await this.db('evv_visits as v')
@@ -159,6 +171,29 @@ export class EvvRepository {
      * Tenant-scoped via the caregiver → users → agency join so a rogue caller
      * cannot update a visit from a different agency.
      */
+    /**
+     * Bulk-mark every verified visit in a date range as `submitted` — the
+     * write-back for "this batch was sent to the Sandata aggregator". Only
+     * advances visits that are not yet in the aggregator pipeline
+     * (sandata_status IS NULL or 'pending'); never downgrades an already
+     * accepted/rejected/submitted row. Tenant-scoped via the caregiver → users
+     * → agency join. Returns the number of rows advanced.
+     */
+    async markSandataSubmittedInRange(agencyId, fromIso, toIso) {
+        const allowedIds = this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .andWhere('v.status', 'verified')
+            .andWhere((b) => b.whereNull('v.sandata_status').orWhere('v.sandata_status', 'pending'));
+        if (fromIso)
+            allowedIds.andWhere('v.clock_in_time', '>=', fromIso);
+        if (toIso)
+            allowedIds.andWhere('v.clock_in_time', '<=', toIso);
+        const count = await this.db('evv_visits')
+            .whereIn('id', allowedIds.select('v.id'))
+            .update({ sandata_status: 'submitted' });
+        return count;
+    }
     async markSandataSubmission(visitId, agencyId, status, confirmationId) {
         const allowedIds = this.db('evv_visits as v')
             .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
@@ -170,6 +205,43 @@ export class EvvRepository {
             .update({
             sandata_status: status,
             ...(confirmationId !== undefined ? { sandata_confirmation_id: confirmationId } : {})
+        });
+        return count > 0;
+    }
+    /**
+     * HHAeXchange analogue of {@link markSandataSubmittedInRange}. Bulk-advances
+     * every verified visit in the range that is not yet in the HHAeXchange
+     * pipeline (hhaexchange_status IS NULL or 'pending') to 'submitted'. Never
+     * downgrades an accepted/rejected/submitted row. Tenant-scoped. Returns the
+     * number of rows advanced.
+     */
+    async markHhaexchangeSubmittedInRange(agencyId, fromIso, toIso) {
+        const allowedIds = this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .andWhere('v.status', 'verified')
+            .andWhere((b) => b.whereNull('v.hhaexchange_status').orWhere('v.hhaexchange_status', 'pending'));
+        if (fromIso)
+            allowedIds.andWhere('v.clock_in_time', '>=', fromIso);
+        if (toIso)
+            allowedIds.andWhere('v.clock_in_time', '<=', toIso);
+        const count = await this.db('evv_visits')
+            .whereIn('id', allowedIds.select('v.id'))
+            .update({ hhaexchange_status: 'submitted' });
+        return count;
+    }
+    /** HHAeXchange analogue of {@link markSandataSubmission}. Tenant-scoped. */
+    async markHhaexchangeSubmission(visitId, agencyId, status, confirmationId) {
+        const allowedIds = this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .andWhere('v.id', visitId)
+            .select('v.id');
+        const count = await this.db('evv_visits')
+            .whereIn('id', allowedIds)
+            .update({
+            hhaexchange_status: status,
+            ...(confirmationId !== undefined ? { hhaexchange_confirmation_id: confirmationId } : {})
         });
         return count > 0;
     }

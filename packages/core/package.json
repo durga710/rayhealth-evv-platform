@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsc --composite false",
     "db:migrate": "tsx src/migrations/runner.ts",
+    "db:seed:learning": "tsx scripts/seed-learning-catalog.ts",
     "lint": "eslint . --ext ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

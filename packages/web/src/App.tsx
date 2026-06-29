@@ -1,56 +1,123 @@
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { NavLink, Link, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/AuthContext.js';
-import { AgencySetupPage } from './features/agency/AgencySetupPage.js';
-import { StaffPage } from './features/staff/StaffPage.js';
-import { ClientsPage } from './features/clients/ClientsPage.js';
-import { AuthorizationsPage } from './features/authorizations/AuthorizationsPage.js';
-import { TemplatesPage } from './features/scheduling/TemplatesPage.js';
-import { AssignmentsPage } from './features/scheduling/AssignmentsPage.js';
-import { LoginPage } from './features/auth/LoginPage.js';
-import { SignupPage } from './features/auth/SignupPage.js';
-import { AcceptInvitePage } from './features/auth/AcceptInvitePage.js';
-import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage.js';
-import { ResetPasswordPage } from './features/auth/ResetPasswordPage.js';
-import { CaregiverLayout } from './features/caregiver/CaregiverLayout.js';
-import { CaregiverDashboard } from './features/caregiver/CaregiverDashboard.js';
-import { CaregiverSchedulePage } from './features/caregiver/CaregiverSchedulePage.js';
-import { CaregiverVisitsPage } from './features/caregiver/CaregiverVisitsPage.js';
-import { CaregiverLearningHubPage } from './features/caregiver/CaregiverLearningHubPage.js';
-import { CaregiverTrainingPage } from './features/caregiver/CaregiverTrainingPage.js';
-import { CourseDetailPage } from './features/caregiver/CourseDetailPage.js';
+
+// Eager: public LCP route (must paint instantly + keep App.test.tsx green),
+// shared layout wrappers, and the floating assistant utility used inside the
+// admin layout. Everything else is route-level code-split below.
 import { LandingPage } from './features/landing/LandingPage.js';
-import { VisitReviewPage } from './features/evv/VisitReviewPage.js';
-import { PricingPage } from './features/marketing/PricingPage.js';
-import { ContactPage } from './features/marketing/ContactPage.js';
-import { DemoPage } from './features/marketing/DemoPage.js';
-import { LaunchPage } from './features/marketing/LaunchPage.js';
-import { AdsPage } from './features/marketing/AdsPage.js';
-import { StatusPage } from './features/marketing/StatusPage.js';
-import { PrivacyPage } from './features/marketing/PrivacyPage.js';
+import { CaregiverLayout } from './features/caregiver/CaregiverLayout.js';
 import { AdminAssistant } from './features/support/AdminAssistant.js';
-import { AuditRetentionPage } from './features/audit/AuditRetentionPage.js';
-import { DashboardPage } from './features/admin/DashboardPage.js';
-import { AuditEventsPage } from './features/audit/AuditEventsPage.js';
-import { HipaaCompliancePage } from './features/compliance/HipaaCompliancePage.js';
-import { LearningHubPage } from './features/learning/LearningHubPage.js';
-import { LearningPortalPage } from './features/learning/LearningPortalPage.js';
-import { ApplyPage } from './features/onboarding/ApplyPage.js';
-import { InterviewPage } from './features/onboarding/InterviewPage.js';
-import { OnboardingHubPage } from './features/onboarding/OnboardingHubPage.js';
-import { ApplicantDetailPage } from './features/onboarding/ApplicantDetailPage.js';
-import { ProfilePage } from './features/profile/ProfilePage.js';
-import { ComplianceOverviewPage } from './features/compliance-engine/ComplianceOverviewPage.js';
-import { AuditDefensePage } from './features/compliance-engine/AuditDefensePage.js';
-import { ExceptionResolutionPage } from './features/compliance-engine/ExceptionResolutionPage.js';
-import { AuthorizationOversightPage } from './features/compliance-engine/AuthorizationOversightPage.js';
-import { MedicaidWorkflowPage } from './features/compliance-engine/MedicaidWorkflowPage.js';
-import { PayrollReconciliationPage } from './features/compliance-engine/PayrollReconciliationPage.js';
-import { ClaimMatchingPage } from './features/compliance-engine/ClaimMatchingPage.js';
-import { CredentialsPage } from './features/compliance-engine/CredentialsPage.js';
+
+// Lazy-loaded route leaves — each becomes its own chunk. The page components are
+// NAMED exports, so map the named export onto `default` for React.lazy.
+const AgencySetupPage = lazy(() => import('./features/agency/AgencySetupPage.js').then((m) => ({ default: m.AgencySetupPage })));
+const GoLiveReadinessPage = lazy(() => import('./features/agency/GoLiveReadinessPage.js').then((m) => ({ default: m.GoLiveReadinessPage })));
+const StaffPage = lazy(() => import('./features/staff/StaffPage.js').then((m) => ({ default: m.StaffPage })));
+const ClientsPage = lazy(() => import('./features/clients/ClientsPage.js').then((m) => ({ default: m.ClientsPage })));
+const AuthorizationsPage = lazy(() => import('./features/authorizations/AuthorizationsPage.js').then((m) => ({ default: m.AuthorizationsPage })));
+const ImportPage = lazy(() => import('./features/import/ImportPage.js').then((m) => ({ default: m.ImportPage })));
+const TemplatesPage = lazy(() => import('./features/scheduling/TemplatesPage.js').then((m) => ({ default: m.TemplatesPage })));
+const AssignmentsPage = lazy(() => import('./features/scheduling/AssignmentsPage.js').then((m) => ({ default: m.AssignmentsPage })));
+const RecurringSchedulesPage = lazy(() => import('./features/scheduling/RecurringSchedulesPage.js').then((m) => ({ default: m.RecurringSchedulesPage })));
+const SuperAdminPage = lazy(() => import('./features/superadmin/SuperAdminPage.js').then((m) => ({ default: m.SuperAdminPage })));
+const LoginPage = lazy(() => import('./features/auth/LoginPage.js').then((m) => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import('./features/auth/SignupPage.js').then((m) => ({ default: m.SignupPage })));
+const AcceptInvitePage = lazy(() => import('./features/auth/AcceptInvitePage.js').then((m) => ({ default: m.AcceptInvitePage })));
+const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage.js').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./features/auth/ResetPasswordPage.js').then((m) => ({ default: m.ResetPasswordPage })));
+const CaregiverDashboard = lazy(() => import('./features/caregiver/CaregiverDashboard.js').then((m) => ({ default: m.CaregiverDashboard })));
+const CaregiverSchedulePage = lazy(() => import('./features/caregiver/CaregiverSchedulePage.js').then((m) => ({ default: m.CaregiverSchedulePage })));
+const CaregiverVisitsPage = lazy(() => import('./features/caregiver/CaregiverVisitsPage.js').then((m) => ({ default: m.CaregiverVisitsPage })));
+const CaregiverLearningHubPage = lazy(() => import('./features/caregiver/CaregiverLearningHubPage.js').then((m) => ({ default: m.CaregiverLearningHubPage })));
+const CaregiverTrainingPage = lazy(() => import('./features/caregiver/CaregiverTrainingPage.js').then((m) => ({ default: m.CaregiverTrainingPage })));
+const CourseDetailPage = lazy(() => import('./features/caregiver/CourseDetailPage.js').then((m) => ({ default: m.CourseDetailPage })));
+const VisitReviewPage = lazy(() => import('./features/evv/VisitReviewPage.js').then((m) => ({ default: m.VisitReviewPage })));
+const PricingPage = lazy(() => import('./features/marketing/site/PricingPage.js').then((m) => ({ default: m.PricingPage })));
+const ContactPage = lazy(() => import('./features/marketing/site/ContactPage.js').then((m) => ({ default: m.ContactPage })));
+const DemoPage = lazy(() => import('./features/marketing/site/DemoPage.js').then((m) => ({ default: m.DemoPage })));
+const LaunchPage = lazy(() => import('./features/marketing/site/LaunchPage.js').then((m) => ({ default: m.LaunchPage })));
+const AdsPage = lazy(() => import('./features/marketing/site/AdsPage.js').then((m) => ({ default: m.AdsPage })));
+const StatusPage = lazy(() => import('./features/marketing/site/StatusPage.js').then((m) => ({ default: m.StatusPage })));
+const PrivacyPage = lazy(() => import('./features/marketing/site/PrivacyPage.js').then((m) => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./features/marketing/site/TermsPage.js').then((m) => ({ default: m.TermsPage })));
+const SchedulingPage = lazy(() => import('./features/marketing/site/SchedulingPage.js').then((m) => ({ default: m.SchedulingPage })));
+const EvvSolutionPage = lazy(() => import('./features/marketing/site/EvvSolutionPage.js').then((m) => ({ default: m.EvvSolutionPage })));
+const BillingPayrollPage = lazy(() => import('./features/marketing/site/BillingPayrollPage.js').then((m) => ({ default: m.BillingPayrollPage })));
+const WorkforceTrainingPage = lazy(() => import('./features/marketing/site/WorkforceTrainingPage.js').then((m) => ({ default: m.WorkforceTrainingPage })));
+const AiAutomationPage = lazy(() => import('./features/marketing/site/AiAutomationPage.js').then((m) => ({ default: m.AiAutomationPage })));
+const CompliancePlatformPage = lazy(() => import('./features/marketing/site/CompliancePlatformPage.js').then((m) => ({ default: m.CompliancePlatformPage })));
+const EvvGuidePage = lazy(() => import('./features/marketing/site/EvvGuidePage.js').then((m) => ({ default: m.EvvGuidePage })));
+const TaskCodesPage = lazy(() => import('./features/marketing/site/TaskCodesPage.js').then((m) => ({ default: m.TaskCodesPage })));
+const AuditChecklistPage = lazy(() => import('./features/marketing/site/AuditChecklistPage.js').then((m) => ({ default: m.AuditChecklistPage })));
+const HipaaCompliancePage = lazy(() => import('./features/marketing/site/HipaaCompliancePage.js').then((m) => ({ default: m.HipaaCompliancePage })));
+const AuditRetentionPage = lazy(() => import('./features/audit/AuditRetentionPage.js').then((m) => ({ default: m.AuditRetentionPage })));
+const DashboardPage = lazy(() => import('./features/admin/DashboardPage.js').then((m) => ({ default: m.DashboardPage })));
+const CommandCenterPage = lazy(() => import('./features/admin/CommandCenterPage.js').then((m) => ({ default: m.CommandCenterPage })));
+const TodayBoardPage = lazy(() => import('./features/admin/TodayBoardPage.js').then((m) => ({ default: m.TodayBoardPage })));
+const AuditEventsPage = lazy(() => import('./features/audit/AuditEventsPage.js').then((m) => ({ default: m.AuditEventsPage })));
+const LearningHubPage = lazy(() => import('./features/learning/LearningHubPage.js').then((m) => ({ default: m.LearningHubPage })));
+const LearningPortalPage = lazy(() => import('./features/learning/LearningPortalPage.js').then((m) => ({ default: m.LearningPortalPage })));
+const CourseEditorPage = lazy(() => import('./features/learning/CourseEditorPage.js').then((m) => ({ default: m.CourseEditorPage })));
+const CertificatePage = lazy(() => import('./features/learning/CertificatePage.js').then((m) => ({ default: m.CertificatePage })));
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage.js').then((m) => ({ default: m.SettingsPage })));
+const ApplyPage = lazy(() => import('./features/onboarding/ApplyPage.js').then((m) => ({ default: m.ApplyPage })));
+const InterviewPage = lazy(() => import('./features/onboarding/InterviewPage.js').then((m) => ({ default: m.InterviewPage })));
+const OnboardingHubPage = lazy(() => import('./features/onboarding/OnboardingHubPage.js').then((m) => ({ default: m.OnboardingHubPage })));
+const ApplicantDetailPage = lazy(() => import('./features/onboarding/ApplicantDetailPage.js').then((m) => ({ default: m.ApplicantDetailPage })));
+const ProfilePage = lazy(() => import('./features/profile/ProfilePage.js').then((m) => ({ default: m.ProfilePage })));
+const ComplianceOverviewPage = lazy(() => import('./features/compliance-engine/ComplianceOverviewPage.js').then((m) => ({ default: m.ComplianceOverviewPage })));
+const AuditDefensePage = lazy(() => import('./features/compliance-engine/AuditDefensePage.js').then((m) => ({ default: m.AuditDefensePage })));
+const ExceptionResolutionPage = lazy(() => import('./features/compliance-engine/ExceptionResolutionPage.js').then((m) => ({ default: m.ExceptionResolutionPage })));
+const AuthorizationOversightPage = lazy(() => import('./features/compliance-engine/AuthorizationOversightPage.js').then((m) => ({ default: m.AuthorizationOversightPage })));
+const MedicaidWorkflowPage = lazy(() => import('./features/compliance-engine/MedicaidWorkflowPage.js').then((m) => ({ default: m.MedicaidWorkflowPage })));
+const PayrollReconciliationPage = lazy(() => import('./features/compliance-engine/PayrollReconciliationPage.js').then((m) => ({ default: m.PayrollReconciliationPage })));
+const ClaimMatchingPage = lazy(() => import('./features/compliance-engine/ClaimMatchingPage.js').then((m) => ({ default: m.ClaimMatchingPage })));
+const RemittancePage = lazy(() => import('./features/compliance-engine/RemittancePage.js').then((m) => ({ default: m.RemittancePage })));
+const EvvSubmissionPage = lazy(() => import('./features/compliance-engine/EvvSubmissionPage.js').then((m) => ({ default: m.EvvSubmissionPage })));
+const HhaexchangeSubmissionPage = lazy(() => import('./features/compliance-engine/HhaexchangeSubmissionPage.js').then((m) => ({ default: m.HhaexchangeSubmissionPage })));
+const ClearinghouseConfigPage = lazy(() => import('./features/compliance-engine/ClearinghouseConfigPage.js').then((m) => ({ default: m.ClearinghouseConfigPage })));
+const CredentialsPage = lazy(() => import('./features/compliance-engine/CredentialsPage.js').then((m) => ({ default: m.CredentialsPage })));
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
+
+/**
+ * Branded loading state shown while a lazily-loaded route chunk is fetched.
+ * Centered, fixed min-height to avoid layout shift, small teal spinner using the
+ * RayHealth brand color. Respects prefers-reduced-motion (no spin when reduced).
+ */
+function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        width: '100%',
+      }}
+    >
+      <style>{`
+        @keyframes rh-route-spin { to { transform: rotate(360deg); } }
+        .rh-route-spinner {
+          width: 28px;
+          height: 28px;
+          border: 3px solid rgba(16, 116, 128, 0.18);
+          border-top-color: #107480;
+          border-radius: 50%;
+          animation: rh-route-spin 0.7s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .rh-route-spinner { animation: none; }
+        }
+      `}</style>
+      <span className="rh-route-spinner" aria-hidden="true" />
+    </div>
+  );
+}
 
 /** Redirects unauthenticated users to /login. */
 function ProtectedRoute() {
@@ -104,6 +171,12 @@ const icons = {
       <rect x="14" y="3" width="7" height="5" rx="1" />
       <rect x="14" y="12" width="7" height="9" rx="1" />
       <rect x="3" y="16" width="7" height="5" rx="1" />
+    </svg>
+  ),
+  settings: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   ),
   agency: (
@@ -204,16 +277,22 @@ interface NavGroupDef extends NavGroup {
 const navGroupDefs: NavGroupDef[] = [
   {
     label: 'Overview',
-    items: [{ to: '/admin', label: 'Dashboard', end: true, icon: icons.dashboard }],
+    items: [
+      { to: '/admin', label: 'Command Center', end: true, icon: icons.dashboard },
+      { to: '/admin/today', label: "Today's Visits", icon: icons.visit },
+      { to: '/admin/overview', label: 'Dashboard', end: true, icon: icons.dashboard },
+    ],
   },
   {
     label: 'Agency',
     allowedRoles: ['admin'],
     items: [
+      { to: '/admin/readiness', label: 'Go-Live Checklist', icon: icons.dashboard },
       { to: '/admin/agency', label: 'Agency Setup', icon: icons.agency },
       { to: '/admin/staff', label: 'Staff', icon: icons.staff },
       { to: '/admin/clients', label: 'Clients', icon: icons.clients },
       { to: '/admin/authorizations', label: 'Authorizations', icon: icons.auth },
+      { to: '/admin/import', label: 'Data Import', icon: icons.agency },
     ],
   },
   {
@@ -228,6 +307,7 @@ const navGroupDefs: NavGroupDef[] = [
     items: [
       { to: '/admin/templates', label: 'Templates', icon: icons.templates },
       { to: '/admin/assignments', label: 'Assignments', icon: icons.assignments },
+      { to: '/admin/recurring-schedules', label: 'Recurring', icon: icons.assignments },
     ],
   },
   {
@@ -259,6 +339,10 @@ const navGroupDefs: NavGroupDef[] = [
       { to: '/admin/compliance-engine/medicaid', label: 'Medicaid', icon: icons.clients },
       { to: '/admin/compliance-engine/payroll', label: 'Payroll', icon: icons.archive },
       { to: '/admin/compliance-engine/claims', label: 'Claims', icon: icons.templates },
+      { to: '/admin/compliance-engine/remittances', label: 'Remittance (ERA)', icon: icons.archive },
+      { to: '/admin/compliance-engine/evv-submission', label: 'EVV Submission', icon: icons.visit },
+      { to: '/admin/compliance-engine/hhaexchange-submission', label: 'EVV — HHAeXchange', icon: icons.visit },
+      { to: '/admin/compliance-engine/clearinghouse', label: 'Clearinghouse', icon: icons.templates },
       { to: '/admin/compliance-engine/credentials', label: 'Credentials', icon: icons.staff },
     ],
   },
@@ -274,12 +358,15 @@ const navGroupDefs: NavGroupDef[] = [
     label: 'Account',
     items: [
       { to: '/admin/profile', label: 'My Profile', icon: icons.profile },
+      { to: '/admin/settings', label: 'Settings', icon: icons.settings },
     ],
   },
 ];
 
 function AdminLayout() {
   const { logout, user } = useAuth();
+  const [navOpen, setNavOpen] = useState(false);
+  const closeNav = () => setNavOpen(false);
 
   const roleLabel = user?.role ?? 'signed in';
   const brandName = user?.agencyTheme?.logoText ?? 'RayHealth';
@@ -292,8 +379,32 @@ function AdminLayout() {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar" aria-label="Primary">
-        <Link to="/admin" className="admin-sidebar__brand">
+      {/* Mobile-only top bar; the sidebar is an off-canvas drawer below 900px. */}
+      <div className="admin-mobilebar">
+        <button
+          type="button"
+          className="admin-hamburger"
+          aria-label="Open navigation menu"
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <Link to="/admin" className="admin-sidebar__brand" style={{ margin: 0 }} onClick={closeNav}>
+          <span className="admin-sidebar__brand-mark">R</span>
+          {brandName}
+          <span className="admin-sidebar__evv-badge">EVV</span>
+        </Link>
+      </div>
+
+      {navOpen && <div className="admin-scrim" onClick={closeNav} aria-hidden />}
+
+      <aside className={`admin-sidebar${navOpen ? ' is-open' : ''}`} aria-label="Primary">
+        <Link to="/admin" className="admin-sidebar__brand" onClick={closeNav}>
           <span className="admin-sidebar__brand-mark">R</span>
           {brandName}
           <span className="admin-sidebar__evv-badge">EVV</span>
@@ -308,6 +419,7 @@ function AdminLayout() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  onClick={closeNav}
                   className={({ isActive }) =>
                     `admin-sidebar__nav-link${isActive ? ' active' : ''}`
                   }
@@ -385,7 +497,8 @@ function AdminLayout() {
 
 export function App() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/contact" element={<ContactPage />} />
@@ -394,9 +507,22 @@ export function App() {
       <Route path="/ads" element={<AdsPage />} />
       <Route path="/status" element={<StatusPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      {/* Marketing site — Platform / Solutions / Resources content pages */}
+      <Route path="/platform/ai-automation" element={<AiAutomationPage />} />
+      <Route path="/platform/compliance" element={<CompliancePlatformPage />} />
+      <Route path="/solutions/scheduling" element={<SchedulingPage />} />
+      <Route path="/solutions/electronic-visit-verification" element={<EvvSolutionPage />} />
+      <Route path="/solutions/billing-payroll" element={<BillingPayrollPage />} />
+      <Route path="/solutions/workforce-training" element={<WorkforceTrainingPage />} />
+      <Route path="/resources/evv-guide" element={<EvvGuidePage />} />
+      <Route path="/resources/task-codes" element={<TaskCodesPage />} />
+      <Route path="/resources/audit-checklist" element={<AuditChecklistPage />} />
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      {/* Hidden platform super-admin console — intentionally not in any nav. */}
+      <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
@@ -412,7 +538,9 @@ export function App() {
           <Route path="learning" element={<CaregiverLearningHubPage />} />
           <Route path="training" element={<CaregiverTrainingPage />} />
           <Route path="training/:courseId" element={<CourseDetailPage />} />
+          <Route path="training/:courseId/certificate" element={<CertificatePage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
@@ -420,19 +548,25 @@ export function App() {
       <Route path="/admin" element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="agency" element={<AgencySetupPage />} />
+          <Route path="readiness" element={<GoLiveReadinessPage />} />
           <Route path="staff" element={<StaffPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="authorizations" element={<AuthorizationsPage />} />
+          <Route path="import" element={<ImportPage />} />
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
+          <Route path="recurring-schedules" element={<RecurringSchedulesPage />} />
           <Route path="review" element={<VisitReviewPage />} />
           <Route path="audit-events" element={<AuditEventsPage />} />
           <Route path="audit-retention" element={<AuditRetentionPage />} />
           <Route path="learning" element={<LearningHubPage />} />
+          <Route path="learning/courses/new" element={<CourseEditorPage />} />
+          <Route path="learning/courses/:id/edit" element={<CourseEditorPage />} />
           <Route path="learning/portal" element={<LearningPortalPage />} />
           <Route path="onboarding" element={<OnboardingHubPage />} />
           <Route path="onboarding/:id" element={<ApplicantDetailPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="compliance-engine" element={<ComplianceOverviewPage />} />
           <Route path="compliance-engine/audit-defense" element={<AuditDefensePage />} />
           <Route path="compliance-engine/exceptions" element={<ExceptionResolutionPage />} />
@@ -440,12 +574,19 @@ export function App() {
           <Route path="compliance-engine/medicaid" element={<MedicaidWorkflowPage />} />
           <Route path="compliance-engine/payroll" element={<PayrollReconciliationPage />} />
           <Route path="compliance-engine/claims" element={<ClaimMatchingPage />} />
+          <Route path="compliance-engine/remittances" element={<RemittancePage />} />
+          <Route path="compliance-engine/evv-submission" element={<EvvSubmissionPage />} />
+          <Route path="compliance-engine/hhaexchange-submission" element={<HhaexchangeSubmissionPage />} />
+          <Route path="compliance-engine/clearinghouse" element={<ClearinghouseConfigPage />} />
           <Route path="compliance-engine/credentials" element={<CredentialsPage />} />
-          <Route index element={<DashboardPage />} />
+          <Route index element={<CommandCenterPage />} />
+          <Route path="today" element={<TodayBoardPage />} />
+          <Route path="overview" element={<DashboardPage />} />
         </Route>
       </Route>
       
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

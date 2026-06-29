@@ -38,14 +38,63 @@ const sectionCard: React.CSSProperties = {
   padding: '1.25rem',
 };
 
+const inputStyle: React.CSSProperties = {
+  border: '1px solid var(--color-border)',
+  borderRadius: 8,
+  fontSize: '0.9rem',
+  padding: '0.45rem 0.6rem',
+};
+
 function formatHours(value: number): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+}
+
+function defaultRange(): { from: string; to: string } {
+  const today = new Date();
+  const to = today.toISOString().slice(0, 10);
+  const from = new Date(today.getTime() - 13 * 86_400_000).toISOString().slice(0, 10);
+  return { from, to };
+}
+
+async function downloadFile(path: string, filename: string): Promise<void> {
+  const res = await fetch(path, { credentials: 'include' });
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 export function PayrollReconciliationPage() {
   const [snapshot, setSnapshot] = useState<PayrollReconciliationResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const range = defaultRange();
+  const [from, setFrom] = useState(range.from);
+  const [to, setTo] = useState(range.to);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const exportCsv = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await downloadFile(
+        `/api/billing/payroll/export?from=${from}&to=${to}`,
+        `payroll-${from}_to_${to}.csv`,
+      );
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Payroll export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -108,7 +157,7 @@ export function PayrollReconciliationPage() {
         'Payroll feed integration (planned)',
       ]}
       nextSteps={[
-        'Wire payroll source integration (CSV, ADP, Paychex, Gusto)',
+        'Direct integrations with ADP / Paychex / Gusto (CSV export is live today)',
         'Weekly close + caregiver pay-period rollup honoring the 15-min grace',
         'Exception workflow: unverified hours, over/under pay, grace-window outliers',
       ]}
@@ -170,6 +219,40 @@ export function PayrollReconciliationPage() {
           {error}
         </div>
       ) : null}
+
+      {/* Payroll export */}
+      <div style={{ ...sectionCard, marginTop: '1rem' }}>
+        <h3 style={{ color: 'var(--color-text)', fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+          Export payroll
+        </h3>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0.4rem 0 0.9rem' }}>
+          Download a payroll-ready CSV of EVV-verified hours per caregiver for a pay period — visit
+          time totaled per caregiver, ready to import into your payroll provider.
+        </p>
+        <div style={{ alignItems: 'flex-end', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.78rem', fontWeight: 700, gap: 4 }}>
+            From
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={inputStyle} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.78rem', fontWeight: 700, gap: 4 }}>
+            To
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={inputStyle} />
+          </label>
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={() => void exportCsv()}
+            style={{ ...primaryButtonStyle, opacity: exporting ? 0.55 : 1 }}
+          >
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+        </div>
+        {exportError ? (
+          <div role="alert" style={{ color: 'var(--color-danger)', fontSize: '0.85rem', fontWeight: 700, marginTop: '0.75rem' }}>
+            {exportError}
+          </div>
+        ) : null}
+      </div>
 
       {snapshot ? (
         <div style={{ ...sectionCard, marginTop: '1rem' }}>

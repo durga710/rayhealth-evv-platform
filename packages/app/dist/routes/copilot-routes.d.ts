@@ -1,7 +1,7 @@
 /**
  * AI Workflow Copilot routes.
  *
- *   GET  /copilot/status     — has the agency enabled the add-on + is Gemini configured
+ *   GET  /copilot/status     — has the agency enabled the add-on + is an AI provider configured
  *   POST /copilot/ask        — answer a conversational question with role-appropriate context
  *
  * Gating:

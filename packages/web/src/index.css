@@ -8,25 +8,25 @@
      Replaces the prior indigo + indigo-alias system. Contrast against the
      #F8FAFC content bg: primary 5.61:1, primary-dark 6.66:1, accent 6.44:1
      — all clear WCAG AA for body text and AAA for UI surfaces. */
-  --color-primary: #7c3aed;        /* violet-600 — strong, regal, healthcare-trustworthy */
-  --color-primary-dark: #6d28d9;   /* violet-700 — headings, focus, hover */
-  --color-primary-light: #c4b5fd;  /* violet-300 — soft tints, sidebar-active */
-  --color-primary-bg: rgba(124, 58, 237, 0.08);
+  --color-primary: #107480;        /* violet-600 — strong, regal, healthcare-trustworthy */
+  --color-primary-dark: #0c5d66;   /* violet-700 — headings, focus, hover */
+  --color-primary-light: #7fc7cf;  /* violet-300 — soft tints, sidebar-active */
+  --color-primary-bg: rgba(16, 116, 128, 0.08);
 
   /* Deep Red accent. Distinct from the danger semantic — accent is the
      secondary brand color (CTAs, badges, attention chips) while danger is
      reserved for error states. */
-  --color-accent: #b91c1c;         /* red-700 — deep, regulatory */
-  --color-accent-dark: #7f1d1d;    /* red-900 — pressed/hover */
-  --color-accent-light: #fecaca;   /* red-200 — accent-bg tints */
-  --color-accent-bg: rgba(185, 28, 28, 0.08);
+  --color-accent: #ee6c2c;         /* RayHealth orange — brand accent */
+  --color-accent-dark: #d8551b;    /* deep orange — pressed/hover */
+  --color-accent-light: #fcd9c2;   /* soft orange — accent-bg tints */
+  --color-accent-bg: rgba(238, 108, 44, 0.08);
 
   /* Surfaces */
   --color-bg: #F8FAFC;             /* slate-50 — main content bg */
   --color-surface: #FFFFFF;        /* card/form bg */
   --color-sidebar: #0F172A;        /* slate-900 — dark sidebar (kept) */
   --color-sidebar-hover: rgba(255, 255, 255, 0.06);
-  --color-sidebar-active: rgba(124, 58, 237, 0.22);  /* purple-tinted active */
+  --color-sidebar-active: rgba(16, 116, 128, 0.22);  /* purple-tinted active */
   --color-sidebar-text: #94A3B8;
   --color-sidebar-text-active: #FFFFFF;
 
@@ -50,8 +50,8 @@
   --color-warning: #F59E0B;        /* amber-500 */
   --color-warning-bg: #FFFBEB;
   --color-warning-border: #FCD34D;
-  --color-info: #7c3aed;           /* info tracks primary now */
-  --color-info-bg: rgba(124, 58, 237, 0.08);
+  --color-info: #107480;           /* info tracks primary now */
+  --color-info-bg: rgba(16, 116, 128, 0.08);
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -68,7 +68,7 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.05);
-  --shadow-focus: 0 0 0 3px rgba(124, 58, 237, 0.28);
+  --shadow-focus: 0 0 0 3px rgba(16, 116, 128, 0.28);
 }
 
 /* ==========================================================================
@@ -368,7 +368,7 @@ button:disabled {
 .badge-info {
   background-color: var(--color-info-bg);
   color: var(--color-primary-dark);
-  border-color: rgba(124, 58, 237, 0.25);
+  border-color: rgba(16, 116, 128, 0.25);
 }
 
 .badge-neutral {
@@ -454,6 +454,16 @@ button:disabled {
   font-size: 0.875rem;
 }
 
+/* Wrap a wide table in <div class="table-scroll"> so it scrolls horizontally
+   on narrow screens instead of overflowing the viewport / clipping columns. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll > .data-table {
+  min-width: 560px;
+}
+
 .data-table thead {
   background-color: #F8FAFC;
 }
@@ -525,7 +535,7 @@ button:disabled {
 .banner-info {
   background-color: var(--color-info-bg);
   color: var(--color-primary-dark);
-  border-color: rgba(124, 58, 237, 0.25);
+  border-color: rgba(16, 116, 128, 0.25);
 }
 
 /* ==========================================================================
@@ -569,18 +579,18 @@ button:disabled {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
   display: grid;
   place-items: center;
   font-size: 0.875rem;
   font-weight: 900;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(124, 58, 237,0.45);
+  box-shadow: 0 2px 8px rgba(16, 116, 128,0.45);
 }
 
 .admin-sidebar__evv-badge {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
   color: white;
   font-size: 0.6rem;
   font-weight: 700;
@@ -682,7 +692,7 @@ button:disabled {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
   color: white;
   display: grid;
   place-items: center;
@@ -695,7 +705,7 @@ button:disabled {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  background-color: rgba(124, 58, 237, 0.2);
+  background-color: rgba(16, 116, 128, 0.2);
   color: #ddd6fe;
   font-size: 0.65rem;
   font-weight: 600;
@@ -817,7 +827,7 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #7c3aed;
+  color: #107480;
 }
 
 .landing-signal-grid {
@@ -839,7 +849,7 @@ button:disabled {
 .landing-signal-card strong {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #7c3aed;
+  color: #107480;
   font-family: var(--font-heading);
   line-height: 1;
 }
@@ -906,15 +916,64 @@ button:disabled {
    Responsive
    ========================================================================== */
 
+/* Mobile top bar with hamburger — hidden on desktop, shown when the sidebar
+   collapses into a slide-in drawer. */
+.admin-mobilebar {
+  display: none;
+}
+.admin-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+}
+.admin-scrim {
+  display: none;
+}
+
 @media (max-width: 900px) {
-  .admin-sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    padding: 1rem;
+  .admin-mobilebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #0f172a;
+    color: #fff;
+    padding: 0.6rem 1rem;
   }
   .admin-shell {
     flex-direction: column;
+  }
+  /* Sidebar becomes an off-canvas drawer that slides in over the content. */
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    max-width: 82vw;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    z-index: 60;
+  }
+  .admin-sidebar.is-open {
+    transform: none;
+  }
+  .admin-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 50;
   }
   .admin-main__inner {
     padding: 1.5rem;

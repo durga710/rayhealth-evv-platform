@@ -24,13 +24,14 @@ function formatHours(h: number): string {
   return `${hrs}h ${mins}m`;
 }
 
-function StatusBadge({ status }: { status: EvvVisit['status'] }) {
-  const map = {
-    verified: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Verified' },
-    pending:  { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
-    flagged:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Flagged' },
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    verified:  { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Verified' },
+    pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
+    flagged:   { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Flagged' },
+    corrected: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Corrected' },
   };
-  const s = map[status];
+  const s = map[status] ?? { bg: '#F1F5F9', color: '#475569', border: '#E2E8F0', label: status || 'Unknown' };
   return (
     <span style={{ fontSize: '0.75rem', fontWeight: 600, background: s.bg, color: s.color, border: `1px solid ${s.border}`, borderRadius: '100px', padding: '0.2rem 0.65rem' }}>
       {s.label}
@@ -69,7 +70,7 @@ export function CaregiverVisitsPage() {
     borderRadius: '6px',
     border: 'none',
     cursor: 'pointer',
-    background: active ? 'var(--color-primary, #7c3aed)' : 'transparent',
+    background: active ? 'var(--color-primary, #107480)' : 'transparent',
     color: active ? '#fff' : '#64748B',
   });
 

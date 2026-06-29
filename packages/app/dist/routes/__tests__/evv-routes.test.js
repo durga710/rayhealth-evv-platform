@@ -92,5 +92,21 @@ describe('evv routes', () => {
         expect(response.status).toBe(400);
         expect(mockCreateVisit).not.toHaveBeenCalled();
     });
+    it('returns an agency visit count via COUNT (no full fetch)', async () => {
+        const countVisitsForAgency = vi.fn().mockResolvedValue(42);
+        const getVisitsForAgency = vi.fn();
+        vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+            countVisitsForAgency,
+            getVisitsForAgency,
+        }));
+        const response = await request(createApp())
+            .get('/evv/visits/count')
+            .set('Authorization', `Bearer ${makeToken('admin')}`);
+        expect(response.status).toBe(200);
+        expect(response.body.count).toBe(42);
+        expect(countVisitsForAgency).toHaveBeenCalledWith('agency-1');
+        // Must NOT fall back to hauling every visit row.
+        expect(getVisitsForAgency).not.toHaveBeenCalled();
+    });
 });
 //# sourceMappingURL=evv-routes.test.js.map

@@ -7,7 +7,44 @@ interface StaffMember {
   email: string;
   role: string;
   status: string;
+  hasNpi?: boolean;
 }
+
+interface Credential {
+  id: string;
+  caregiverId: string;
+  credentialType: string;
+  status: string;
+  expiresAt: string;
+  issuedAt?: string;
+  notes?: string;
+}
+
+interface CredentialCompliance {
+  compliant: boolean;
+  expiringSoon: Credential[];
+  expired: Credential[];
+  missing: string[];
+}
+
+interface CredentialForm {
+  credentialType: string;
+  expiresAt: string;
+  issuedAt: string;
+  notes: string;
+}
+
+const CRED_TYPES: { value: string; label: string }[] = [
+  { value: 'tb-screening', label: 'TB Screening' },
+  { value: 'background-check', label: 'Background Check' },
+  { value: 'license', label: 'License' },
+  { value: 'training', label: 'Training' },
+];
+
+const CRED_TYPE_LABEL: Record<string, string> =
+  Object.fromEntries(CRED_TYPES.map((c) => [c.value, c.label]));
+
+const EMPTY_CRED_FORM: CredentialForm = { credentialType: '', expiresAt: '', issuedAt: '', notes: '' };
 
 type EmailDeliveryStatus = 'sent' | 'failed' | 'not_configured';
 
@@ -35,7 +72,7 @@ type ResendState =
   | { status: 'failed'; reason: string };
 
 const ROLE_COLORS: Record<string, string> = {
-  admin:       '#7c3aed',
+  admin:       '#107480',
   coordinator: '#0EA5E9',
   caregiver:   '#10B981',
   family:      '#F59E0B',
@@ -47,7 +84,7 @@ function Avatar({ email, active }: { email: string; active: boolean }) {
       aria-hidden
       style={{
         width: 28, height: 28, borderRadius: '50%',
-        background: active ? 'linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%)' : '#E2E8F0',
+        background: active ? 'linear-gradient(135deg,#107480 0%,#7fc7cf 100%)' : '#E2E8F0',
         color: active ? 'white' : '#64748B',
         display: 'grid', placeItems: 'center',
         fontWeight: 600, fontSize: '0.75rem', flexShrink: 0,
@@ -89,6 +126,15 @@ export function StaffPage() {
   const [removing, setRemoving]       = useState<Record<string, boolean>>({});
   const [revoking, setRevoking]       = useState<Record<string, boolean>>({});
   const [revokingAll, setRevokingAll] = useState(false);
+  const [npiInput, setNpiInput]       = useState<Record<string, string>>({});
+  const [savingNpi, setSavingNpi]     = useState<Record<string, boolean>>({});
+
+  // Credentialing (per caregiver)
+  const [creds, setCreds]                 = useState<Record<string, Credential[]>>({});
+  const [credCompliance, setCredCompliance] = useState<Record<string, CredentialCompliance>>({});
+  const [credLoading, setCredLoading]     = useState<Record<string, boolean>>({});
+  const [credForm, setCredForm]           = useState<Record<string, CredentialForm>>({});
+  const [credSaving, setCredSaving]       = useState<Record<string, boolean>>({});
 
   const loadStaff = useCallback(() => {
     setLoading(true);
@@ -183,6 +229,88 @@ export function StaffPage() {
       alert(err instanceof Error ? err.message : 'Failed to update role');
     } finally {
       setSavingRole(prev => { const n = { ...prev }; delete n[memberId]; return n; });
+    }
+  };
+
+  // ── Credentialing ─────────────────────────────────────────────────
+  const loadCredentials = useCallback((caregiverId: string) => {
+    setCredLoading(prev => ({ ...prev, [caregiverId]: true }));
+    getJson<{ credentials: Credential[]; compliance: CredentialCompliance }>(
+      `/api/staff/caregivers/${encodeURIComponent(caregiverId)}/credentials`,
+    )
+      .then(data => {
+        setCreds(prev => ({ ...prev, [caregiverId]: data.credentials || [] }));
+        setCredCompliance(prev => ({ ...prev, [caregiverId]: data.compliance }));
+      })
+      .catch(() => {
+        // Mark as loaded-but-empty so the section renders an add form rather
+        // than spinning forever.
+        setCreds(prev => ({ ...prev, [caregiverId]: prev[caregiverId] ?? [] }));
+      })
+      .finally(() => setCredLoading(prev => ({ ...prev, [caregiverId]: false })));
+  }, []);
+
+  // Lazy-load a caregiver's credentials the first time their row expands.
+  useEffect(() => {
+    if (!expandedId) return;
+    const member = staff.find(s => s.id === expandedId);
+    if (member && member.role === 'caregiver' && creds[expandedId] === undefined) {
+      loadCredentials(expandedId);
+    }
+  }, [expandedId, staff, creds, loadCredentials]);
+
+  const handleAddCredential = async (caregiverId: string) => {
+    const form = credForm[caregiverId] ?? EMPTY_CRED_FORM;
+    if (!form.credentialType || !form.expiresAt) {
+      alert('Credential type and expiry date are required.');
+      return;
+    }
+    setCredSaving(prev => ({ ...prev, [caregiverId]: true }));
+    try {
+      await postJson(`/api/staff/caregivers/${encodeURIComponent(caregiverId)}/credentials`, {
+        credentialType: form.credentialType,
+        status: 'active',
+        expiresAt: form.expiresAt,
+        issuedAt: form.issuedAt || undefined,
+        notes: form.notes || undefined,
+      });
+      setCredForm(prev => ({ ...prev, [caregiverId]: EMPTY_CRED_FORM }));
+      loadCredentials(caregiverId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to add credential');
+    } finally {
+      setCredSaving(prev => ({ ...prev, [caregiverId]: false }));
+    }
+  };
+
+  const handleExpireCredential = async (caregiverId: string, credId: string) => {
+    if (!window.confirm('Mark this credential expired? This cannot be undone.')) return;
+    try {
+      await deleteJson(
+        `/api/staff/caregivers/${encodeURIComponent(caregiverId)}/credentials/${encodeURIComponent(credId)}`,
+      );
+      loadCredentials(caregiverId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to expire credential');
+    }
+  };
+
+  // ── Set caregiver NPI (rendering provider for 837 claims) ─────────
+  const handleSaveNpi = async (memberId: string) => {
+    const npi = (npiInput[memberId] ?? '').trim();
+    if (!/^\d{10}$/.test(npi)) {
+      alert('NPI must be exactly 10 digits.');
+      return;
+    }
+    setSavingNpi(prev => ({ ...prev, [memberId]: true }));
+    try {
+      await patchJson(`/api/staff/caregivers/${encodeURIComponent(memberId)}`, { npi });
+      setStaff(prev => prev.map(s => s.id === memberId ? { ...s, hasNpi: true } : s));
+      setNpiInput(prev => { const n = { ...prev }; delete n[memberId]; return n; });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save NPI');
+    } finally {
+      setSavingNpi(prev => { const n = { ...prev }; delete n[memberId]; return n; });
     }
   };
 
@@ -288,6 +416,7 @@ export function StaffPage() {
              activeStaff.length === 0 ? (
                <EmptyState title="No active staff yet" body="Staff appear here once they accept their invite." cta={{ label: 'Invite a staff member', onClick: focusInvite }} />
              ) : (
+               <div className="table-scroll">
                <table className="data-table">
                  <thead>
                    <tr>
@@ -328,6 +457,153 @@ export function StaffPage() {
                                  <div style={{ fontWeight: 600 }}>Role</div>
                                  <div><RoleBadge role={s.role} /></div>
                                </div>
+
+                               {!isUser && (
+                                 <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8 }}>
+                                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0F172A', marginBottom: '0.4rem' }}>
+                                     Rendering NPI{' '}
+                                     {s.hasNpi
+                                       ? <span style={{ color: '#059669', fontWeight: 500 }}>· on file</span>
+                                       : <span style={{ color: '#BE123C', fontWeight: 500 }}>· not set (blocks clean 837 claims)</span>}
+                                   </div>
+                                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                     <input
+                                       value={npiInput[s.id] ?? ''}
+                                       onChange={e => setNpiInput(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                       placeholder={s.hasNpi ? 'Update 10-digit NPI' : '10-digit NPI'}
+                                       inputMode="numeric"
+                                       maxLength={10}
+                                       className="input-field"
+                                       style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem', maxWidth: 200 }}
+                                       onClick={e => e.stopPropagation()}
+                                     />
+                                     <button
+                                       type="button"
+                                       className="btn-secondary btn-sm"
+                                       disabled={(savingNpi[s.id] ?? false) || !(npiInput[s.id] ?? '').trim()}
+                                       onClick={() => handleSaveNpi(s.id)}
+                                     >
+                                       {savingNpi[s.id] ? 'Saving…' : 'Save NPI'}
+                                     </button>
+                                   </div>
+                                 </div>
+                               )}
+
+                               {!isUser && (
+                                 <div
+                                   style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8 }}
+                                   onClick={e => e.stopPropagation()}
+                                 >
+                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+                                     <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0F172A' }}>Credentials &amp; compliance</span>
+                                     {credCompliance[s.id] && (
+                                       <span style={{
+                                         fontSize: '0.75rem', fontWeight: 600, padding: '0.1em 0.5em', borderRadius: 999,
+                                         background: credCompliance[s.id].compliant ? '#05966918' : '#BE123C18',
+                                         color: credCompliance[s.id].compliant ? '#059669' : '#BE123C',
+                                       }}>
+                                         {credCompliance[s.id].compliant ? 'Compliant' : 'Action needed'}
+                                       </span>
+                                     )}
+                                   </div>
+
+                                   {credLoading[s.id] && creds[s.id] === undefined ? (
+                                     <div style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Loading credentials…</div>
+                                   ) : (
+                                     <>
+                                       {(creds[s.id]?.length ?? 0) > 0 ? (
+                                         <table className="data-table" style={{ marginBottom: '0.75rem' }}>
+                                           <thead>
+                                             <tr>
+                                               <th>Type</th><th>Status</th><th>Expires</th><th aria-label="actions" />
+                                             </tr>
+                                           </thead>
+                                           <tbody>
+                                             {creds[s.id].map(c => {
+                                               const expired = c.status === 'expired' || new Date(c.expiresAt) < new Date();
+                                               return (
+                                                 <tr key={c.id}>
+                                                   <td>{CRED_TYPE_LABEL[c.credentialType] ?? c.credentialType}</td>
+                                                   <td>
+                                                     <span style={{ color: expired ? '#BE123C' : '#059669', fontWeight: 500, textTransform: 'capitalize' }}>
+                                                       {expired ? 'expired' : c.status}
+                                                     </span>
+                                                   </td>
+                                                   <td style={{ color: expired ? '#BE123C' : '#475569' }}>{c.expiresAt}</td>
+                                                   <td style={{ textAlign: 'right' }}>
+                                                     {!expired && (
+                                                       <button
+                                                         type="button"
+                                                         className="btn-ghost btn-sm"
+                                                         style={{ color: '#BE123C' }}
+                                                         onClick={() => handleExpireCredential(s.id, c.id)}
+                                                       >
+                                                         Expire
+                                                       </button>
+                                                     )}
+                                                   </td>
+                                                 </tr>
+                                               );
+                                             })}
+                                           </tbody>
+                                         </table>
+                                       ) : (
+                                         <div style={{ fontSize: '0.8125rem', color: '#94A3B8', marginBottom: '0.75rem' }}>No credentials on file yet.</div>
+                                       )}
+
+                                       {credCompliance[s.id] && credCompliance[s.id].missing.length > 0 && (
+                                         <div style={{ fontSize: '0.75rem', color: '#BE123C', marginBottom: '0.75rem' }}>
+                                           Missing required: {credCompliance[s.id].missing.map(m => CRED_TYPE_LABEL[m] ?? m).join(', ')}
+                                         </div>
+                                       )}
+
+                                       {/* Add credential */}
+                                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #F1F5F9', paddingTop: '0.6rem' }}>
+                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                           <label className="label" style={{ fontSize: '0.7rem' }}>Type</label>
+                                           <select
+                                             className="select-field"
+                                             style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem', minWidth: 150 }}
+                                             value={(credForm[s.id] ?? EMPTY_CRED_FORM).credentialType}
+                                             onChange={e => setCredForm(prev => ({ ...prev, [s.id]: { ...(prev[s.id] ?? EMPTY_CRED_FORM), credentialType: e.target.value } }))}
+                                           >
+                                             <option value="">Select…</option>
+                                             {CRED_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                           </select>
+                                         </div>
+                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                           <label className="label" style={{ fontSize: '0.7rem' }}>Expires</label>
+                                           <input
+                                             type="date"
+                                             className="input-field"
+                                             style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem' }}
+                                             value={(credForm[s.id] ?? EMPTY_CRED_FORM).expiresAt}
+                                             onChange={e => setCredForm(prev => ({ ...prev, [s.id]: { ...(prev[s.id] ?? EMPTY_CRED_FORM), expiresAt: e.target.value } }))}
+                                           />
+                                         </div>
+                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                           <label className="label" style={{ fontSize: '0.7rem' }}>Issued (optional)</label>
+                                           <input
+                                             type="date"
+                                             className="input-field"
+                                             style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem' }}
+                                             value={(credForm[s.id] ?? EMPTY_CRED_FORM).issuedAt}
+                                             onChange={e => setCredForm(prev => ({ ...prev, [s.id]: { ...(prev[s.id] ?? EMPTY_CRED_FORM), issuedAt: e.target.value } }))}
+                                           />
+                                         </div>
+                                         <button
+                                           type="button"
+                                           className="btn-secondary btn-sm"
+                                           disabled={(credSaving[s.id] ?? false) || !(credForm[s.id]?.credentialType) || !(credForm[s.id]?.expiresAt)}
+                                           onClick={() => handleAddCredential(s.id)}
+                                         >
+                                           {credSaving[s.id] ? 'Adding…' : 'Add credential'}
+                                         </button>
+                                       </div>
+                                     </>
+                                   )}
+                                 </div>
+                               )}
 
                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                  {isUser && (
@@ -372,6 +648,7 @@ export function StaffPage() {
                    })}
                  </tbody>
                </table>
+               </div>
              )}
           </div>
 
@@ -393,6 +670,7 @@ export function StaffPage() {
                   {revokingAll ? 'Revoking…' : `Revoke all (${pendingInvites.length})`}
                 </button>
               </div>
+              <div className="table-scroll">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -422,7 +700,14 @@ export function StaffPage() {
                               disabled={resend.status === 'sending'}
                               className={resend.status === 'sent' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'}
                             >
-                              {resend.status === 'sending' ? 'Resending…' : resend.status === 'sent' ? 'Sent ✓' : 'Resend'}
+                              {resend.status === 'sending' ? 'Resending…' : resend.status === 'sent' ? (
+                                <>
+                                  Sent{' '}
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ verticalAlign: 'middle' }}>
+                                    <path d="M20 6 9 17l-5-5" />
+                                  </svg>
+                                </>
+                              ) : 'Resend'}
                             </button>
                             <button
                               type="button"
@@ -443,6 +728,7 @@ export function StaffPage() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 

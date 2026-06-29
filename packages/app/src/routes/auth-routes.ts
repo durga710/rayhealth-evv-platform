@@ -2,13 +2,15 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { AgencyRepository, AuditEventRepository, PasswordResetRepository, SessionRepository, UserRepository, type NewAuditEvent } from '@rayhealth/core';
+import { AgencyRepository, AuditEventRepository, PasswordResetRepository, SessionRepository, UserRepository, type NewAuditEvent, type AppRole } from '@rayhealth/core';
 import { authContext } from '../middleware/auth-context.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } from '../security/cookies.js';
 import { createOpaqueToken, hashOpaqueToken } from '../security/token-hashing.js';
 import { createEmailClient, buildPasswordResetUrl } from '../email/email-client.js';
 import { safeError } from '../security/safe-log.js';
+import { CURRENT_TERMS_VERSION } from '../terms.js';
+import { verifySync } from 'otplib';
 
 const router = Router();
 type AuditEventDb = ConstructorParameters<typeof AuditEventRepository>[0];
@@ -17,6 +19,30 @@ function jwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('JWT_SECRET env var is not set');
   return secret;
+}
+
+/**
+ * Login gate enforced after the password check: a suspended account or an
+ * agency that the platform super-admin hasn't approved cannot sign in. The
+ * fields come from UserRepository.findByEmail (R21+); when they're undefined
+ * (older data / mocked tests) the login is not gated.
+ */
+function loginGate(user: { suspendedAt?: string | null; agencyReviewStatus?: string }):
+  | { code: string; message: string }
+  | null {
+  if (user.suspendedAt) {
+    return { code: 'ACCOUNT_SUSPENDED', message: 'This account has been suspended. Contact your administrator.' };
+  }
+  if (user.agencyReviewStatus === 'pending') {
+    return {
+      code: 'AGENCY_PENDING_REVIEW',
+      message: 'Your agency is awaiting review and approval. You will be able to sign in once approved.',
+    };
+  }
+  if (user.agencyReviewStatus === 'rejected') {
+    return { code: 'AGENCY_REJECTED', message: 'Your agency registration was not approved. Contact support.' };
+  }
+  return null;
 }
 
 async function recordAuditEvent(db: AuditEventDb, event: NewAuditEvent): Promise<void> {
@@ -48,6 +74,21 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const gate = loginGate(user);
+    if (gate) {
+      res.status(403).json({ code: gate.code, message: gate.message });
+      return;
+    }
+
+    // If the user has TOTP 2FA enabled, do not establish a session yet — issue a
+    // short-lived challenge token and require a second factor via /login/2fa.
+    // `totpEnabled` rides along on findByEmail, so no second query is needed.
+    if (user.totpEnabled) {
+      const challengeToken = jwt.sign({ sub: user.id, purpose: '2fa' }, jwtSecret(), { expiresIn: '5m' });
+      res.json({ twoFactorRequired: true, challengeToken });
       return;
     }
 
@@ -97,6 +138,102 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Second factor: exchange a challenge token + TOTP/backup code for a session.
+router.post('/login/2fa', async (req, res) => {
+  const { challengeToken, code } = req.body ?? {};
+  if (!challengeToken || !code) {
+    res.status(400).json({ message: 'challengeToken and code are required' });
+    return;
+  }
+  try {
+    let userId: string;
+    try {
+      const payload = jwt.verify(challengeToken, jwtSecret(), { algorithms: ['HS256'] }) as { sub?: string; purpose?: string };
+      if (payload.purpose !== '2fa' || !payload.sub) throw new Error('bad challenge');
+      userId = payload.sub;
+    } catch {
+      res.status(401).json({ message: 'Your verification session expired. Please sign in again.' });
+      return;
+    }
+
+    const db = req.app.get('db');
+    type Row = {
+      id: string; agency_id: string; role: AppRole; caregiver_id: string | null;
+      email: string; first_name: string | null; last_name: string | null; avatar_url: string | null;
+      totp_secret: string | null; totp_enabled: boolean; totp_backup_codes: string[] | null;
+    };
+    const row = (await db('users').where({ id: userId }).first()) as Row | undefined;
+    if (!row || !row.totp_enabled || !row.totp_secret) {
+      res.status(401).json({ message: 'Two-factor authentication is not available for this account.' });
+      return;
+    }
+
+    const cleaned = String(code).replace(/\s/g, '');
+    let verified = verifySync({ token: cleaned, secret: row.totp_secret }).valid;
+
+    // Fall back to single-use backup codes.
+    if (!verified && Array.isArray(row.totp_backup_codes)) {
+      const upper = cleaned.toUpperCase();
+      for (let i = 0; i < row.totp_backup_codes.length; i += 1) {
+        if (await bcrypt.compare(upper, row.totp_backup_codes[i])) {
+          verified = true;
+          const remaining = row.totp_backup_codes.filter((_, j) => j !== i);
+          await db('users').where({ id: row.id }).update({ totp_backup_codes: JSON.stringify(remaining) });
+          break;
+        }
+      }
+    }
+
+    if (!verified) {
+      res.status(401).json({ message: 'That code is incorrect or expired.' });
+      return;
+    }
+
+    const sessionToken = createOpaqueToken();
+    const csrfToken = createOpaqueToken();
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+    const session = await new SessionRepository(db).create({
+      agencyId: row.agency_id,
+      userId: row.id,
+      role: row.role,
+      caregiverId: row.caregiver_id ?? undefined,
+      sessionTokenHash: hashOpaqueToken(sessionToken),
+      csrfTokenHash: hashOpaqueToken(csrfToken),
+      userAgent: req.header('user-agent'),
+      ipAddress: req.ip,
+      expiresAt,
+    });
+
+    await recordAuditEvent(db, {
+      agencyId: row.agency_id,
+      actorId: row.id,
+      actorType: 'user',
+      eventType: 'auth.login.success',
+      entityType: 'session',
+      entityId: session.id,
+      outcome: 'success',
+      payload: { authMethod: 'session', secondFactor: 'totp' },
+      occurredAt: new Date().toISOString(),
+    });
+
+    const agencyTheme = await new AgencyRepository(db).findTheme(row.agency_id).catch(() => null);
+    res.cookie(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions());
+    res.json({
+      userId: row.id,
+      role: row.role,
+      agencyId: row.agency_id,
+      csrfToken,
+      agencyTheme,
+      email: row.email,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      avatarUrl: row.avatar_url,
+    });
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 router.post('/mobile/login', async (req, res) => {
   const { email, password } = req.body ?? {};
   if (!email || !password) {
@@ -109,6 +246,12 @@ router.post('/mobile/login', async (req, res) => {
     const user = await new UserRepository(db).findByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const gate = loginGate(user);
+    if (gate) {
+      res.status(403).json({ code: gate.code, message: gate.message });
       return;
     }
 
@@ -141,6 +284,8 @@ const signupSchema = z.object({
   state: z.literal('PA'),
   adminEmail: z.string().email().max(200),
   password: z.string().min(12).max(128),
+  // Affirmative Terms of Service acceptance is required to create an account.
+  acceptedTerms: z.literal(true, { message: 'You must accept the Terms of Service to continue' }),
 });
 
 // Self-serve agency signup. Creates agency + admin user atomically.
@@ -169,49 +314,37 @@ router.post('/signup', async (req, res) => {
         operatingTracks: ['personal-assistance'],
       });
       const passwordHash = await bcrypt.hash(password, 12);
-      const user = await new UserRepository(trx).create({
+      const userRepo = new UserRepository(trx);
+      const user = await userRepo.create({
         agencyId: agency.id!,
         email: adminEmail,
         passwordHash,
         role: 'admin',
       });
+      await userRepo.recordTermsAcceptance(user.id, CURRENT_TERMS_VERSION);
       return { agency, user };
     });
 
-    const sessionToken = createOpaqueToken();
-    const csrfToken = createOpaqueToken();
-    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
-    const session = await new SessionRepository(db).create({
-      agencyId: result.user.agencyId,
-      userId: result.user.id,
-      role: result.user.role,
-      caregiverId: undefined,
-      sessionTokenHash: hashOpaqueToken(sessionToken),
-      csrfTokenHash: hashOpaqueToken(csrfToken),
-      userAgent: req.header('user-agent'),
-      ipAddress: req.ip,
-      expiresAt,
-    });
-
+    // A self-serve signup creates the agency in `review_status='pending'`. We do
+    // NOT establish a session here — the agency must be approved by a platform
+    // super-admin before anyone on it can sign in. Issuing a cookie at this point
+    // would let an unapproved tenant operate the system, bypassing the review gate.
     await recordAuditEvent(db, {
       agencyId: result.user.agencyId,
       actorId: result.user.id,
       actorType: 'user',
-      eventType: 'auth.login.success',
-      entityType: 'session',
-      entityId: session.id,
+      eventType: 'agency.review.requested',
+      entityType: 'agency',
+      entityId: result.user.agencyId,
       outcome: 'success',
-      payload: { authMethod: 'session', source: 'signup' },
+      payload: { source: 'signup' },
       occurredAt: new Date().toISOString(),
     });
 
-    res.cookie(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions());
     res.status(201).json({
-      userId: result.user.id,
-      role: result.user.role,
-      agencyId: result.user.agencyId,
-      csrfToken,
-      agencyTheme: null,
+      status: 'pending_review',
+      message:
+        'Your agency has been registered and is awaiting review. You will be able to sign in once approved.',
     });
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;

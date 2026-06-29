@@ -10,6 +10,7 @@ import type {
   EnrollmentStatus,
   InsightCaregiver,
   LearningAgencyRollup,
+  LearningCertificate,
   LearningCourse,
   LearningInsightsEnvelope,
   NewCourseCompletion,
@@ -72,9 +73,49 @@ export class LearningRepository {
         required: data.required,
         duration_minutes: data.durationMinutes,
         external_url: data.externalUrl ?? null,
+        modules: data.modules ? JSON.stringify(data.modules) : null,
       })
       .returning('*');
     return this.mapCourse(row as Record<string, unknown>);
+  }
+
+  /**
+   * Updates an agency-owned course. Global courses (agency_id NULL) are not
+   * editable by agencies, so the WHERE clause scopes to the agency's own rows;
+   * an attempt to edit a global or other-agency course matches nothing and
+   * returns undefined.
+   */
+  async updateCourse(
+    id: string,
+    agencyId: string,
+    data: Partial<NewLearningCourse>,
+  ): Promise<LearningCourse | undefined> {
+    const patch: Record<string, unknown> = { updated_at: this.db.fn.now() };
+    if (data.code !== undefined) patch.code = data.code;
+    if (data.title !== undefined) patch.title = data.title;
+    if (data.description !== undefined) patch.description = data.description;
+    if (data.cadence !== undefined) patch.cadence = data.cadence;
+    if (data.expiresAfterDays !== undefined) patch.expires_after_days = data.expiresAfterDays;
+    if (data.required !== undefined) patch.required = data.required;
+    if (data.durationMinutes !== undefined) patch.duration_minutes = data.durationMinutes;
+    if (data.externalUrl !== undefined) patch.external_url = data.externalUrl ?? null;
+    if (data.modules !== undefined) patch.modules = data.modules ? JSON.stringify(data.modules) : null;
+
+    const [row] = await this.db('learning_courses')
+      .where({ id, agency_id: agencyId })
+      .update(patch)
+      .returning('*');
+    return row ? this.mapCourse(row as Record<string, unknown>) : undefined;
+  }
+
+  /**
+   * Deletes an agency-owned course. Scoped to the agency's own rows so a global
+   * or other-agency course cannot be removed. Returns true if a row was deleted.
+   * Enrollments/completions cascade-delete via FK ON DELETE CASCADE.
+   */
+  async deleteCourse(id: string, agencyId: string): Promise<boolean> {
+    const deleted = await this.db('learning_courses').where({ id, agency_id: agencyId }).del();
+    return deleted > 0;
   }
 
   /** Idempotent upsert by (agency_id, code). Used by the catalog seed script. */
@@ -374,6 +415,56 @@ export class LearningRepository {
     });
 
     return { course, caregivers };
+  }
+
+  /**
+   * Assembles certificate-of-completion data for a caregiver's completed course.
+   * Returns undefined if the caregiver has no completed enrollment for the
+   * course (so the route can 404 rather than mint a certificate for incomplete
+   * training). The verification code is derived from the enrollment id.
+   */
+  async getCertificate(courseId: string, caregiverId: string): Promise<LearningCertificate | undefined> {
+    const row = await this.db('course_enrollments as e')
+      .join('caregivers as cg', 'cg.id', 'e.caregiver_id')
+      .join('learning_courses as c', 'c.id', 'e.course_id')
+      .join('agencies as a', 'a.id', 'e.agency_id')
+      .where('e.course_id', courseId)
+      .where('e.caregiver_id', caregiverId)
+      .whereNotNull('e.last_completed_at')
+      .first(
+        'e.id as enrollment_id',
+        'e.last_completed_at',
+        'e.expires_at',
+        'cg.first_name',
+        'cg.last_name',
+        'c.title as course_title',
+        'c.code as course_code',
+        'c.cadence',
+        'a.name as agency_name',
+      );
+    if (!row) return undefined;
+
+    const r = row as Record<string, unknown>;
+    const enrollmentId = String(r.enrollment_id);
+    const completion = await this.db('course_completions')
+      .where({ enrollment_id: enrollmentId })
+      .orderBy('completed_at', 'desc')
+      .first('score');
+    const score = completion && (completion as Record<string, unknown>).score != null
+      ? Number((completion as Record<string, unknown>).score)
+      : null;
+
+    return {
+      caregiverName: `${String(r.first_name ?? '').trim()} ${String(r.last_name ?? '').trim()}`.trim(),
+      agencyName: String(r.agency_name ?? ''),
+      courseTitle: String(r.course_title ?? ''),
+      courseCode: String(r.course_code ?? ''),
+      cadence: r.cadence as LearningCertificate['cadence'],
+      completedAt: this.toIsoString(r.last_completed_at),
+      expiresAt: r.expires_at ? this.toIsoString(r.expires_at) : null,
+      score,
+      verificationCode: `RH-${enrollmentId.replace(/-/g, '').slice(0, 8).toUpperCase()}`,
+    };
   }
 
   async getAssignmentBlockers(caregiverId: string, now = new Date()): Promise<AssignmentComplianceCheck> {

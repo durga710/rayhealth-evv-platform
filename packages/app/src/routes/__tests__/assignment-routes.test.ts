@@ -18,11 +18,24 @@ describe('assignment routes', () => {
       visitTemplateId: 'template-1'
     });
     vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
-      createAssignment: mockCreateAssignment
+      createAssignment: mockCreateAssignment,
+      getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+      getCaregiverScheduleForConflict: vi.fn().mockResolvedValue([])
     } as any));
     // The route now verifies caregiver belongs to the agency before creating.
     vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
-      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' })
+      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' }),
+      getCredentials: vi.fn().mockResolvedValue([])
+    } as any));
+    // Conflict-gate dependencies (authorizations, billed units, audit).
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getAuthorizations: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+      getBilledLineUnits: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({
+      create: vi.fn().mockResolvedValue({})
     } as any));
 
     const response = await request(createApp())
@@ -38,6 +51,37 @@ describe('assignment routes', () => {
 
     expect(response.status).toBe(201);
     expect(mockCreateAssignment).toHaveBeenCalled();
+  });
+
+  it('warns (does not block) when the caregiver has non-active credentials', async () => {
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      createAssignment: vi.fn().mockResolvedValue({ id: '124', caregiverId: 'caregiver-1', visitTemplateId: 'template-1' }),
+      getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+      getCaregiverScheduleForConflict: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' }),
+      getCredentials: vi.fn().mockResolvedValue([
+        { credentialType: 'tb-screening', status: 'expired' }
+      ])
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getAuthorizations: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+      getBilledLineUnits: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({
+      create: vi.fn().mockResolvedValue({})
+    } as any));
+
+    const response = await request(createApp())
+      .post('/assignments')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ clientId: 'client-1', caregiverId: 'caregiver-1', visitTemplateId: 'template-1', visitDate: '2026-05-20' });
+
+    expect(response.status).toBe(201);
+    expect(response.body.warnings.some((w: string) => w.includes('non-active credentials'))).toBe(true);
   });
 
   it('forbids caregivers from creating assignments', async () => {
@@ -79,5 +123,104 @@ describe('assignment routes', () => {
 
     expect(response.status).toBe(400);
     expect(mockCreateAssignment).not.toHaveBeenCalled();
+  });
+
+  // Shared no-conflict mocks for the reschedule path (which now re-runs the gate).
+  function mockRescheduleDeps(
+    overrides: { getCaregiverScheduleForConflict?: unknown; updateAssignment?: unknown } = {},
+  ) {
+    const updateAssignment =
+      overrides.updateAssignment ??
+      vi.fn().mockResolvedValue({
+        id: 'a1', caregiverId: 'caregiver-1', visitTemplateId: 'template-1', visitDate: '2026-06-01',
+      });
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      updateAssignment,
+      getAssignmentById: vi.fn().mockResolvedValue({
+        id: 'a1', caregiverId: 'caregiver-1', visitTemplateId: 'template-1', clientId: 'client-1', visitDate: '2026-05-20',
+      }),
+      getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+      getCaregiverScheduleForConflict:
+        overrides.getCaregiverScheduleForConflict ?? vi.fn().mockResolvedValue([]),
+    } as any));
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-1', status: 'active' }),
+      getCredentials: vi.fn().mockResolvedValue([]),
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getAuthorizations: vi.fn().mockResolvedValue([]),
+    } as any));
+    vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+      getBilledLineUnits: vi.fn().mockResolvedValue([]),
+    } as any));
+    return updateAssignment as ReturnType<typeof vi.fn>;
+  }
+
+  it('reschedules an assignment via PUT', async () => {
+    const updateAssignment = mockRescheduleDeps();
+
+    const response = await request(createApp())
+      .put('/assignments/a1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ visitDate: '2026-06-01' });
+
+    expect(response.status).toBe(200);
+    expect(updateAssignment).toHaveBeenCalledWith('a1', 'agency-1', { visitDate: '2026-06-01' });
+  });
+
+  it('blocks a reschedule that would double-book the caregiver (409)', async () => {
+    // The caregiver already has template-1 on 2026-06-01 (a different assignment).
+    const updateAssignment = mockRescheduleDeps({
+      getCaregiverScheduleForConflict: vi
+        .fn()
+        .mockResolvedValue([{ visitTemplateId: 'template-1', visitDate: '2026-06-01' }]),
+    });
+
+    const response = await request(createApp())
+      .put('/assignments/a1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ visitDate: '2026-06-01' });
+
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('SCHEDULE_CONFLICT');
+    expect(updateAssignment).not.toHaveBeenCalled();
+  });
+
+  it('rejects a PUT with a malformed visitDate', async () => {
+    const updateAssignment = vi.fn();
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({ updateAssignment } as any));
+
+    const response = await request(createApp())
+      .put('/assignments/a1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ visitDate: 'next tuesday' });
+
+    expect(response.status).toBe(400);
+    expect(updateAssignment).not.toHaveBeenCalled();
+  });
+
+  it('deletes an assignment with no EVV visit (204)', async () => {
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      deleteAssignment: vi.fn().mockResolvedValue('deleted'),
+    } as any));
+
+    const response = await request(createApp())
+      .delete('/assignments/a1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`);
+
+    expect(response.status).toBe(204);
+  });
+
+  it('refuses to delete an assignment that already has an EVV visit (409)', async () => {
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      deleteAssignment: vi.fn().mockResolvedValue('has_dependencies'),
+    } as any));
+
+    const response = await request(createApp())
+      .delete('/assignments/a1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`);
+
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('HAS_DEPENDENCIES');
   });
 });

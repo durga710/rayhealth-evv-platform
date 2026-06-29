@@ -25,10 +25,11 @@ describe('admin app shell', () => {
     // Hero h1 uses a <br />, so match by role to avoid text-node split issues.
     const h1 = await screen.findByRole('heading', { level: 1 });
     expect(h1).toBeInTheDocument();
-    expect(h1).toHaveTextContent(/Home care, run like operations/i);
-    // Log-in nav link confirms the full marketing shell rendered.
-    expect(screen.getByRole('link', { name: /log in/i })).toBeInTheDocument();
-    // Old hero copy must not be present.
-    expect(screen.queryByText(/CARE\. VERIFIED\. DELIVERED/i)).not.toBeInTheDocument();
+    expect(h1).toHaveTextContent(/operating system/i);
+    expect(h1).toHaveTextContent(/home-care/i);
+    // Sign-in link(s) confirm the full marketing shell rendered.
+    expect(screen.getAllByRole('link', { name: /sign in/i }).length).toBeGreaterThan(0);
+    // A demo CTA confirms the conversion-focused shell rendered.
+    expect(screen.getAllByRole('link', { name: /book a demo/i }).length).toBeGreaterThan(0);
   });
 });

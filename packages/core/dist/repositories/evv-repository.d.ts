@@ -20,6 +20,11 @@ export declare class EvvRepository {
     updateVisit(id: string, agencyId: string, visit: Partial<EvvVisit>): Promise<EvvVisit | null>;
     /** All visits within an agency. */
     getVisitsForAgency(agencyId: string): Promise<EvvVisit[]>;
+    /**
+     * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
+     * (PHI-bearing) visit row across the wire just to read `.length`.
+     */
+    countVisitsForAgency(agencyId: string): Promise<number>;
     /** Single visit within an agency; returns null without leaking cross-tenant existence. */
     getVisitByIdForAgency(id: string, agencyId: string): Promise<EvvVisit | null>;
     /**
@@ -56,6 +61,25 @@ export declare class EvvRepository {
      * Tenant-scoped via the caregiver → users → agency join so a rogue caller
      * cannot update a visit from a different agency.
      */
+    /**
+     * Bulk-mark every verified visit in a date range as `submitted` — the
+     * write-back for "this batch was sent to the Sandata aggregator". Only
+     * advances visits that are not yet in the aggregator pipeline
+     * (sandata_status IS NULL or 'pending'); never downgrades an already
+     * accepted/rejected/submitted row. Tenant-scoped via the caregiver → users
+     * → agency join. Returns the number of rows advanced.
+     */
+    markSandataSubmittedInRange(agencyId: string, fromIso?: string, toIso?: string): Promise<number>;
     markSandataSubmission(visitId: string, agencyId: string, status: 'pending' | 'submitted' | 'accepted' | 'rejected', confirmationId?: string | null): Promise<boolean>;
+    /**
+     * HHAeXchange analogue of {@link markSandataSubmittedInRange}. Bulk-advances
+     * every verified visit in the range that is not yet in the HHAeXchange
+     * pipeline (hhaexchange_status IS NULL or 'pending') to 'submitted'. Never
+     * downgrades an accepted/rejected/submitted row. Tenant-scoped. Returns the
+     * number of rows advanced.
+     */
+    markHhaexchangeSubmittedInRange(agencyId: string, fromIso?: string, toIso?: string): Promise<number>;
+    /** HHAeXchange analogue of {@link markSandataSubmission}. Tenant-scoped. */
+    markHhaexchangeSubmission(visitId: string, agencyId: string, status: 'pending' | 'submitted' | 'accepted' | 'rejected', confirmationId?: string | null): Promise<boolean>;
 }
 //# sourceMappingURL=evv-repository.d.ts.map

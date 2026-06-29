@@ -18,6 +18,7 @@ import authorizationRoutes from './routes/authorization-routes.js';
 import templateRoutes from './routes/template-routes.js';
 import assignmentRoutes from './routes/assignment-routes.js';
 import evvRoutes from './routes/evv-routes.js';
+import mobileRoutes from './routes/mobile-routes.js';
 import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
 import auditRetentionRoutes from './routes/audit-retention-routes.js';
@@ -26,13 +27,22 @@ import learningRoutes from './routes/learning-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
 import marketingRoutes from './routes/marketing-routes.js';
 import billingRoutes from './routes/billing-routes.js';
+import billingClaimsRoutes from './routes/billing-claims-routes.js';
 import onboardingRoutes from './routes/onboarding-routes.js';
 import onboardingAdminRoutes from './routes/onboarding-admin-routes.js';
 import profileRoutes from './routes/profile-routes.js';
+import settingsRoutes from './routes/settings-routes.js';
 import agencySandataConfigRoutes from './routes/agency-sandata-config-routes.js';
 import agencyHhaexchangeConfigRoutes from './routes/agency-hhaexchange-config-routes.js';
+import agencyClearinghouseConfigRoutes from './routes/agency-clearinghouse-config-routes.js';
 import copilotRoutes from './routes/copilot-routes.js';
+import supportRoutes from './routes/support-routes.js';
 import complianceEngineRoutes from './routes/compliance-engine-routes.js';
+import commandCenterRoutes from './routes/command-center-routes.js';
+import exportRoutes from './routes/export-routes.js';
+import importRoutes from './routes/import-routes.js';
+import recurringScheduleRoutes from './routes/recurring-schedule-routes.js';
+import superadminRoutes from './routes/superadmin-routes.js';
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 /**
  * Default rate limit for the authenticated API surface. 300 requests per
@@ -62,6 +72,20 @@ const copilotLimiter = rateLimit({
     max: 40,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+});
+/**
+ * Public marketing support chat is unauthenticated and calls a paid model on
+ * every turn, so it's the most abusable surface. 20 messages per 15-min window
+ * per IP is plenty for a genuine pre-sales conversation but caps cost/abuse
+ * from an anonymous scripted client.
+ */
+const supportChatLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many messages. Please try again in a few minutes.' },
     skip: () => process.env.NODE_ENV === 'test',
 });
 /**
@@ -157,6 +181,16 @@ export function createApp() {
         app.use(`${prefix}/health`, healthLimiter, healthRoutes);
         app.use(`${prefix}/marketing`, marketingRoutes);
         app.use(`${prefix}/onboarding`, onboardingRoutes);
+        // Public marketing-site support chat ("RayHealthAssist"). Mounted before
+        // authContext so the anonymous widget reaches it without a session; behind
+        // its own tighter rate limit since each turn calls a paid model.
+        app.use(`${prefix}/support`, supportChatLimiter, supportRoutes);
+        // Platform super-admin console. Mounted BEFORE authContext: it carries its
+        // own platform bearer token (scope:'platform'), not an agency session. Only
+        // the login endpoint is brute-force rate-limited; the token-gated actions
+        // are protected by requirePlatformAdmin.
+        app.use(`${prefix}/superadmin/login`, authLimiter);
+        app.use(`${prefix}/superadmin`, superadminRoutes);
     }
     // ---------- Authenticated surface ----------
     // Default limiter applies to every authenticated route; per-route
@@ -170,13 +204,18 @@ export function createApp() {
         app.use(`${prefix}/agencies`, agencyRoutes);
         app.use(`${prefix}/agencies`, agencySandataConfigRoutes);
         app.use(`${prefix}/agencies`, agencyHhaexchangeConfigRoutes);
+        app.use(`${prefix}/agencies`, agencyClearinghouseConfigRoutes);
         app.use(`${prefix}/staff`, staffRoutes);
         app.use(`${prefix}/clients`, clientRoutes);
         app.use(`${prefix}/authorizations`, authorizationRoutes);
         app.use(`${prefix}/templates`, templateRoutes);
         app.use(`${prefix}/assignments`, assignmentRoutes);
+        app.use(`${prefix}/recurring-schedules`, recurringScheduleRoutes);
         app.use(`${prefix}/evv`, evvRoutes);
+        app.use(`${prefix}/mobile`, mobileRoutes);
         app.use(`${prefix}/maintenance`, maintenanceRoutes);
+        app.use(`${prefix}/exports`, exportRoutes);
+        app.use(`${prefix}/import`, importRoutes);
         app.use(`${prefix}/tasks`, taskRoutes);
         app.use(`${prefix}/admin/audit-retention`, adminAuditLimiter, auditRetentionRoutes);
         app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);
@@ -184,9 +223,12 @@ export function createApp() {
         app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
         app.use(`${prefix}/copilot`, copilotLimiter, copilotRoutes);
         app.use(`${prefix}/billing`, billingRoutes);
+        app.use(`${prefix}/billing`, billingClaimsRoutes);
         app.use(`${prefix}/admin/onboarding`, onboardingAdminRoutes);
         app.use(`${prefix}/profile`, profileRoutes);
+        app.use(`${prefix}/settings`, settingsRoutes);
         app.use(`${prefix}/compliance-engine`, complianceEngineRoutes);
+        app.use(`${prefix}/command-center`, commandCenterRoutes);
     }
     return app;
 }

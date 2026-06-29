@@ -383,9 +383,13 @@ export async function up(knex) {
       END$$;
     `);
     }
-    // Expand audit_events_event_type_check to include invite and email event
-    // types emitted by invite-routes. DROP IF EXISTS + ADD is idempotent:
-    // safe whether the old narrow constraint exists or the new wide one does.
+    // Keep audit_events_event_type_check in lock-step with the domain
+    // `auditEventTypes` enum (packages/core/src/domain/audit.ts). The previous
+    // version of this constraint omitted the copilot.* events, so copilot audit
+    // writes were silently rejected at the DB layer (caught by the route's
+    // try/catch). This DROP IF EXISTS + ADD is idempotent and now lists the full
+    // enum, including copilot.*, claim.*, and payroll.export. Any change to the
+    // domain enum must update this list in the same PR.
     await knex.raw(`
     DO $$
     BEGIN
@@ -395,12 +399,31 @@ export async function up(knex) {
           DROP CONSTRAINT IF EXISTS audit_events_event_type_check;
         ALTER TABLE audit_events
           ADD CONSTRAINT audit_events_event_type_check CHECK (event_type IN (
+            'visit.created','visit.clock-out','visit.approved','visit.flagged',
+            'credential.created','credential.expired','credential.renewed',
+            'caregiver.created','caregiver.status-changed',
+            'assignment.created','assignment.cancelled',
+            'exception.filed','exception.approved',
             'auth.login.success','auth.login.failure','auth.logout',
             'session.created','session.revoked','csrf.failure',
             'phi.read','phi.create','phi.update','phi.delete','phi.export',
             'request.write','permission.denied',
             'invite.created','invite.email.sent','invite.email.failed',
-            'invite.accepted','invite.access_code_failed'
+            'invite.accepted','invite.access_code_failed',
+            'invite.revoked','invite.revoked_all',
+            'auth.password_reset.requested','auth.password_reset.completed',
+            'agency.evv-config.changed',
+            'copilot.query','copilot.action.confirmed','copilot.action.declined',
+            'copilot.reminder.sent',
+            'claim.generated','claim.validated','claim.submitted','claim.status-changed',
+            'payroll.exported',
+            'evv.sandata.submitted','evv.sandata.reconciled',
+            'evv.hhaexchange.submitted','evv.hhaexchange.reconciled',
+            'data.imported','claim.remittance.posted',
+            'schedule.recurring.materialized',
+            'platform.login.success','platform.login.failure',
+            'agency.review.approved','agency.review.rejected',
+            'account.suspended','account.reactivated'
           ));
       END IF;
     END$$;
@@ -885,8 +908,564 @@ export async function up(knex) {
             });
         }
     }
+    // ── R13 — Claims & billing ───────────────────────────────────────────────
+    // Medicaid claim generation. A `claims` row aggregates one client's verified
+    // visits over a service period for one payer; each `claim_lines` row bills a
+    // single immutable evv_visits row (one date of service). Money is stored in
+    // integer cents. agency_id scopes every claim; claim_lines cascade-delete
+    // with their claim, and reference evv_visits with ON DELETE RESTRICT so a
+    // visit that has been billed cannot be deleted out from under a claim.
+    if (!(await knex.schema.hasTable('claims'))) {
+        await knex.schema.createTable('claims', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable().onDelete('CASCADE');
+            table.uuid('client_id').references('id').inTable('clients').notNullable().onDelete('RESTRICT');
+            table.string('payer_id').notNullable();
+            table.date('period_start').notNullable();
+            table.date('period_end').notNullable();
+            table.string('status', 20).notNullable().defaultTo('draft');
+            table.integer('total_units').notNullable().defaultTo(0);
+            table.integer('total_charge_cents').notNullable().defaultTo(0);
+            table.string('denial_risk', 10).notNullable().defaultTo('low');
+            table.string('control_number', 20);
+            table.text('payer_claim_id');
+            table.text('status_reason');
+            table.timestamp('submitted_at', { useTz: true });
+            table.timestamps(true, true);
+            table.index(['agency_id', 'status']);
+            table.index(['client_id']);
+        });
+    }
+    await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='claims')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                         WHERE table_schema='public'
+                           AND table_name='claims'
+                           AND constraint_name='claims_status_check') THEN
+        ALTER TABLE claims
+          ADD CONSTRAINT claims_status_check CHECK (
+            status IN ('draft','ready','submitted','accepted','rejected','denied','paid','void')
+          );
+      END IF;
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='claims')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
+                         WHERE table_schema='public'
+                           AND table_name='claims'
+                           AND constraint_name='claims_denial_risk_check') THEN
+        ALTER TABLE claims
+          ADD CONSTRAINT claims_denial_risk_check CHECK (
+            denial_risk IN ('low','medium','high')
+          );
+      END IF;
+    END$$;
+  `);
+    if (!(await knex.schema.hasTable('claim_lines'))) {
+        await knex.schema.createTable('claim_lines', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('claim_id').references('id').inTable('claims').notNullable().onDelete('CASCADE');
+            table.uuid('visit_id').references('id').inTable('evv_visits').notNullable().onDelete('RESTRICT');
+            table.string('service_code').notNullable();
+            table.date('service_date').notNullable();
+            table.integer('units').notNullable().defaultTo(0);
+            table.integer('minutes').notNullable().defaultTo(0);
+            table.integer('charge_cents').notNullable().defaultTo(0);
+            table.string('denial_risk', 10).notNullable().defaultTo('low');
+            table.jsonb('denial_reasons').notNullable().defaultTo('[]');
+            table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+            // One line per visit per claim — a visit can't appear twice on a claim.
+            table.unique(['claim_id', 'visit_id']);
+            table.index(['claim_id']);
+            table.index(['visit_id']);
+        });
+    }
+    // ── R14 — Agency billing identity (837 billing-provider profile) ──────────
+    // The 837P billing-provider loop (2010AA) needs the agency's NPI, tax id and
+    // service address; the agency's clearinghouse interchange id labels the
+    // receiver. These are nullable: a 837 still generates without them, but the
+    // claim route flags an incomplete billing profile so an agency knows what to
+    // fill before a clearinghouse will accept the file.
+    if (await knex.schema.hasTable('agencies')) {
+        const billingIdentityCols = [
+            ['billing_npi', (t) => t.string('billing_npi', 10).nullable()],
+            ['billing_tax_id', (t) => t.string('billing_tax_id', 20).nullable()],
+            ['billing_address1', (t) => t.string('billing_address1', 200).nullable()],
+            ['billing_city', (t) => t.string('billing_city', 100).nullable()],
+            ['billing_state', (t) => t.specificType('billing_state', 'char(2)').nullable()],
+            ['billing_postal_code', (t) => t.string('billing_postal_code', 10).nullable()],
+            ['billing_taxonomy', (t) => t.string('billing_taxonomy', 20).nullable()],
+            ['clearinghouse_id', (t) => t.string('clearinghouse_id', 40).nullable()],
+        ];
+        for (const [col, build] of billingIdentityCols) {
+            if (!(await knex.schema.hasColumn('agencies', col))) {
+                await knex.schema.alterTable('agencies', build);
+            }
+        }
+    }
+    // ── R15 — Agency fee schedule (cents per billing unit, by HCPCS code) ──────
+    // Stored as jsonb { "T1019": 600, ... } keyed by service code. Drives the
+    // claim line chargeCents; without it claim lines are $0 and flagged.
+    if ((await knex.schema.hasTable('agencies')) &&
+        !(await knex.schema.hasColumn('agencies', 'fee_schedule'))) {
+        await knex.schema.alterTable('agencies', (t) => {
+            t.jsonb('fee_schedule').nullable();
+        });
+    }
+    // ── R16 — Audit retention infrastructure ──────────────────────────────────
+    // The audit retention sweep moves rows older than the statutory floor
+    // (PA_RETENTION_YEARS = 7) out of the hot `audit_events` table into
+    // `audit_events_archive`, logging each run to `audit_retention_runs`. These
+    // tables previously lived only in an orphaned dated migration that the
+    // baseline runner (`schema.up`) never invokes, so prod never had them and
+    // the sweep would fail. They are created here, idempotently, mirroring the
+    // LIVE `audit_events` shape (actor_id/actor_type/entity_type/entity_id/
+    // outcome/correlation_id) — NOT the legacy actor_user_id/resource_type shape
+    // that the original archive table and sweep INSERT...SELECT were written
+    // against.
+    if (!(await knex.schema.hasTable('audit_events_archive'))) {
+        await knex.schema.createTable('audit_events_archive', (table) => {
+            // Keep id stable across the move so a future restore can re-insert by id.
+            table.uuid('id').primary();
+            table.uuid('agency_id').notNullable();
+            table.uuid('actor_id').notNullable();
+            table.string('actor_type').notNullable().defaultTo('user');
+            table.string('event_type').notNullable();
+            table.string('entity_type').notNullable();
+            table.uuid('entity_id').notNullable();
+            table.string('outcome').notNullable().defaultTo('success');
+            table.string('correlation_id');
+            table.jsonb('payload').notNullable().defaultTo(knex.raw("'{}'::jsonb"));
+            table.timestamp('occurred_at').notNullable();
+            table.timestamp('archived_at').notNullable().defaultTo(knex.fn.now());
+            table.index(['agency_id', 'occurred_at']);
+            table.index(['event_type']);
+        });
+    }
+    else {
+        // Bring an archive table created by the legacy migration into alignment
+        // with the live audit_events shape. Old columns (actor_user_id etc.) are
+        // left in place (nullable) — dropping them could lose side-channel data.
+        for (const [col, add] of [
+            ['actor_id', (t) => t.uuid('actor_id')],
+            ['actor_type', (t) => t.string('actor_type')],
+            ['entity_type', (t) => t.string('entity_type')],
+            ['entity_id', (t) => t.uuid('entity_id')],
+            ['outcome', (t) => t.string('outcome')],
+            ['correlation_id', (t) => t.string('correlation_id')],
+        ]) {
+            if (!(await knex.schema.hasColumn('audit_events_archive', col))) {
+                await knex.schema.alterTable('audit_events_archive', add);
+            }
+        }
+    }
+    if (!(await knex.schema.hasTable('audit_retention_runs'))) {
+        await knex.schema.createTable('audit_retention_runs', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.timestamp('started_at').notNullable();
+            table.timestamp('completed_at');
+            table.string('status').notNullable(); // running | success | error
+            table.integer('rows_archived').notNullable().defaultTo(0);
+            table.integer('rows_purged_from_hot').notNullable().defaultTo(0);
+            table.timestamp('cutoff_used').notNullable();
+            table.text('error_message');
+            table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+            table.index(['started_at']);
+            table.index(['status']);
+        });
+    }
+    // ── R17 — Import / migration source keys ───────────────────────────────────
+    // Onboarding an agency off another platform (HHAeXchange, Sandata, etc.)
+    // means bulk-importing their clients, caregivers, and authorizations. To make
+    // re-imports idempotent and to link related rows across files, every
+    // importable entity carries the SOURCE SYSTEM's id in `external_id`. We can't
+    // dedupe on PHI columns (medicaid_number / npi use random-IV encryption, so
+    // the same plaintext encrypts differently each time), so external_id is the
+    // stable upsert key. Postgres treats NULLs as distinct in a unique index, so
+    // manually-created rows (no external_id) never collide.
+    //
+    // clients + caregivers have agency_id → UNIQUE(agency_id, external_id).
+    // authorizations scope through clients (no agency_id) → UNIQUE(client_id,
+    // external_id).
+    for (const tbl of ['clients', 'caregivers', 'authorizations']) {
+        if (!(await knex.schema.hasTable(tbl)))
+            continue;
+        if (!(await knex.schema.hasColumn(tbl, 'external_id'))) {
+            await knex.schema.alterTable(tbl, (t) => {
+                t.string('external_id', 128).nullable();
+            });
+        }
+        const scope = tbl === 'authorizations' ? 'client_id' : 'agency_id';
+        await knex.raw(`create unique index if not exists ${tbl}_external_id_uniq
+       on ${tbl} (${scope}, external_id)`);
+    }
+    // ── R18 — ERA / 835 remittance posting ─────────────────────────────────────
+    // The back half of the billing loop: a payer returns an 835 electronic
+    // remittance advice (ERA) telling us what each claim was paid / adjusted /
+    // denied. `claim_remittances` records every posting (one row per CLP claim in
+    // the file); a posting matched to one of our claims (by control_number) also
+    // advances that claim's status + paid_cents. Unmatched postings are kept with
+    // claim_id NULL so nothing in the file is silently dropped.
+    if ((await knex.schema.hasTable('claims')) && !(await knex.schema.hasColumn('claims', 'paid_cents'))) {
+        await knex.schema.alterTable('claims', (t) => {
+            t.integer('paid_cents').notNullable().defaultTo(0);
+        });
+    }
+    if (!(await knex.schema.hasTable('claim_remittances'))) {
+        await knex.schema.createTable('claim_remittances', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable().onDelete('CASCADE');
+            table.uuid('claim_id').references('id').inTable('claims').nullable().onDelete('SET NULL');
+            table.string('control_number', 40).notNullable(); // CLP01 — our patient control number
+            table.text('payer_claim_control_number'); // CLP07
+            table.string('status_code', 4); // CLP02 (1=paid, 4=denied, 22=reversal, …)
+            table.integer('charge_cents').notNullable().defaultTo(0); // CLP03
+            table.integer('paid_cents').notNullable().defaultTo(0); // CLP04
+            table.integer('patient_responsibility_cents').notNullable().defaultTo(0); // CLP05
+            table.integer('adjustment_cents').notNullable().defaultTo(0);
+            table.jsonb('adjustment_codes').notNullable().defaultTo('[]'); // [{group,reasonCode,amountCents}]
+            table.string('trace_number', 60); // TRN02 — EFT / check trace
+            table.boolean('matched').notNullable().defaultTo(false);
+            table.timestamp('posted_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+            table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+            table.index(['agency_id']);
+            table.index(['claim_id']);
+        });
+    }
+    // ── R19 — Recurring schedules ──────────────────────────────────────────────
+    // A recurring schedule is a weekly visit pattern (which caregiver, which
+    // visit template/client, which days-of-week + time, over a date range). The
+    // materializer expands it into concrete `assignments` for a rolling horizon,
+    // running each occurrence through the same conflict + credential checks as a
+    // manual assignment. `assignments.recurring_schedule_id` links a generated
+    // assignment back to its pattern (traceability + idempotent re-materialize).
+    if (!(await knex.schema.hasTable('recurring_schedules'))) {
+        await knex.schema.createTable('recurring_schedules', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.uuid('agency_id').references('id').inTable('agencies').notNullable().onDelete('CASCADE');
+            table.uuid('caregiver_id').notNullable();
+            table.uuid('visit_template_id').references('id').inTable('visit_templates').notNullable().onDelete('CASCADE');
+            // days_of_week: JSON array of ints 0(Sun)..6(Sat).
+            table.jsonb('days_of_week').notNullable().defaultTo('[]');
+            table.string('start_time', 5).notNullable(); // 'HH:MM'
+            table.string('end_time', 5).notNullable(); // 'HH:MM'
+            table.date('start_date').notNullable();
+            table.date('end_date').notNullable();
+            table.string('status', 12).notNullable().defaultTo('active'); // active | paused | ended
+            table.timestamps(true, true);
+            table.index(['agency_id', 'status']);
+            table.index(['caregiver_id']);
+        });
+        await knex.raw(`ALTER TABLE recurring_schedules ADD CONSTRAINT recurring_schedules_status_check
+       CHECK (status IN ('active','paused','ended'))`);
+    }
+    if ((await knex.schema.hasTable('assignments')) &&
+        !(await knex.schema.hasColumn('assignments', 'recurring_schedule_id'))) {
+        await knex.schema.alterTable('assignments', (t) => {
+            t.uuid('recurring_schedule_id').nullable();
+        });
+        await knex.raw(`create index if not exists assignments_recurring_schedule_id_idx
+       on assignments (recurring_schedule_id)`);
+    }
+    // ── R20 — HHAeXchange aggregator submission tracking ──────────────────────
+    // Mirror of R7 (Sandata) for agencies whose state routes EVV through the
+    // HHAeXchange aggregator instead of Sandata. Same four-state lifecycle and
+    // the same exclusion from the immutability trigger — these columns change
+    // legitimately after clock-out when the export batch is submitted and the
+    // aggregator's accept/reject response is written back.
+    if (await knex.schema.hasTable('evv_visits')) {
+        if (!(await knex.schema.hasColumn('evv_visits', 'hhaexchange_status'))) {
+            await knex.schema.alterTable('evv_visits', (t) => {
+                t.string('hhaexchange_status').nullable();
+            });
+        }
+        if (!(await knex.schema.hasColumn('evv_visits', 'hhaexchange_confirmation_id'))) {
+            await knex.schema.alterTable('evv_visits', (t) => {
+                t.text('hhaexchange_confirmation_id').nullable();
+            });
+        }
+        await knex.raw(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE table_schema = 'public'
+            AND table_name = 'evv_visits'
+            AND constraint_name = 'evv_visits_hhaexchange_status_check'
+        ) AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'evv_visits'
+            AND column_name = 'hhaexchange_status'
+        ) THEN
+          ALTER TABLE evv_visits
+            ADD CONSTRAINT evv_visits_hhaexchange_status_check
+            CHECK (hhaexchange_status IN ('pending','submitted','accepted','rejected'));
+        END IF;
+      END$$;
+    `);
+    }
+    // ── R21 — Platform super-admin: agency review gate + account suspension ────
+    // The platform owner ("super admin", outside the agency tenancy) reviews
+    // every new agency signup to confirm it's a real homecare agency before it
+    // can operate, and can suspend any user account. `agencies.review_status`
+    // gates login: 'pending' (default for NEW signups) and 'rejected' block the
+    // agency's users; only 'approved' may operate. CRITICAL: every agency that
+    // already exists at migration time is backfilled to 'approved' so no live
+    // tenant is locked out. `users.suspended_at` (set = account terminated) is
+    // checked at login and in auth-context so a suspension takes effect at once.
+    if (await knex.schema.hasTable('agencies')) {
+        if (!(await knex.schema.hasColumn('agencies', 'review_status'))) {
+            await knex.schema.alterTable('agencies', (t) => {
+                t.string('review_status', 12).notNullable().defaultTo('pending');
+                t.timestamp('reviewed_at', { useTz: true }).nullable();
+                t.string('reviewed_by', 100).nullable();
+                t.text('review_notes').nullable();
+            });
+            // Backfill: all pre-existing agencies are legitimately operating, so
+            // grandfather them in as approved. New signups insert 'pending' via the
+            // column default. This UPDATE runs ONLY in the column-creation branch, so
+            // it never re-approves an agency a super-admin later set to pending.
+            await knex('agencies').update({ review_status: 'approved' });
+        }
+        await knex.raw(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE table_schema='public' AND table_name='agencies'
+            AND constraint_name='agencies_review_status_check'
+        ) THEN
+          ALTER TABLE agencies
+            ADD CONSTRAINT agencies_review_status_check
+            CHECK (review_status IN ('pending','approved','rejected'));
+        END IF;
+      END$$;
+    `);
+    }
+    if ((await knex.schema.hasTable('users')) &&
+        !(await knex.schema.hasColumn('users', 'suspended_at'))) {
+        await knex.schema.alterTable('users', (t) => {
+            t.timestamp('suspended_at', { useTz: true }).nullable();
+        });
+    }
+    // ── R22 — Platform super-admin WebAuthn (Face ID / device biometric) 2FA ──
+    // Passkey credentials registered by the super-admin for second-factor login.
+    // We store only the credential's PUBLIC key (base64url) + signature counter —
+    // never any biometric data, which by design never leaves the user's device.
+    // Scoped by `username` (the env SUPER_ADMIN_USERNAME) since the super-admin is
+    // not a row in `users`. Multiple rows = multiple enrolled devices.
+    if (!(await knex.schema.hasTable('platform_admin_credentials'))) {
+        await knex.schema.createTable('platform_admin_credentials', (table) => {
+            table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+            table.string('username', 100).notNullable();
+            table.text('credential_id').notNullable().unique(); // base64url
+            table.text('public_key').notNullable(); // base64url-encoded COSE public key
+            table.bigInteger('counter').notNullable().defaultTo(0);
+            table.text('transports').nullable(); // JSON array
+            table.string('device_label', 120).nullable();
+            table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+            table.timestamp('last_used_at', { useTz: true }).nullable();
+            table.index(['username']);
+        });
+    }
+    // ── R23 — Terms of Service acceptance ─────────────────────────────────────
+    // Records that a principal affirmatively accepted the Terms of Service, and
+    // which version. Captured at agency signup (users) and at caregiver job
+    // application (applicants). Nullable because rows created before this column
+    // existed never went through the acceptance gate; the gate is enforced
+    // forward-only at the route layer.
+    if (await knex.schema.hasTable('users')) {
+        if (!(await knex.schema.hasColumn('users', 'terms_accepted_at'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.timestamp('terms_accepted_at', { useTz: true }).nullable();
+                t.string('terms_version', 32).nullable();
+            });
+        }
+    }
+    if (await knex.schema.hasTable('applicants')) {
+        if (!(await knex.schema.hasColumn('applicants', 'terms_accepted_at'))) {
+            await knex.schema.alterTable('applicants', (t) => {
+                t.timestamp('terms_accepted_at', { useTz: true }).nullable();
+                t.string('terms_version', 32).nullable();
+            });
+        }
+    }
+    // ── R24 — Account settings: 2FA (TOTP), notifications, preferences ─────────
+    // All nullable/defaulted so existing users are unaffected. totp_secret holds
+    // the base32 secret (only used while totp_enabled); totp_backup_codes is a
+    // JSON array of bcrypt-hashed single-use recovery codes. notification_prefs
+    // and preferences are free-form JSON blobs owned by the settings UI.
+    if (await knex.schema.hasTable('users')) {
+        if (!(await knex.schema.hasColumn('users', 'totp_secret'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.text('totp_secret').nullable();
+                t.boolean('totp_enabled').notNullable().defaultTo(false);
+                t.jsonb('totp_backup_codes').nullable();
+            });
+        }
+        if (!(await knex.schema.hasColumn('users', 'notification_prefs'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.jsonb('notification_prefs').nullable();
+            });
+        }
+        if (!(await knex.schema.hasColumn('users', 'preferences'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.jsonb('preferences').nullable();
+            });
+        }
+        if (!(await knex.schema.hasColumn('users', 'deletion_requested_at'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.timestamp('deletion_requested_at', { useTz: true }).nullable();
+            });
+        }
+    }
+    // ── R25 — EVV aggregator + clearinghouse submission config ────────────────
+    // Ports agency_evv_config / agency_sandata_config / agency_hhaexchange_config
+    // (previously created only by unported dated migrations, so absent on a freshly
+    // migrated DB) into the baseline, and adds what automated submission needs: a
+    // per-agency API base URL and an AES-256-GCM encrypted credentials blob (see
+    // security/cell-cipher.ts). agency_clearinghouse_config is new — it carries the
+    // 837/835 trading-partner transport, endpoint, and credentials.
+    if (!(await knex.schema.hasTable('agency_evv_config'))) {
+        await knex.schema.createTable('agency_evv_config', (t) => {
+            t.uuid('agency_id').primary().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('aggregator', 16).notNullable().defaultTo('none');
+            t.string('state_code', 2).notNullable().defaultTo('PA');
+            t.boolean('production_ready').notNullable().defaultTo(false);
+            t.timestamps(true, true);
+        });
+    }
+    if (!(await knex.schema.hasTable('agency_sandata_config'))) {
+        await knex.schema.createTable('agency_sandata_config', (t) => {
+            t.uuid('agency_id').primary().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('provider_id', 9).nullable();
+            t.string('timezone', 64).notNullable().defaultTo('America/New_York');
+            t.jsonb('caregiver_mappings').notNullable().defaultTo(knex.raw("'[]'::jsonb"));
+            t.jsonb('service_mappings').notNullable().defaultTo(knex.raw("'[]'::jsonb"));
+            t.boolean('enabled').notNullable().defaultTo(false);
+            t.string('api_base_url', 255).nullable();
+            t.text('credentials_encrypted').nullable();
+            t.timestamps(true, true);
+        });
+    }
+    else if (!(await knex.schema.hasColumn('agency_sandata_config', 'api_base_url'))) {
+        await knex.schema.alterTable('agency_sandata_config', (t) => {
+            t.string('api_base_url', 255).nullable();
+            t.text('credentials_encrypted').nullable();
+        });
+    }
+    if (!(await knex.schema.hasTable('agency_hhaexchange_config'))) {
+        await knex.schema.createTable('agency_hhaexchange_config', (t) => {
+            t.uuid('agency_id').primary().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('agency_tax_id', 9).nullable();
+            t.string('hha_provider_id', 32).nullable();
+            t.string('timezone', 64).notNullable().defaultTo('America/New_York');
+            t.jsonb('caregiver_mappings').notNullable().defaultTo(knex.raw("'[]'::jsonb"));
+            t.jsonb('service_mappings').notNullable().defaultTo(knex.raw("'[]'::jsonb"));
+            t.boolean('enabled').notNullable().defaultTo(false);
+            t.string('api_base_url', 255).nullable();
+            t.text('credentials_encrypted').nullable();
+            t.timestamps(true, true);
+        });
+    }
+    else if (!(await knex.schema.hasColumn('agency_hhaexchange_config', 'api_base_url'))) {
+        await knex.schema.alterTable('agency_hhaexchange_config', (t) => {
+            t.string('api_base_url', 255).nullable();
+            t.text('credentials_encrypted').nullable();
+        });
+    }
+    if (!(await knex.schema.hasTable('agency_clearinghouse_config'))) {
+        await knex.schema.createTable('agency_clearinghouse_config', (t) => {
+            t.uuid('agency_id').primary().references('id').inTable('agencies').onDelete('CASCADE');
+            // 'sftp' | 'http' — how the 837 is transmitted and the 835 retrieved.
+            t.string('transport', 16).notNullable().defaultTo('sftp');
+            t.string('endpoint', 255).nullable();
+            t.text('credentials_encrypted').nullable();
+            // Free-form per-clearinghouse settings (submitter id, receiver id, dirs).
+            t.jsonb('settings').notNullable().defaultTo(knex.raw("'{}'::jsonb"));
+            t.boolean('enabled').notNullable().defaultTo(false);
+            t.timestamps(true, true);
+        });
+    }
+    // ── R26 — Sandata Alt EVV transmission state ──────────────────────────────
+    // The Alt EVV API is async: POST a batch → receive a UUID → poll /status until
+    // Sandata returns per-record ACCEPTED/REJECTED/EXCEPTION. These tables hold the
+    // durable state the synchronous client never had: a per-record sequence number
+    // (Sandata requires it to increment on each resend), the last UUID/poll result,
+    // the transmission ledger, and a visit exception queue. entity_type is one of
+    // CLIENT|EMPLOYEE|VISIT; status is PENDING|RECEIVED|VERIFIED|EXCEPTION|REJECTED.
+    if (!(await knex.schema.hasTable('sandata_record_state'))) {
+        await knex.schema.createTable('sandata_record_state', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('entity_type', 16).notNullable(); // CLIENT | EMPLOYEE | VISIT
+            t.string('external_id', 128).notNullable(); // ClientCustomID / EmployeeCustomID / VisitOtherID
+            t.integer('sequence_id').notNullable().defaultTo(1);
+            t.string('status', 16).notNullable().defaultTo('PENDING');
+            t.uuid('last_uuid').nullable();
+            t.timestamp('last_transmitted_at').nullable();
+            t.timestamp('last_status_checked_at').nullable();
+            t.specificType('last_reason_codes', 'text[]').nullable();
+            t.text('last_description').nullable();
+            t.string('last_payload_hash', 64).nullable();
+            t.timestamps(true, true);
+            t.unique(['agency_id', 'entity_type', 'external_id']);
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_transmission'))) {
+        await knex.schema.createTable('sandata_transmission', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('entity_type', 16).notNullable();
+            t.uuid('uuid').notNullable().unique(); // Sandata-issued batch UUID
+            t.integer('record_count').notNullable().defaultTo(0);
+            t.string('environment', 8).notNullable().defaultTo('UAT'); // UAT | PROD
+            t.string('status', 16).notNullable().defaultTo('RECEIVED'); // RECEIVED | COMPLETED | FAILED
+            t.timestamp('posted_at').notNullable().defaultTo(knex.fn.now());
+            t.timestamp('status_polled_at').nullable();
+            t.integer('poll_attempts').notNullable().defaultTo(0);
+            t.timestamp('completed_at').nullable();
+            t.jsonb('raw_response').nullable();
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_transmission_record'))) {
+        await knex.schema.createTable('sandata_transmission_record', (t) => {
+            t.bigIncrements('id').primary();
+            t.bigInteger('transmission_id').notNullable().references('id').inTable('sandata_transmission').onDelete('CASCADE');
+            t.bigInteger('record_state_id').notNullable().references('id').inTable('sandata_record_state').onDelete('CASCADE');
+            t.string('external_id', 128).notNullable();
+            t.unique(['transmission_id', 'record_state_id']);
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_exception_queue'))) {
+        await knex.schema.createTable('sandata_exception_queue', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.uuid('visit_id').nullable().references('id').inTable('evv_visits').onDelete('CASCADE');
+            t.string('external_id', 128).notNullable();
+            t.string('exception_id', 64).nullable();
+            t.specificType('reason_codes', 'text[]').nullable();
+            t.text('description').nullable();
+            t.boolean('requires_fix').notNullable().defaultTo(true);
+            t.boolean('resolved').notNullable().defaultTo(false);
+            t.timestamps(true, true);
+        });
+    }
 }
 export async function down(knex) {
+    await knex.schema.dropTableIfExists('sandata_exception_queue');
+    await knex.schema.dropTableIfExists('sandata_transmission_record');
+    await knex.schema.dropTableIfExists('sandata_transmission');
+    await knex.schema.dropTableIfExists('sandata_record_state');
+    await knex.schema.dropTableIfExists('agency_clearinghouse_config');
+    await knex.schema.dropTableIfExists('agency_hhaexchange_config');
+    await knex.schema.dropTableIfExists('agency_sandata_config');
+    await knex.schema.dropTableIfExists('agency_evv_config');
+    await knex.schema.dropTableIfExists('claim_lines');
+    await knex.schema.dropTableIfExists('claims');
     await knex.schema.dropTableIfExists('password_reset_tokens');
     await knex.schema.dropTableIfExists('onboarding_documents');
     await knex.schema.dropTableIfExists('onboarding_interviews');

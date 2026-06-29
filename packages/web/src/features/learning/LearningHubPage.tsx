@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { Link, useNavigate } from 'react-router-dom';
+import { getJson, postJson, deleteJson } from '../../lib/api-client.js';
+
+interface CourseModules {
+  objectives?: string[];
+  sections?: Array<{ title: string; content: string }>;
+  quiz?: Array<unknown> | null;
+}
 
 interface Course {
   id: string;
+  agencyId: string | null;
   code: string;
   title: string;
   description: string;
@@ -10,6 +18,7 @@ interface Course {
   required: boolean;
   durationMinutes: number;
   expiresAfterDays: number | null;
+  modules: CourseModules | null;
 }
 
 interface Rollup {
@@ -44,7 +53,7 @@ interface StaffMember { id: string; email: string; role: string; }
 const severityColors: Record<string, { bg: string; text: string; border: string }> = {
   critical: { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' },
   warning: { bg: '#FFFBEB', text: '#B45309', border: '#FCD34D' },
-  info: { bg: 'rgba(124, 58, 237, 0.08)', text: '#6d28d9', border: 'rgba(124, 58, 237, 0.25)' },
+  info: { bg: 'rgba(16, 116, 128, 0.08)', text: '#0c5d66', border: 'rgba(16, 116, 128, 0.25)' },
 };
 
 const cadenceLabel: Record<string, string> = {
@@ -55,9 +64,11 @@ const cadenceLabel: Record<string, string> = {
 };
 
 export function LearningHubPage() {
+  const navigate = useNavigate();
   const [rollup, setRollup] = useState<Rollup | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [caregivers, setCaregivers] = useState<StaffMember[]>([]);
   const [enrollCaregiverId, setEnrollCaregiverId] = useState('');
   const [enrollCourseId, setEnrollCourseId] = useState('');
@@ -113,6 +124,21 @@ export function LearningHubPage() {
       </div>
     );
   }
+
+  const handleDeleteCourse = async (course: Course) => {
+    if (!window.confirm(`Delete "${course.title}"? Enrollments and completion records for this course will also be removed. This cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(course.id);
+    try {
+      await deleteJson(`/api/learning/courses/${course.id}`);
+      setCourses((prev) => prev.filter((c) => c.id !== course.id));
+    } catch {
+      window.alert('Failed to delete course.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const compliancePct = rollup ? Math.round(rollup.complianceRate * 100) : 0;
 
@@ -224,7 +250,15 @@ export function LearningHubPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 380px)', gap: '1.5rem', alignItems: 'start' }}>
         {/* Course catalog */}
         <div>
-          <h3 className="section-title" style={{ marginBottom: '0.85rem' }}>Course catalog</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', gap: '1rem' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Course catalog</h3>
+            <Link
+              to="/admin/learning/courses/new"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 0.9rem', background: '#107480', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '0.8125rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              + New course
+            </Link>
+          </div>
           {courses.length === 0 ? (
             <div
               style={{
@@ -285,9 +319,35 @@ export function LearningHubPage() {
                   >
                     {c.description}
                   </p>
-                  <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#94A3B8' }}>
-                    {c.durationMinutes} min
-                    {c.expiresAfterDays ? ` · expires after ${c.expiresAfterDays} days` : ''}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.4rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span>{c.durationMinutes} min</span>
+                      {c.expiresAfterDays ? <span>· expires after {c.expiresAfterDays} days</span> : null}
+                      {c.modules?.sections?.length ? <span style={{ color: '#0c5d66' }}>· {c.modules.sections.length} section{c.modules.sections.length === 1 ? '' : 's'}</span> : null}
+                      {c.modules?.quiz?.length ? <span style={{ color: '#0c5d66' }}>· {c.modules.quiz.length}-question quiz</span> : null}
+                      {!c.modules?.sections?.length && !c.modules?.quiz?.length ? <span style={{ color: '#B45309' }}>· no content yet</span> : null}
+                    </div>
+                    {c.agencyId === null ? (
+                      <span className="badge badge-info" title="Shared across all agencies — read only">Global</span>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/learning/courses/${c.id}/edit`)}
+                          style={{ padding: '0.3rem 0.7rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#334155', cursor: 'pointer' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deletingId === c.id}
+                          onClick={() => void handleDeleteCourse(c)}
+                          style={{ padding: '0.3rem 0.7rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #FECACA', background: '#FEF2F2', color: '#DC2626', cursor: deletingId === c.id ? 'wait' : 'pointer' }}
+                        >
+                          {deletingId === c.id ? '…' : 'Delete'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

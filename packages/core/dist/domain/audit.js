@@ -30,6 +30,34 @@ export const auditEventTypes = [
     'auth.password_reset.requested', 'auth.password_reset.completed',
     'agency.evv-config.changed',
     'copilot.query', 'copilot.action.confirmed', 'copilot.action.declined',
+    // Copilot reminder dispatch (now wired to the real email pipeline).
+    'copilot.reminder.sent',
+    // Billing / claims lifecycle.
+    'claim.generated', 'claim.validated', 'claim.submitted', 'claim.status-changed',
+    'payroll.exported',
+    // State EVV aggregator (Sandata) submission lifecycle. `submitted` marks a
+    // batch as sent to the aggregator; `reconciled` records the aggregator's
+    // accept/reject response written back onto each visit.
+    'evv.sandata.submitted', 'evv.sandata.reconciled',
+    // Real Alternate-EVV async transport: `submitted` = clients/employees/visits
+    // POSTed in load order; `polled` = status results applied + exceptions queued.
+    'evv.sandata.altevv.submitted', 'evv.sandata.altevv.polled',
+    // HHAeXchange aggregator submission lifecycle — mirror of the Sandata pair
+    // for agencies routed through HHAeXchange instead of Sandata.
+    'evv.hhaexchange.submitted', 'evv.hhaexchange.reconciled',
+    // Bulk migration import (clients / caregivers / authorizations CSV load).
+    'data.imported',
+    // ERA / 835 remittance posting (payer payment file matched back onto claims).
+    'claim.remittance.posted',
+    // Recurring schedule materialized into concrete assignments for a horizon.
+    'schedule.recurring.materialized',
+    // Platform super-admin (outside agency tenancy). `platform.login.*` track the
+    // super-admin's own auth; `agency.review.*` record the manual approval gate on
+    // new agency signups; `account.suspended` / `account.reactivated` record the
+    // super-admin terminating or restoring a user account.
+    'platform.login.success', 'platform.login.failure',
+    'agency.review.requested', 'agency.review.approved', 'agency.review.rejected',
+    'account.suspended', 'account.reactivated',
 ];
 export const auditOutcomes = ['success', 'failure', 'denied'];
 export const auditActorTypes = ['user', 'service', 'system'];

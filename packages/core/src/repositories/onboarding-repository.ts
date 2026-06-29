@@ -29,6 +29,16 @@ export class OnboardingRepository {
     return this.mapApplicant(row);
   }
 
+  /**
+   * Records that an applicant affirmatively accepted the Terms of Service when
+   * they submitted their application. Called once, right after createApplicant.
+   */
+  async recordTermsAcceptance(applicantId: string, version: string): Promise<void> {
+    await this.db('applicants')
+      .where({ id: applicantId })
+      .update({ terms_accepted_at: this.db.fn.now(), terms_version: version });
+  }
+
   async findApplicantById(id: string, agencyId: string): Promise<Applicant | null> {
     const row = await this.db('applicants').where({ id, agency_id: agencyId }).first();
     return row ? this.mapApplicant(row) : null;

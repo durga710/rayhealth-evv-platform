@@ -122,7 +122,7 @@ export function CaregiverLearningHubPage() {
     borderRadius: '6px',
     border: 'none',
     cursor: 'pointer',
-    background: active ? 'var(--color-primary, #7c3aed)' : 'transparent',
+    background: active ? 'var(--color-primary, #107480)' : 'transparent',
     color: active ? '#fff' : '#64748B',
   });
 
@@ -139,7 +139,7 @@ export function CaregiverLearningHubPage() {
         </div>
         <Link
           to="/portal/training"
-          style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary, #7c3aed)', textDecoration: 'none' }}
+          style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary, #107480)', textDecoration: 'none' }}
         >
           My Training →
         </Link>
@@ -246,7 +246,10 @@ export function CaregiverLearningHubPage() {
                       {course.description}
                     </p>
                     <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#94A3B8', flexWrap: 'wrap' }}>
-                      <span>⏱ {course.durationMinutes} min</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {course.durationMinutes} min
+                      </span>
                       {dueAt && <span>Due: {formatDate(dueAt)}</span>}
                       {completedAt && <span>Completed: {formatDate(completedAt)}</span>}
                       {expiresAt && <span>Expires: {formatDate(expiresAt)}</span>}
@@ -262,7 +265,7 @@ export function CaregiverLearningHubPage() {
                       fontSize: '0.8125rem',
                       fontWeight: 600,
                       color: '#fff',
-                      background: status === 'completed' ? '#64748B' : 'var(--color-primary, #7c3aed)',
+                      background: status === 'completed' ? '#64748B' : 'var(--color-primary, #107480)',
                       borderRadius: '8px',
                       textDecoration: 'none',
                       whiteSpace: 'nowrap',

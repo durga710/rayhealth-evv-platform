@@ -5,6 +5,7 @@ import { generateText } from 'ai';
 import { OnboardingRepository, type OnboardingInterview } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 import { aiModel } from '../ai.js';
+import { CURRENT_TERMS_VERSION } from '../terms.js';
 
 const router = Router();
 const TOTAL_QUESTIONS = 8;
@@ -17,6 +18,8 @@ const applyBodySchema = z.object({
   phone: z.string().max(30).optional(),
   position: z.string().max(100).optional(),
   coverMessage: z.string().max(5000).optional(),
+  // Affirmative Terms of Service acceptance is required to submit an application.
+  acceptedTerms: z.literal(true, { message: 'You must accept the Terms of Service to apply' }),
 });
 
 const messageBodySchema = z.object({
@@ -135,6 +138,7 @@ router.post('/apply', async (req, res) => {
         coverMessage,
         status: 'applied',
       });
+      await repo.recordTermsAcceptance(applicant.id!, CURRENT_TERMS_VERSION);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('unique') || msg.includes('duplicate') || msg.includes('23505')) {

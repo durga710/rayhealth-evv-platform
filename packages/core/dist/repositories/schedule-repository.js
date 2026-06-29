@@ -54,6 +54,62 @@ export class ScheduleRepository {
                 : undefined
         };
     }
+    /** Resolve the client a visit template belongs to, scoped to the agency. */
+    async getTemplateClient(visitTemplateId, agencyId) {
+        const row = await this.db('visit_templates')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('visit_templates.id', visitTemplateId)
+            .andWhere('clients.agency_id', agencyId)
+            .select('clients.id as client_id')
+            .first();
+        return row ? { clientId: row.client_id } : null;
+    }
+    /**
+     * Existing (template, date) pairs for a caregiver — for duplicate detection.
+     * `excludeAssignmentId` omits one assignment from the result so a reschedule of
+     * an existing assignment doesn't flag itself as a duplicate.
+     */
+    async getCaregiverScheduleForConflict(caregiverId, agencyId, excludeAssignmentId) {
+        const query = this.db('assignments')
+            .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('assignments.caregiver_id', caregiverId)
+            .andWhere('clients.agency_id', agencyId);
+        if (excludeAssignmentId)
+            query.andWhereNot('assignments.id', excludeAssignmentId);
+        const rows = await query.select('assignments.visit_template_id', 'assignments.scheduled_start_time');
+        return rows.map((row) => ({
+            visitTemplateId: row.visit_template_id,
+            visitDate: row.scheduled_start_time
+                ? new Date(row.scheduled_start_time).toISOString().slice(0, 10)
+                : undefined,
+        }));
+    }
+    /**
+     * One assignment with its resolved client + scheduled date, tenant-scoped.
+     * Used by the reschedule/reassign path to merge a partial patch over the
+     * current values before re-running the conflict gate. Null = unknown/cross-tenant.
+     */
+    async getAssignmentById(assignmentId, agencyId) {
+        const row = await this.db('assignments')
+            .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('assignments.id', assignmentId)
+            .andWhere('clients.agency_id', agencyId)
+            .select('assignments.id', 'assignments.caregiver_id', 'assignments.visit_template_id', 'clients.id as client_id', 'assignments.scheduled_start_time')
+            .first();
+        if (!row)
+            return null;
+        return {
+            id: row.id,
+            caregiverId: row.caregiver_id,
+            visitTemplateId: row.visit_template_id,
+            clientId: row.client_id,
+            visitDate: row.scheduled_start_time
+                ? new Date(row.scheduled_start_time).toISOString().slice(0, 10)
+                : undefined,
+        };
+    }
     async getAssignments(agencyId) {
         const rows = await this.db('assignments')
             .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
@@ -194,6 +250,114 @@ export class ScheduleRepository {
             currentClockInTime: toIsoOrNull(row.current_clock_in_time),
             currentClockOutTime: toIsoOrNull(row.current_clock_out_time)
         }));
+    }
+    /**
+     * Tenant-scoped (via client join) template update. Only provided fields are
+     * written. Returns the updated template, or null when unknown / cross-tenant.
+     */
+    async updateTemplate(templateId, agencyId, patch) {
+        const owned = await this.db('visit_templates')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('visit_templates.id', templateId)
+            .andWhere('clients.agency_id', agencyId)
+            .first('visit_templates.id');
+        if (!owned)
+            return null;
+        const cols = {};
+        if (patch.name !== undefined)
+            cols.name = patch.name;
+        if (patch.tasks !== undefined)
+            cols.tasks = JSON.stringify(patch.tasks);
+        if (Object.keys(cols).length > 0) {
+            cols.updated_at = this.db.fn.now();
+            await this.db('visit_templates').where({ id: templateId }).update(cols);
+        }
+        const row = await this.db('visit_templates').where({ id: templateId }).first();
+        return row
+            ? {
+                id: row.id,
+                clientId: row.client_id,
+                name: row.name,
+                tasks: typeof row.tasks === 'string' ? JSON.parse(row.tasks) : row.tasks
+            }
+            : null;
+    }
+    /**
+     * Delete a template, tenant-scoped. Refuses ('has_dependencies') when any
+     * assignment still references it. 'not_found' for unknown / cross-tenant id.
+     */
+    async deleteTemplate(templateId, agencyId) {
+        const owned = await this.db('visit_templates')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('visit_templates.id', templateId)
+            .andWhere('clients.agency_id', agencyId)
+            .first('visit_templates.id');
+        if (!owned)
+            return 'not_found';
+        const dep = await this.db('assignments').where({ visit_template_id: templateId }).first('id');
+        if (dep)
+            return 'has_dependencies';
+        await this.db('visit_templates').where({ id: templateId }).del();
+        return 'deleted';
+    }
+    /** True when the assignment exists and belongs to the agency (via template→client). */
+    async assignmentInAgency(assignmentId, agencyId) {
+        const row = await this.db('assignments')
+            .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
+            .join('clients', 'visit_templates.client_id', 'clients.id')
+            .where('assignments.id', assignmentId)
+            .andWhere('clients.agency_id', agencyId)
+            .first('assignments.id');
+        return Boolean(row);
+    }
+    /**
+     * Tenant-scoped assignment update. Supports rescheduling (visitDate, null to
+     * clear) and reassigning caregiver/template. The caller MUST validate that any
+     * new caregiverId / visitTemplateId belongs to the agency first. Returns null
+     * when the assignment is unknown / cross-tenant.
+     */
+    async updateAssignment(assignmentId, agencyId, patch) {
+        if (!(await this.assignmentInAgency(assignmentId, agencyId)))
+            return null;
+        const cols = {};
+        if (patch.caregiverId !== undefined)
+            cols.caregiver_id = patch.caregiverId;
+        if (patch.visitTemplateId !== undefined)
+            cols.visit_template_id = patch.visitTemplateId;
+        if (patch.visitDate !== undefined) {
+            cols.scheduled_start_time = patch.visitDate
+                ? new Date(`${patch.visitDate}T00:00:00.000Z`).toISOString()
+                : null;
+        }
+        if (Object.keys(cols).length > 0) {
+            cols.updated_at = this.db.fn.now();
+            await this.db('assignments').where({ id: assignmentId }).update(cols);
+        }
+        const row = await this.db('assignments').where({ id: assignmentId }).first();
+        return row
+            ? {
+                id: row.id,
+                caregiverId: row.caregiver_id,
+                visitTemplateId: row.visit_template_id,
+                visitDate: row.scheduled_start_time
+                    ? new Date(row.scheduled_start_time).toISOString().slice(0, 10)
+                    : undefined
+            }
+            : null;
+    }
+    /**
+     * Delete (cancel) an assignment, tenant-scoped. Refuses ('has_dependencies')
+     * when an EVV visit already exists for it — those carry verified clock-in/out
+     * history. 'not_found' for unknown / cross-tenant id.
+     */
+    async deleteAssignment(assignmentId, agencyId) {
+        if (!(await this.assignmentInAgency(assignmentId, agencyId)))
+            return 'not_found';
+        const dep = await this.db('evv_visits').where({ assignment_id: assignmentId }).first('id');
+        if (dep)
+            return 'has_dependencies';
+        await this.db('assignments').where({ id: assignmentId }).del();
+        return 'deleted';
     }
 }
 //# sourceMappingURL=schedule-repository.js.map

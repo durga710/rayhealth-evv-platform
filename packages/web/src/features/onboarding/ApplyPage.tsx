@@ -17,6 +17,7 @@ export function ApplyPage() {
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('Direct Support Associate');
   const [coverMessage, setCoverMessage] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,10 @@ export function ApplyPage() {
     e.preventDefault();
     if (!agencyId) {
       setError('Invalid application link.');
+      return;
+    }
+    if (!agreed) {
+      setError('You must accept the Terms of Service to apply.');
       return;
     }
     setError('');
@@ -40,6 +45,7 @@ export function ApplyPage() {
           phone: phone.trim() || undefined,
           position: position.trim(),
           coverMessage: coverMessage.trim() || undefined,
+          acceptedTerms: true,
         }),
       });
 
@@ -94,7 +100,7 @@ export function ApplyPage() {
             right: '-20%',
             width: '60%',
             height: '60%',
-            background: 'radial-gradient(circle, rgba(124, 58, 237,0.18) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(16, 116, 128,0.18) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -116,7 +122,7 @@ export function ApplyPage() {
           RayHealth
           <span
             style={{
-              background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+              background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
               color: 'white',
               padding: '3px 8px',
               borderRadius: '5px',
@@ -188,7 +194,7 @@ export function ApplyPage() {
                   height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#7c3aed"
+                  stroke="#107480"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -210,7 +216,7 @@ export function ApplyPage() {
             letterSpacing: '0.04em',
           }}
         >
-          Pennsylvania &middot; Direct care employment &middot; Powered by RayHealth EVV
+          Pennsylvania &middot; Direct care employment &middot; Powered by RayHealthEVV™
         </div>
       </aside>
 
@@ -399,6 +405,25 @@ export function ApplyPage() {
                 }}
               />
             </div>
+
+            <label
+              htmlFor="agreeTerms"
+              style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5, cursor: 'pointer' }}
+            >
+              <input
+                id="agreeTerms"
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                style={{ marginTop: '2px', width: 16, height: 16, accentColor: '#107480', flexShrink: 0 }}
+              />
+              <span>
+                I confirm my information is accurate and I agree to the{' '}
+                <Link to="/terms" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>.
+              </span>
+            </label>
 
             <button
               type="submit"

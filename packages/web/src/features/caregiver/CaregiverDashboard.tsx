@@ -48,13 +48,15 @@ function isThisMonth(dateStr: string): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
 
-function StatusBadge({ status }: { status: EvvVisit['status'] }) {
-  const map = {
-    verified: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Verified' },
-    pending:  { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
-    flagged:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Flagged' },
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    verified:  { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Verified' },
+    pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
+    flagged:   { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Flagged' },
+    corrected: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Corrected' },
   };
-  const s = map[status];
+  const fallback = { bg: '#F1F5F9', color: '#475569', border: '#E2E8F0', label: status || 'Unknown' };
+  const s = map[status] ?? fallback;
   return (
     <span style={{
       fontSize: '0.6875rem',
@@ -115,7 +117,7 @@ export function CaregiverDashboard() {
           marginBottom: '1.75rem',
           animation: 'rh-pulse 1.5s ease-in-out infinite',
         }} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
           {[0, 1, 2].map((i) => (
             <div key={i} style={{
               background: '#fff',
@@ -203,25 +205,6 @@ export function CaregiverDashboard() {
           background: 'rgba(255,255,255,0.05)',
           pointerEvents: 'none',
         }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span style={{
-            display: 'inline-block',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: '#4ADE80',
-            boxShadow: '0 0 0 3px rgba(74,222,128,0.25)',
-          }} aria-label="Online" />
-          <span style={{
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.6)',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-          }}>
-            Active Session
-          </span>
-        </div>
         <h1 style={{ fontSize: '1.625rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', lineHeight: 1.2 }}>
           {greeting}, {firstName}
         </h1>
@@ -231,7 +214,7 @@ export function CaregiverDashboard() {
       </div>
 
       {/* ── Stat tiles ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -286,7 +269,7 @@ export function CaregiverDashboard() {
       </div>
 
       {/* ── Cards row ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
 
         {/* Recent Visits card */}
         <div style={{

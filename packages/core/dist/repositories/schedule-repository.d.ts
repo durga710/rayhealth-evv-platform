@@ -30,6 +30,31 @@ export declare class ScheduleRepository {
     createTemplate(template: any): Promise<any>;
     getTemplates(agencyId: string): Promise<any[]>;
     createAssignment(assignment: AssignmentInput): Promise<any>;
+    /** Resolve the client a visit template belongs to, scoped to the agency. */
+    getTemplateClient(visitTemplateId: string, agencyId: string): Promise<{
+        clientId: string;
+    } | null>;
+    /**
+     * Existing (template, date) pairs for a caregiver — for duplicate detection.
+     * `excludeAssignmentId` omits one assignment from the result so a reschedule of
+     * an existing assignment doesn't flag itself as a duplicate.
+     */
+    getCaregiverScheduleForConflict(caregiverId: string, agencyId: string, excludeAssignmentId?: string): Promise<Array<{
+        visitTemplateId: string;
+        visitDate?: string;
+    }>>;
+    /**
+     * One assignment with its resolved client + scheduled date, tenant-scoped.
+     * Used by the reschedule/reassign path to merge a partial patch over the
+     * current values before re-running the conflict gate. Null = unknown/cross-tenant.
+     */
+    getAssignmentById(assignmentId: string, agencyId: string): Promise<{
+        id: string;
+        caregiverId: string;
+        visitTemplateId: string;
+        clientId: string;
+        visitDate?: string;
+    } | null>;
     getAssignments(agencyId: string): Promise<any[]>;
     getAssignmentsByCaregiver(caregiverId: string, agencyId?: string): Promise<any[]>;
     getAssignmentForCaregiver(assignmentId: string, caregiverId: string, agencyId?: string): Promise<any | null>;
@@ -54,5 +79,37 @@ export declare class ScheduleRepository {
      * time) assignments still see them at the bottom rather than at top.
      */
     getTodaysScheduleForCaregiver(caregiverId: string, agencyId: string): Promise<TodayScheduleRow[]>;
+    /**
+     * Tenant-scoped (via client join) template update. Only provided fields are
+     * written. Returns the updated template, or null when unknown / cross-tenant.
+     */
+    updateTemplate(templateId: string, agencyId: string, patch: {
+        name?: string;
+        tasks?: unknown;
+    }): Promise<any | null>;
+    /**
+     * Delete a template, tenant-scoped. Refuses ('has_dependencies') when any
+     * assignment still references it. 'not_found' for unknown / cross-tenant id.
+     */
+    deleteTemplate(templateId: string, agencyId: string): Promise<'deleted' | 'not_found' | 'has_dependencies'>;
+    /** True when the assignment exists and belongs to the agency (via template→client). */
+    assignmentInAgency(assignmentId: string, agencyId: string): Promise<boolean>;
+    /**
+     * Tenant-scoped assignment update. Supports rescheduling (visitDate, null to
+     * clear) and reassigning caregiver/template. The caller MUST validate that any
+     * new caregiverId / visitTemplateId belongs to the agency first. Returns null
+     * when the assignment is unknown / cross-tenant.
+     */
+    updateAssignment(assignmentId: string, agencyId: string, patch: {
+        caregiverId?: string;
+        visitTemplateId?: string;
+        visitDate?: string | null;
+    }): Promise<any | null>;
+    /**
+     * Delete (cancel) an assignment, tenant-scoped. Refuses ('has_dependencies')
+     * when an EVV visit already exists for it — those carry verified clock-in/out
+     * history. 'not_found' for unknown / cross-tenant id.
+     */
+    deleteAssignment(assignmentId: string, agencyId: string): Promise<'deleted' | 'not_found' | 'has_dependencies'>;
 }
 //# sourceMappingURL=schedule-repository.d.ts.map

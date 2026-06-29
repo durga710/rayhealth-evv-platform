@@ -213,6 +213,18 @@ export declare class ComplianceEngineRepository {
      */
     getClaimMatching(agencyId: string): Promise<ClaimMatchingCounts>;
     /**
+     * The ACTIONABLE list behind the claim-readiness counts: the specific visits
+     * that are NOT billable yet and WHY, so an owner can clear them before a claim
+     * run instead of just seeing a number. A visit blocks billing when it is:
+     *   - open    → clocked in but never clocked out (no duration to bill)
+     *   - flagged → failed an EVV check, needs review
+     *   - pending → awaiting verification
+     * Open visits are included regardless of age (a stale open shift is the worst
+     * offender); flagged/pending are scoped to the trailing 60 days. Agency-scoped
+     * via the caregiver. Capped; `truncated` signals more exist than returned.
+     */
+    getClaimReadinessBlockers(agencyId: string, limit?: number): Promise<ClaimReadinessBlockers>;
+    /**
      * Payroll Reconciliation snapshot from EVV-verified clock events.
      * Uses Postgres `EXTRACT(EPOCH FROM (clock_out_time - clock_in_time))` to
      * compute durations. Joins `evv_visits → caregivers` for agency scope.
@@ -232,6 +244,50 @@ export declare class ComplianceEngineRepository {
      * exceptions have no `agency_id`. "Open" means `approved_at IS NULL`.
      */
     getExceptionResolution(agencyId: string): Promise<ExceptionResolutionCounts>;
+    /**
+     * Agency-wide operational snapshot of TODAY's scheduled visits — the heart of
+     * the owner command center. Joins assignments scheduled today (UTC) →
+     * visit_templates → clients (agency scope) and LEFT JOINs the latest EVV visit
+     * per assignment to classify each into one bucket:
+     *   - completed  : visit clocked out
+     *   - inProgress : clocked in, not yet out
+     *   - lateStart  : scheduled start already passed (> grace) with no clock-in — needs action NOW
+     *   - upcoming   : scheduled later today, not started
+     * `lateStart` is the actionable "no-show risk" bucket an owner must chase.
+     * Counts only — no PHI rows leave the DB.
+     */
+    getTodaysVisitOps(agencyId: string, nowIso: string): Promise<TodaysVisitOps>;
+    /**
+     * Per-visit rows for today's scheduling board — the actionable drill-down
+     * behind the command-center "late to start" count. Returns client + caregiver
+     * identity (the assigned office staff are authorized to see their own agency's
+     * roster) and the raw clock timestamps; the caller derives display status via
+     * `deriveTodayVisitStatus`. Agency-scoped through clients.agency_id; ordered by
+     * scheduled time so the board reads top-to-bottom through the day.
+     */
+    getTodaysVisitBoard(agencyId: string): Promise<TodayVisitBoardRow[]>;
+}
+/** One row of today's visit board (pre-status-derivation). */
+export interface TodayVisitBoardRow {
+    assignmentId: string;
+    clientName: string;
+    caregiverName: string;
+    scheduledStartTime: string | null;
+    clockInTime: string | null;
+    clockOutTime: string | null;
+}
+/** Agency-wide "today" operational counts for the command center. */
+export interface TodaysVisitOps {
+    /** Assignments scheduled for today (UTC). */
+    scheduledToday: number;
+    /** Today's visits already clocked out. */
+    completed: number;
+    /** Today's visits clocked in but not yet clocked out. */
+    inProgress: number;
+    /** Scheduled start passed (>15m grace) with no clock-in — needs action now. */
+    lateStart: number;
+    /** Scheduled later today, not started yet. */
+    upcoming: number;
 }
 /** Counts powering the Authorization Oversight compliance lens. */
 export interface AuthorizationOversightCounts {
@@ -286,6 +342,29 @@ export interface ClaimMatchingCounts {
     flaggedVisitsLast7d: number;
     /** EVV visits with `status='pending'` (in-flight, not yet verified). */
     pendingVisits: number;
+}
+/** Why a visit can't be billed yet. */
+export type ClaimBlockerReason = 'open' | 'flagged' | 'pending';
+/** One non-billable visit with the reason it's blocked. */
+export interface ClaimBlocker {
+    visitId: string;
+    reason: ClaimBlockerReason;
+    clientName: string;
+    caregiverName: string;
+    clockInTime: string | null;
+    clockOutTime: string | null;
+}
+/** Actionable claim-readiness blockers: the visits standing between you and a clean claim run. */
+export interface ClaimReadinessBlockers {
+    counts: {
+        open: number;
+        flagged: number;
+        pending: number;
+        total: number;
+    };
+    /** True when more blockers exist than were returned (refine / paginate). */
+    truncated: boolean;
+    blockers: ClaimBlocker[];
 }
 /** Counts powering the Payroll Reconciliation snapshot. */
 export interface PayrollReconciliationCounts {

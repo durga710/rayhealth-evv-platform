@@ -1,7 +1,7 @@
 /**
  * AI Workflow Copilot routes.
  *
- *   GET  /copilot/status     — has the agency enabled the add-on + is Gemini configured
+ *   GET  /copilot/status     — has the agency enabled the add-on + is an AI provider configured
  *   POST /copilot/ask        — answer a conversational question with role-appropriate context
  *
  * Gating:
@@ -16,7 +16,7 @@
 import { createHash } from 'node:crypto';
 import { Router } from 'express';
 import { AuditEventRepository, copilotActionSchema, parseAgencyFeatures, } from '@rayhealth/core';
-import { GeminiApiError, GeminiNotConfiguredError, askGemini, isGeminiConfigured } from '../services/gemini-client.js';
+import { askAI, isAIConfigured, AINotConfiguredError } from '../ai.js';
 import { ActionAuthorizationError, ActionExecutionError, executeCopilotAction, } from '../services/copilot-action-executor.js';
 import { buildCopilotContext, contextSizeSummary } from '../services/copilot-context.js';
 const router = Router();
@@ -40,7 +40,9 @@ router.get('/status', async (req, res) => {
             data: {
                 enabled: features.aiCopilot.enabled,
                 plan: features.aiCopilot.plan,
-                geminiConfigured: isGeminiConfigured(),
+                // Field name kept for frontend back-compat; now reflects whichever AI
+                // provider is configured (Bedrock preferred, Gemini fallback).
+                geminiConfigured: isAIConfigured(),
             },
         });
     }
@@ -111,7 +113,7 @@ router.post('/ask', async (req, res) => {
             });
             return;
         }
-        if (!isGeminiConfigured()) {
+        if (!isAIConfigured()) {
             res.status(503).json({
                 success: false,
                 code: 'COPILOT_NOT_CONFIGURED',
@@ -121,7 +123,7 @@ router.post('/ask', async (req, res) => {
         }
         const role = req.auth.role;
         const systemInstruction = SYSTEM_PROMPTS[role] ?? SYSTEM_PROMPTS.coordinator;
-        const model = body.model ?? (features.aiCopilot.plan === 'pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash');
+        const tier = features.aiCopilot.plan === 'pro' ? 'pro' : 'starter';
         // Build the per-request context blob so the model has real UUIDs to
         // reference when emitting PROPOSE_ACTION_DATA. Failures degrade to an
         // empty blob — the model can still answer questions, it just won't have
@@ -136,10 +138,10 @@ router.post('/ask', async (req, res) => {
         const enrichedPrompt = context.text
             ? `${context.text}\n\nUser question:\n${prompt}`
             : prompt;
-        const result = await askGemini({
+        const result = await askAI({
             prompt: enrichedPrompt,
             systemInstruction,
-            model,
+            tier,
         });
         // Parse out the trailing PROPOSE_ACTION (plain English) and optional
         // PROPOSE_ACTION_DATA (structured JSON) lines. The data line is
@@ -209,16 +211,15 @@ router.post('/ask', async (req, res) => {
         });
     }
     catch (error) {
-        if (error instanceof GeminiNotConfiguredError) {
+        if (error instanceof AINotConfiguredError) {
             res.status(503).json({ success: false, code: 'COPILOT_NOT_CONFIGURED', error: error.message });
             return;
         }
-        if (error instanceof GeminiApiError) {
-            res.status(502).json({ success: false, code: 'COPILOT_UPSTREAM_ERROR', error: error.message });
-            return;
-        }
+        // A thrown error from the model provider (Bedrock/Gemini) is an upstream
+        // failure, not a bug in our handler — surface it as 502 so the client can
+        // distinguish "try again" from a hard 500.
         const message = error instanceof Error ? error.message : 'unexpected error';
-        res.status(500).json({ success: false, error: message });
+        res.status(502).json({ success: false, code: 'COPILOT_UPSTREAM_ERROR', error: message });
     }
 });
 // ---------- Execute (v2 action runner) ----------

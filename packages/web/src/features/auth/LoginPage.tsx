@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext.js';
+import { BrandLogo } from '../../components/brand/BrandLogo.js';
 
 const ADMIN_ROLES = new Set(['admin', 'coordinator']);
 
@@ -11,14 +12,27 @@ const trustPoints = [
 ];
 
 export function LoginPage() {
-  const { login, isAuthenticated, user } = useAuth();
+  const { login, completeTwoFactor, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [code, setCode] = useState('');
   const passwordWasReset = searchParams.get('reset') === '1';
+
+  const goToDashboard = (role: string) => {
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo && returnTo.startsWith('/') && ADMIN_ROLES.has(role)) {
+      navigate(returnTo, { replace: true });
+    } else if (ADMIN_ROLES.has(role)) {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/portal', { replace: true });
+    }
+  };
 
   // If the user is already authenticated (e.g. pressing Back from /admin),
   // send them straight to their dashboard instead of showing the login form.
@@ -39,18 +53,29 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const { role } = await login(email, password);
-      const returnTo = searchParams.get('returnTo');
-      // replace: true so /login is never in the back-button history
-      if (returnTo && returnTo.startsWith('/') && ADMIN_ROLES.has(role)) {
-        navigate(returnTo, { replace: true });
-      } else if (ADMIN_ROLES.has(role)) {
-        navigate('/admin', { replace: true });
+      const result = await login(email, password);
+      if ('twoFactorRequired' in result) {
+        setChallengeToken(result.challengeToken);
       } else {
-        navigate('/portal', { replace: true });
+        goToDashboard(result.role);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!challengeToken) return;
+    setError('');
+    setLoading(true);
+    try {
+      const { role } = await completeTwoFactor(challengeToken, code.trim());
+      goToDashboard(role);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -87,7 +112,7 @@ export function LoginPage() {
             right: '-20%',
             width: '60%',
             height: '60%',
-            background: 'radial-gradient(circle, rgba(124, 58, 237,0.18) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(16,116,128,0.22) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -106,10 +131,11 @@ export function LoginPage() {
             letterSpacing: '-0.01em',
           }}
         >
+          <BrandLogo variant="mark" height={30} alt="" />
           RayHealth
           <span
             style={{
-              background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+              background: 'linear-gradient(135deg, #ee6c2c 0%, #f59e3c 100%)',
               color: 'white',
               padding: '3px 8px',
               borderRadius: '5px',
@@ -168,7 +194,7 @@ export function LoginPage() {
                   height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#7c3aed"
+                  stroke="#5fd0d6"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -253,6 +279,43 @@ export function LoginPage() {
             </div>
           )}
 
+          {challengeToken ? (
+            <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="code" className="label">Authentication code</label>
+                <input
+                  id="code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="6-digit code or backup code"
+                  required
+                  className="input-field"
+                />
+                <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>
+                  Enter the code from your authenticator app, or a backup code.
+                </span>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary"
+                style={{ width: '100%', padding: '0.75rem', fontWeight: 600, marginTop: '0.25rem', fontSize: '0.9375rem', cursor: loading ? 'wait' : 'pointer' }}
+              >
+                {loading ? 'Verifying…' : 'Verify & sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setChallengeToken(null); setCode(''); setError(''); }}
+                style={{ background: 'none', border: 'none', color: '#107480', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}
+              >
+                ← Back to sign in
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label htmlFor="email" className="label">Email</label>
@@ -301,12 +364,13 @@ export function LoginPage() {
             <div style={{ textAlign: 'center' }}>
               <Link
                 to="/forgot-password"
-                style={{ fontSize: '0.875rem', color: '#7c3aed', fontWeight: 500 }}
+                style={{ fontSize: '0.875rem', color: '#107480', fontWeight: 500 }}
               >
                 Forgot your password?
               </Link>
             </div>
           </form>
+          )}
 
           <div
             style={{
@@ -339,11 +403,11 @@ export function LoginPage() {
               HIPAA compliance documentation
             </Link>
             <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-              Need access? <Link to="/" style={{ color: '#7c3aed', fontWeight: 500 }}>Contact your agency admin.</Link>
+              Need access? <Link to="/" style={{ color: '#107480', fontWeight: 500 }}>Contact your agency admin.</Link>
             </span>
             <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
               New agency?{' '}
-              <Link to="/signup" style={{ color: '#7c3aed', fontWeight: 500 }}>Create an account.</Link>
+              <Link to="/signup" style={{ color: '#107480', fontWeight: 500 }}>Create an account.</Link>
             </span>
           </div>
         </div>

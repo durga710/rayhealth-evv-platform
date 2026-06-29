@@ -19,7 +19,7 @@ type PageState =
 
 function CheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#107480" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -135,7 +135,7 @@ export function AcceptInvitePage() {
           right: '-20%',
           width: '60%',
           height: '60%',
-          background: 'radial-gradient(circle, rgba(124, 58, 237,0.18) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(16, 116, 128,0.18) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -156,7 +156,7 @@ export function AcceptInvitePage() {
         RayHealth
         <span
           style={{
-            background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+            background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
             color: 'white',
             padding: '3px 8px',
             borderRadius: '5px',
@@ -175,7 +175,7 @@ export function AcceptInvitePage() {
           Set up your care account.
         </h1>
         <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
-          You've been invited to join your agency on RayHealth EVV. Create your password to finish setting up your account.
+          You've been invited to join your agency on RayHealthEVV™. Create your password to finish setting up your account.
         </p>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {[
@@ -218,7 +218,7 @@ export function AcceptInvitePage() {
             <div role="alert" className="info-banner banner-error">
               {pageState.message}
             </div>
-            <Link to="/login" style={{ color: '#7c3aed', fontWeight: 500, fontSize: '0.9375rem' }}>
+            <Link to="/login" style={{ color: '#107480', fontWeight: 500, fontSize: '0.9375rem' }}>
               Go to sign in →
             </Link>
           </div>
@@ -235,7 +235,7 @@ export function AcceptInvitePage() {
           <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
             <div
               aria-hidden
-              style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
@@ -371,7 +371,7 @@ export function AcceptInvitePage() {
 
           <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1rem', fontSize: '0.8125rem', color: '#94A3B8' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: '#7c3aed', fontWeight: 500 }}>Sign in</Link>
+            <Link to="/login" style={{ color: '#107480', fontWeight: 500 }}>Sign in</Link>
           </div>
         </div>
       </main>

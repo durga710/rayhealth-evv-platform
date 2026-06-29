@@ -83,6 +83,36 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
   return mutate<T>('POST', path, body);
 }
 
+/**
+ * POST a raw text body (e.g. a CSV upload) with the CSRF token. Used by the
+ * data-import flow where the payload can exceed the JSON body limit, so it is
+ * sent as text/csv and consumed by a route-scoped text parser server-side.
+ */
+export async function postText<T>(path: string, text: string): Promise<T> {
+  const opts = (t: string | null): RequestInit => ({
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'content-type': 'text/csv',
+      ...(t ? { 'x-csrf-token': t } : {}),
+    },
+    body: text,
+  });
+
+  let response = await fetch(path, opts(getCsrfToken()));
+  if (response.status === 403) {
+    const err = await extractError(response);
+    if (err.serverMessage === 'Invalid CSRF token') {
+      const fresh = await refreshCsrfToken();
+      if (fresh) response = await fetch(path, opts(fresh));
+    }
+    if (!response.ok) throw err;
+  }
+  if (!response.ok) throw await extractError(response);
+  if (response.status === 204) return null as T;
+  return (await response.json()) as T;
+}
+
 export async function putJson<T>(path: string, body: unknown): Promise<T> {
   return mutate<T>('PUT', path, body);
 }
