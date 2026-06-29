@@ -51,6 +51,7 @@ export * from './domain/copilot-actions.js';
 export * from './repositories/agency-evv-config-repository.js';
 export * from './repositories/agency-hhaexchange-config-repository.js';
 export * from './repositories/agency-sandata-config-repository.js';
+export * from './repositories/agency-clearinghouse-config-repository.js';
 export * from './services/sandata-mapping.js';
 export * from './services/hhaexchange-mapping.js';
 export * from './services/audit-retention-sweep.js';

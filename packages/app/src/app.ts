@@ -36,6 +36,7 @@ import profileRoutes from './routes/profile-routes.js';
 import settingsRoutes from './routes/settings-routes.js';
 import agencySandataConfigRoutes from './routes/agency-sandata-config-routes.js';
 import agencyHhaexchangeConfigRoutes from './routes/agency-hhaexchange-config-routes.js';
+import agencyClearinghouseConfigRoutes from './routes/agency-clearinghouse-config-routes.js';
 import copilotRoutes from './routes/copilot-routes.js';
 import supportRoutes from './routes/support-routes.js';
 import complianceEngineRoutes from './routes/compliance-engine-routes.js';
@@ -225,6 +226,7 @@ export function createApp() {
     app.use(`${prefix}/agencies`, agencyRoutes);
     app.use(`${prefix}/agencies`, agencySandataConfigRoutes);
     app.use(`${prefix}/agencies`, agencyHhaexchangeConfigRoutes);
+    app.use(`${prefix}/agencies`, agencyClearinghouseConfigRoutes);
     app.use(`${prefix}/staff`, staffRoutes);
     app.use(`${prefix}/clients`, clientRoutes);
     app.use(`${prefix}/authorizations`, authorizationRoutes);
