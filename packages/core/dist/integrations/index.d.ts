@@ -9,4 +9,10 @@ export * from './types.js';
 export * as SandataClient from './sandata-client.js';
 export * as HhaexchangeClient from './hhaexchange-client.js';
 export * as ClearinghouseClient from './clearinghouse-client.js';
+/**
+ * Real Sandata Alternate-EVV (async POST → UUID → poll). Phase 1 = types +
+ * mapper + validator; the synchronous `SandataClient` above is retired once the
+ * transmission service lands.
+ */
+export * as SandataAltEvv from './sandata/index.js';
 //# sourceMappingURL=index.d.ts.map

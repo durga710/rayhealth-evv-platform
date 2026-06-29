@@ -1390,8 +1390,76 @@ export async function up(knex) {
             t.timestamps(true, true);
         });
     }
+    // ── R26 — Sandata Alt EVV transmission state ──────────────────────────────
+    // The Alt EVV API is async: POST a batch → receive a UUID → poll /status until
+    // Sandata returns per-record ACCEPTED/REJECTED/EXCEPTION. These tables hold the
+    // durable state the synchronous client never had: a per-record sequence number
+    // (Sandata requires it to increment on each resend), the last UUID/poll result,
+    // the transmission ledger, and a visit exception queue. entity_type is one of
+    // CLIENT|EMPLOYEE|VISIT; status is PENDING|RECEIVED|VERIFIED|EXCEPTION|REJECTED.
+    if (!(await knex.schema.hasTable('sandata_record_state'))) {
+        await knex.schema.createTable('sandata_record_state', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('entity_type', 16).notNullable(); // CLIENT | EMPLOYEE | VISIT
+            t.string('external_id', 128).notNullable(); // ClientCustomID / EmployeeCustomID / VisitOtherID
+            t.integer('sequence_id').notNullable().defaultTo(1);
+            t.string('status', 16).notNullable().defaultTo('PENDING');
+            t.uuid('last_uuid').nullable();
+            t.timestamp('last_transmitted_at').nullable();
+            t.timestamp('last_status_checked_at').nullable();
+            t.specificType('last_reason_codes', 'text[]').nullable();
+            t.text('last_description').nullable();
+            t.string('last_payload_hash', 64).nullable();
+            t.timestamps(true, true);
+            t.unique(['agency_id', 'entity_type', 'external_id']);
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_transmission'))) {
+        await knex.schema.createTable('sandata_transmission', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.string('entity_type', 16).notNullable();
+            t.uuid('uuid').notNullable().unique(); // Sandata-issued batch UUID
+            t.integer('record_count').notNullable().defaultTo(0);
+            t.string('environment', 8).notNullable().defaultTo('UAT'); // UAT | PROD
+            t.string('status', 16).notNullable().defaultTo('RECEIVED'); // RECEIVED | COMPLETED | FAILED
+            t.timestamp('posted_at').notNullable().defaultTo(knex.fn.now());
+            t.timestamp('status_polled_at').nullable();
+            t.integer('poll_attempts').notNullable().defaultTo(0);
+            t.timestamp('completed_at').nullable();
+            t.jsonb('raw_response').nullable();
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_transmission_record'))) {
+        await knex.schema.createTable('sandata_transmission_record', (t) => {
+            t.bigIncrements('id').primary();
+            t.bigInteger('transmission_id').notNullable().references('id').inTable('sandata_transmission').onDelete('CASCADE');
+            t.bigInteger('record_state_id').notNullable().references('id').inTable('sandata_record_state').onDelete('CASCADE');
+            t.string('external_id', 128).notNullable();
+            t.unique(['transmission_id', 'record_state_id']);
+        });
+    }
+    if (!(await knex.schema.hasTable('sandata_exception_queue'))) {
+        await knex.schema.createTable('sandata_exception_queue', (t) => {
+            t.bigIncrements('id').primary();
+            t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+            t.uuid('visit_id').nullable().references('id').inTable('evv_visits').onDelete('CASCADE');
+            t.string('external_id', 128).notNullable();
+            t.string('exception_id', 64).nullable();
+            t.specificType('reason_codes', 'text[]').nullable();
+            t.text('description').nullable();
+            t.boolean('requires_fix').notNullable().defaultTo(true);
+            t.boolean('resolved').notNullable().defaultTo(false);
+            t.timestamps(true, true);
+        });
+    }
 }
 export async function down(knex) {
+    await knex.schema.dropTableIfExists('sandata_exception_queue');
+    await knex.schema.dropTableIfExists('sandata_transmission_record');
+    await knex.schema.dropTableIfExists('sandata_transmission');
+    await knex.schema.dropTableIfExists('sandata_record_state');
     await knex.schema.dropTableIfExists('agency_clearinghouse_config');
     await knex.schema.dropTableIfExists('agency_hhaexchange_config');
     await knex.schema.dropTableIfExists('agency_sandata_config');
