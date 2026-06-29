@@ -22,7 +22,19 @@ export const clientSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   dateOfBirth: z.string().date(),
-  medicaidNumber: z.string().min(10).optional()
+  medicaidNumber: z.string().min(10).optional(),
+  // Service address + GPS anchor for EVV geofencing. All optional so existing
+  // callers and imports keep working, but when latitude/longitude are present
+  // the clock-in / clock-out geofence gate can actually validate location
+  // instead of failing open. geofenceRadiusM defaults to 150m at the DB level.
+  addressLine1: z.string().max(200).optional(),
+  addressLine2: z.string().max(200).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().length(2).optional(),
+  postalCode: z.string().max(10).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  geofenceRadiusM: z.number().int().positive().max(100_000).optional()
 });
 
 export type Client = z.infer<typeof clientSchema>;

@@ -34,6 +34,7 @@ export * from './services/evv-exception-service.js';
 export * from './services/claim-generation-service.js';
 export * from './services/edi-837p.js';
 export * from './services/payroll-export-service.js';
+export * from './services/command-center-service.js';
 export * from './security/cell-cipher.js';
 export * from './security/geofence.js';
 export * from './domain/mobile-session.js';

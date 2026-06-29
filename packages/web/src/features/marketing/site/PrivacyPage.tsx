@@ -261,7 +261,7 @@ export function PrivacyPage() {
               }}
             >
               <p style={{ margin: 0, lineHeight: 1.7 }}>
-                Privacy / Security Officer — RayHealth EVV<br />
+                Privacy / Security Officer — RayHealthEVV™<br />
                 <a href="mailto:security@rayhealthevv.com">security@rayhealthevv.com</a>
                 <br />
                 Or via <Link to="/contact">/contact</Link> (the form routes to the same

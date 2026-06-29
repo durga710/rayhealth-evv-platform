@@ -117,6 +117,17 @@ export function DashboardPage() {
       }
     };
 
+    // Count endpoint returns { count } — avoids pulling every PHI-bearing visit
+    // row just to read its length on the dashboard.
+    const safeCountField = async (path: string): Promise<number | null> => {
+      try {
+        const data = await getJson<{ count: number }>(path);
+        return typeof data?.count === 'number' ? data.count : null;
+      } catch {
+        return null;
+      }
+    };
+
     const safeRollup = async (): Promise<number | null> => {
       try {
         const res = await getJson<{ success: boolean; data: { complianceRate: number } }>('/api/learning/rollup');
@@ -130,7 +141,7 @@ export function DashboardPage() {
       safeCount('/api/clients'),
       safeCount('/api/staff'),
       safeCount('/api/assignments'),
-      safeCount('/api/evv/visits'),
+      safeCountField('/api/evv/visits/count'),
       safeRollup(),
     ]).then(([clients, staff, assignments, visits, complianceRate]) => {
       if (cancelled) return;
@@ -165,7 +176,7 @@ export function DashboardPage() {
 
   const stats: StatTile[] = [
     {
-      label: 'Active clients',
+      label: 'Clients',
       value: formatCount(counts.clients),
       tint: '#4F46E5',
       icon: (
@@ -188,7 +199,7 @@ export function DashboardPage() {
       ),
     },
     {
-      label: 'Open assignments',
+      label: 'Assignments',
       value: formatCount(counts.assignments),
       tint: '#0891B2',
       icon: (
@@ -201,7 +212,7 @@ export function DashboardPage() {
       ),
     },
     {
-      label: 'Visits this period',
+      label: 'Total visits',
       value: formatCount(counts.visits),
       tint: '#16A34A',
       icon: (

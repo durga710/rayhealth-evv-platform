@@ -13,6 +13,7 @@ export function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,6 +29,7 @@ export function SignupPage() {
     setError('');
     if (password !== confirm) { setError('Passwords do not match'); return; }
     if (password.length < 12) { setError('Password must be at least 12 characters'); return; }
+    if (!agreed) { setError('You must accept the Terms of Service to continue'); return; }
 
     setLoading(true);
     try {
@@ -35,7 +37,7 @@ export function SignupPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agencyName: agencyName.trim(), state: 'PA', adminEmail: email, password }),
+        body: JSON.stringify({ agencyName: agencyName.trim(), state: 'PA', adminEmail: email, password, acceptedTerms: true }),
       });
       const data: { message?: string } = await res.json();
       if (!res.ok) {
@@ -253,6 +255,24 @@ export function SignupPage() {
                   className="input-field"
                 />
               </div>
+              <label
+                htmlFor="agreeTerms"
+                style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5, cursor: 'pointer' }}
+              >
+                <input
+                  id="agreeTerms"
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  style={{ marginTop: '2px', width: 16, height: 16, accentColor: '#107480', flexShrink: 0 }}
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>.
+                </span>
+              </label>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"

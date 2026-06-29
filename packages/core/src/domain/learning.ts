@@ -198,3 +198,21 @@ export interface CourseCaregiverEnvelope {
   course: LearningCourse;
   caregivers: CourseCaregiverRow[];
 }
+
+/**
+ * Certificate of completion data — assembled from a completed enrollment plus
+ * the caregiver, course, and agency it belongs to. `verificationCode` is a
+ * short, human-readable identifier derived from the enrollment id so a printed
+ * certificate can be traced back to its record.
+ */
+export interface LearningCertificate {
+  caregiverName: string;
+  agencyName: string;
+  courseTitle: string;
+  courseCode: string;
+  cadence: CourseCadence;
+  completedAt: string;
+  expiresAt: string | null;
+  score: number | null;
+  verificationCode: string;
+}

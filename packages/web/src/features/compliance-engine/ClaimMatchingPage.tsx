@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getJson, postJson } from '../../lib/api-client.js';
 import {
   ComplianceEmptyQueue,
@@ -42,6 +43,30 @@ interface GenerateResult {
   claims: ClaimRow[];
   unbillable: Array<{ visitId: string; clientId: string; reasons: string[] }>;
 }
+
+type BlockerReason = 'open' | 'flagged' | 'pending';
+
+interface ClaimBlocker {
+  visitId: string;
+  reason: BlockerReason;
+  clientName: string;
+  caregiverName: string;
+  clockInTime: string | null;
+  clockOutTime: string | null;
+}
+
+interface BlockersResponse {
+  asOf: string;
+  counts: { open: number; flagged: number; pending: number; total: number };
+  truncated: boolean;
+  blockers: ClaimBlocker[];
+}
+
+const BLOCKER_META: Record<BlockerReason, { label: string; detail: string; fg: string; bg: string; to: string }> = {
+  open: { label: 'Not clocked out', detail: 'Caregiver clocked in but never clocked out — no duration to bill or pay.', fg: '#991B1B', bg: '#FEF2F2', to: '/admin/review' },
+  flagged: { label: 'Flagged', detail: 'Failed an EVV check — review before it can be billed.', fg: '#92400E', bg: '#FFFBEB', to: '/admin/compliance-engine/exceptions' },
+  pending: { label: 'Pending verification', detail: 'Awaiting verification before it becomes claim-ready.', fg: '#155E75', bg: '#ECFEFF', to: '/admin/review' },
+};
 
 const primaryButtonStyle: React.CSSProperties = {
   backgroundColor: 'var(--color-primary)',
@@ -121,6 +146,7 @@ export function ClaimMatchingPage() {
   const [genResult, setGenResult] = useState<GenerateResult | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [blockers, setBlockers] = useState<BlockersResponse | null>(null);
 
   const loadSnapshot = useCallback(async () => {
     setLoading(true);
@@ -148,10 +174,20 @@ export function ClaimMatchingPage() {
     }
   }, []);
 
+  const loadBlockers = useCallback(async () => {
+    try {
+      const data = await getJson<BlockersResponse>('/api/compliance-engine/claims/blockers');
+      setBlockers(data);
+    } catch {
+      setBlockers(null); // non-critical advisory panel
+    }
+  }, []);
+
   useEffect(() => {
     void loadSnapshot();
     void loadClaims();
-  }, [loadSnapshot, loadClaims]);
+    void loadBlockers();
+  }, [loadSnapshot, loadClaims, loadBlockers]);
 
   const generate = async () => {
     setGenerating(true);
@@ -286,6 +322,62 @@ export function ClaimMatchingPage() {
           </div>
         ) : null}
       </div>
+
+      {/* Readiness blockers — the actionable list behind the flagged/pending KPIs */}
+      {blockers && blockers.counts.total > 0 ? (
+        <div style={sectionCard}>
+          <h3 style={{ color: 'var(--color-text)', fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+            Readiness blockers
+          </h3>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0.4rem 0 0.9rem' }}>
+            {blockers.counts.total} visit{blockers.counts.total === 1 ? '' : 's'} can&apos;t be billed yet
+            {' '}({blockers.counts.open} not clocked out · {blockers.counts.flagged} flagged · {blockers.counts.pending} pending).
+            Clear these before your next claim run.
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.85rem', minWidth: 520 }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                  <th style={{ padding: '0.4rem 0.6rem' }}>Reason</th>
+                  <th style={{ padding: '0.4rem 0.6rem' }}>Client</th>
+                  <th style={{ padding: '0.4rem 0.6rem' }}>Caregiver</th>
+                  <th style={{ padding: '0.4rem 0.6rem' }}>Clock-in</th>
+                  <th style={{ padding: '0.4rem 0.6rem' }}>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blockers.blockers.map((b) => {
+                  const m = BLOCKER_META[b.reason];
+                  return (
+                    <tr key={b.visitId} style={{ borderTop: '1px solid var(--color-border)' }}>
+                      <td style={{ padding: '0.5rem 0.6rem' }}>
+                        <span style={{ background: m.bg, color: m.fg, borderRadius: 999, padding: '0.15rem 0.55rem', fontSize: '0.7rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                          {m.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.5rem 0.6rem', fontWeight: 700, color: 'var(--color-text)' }}>{b.clientName}</td>
+                      <td style={{ padding: '0.5rem 0.6rem', color: 'var(--color-text-muted)' }}>{b.caregiverName}</td>
+                      <td style={{ padding: '0.5rem 0.6rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+                        {b.clockInTime ? new Date(b.clockInTime).toLocaleDateString() : '—'}
+                      </td>
+                      <td style={{ padding: '0.5rem 0.6rem' }}>
+                        <Link to={m.to} style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
+                          Resolve →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {blockers.truncated ? (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', marginTop: '0.6rem' }}>
+              Showing the oldest {blockers.blockers.length}. Clear these, then refresh to see more.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {actionError ? (
         <div

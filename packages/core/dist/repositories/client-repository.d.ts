@@ -65,6 +65,27 @@ export declare class ClientRepository {
         action: ImportAction;
     }>;
     getAuthorizations(agencyId: string): Promise<Authorization[]>;
+    /**
+     * Tenant-scoped partial update of a client. Only provided fields are written
+     * (address + geofence anchor included), so an edit that omits the Medicaid
+     * number leaves it untouched. Returns the updated client, or null when the id
+     * does not exist in this agency.
+     */
+    updateClient(clientId: string, agencyId: string, patch: Partial<Client>): Promise<Client | null>;
+    /**
+     * Delete a client, tenant-scoped. Refuses ('has_dependencies') when
+     * authorizations or visit templates still reference the client, since those
+     * carry billing / scheduling history a hard delete would orphan — the owner
+     * must remove dependents first. 'not_found' for an unknown or cross-tenant id.
+     */
+    deleteClient(clientId: string, agencyId: string): Promise<'deleted' | 'not_found' | 'has_dependencies'>;
+    /**
+     * Tenant-scoped (via client join) authorization update. clientId is not
+     * reassignable. Returns null when unknown or cross-tenant.
+     */
+    updateAuthorization(authId: string, agencyId: string, patch: Partial<Authorization>): Promise<Authorization | null>;
+    /** Tenant-scoped authorization delete. false when not found / cross-tenant. */
+    deleteAuthorization(authId: string, agencyId: string): Promise<boolean>;
     private mapRowToClient;
     private mapRowToAuthorization;
 }

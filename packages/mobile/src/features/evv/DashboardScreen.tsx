@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
+import { deriveVisitState, type VisitState } from '../../lib/visit-state';
 
 interface Assignment {
   id: string;
@@ -24,6 +25,24 @@ interface Assignment {
   clientLat?: number | null;
   clientLng?: number | null;
   clientGeofenceM?: number;
+  visitState: VisitState;
+  openVisitId?: string | null;
+  clockInTime?: string | null;
+}
+
+/** Subset of the /api/mobile/caregiver/today schedule row we render here. */
+interface TodayScheduleRow {
+  assignmentId: string;
+  scheduledStartTime: string | null;
+  clientFirstName: string;
+  clientLastName: string;
+  clientLatitude: number | null;
+  clientLongitude: number | null;
+  geofenceRadiusM: number;
+  currentVisitId: string | null;
+  currentVisitStatus: string | null;
+  currentClockInTime: string | null;
+  currentClockOutTime: string | null;
 }
 
 const FOREGROUND_FIRE_WINDOW_MS = 32_000;
@@ -113,8 +132,25 @@ export default function DashboardScreen() {
   const fetchAssignments = async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-      const { data } = await apiClient.get('/api/assignments/caregiver');
-      const list: Assignment[] = data || [];
+      // Purpose-built mobile endpoint: TODAY's window (12h back / 24h forward)
+      // with the scheduled start time the shift-alert scheduler needs. The old
+      // /assignments/caregiver returned every assignment with no time, so the
+      // "Today's Visits" screen was neither scoped to today nor able to alert.
+      const { data } = await apiClient.get('/api/mobile/caregiver/today');
+      const rows: TodayScheduleRow[] = data?.schedule ?? [];
+      const list: Assignment[] = rows.map((r) => ({
+        id: r.assignmentId,
+        clientName: `${r.clientFirstName ?? ''} ${r.clientLastName ?? ''}`.trim() || 'Client',
+        time: r.scheduledStartTime ?? undefined,
+        // serviceCode is re-derived server-side at clock-in; not needed here.
+        serviceCode: undefined,
+        clientLat: r.clientLatitude ?? null,
+        clientLng: r.clientLongitude ?? null,
+        clientGeofenceM: r.geofenceRadiusM ?? 150,
+        visitState: deriveVisitState(r),
+        openVisitId: r.currentVisitId ?? null,
+        clockInTime: r.currentClockInTime ?? null,
+      }));
       setAssignments(list);
       const permStatus = await ensureNotificationPermission();
       if (permStatus === 'granted') {
@@ -192,6 +228,9 @@ export default function DashboardScreen() {
               clientLat: item.clientLat != null ? String(item.clientLat) : '',
               clientLng: item.clientLng != null ? String(item.clientLng) : '',
               clientGeofenceM: item.clientGeofenceM != null ? String(item.clientGeofenceM) : '150',
+              // Resume an in-progress visit when one is open.
+              openVisitId: item.openVisitId ?? '',
+              clockInTime: item.clockInTime ?? '',
             },
           })
         }
@@ -308,7 +347,16 @@ function CardContent({
           <Text style={styles.clientName} numberOfLines={1}>{item.clientName}</Text>
           <Text style={styles.visitTime}>{formatTime(item.time)}</Text>
         </View>
-        {status === 'now' ? (
+        {item.visitState === 'in_progress' ? (
+          <View style={styles.badgeInProgress}>
+            <View style={styles.badgeDotGreen} />
+            <Text style={styles.badgeInProgressText}>In progress</Text>
+          </View>
+        ) : item.visitState === 'completed' ? (
+          <View style={styles.badgeCompleted}>
+            <Text style={styles.badgeCompletedText}>Completed ✓</Text>
+          </View>
+        ) : status === 'now' ? (
           <View style={styles.badgeNow}>
             <View style={styles.badgeDot} />
             <Text style={styles.badgeNowText}>Now</Text>
@@ -331,7 +379,13 @@ function CardContent({
           </View>
         ) : null}
       </View>
-      <Text style={styles.tapHint}>Tap to clock in →</Text>
+      <Text style={styles.tapHint}>
+        {item.visitState === 'in_progress'
+          ? 'Tap to clock out →'
+          : item.visitState === 'completed'
+          ? 'Visit completed today'
+          : 'Tap to clock in →'}
+      </Text>
     </>
   );
 }
@@ -466,6 +520,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4,
   },
   badgePastText: { color: '#94a3b8', fontSize: 11, fontWeight: '700' },
+  badgeInProgress: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    borderRadius: 999,
+    paddingHorizontal: 10, paddingVertical: 4, gap: 5,
+    borderWidth: 1, borderColor: '#bbf7d0',
+  },
+  badgeDotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#16a34a' },
+  badgeInProgressText: { color: '#15803d', fontSize: 11, fontWeight: '800' },
+  badgeCompleted: {
+    backgroundColor: '#ecfdf5', borderRadius: 999,
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderWidth: 1, borderColor: '#a7f3d0',
+  },
+  badgeCompletedText: { color: '#047857', fontSize: 11, fontWeight: '700' },
 
   // Empty state
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },

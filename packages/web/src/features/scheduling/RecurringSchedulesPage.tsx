@@ -28,6 +28,23 @@ interface MaterializeResult {
   schedules?: number;
 }
 
+interface CoverageGap {
+  scheduleId: string;
+  caregiverName: string | null;
+  clientName: string;
+  templateName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+interface CoverageForecast {
+  windowStart: string;
+  windowEnd: string;
+  totalGaps: number;
+  gaps: CoverageGap[];
+}
+
 const DAYS = [
   { value: 1, short: 'Mon' },
   { value: 2, short: 'Tue' },
@@ -69,6 +86,13 @@ export function RecurringSchedulesPage() {
 
   const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [forecast, setForecast] = useState<CoverageForecast | null>(null);
+
+  const loadForecast = useCallback(() => {
+    getJson<CoverageForecast>('/api/recurring-schedules/forecast?days=14')
+      .then((data) => setForecast(data))
+      .catch(() => { /* non-critical advisory */ });
+  }, []);
 
   const loadSchedules = useCallback(() => {
     setLoading(true);
@@ -81,13 +105,14 @@ export function RecurringSchedulesPage() {
 
   useEffect(() => {
     loadSchedules();
+    loadForecast();
     getJson<StaffMember[]>('/api/staff')
       .then((data) => setStaff(data || []))
       .catch(() => { /* non-critical */ });
     getJson<Template[]>('/api/templates')
       .then((data) => setTemplates(data || []))
       .catch(() => { /* non-critical */ });
-  }, [loadSchedules]);
+  }, [loadSchedules, loadForecast]);
 
   const caregivers = staff.filter((s) => s.role === 'caregiver' || s.role === 'coordinator');
 
@@ -168,6 +193,7 @@ export function RecurringSchedulesPage() {
         kind: 'success',
         text: `Generated ${r.created} visit${r.created === 1 ? '' : 's'} (${r.skipped} already existed) through ${r.windowEnd}.`,
       });
+      loadForecast();
     } catch (err) {
       setBanner({ kind: 'error', text: (err as Error).message || 'Failed to generate visits.' });
     } finally {
@@ -184,6 +210,7 @@ export function RecurringSchedulesPage() {
         kind: 'success',
         text: `Generated ${r.created} visit${r.created === 1 ? '' : 's'} across ${r.schedules ?? 0} schedule${r.schedules === 1 ? '' : 's'} (${r.skipped} already existed) through ${r.windowEnd}.`,
       });
+      loadForecast();
     } catch (err) {
       setBanner({ kind: 'error', text: (err as Error).message || 'Failed to generate visits.' });
     } finally {
@@ -217,6 +244,49 @@ export function RecurringSchedulesPage() {
           style={{ marginBottom: '1rem' }}
         >
           {banner.text}
+        </div>
+      )}
+
+      {forecast && forecast.totalGaps > 0 && (
+        <div
+          role="status"
+          style={{
+            marginBottom: '1rem',
+            background: '#FFFBEB',
+            border: '1px solid #FDE68A',
+            borderRadius: '10px',
+            padding: '0.9rem 1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D97706', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: '12rem' }}>
+            <div style={{ fontWeight: 700, color: '#92400E' }}>
+              {forecast.totalGaps} upcoming visit{forecast.totalGaps === 1 ? '' : 's'} not yet generated
+            </div>
+            <div style={{ fontSize: '0.8125rem', color: '#92400E', opacity: 0.9 }}>
+              Active recurring patterns have visits in the next 14 days that aren't on the calendar yet — caregivers won't see them until you generate them.
+              {' '}
+              {forecast.gaps.slice(0, 3).map((g, i) => (
+                <span key={`${g.scheduleId}-${g.date}`}>
+                  {i > 0 ? '; ' : 'Soonest: '}
+                  {g.clientName} on {g.date} {g.startTime}
+                </span>
+              ))}
+              {forecast.totalGaps > 3 ? `; +${forecast.totalGaps - 3} more` : '.'}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={materializeAll}
+            className="btn-primary btn-sm"
+            disabled={busyId === '__all__'}
+          >
+            {busyId === '__all__' ? 'Generating…' : 'Generate now'}
+          </button>
         </div>
       )}
 

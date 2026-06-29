@@ -3,14 +3,10 @@ import { requireCapability } from '../middleware/require-capability.js';
 import {
   AuditEventRepository,
   CaregiverRepository,
-  ClaimRepository,
-  ClientRepository,
   ScheduleRepository,
   assignmentInputSchema,
-  checkScheduleConflicts,
-  evaluateCredentialEligibility,
-  type ConflictAuthorization,
 } from '@rayhealth/core';
+import { evaluateAssignmentChecks } from './assignment-checks.js';
 import { safeError } from '../security/safe-log.js';
 
 const router = Router();
@@ -49,90 +45,31 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
       return res.status(400).json({ message: 'Valid caregiverId and visitTemplateId are required' });
     }
 
-    // Verify the caregiver belongs to this agency before creating the assignment.
-    // Without this check an admin with a leaked caregiverId from another agency
-    // could create cross-agency assignments.
-    const caregiverRepo = new CaregiverRepository(db);
-    const caregiver = await caregiverRepo.findById(
-      parsed.data.caregiverId,
-      req.auth.agencyId
-    );
-    if (!caregiver) {
+    // Run the shared safety checks (cross-tenant caregiver guard, credential
+    // advisory, template→client resolution, duplicate-booking + authorization
+    // coverage gate). Same logic the reschedule path uses, so the two can't drift.
+    const checks = await evaluateAssignmentChecks(db, req.auth.agencyId, {
+      caregiverId: parsed.data.caregiverId,
+      visitTemplateId: parsed.data.visitTemplateId,
+      visitDate: parsed.data.visitDate,
+    });
+
+    if (!checks.caregiver) {
       return res.status(403).json({ message: 'Caregiver does not belong to this agency' });
     }
-
-    // Credential check (HHAeXchange-style): surface a warning when the caregiver
-    // has non-active credentials. A warning, not a hard block, so a coordinator
-    // can still schedule while a renewal is in flight — the warning rides along
-    // on the response and the assignment.created audit.
-    const credentials = await caregiverRepo.getCredentials(parsed.data.caregiverId, req.auth.agencyId);
-    const credCheck = evaluateCredentialEligibility({
-      operatingTrack: 'personal-assistance',
-      credentials: credentials.map((c) => ({ credentialType: c.credentialType, status: c.status })),
-    });
-
-    // Resolve the template's client (also validates the template is in-agency).
-    const templateClient = await repo.getTemplateClient(
-      parsed.data.visitTemplateId,
-      req.auth.agencyId
-    );
-    if (!templateClient) {
+    if (!checks.templateClient) {
       return res.status(404).json({ message: 'Visit template not found in this agency' });
     }
-
-    // Gather conflict inputs: the caregiver's existing schedule (duplicate
-    // detection) and the client's authorizations with units remaining after
-    // billed claims (coverage + exhaustion warnings).
-    const [existingAssignments, allAuthorizations, billedUnits] = await Promise.all([
-      repo.getCaregiverScheduleForConflict(parsed.data.caregiverId, req.auth.agencyId),
-      new ClientRepository(db).getAuthorizations(req.auth.agencyId),
-      new ClaimRepository(db).getBilledLineUnits(req.auth.agencyId),
-    ]);
-
-    const authorizations: ConflictAuthorization[] = allAuthorizations
-      .filter((a) => a.clientId === templateClient.clientId)
-      .map((a) => {
-        const used = billedUnits
-          .filter(
-            (b) =>
-              b.clientId === templateClient.clientId &&
-              b.serviceCode === a.serviceCode &&
-              b.serviceDate >= a.startDate &&
-              b.serviceDate <= a.endDate,
-          )
-          .reduce((sum, b) => sum + b.units, 0);
-        return {
-          serviceCode: a.serviceCode,
-          startDate: a.startDate,
-          endDate: a.endDate,
-          unitsAuthorized: a.unitsAuthorized,
-          unitsRemaining: a.unitsAuthorized - used,
-        };
-      });
-
-    const conflicts = checkScheduleConflicts({
-      proposed: {
-        visitTemplateId: parsed.data.visitTemplateId,
-        visitDate: parsed.data.visitDate,
-      },
-      existingAssignments,
-      authorizations,
-    });
-
-    if (conflicts.hardConflicts.length > 0) {
+    if (checks.hardConflicts.length > 0) {
       return res.status(409).json({
-        message: conflicts.hardConflicts[0],
+        message: checks.hardConflicts[0],
         code: 'SCHEDULE_CONFLICT',
-        conflicts: conflicts.hardConflicts,
+        conflicts: checks.hardConflicts,
       });
     }
 
-    const warnings = [
-      ...conflicts.warnings,
-      ...(credCheck.eligible
-        ? []
-        : [`Caregiver has non-active credentials: ${credCheck.reasons.join(', ')}`]),
-    ];
+    const warnings = checks.warnings;
+    const templateClient = checks.templateClient;
 
     const assignment = await repo.createAssignment(parsed.data);
 
@@ -182,6 +119,99 @@ router.get('/', requireCapability('schedule.read'), async (req, res) => {
     const assignments = await repo.getAssignments(req.auth.agencyId);
     res.json(assignments);
   } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.put('/:id', requireCapability('schedule.write'), async (req, res) => {
+  try {
+    const db = req.app.get('db');
+    const repo = new ScheduleRepository(db);
+
+    const { caregiverId, visitTemplateId, visitDate } = req.body ?? {};
+    const patch: { caregiverId?: string; visitTemplateId?: string; visitDate?: string | null } = {};
+
+    // A reassigned caregiver / template must belong to this agency — same
+    // cross-tenant guard the create path enforces.
+    if (caregiverId !== undefined) {
+      if (typeof caregiverId !== 'string' || !caregiverId) {
+        return res.status(400).json({ message: 'caregiverId must be a non-empty string' });
+      }
+      const caregiver = await new CaregiverRepository(db).findById(caregiverId, req.auth.agencyId);
+      if (!caregiver) {
+        return res.status(403).json({ message: 'Caregiver does not belong to this agency' });
+      }
+      patch.caregiverId = caregiverId;
+    }
+    if (visitTemplateId !== undefined) {
+      if (typeof visitTemplateId !== 'string' || !visitTemplateId) {
+        return res.status(400).json({ message: 'visitTemplateId must be a non-empty string' });
+      }
+      const templateClient = await repo.getTemplateClient(visitTemplateId, req.auth.agencyId);
+      if (!templateClient) {
+        return res.status(404).json({ message: 'Visit template not found in this agency' });
+      }
+      patch.visitTemplateId = visitTemplateId;
+    }
+    if (visitDate !== undefined) {
+      if (visitDate !== null && (typeof visitDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(visitDate))) {
+        return res.status(400).json({ message: 'visitDate must be YYYY-MM-DD or null' });
+      }
+      patch.visitDate = visitDate;
+    }
+
+    // Re-run the conflict gate on the EFFECTIVE assignment (current values with
+    // the patch applied) so a reschedule/reassign can't silently create a
+    // double-booking or push past authorized units — the create path enforces
+    // this, the edit path must too. Self-excluded from duplicate detection.
+    const assignmentId = String(req.params.id);
+    const current = await repo.getAssignmentById(assignmentId, req.auth.agencyId);
+    if (!current) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    const checks = await evaluateAssignmentChecks(db, req.auth.agencyId, {
+      caregiverId: patch.caregiverId ?? current.caregiverId,
+      visitTemplateId: patch.visitTemplateId ?? current.visitTemplateId,
+      visitDate: patch.visitDate !== undefined ? (patch.visitDate ?? undefined) : current.visitDate,
+      excludeAssignmentId: assignmentId,
+    });
+    if (checks.hardConflicts.length > 0) {
+      return res.status(409).json({
+        message: checks.hardConflicts[0],
+        code: 'SCHEDULE_CONFLICT',
+        conflicts: checks.hardConflicts,
+      });
+    }
+
+    const updated = await repo.updateAssignment(assignmentId, req.auth.agencyId, patch);
+    if (!updated) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    res.json({ ...updated, warnings: checks.warnings });
+  } catch (error) {
+    safeError('Assignment update failed', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.delete('/:id', requireCapability('schedule.write'), async (req, res) => {
+  try {
+    const db = req.app.get('db');
+    const repo = new ScheduleRepository(db);
+    const result = await repo.deleteAssignment(String(req.params.id), req.auth.agencyId);
+    if (result === 'not_found') {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    if (result === 'has_dependencies') {
+      return res.status(409).json({
+        message: 'This assignment already has an EVV visit and cannot be deleted.',
+        code: 'HAS_DEPENDENCIES',
+      });
+    }
+    res.status(204).end();
+  } catch (error) {
+    safeError('Assignment delete failed', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });

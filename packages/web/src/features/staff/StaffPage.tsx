@@ -416,6 +416,7 @@ export function StaffPage() {
              activeStaff.length === 0 ? (
                <EmptyState title="No active staff yet" body="Staff appear here once they accept their invite." cta={{ label: 'Invite a staff member', onClick: focusInvite }} />
              ) : (
+               <div className="table-scroll">
                <table className="data-table">
                  <thead>
                    <tr>
@@ -647,6 +648,7 @@ export function StaffPage() {
                    })}
                  </tbody>
                </table>
+               </div>
              )}
           </div>
 
@@ -668,6 +670,7 @@ export function StaffPage() {
                   {revokingAll ? 'Revoking…' : `Revoke all (${pendingInvites.length})`}
                 </button>
               </div>
+              <div className="table-scroll">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -725,6 +728,7 @@ export function StaffPage() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 

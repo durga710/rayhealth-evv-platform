@@ -20,6 +20,11 @@ export declare class EvvRepository {
     updateVisit(id: string, agencyId: string, visit: Partial<EvvVisit>): Promise<EvvVisit | null>;
     /** All visits within an agency. */
     getVisitsForAgency(agencyId: string): Promise<EvvVisit[]>;
+    /**
+     * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
+     * (PHI-bearing) visit row across the wire just to read `.length`.
+     */
+    countVisitsForAgency(agencyId: string): Promise<number>;
     /** Single visit within an agency; returns null without leaking cross-tenant existence. */
     getVisitByIdForAgency(id: string, agencyId: string): Promise<EvvVisit | null>;
     /**

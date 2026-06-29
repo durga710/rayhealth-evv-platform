@@ -247,10 +247,15 @@ export function CaregiverTrainingPage() {
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
                   {isCompleted && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: '#16A34A', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '0.3rem 0.7rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/portal/training/${course.id}/certificate`)}
+                      title="View certificate of completion"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: '#16A34A', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer' }}
+                    >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                       Certificate
-                    </span>
+                    </button>
                   )}
                   <button
                     type="button"

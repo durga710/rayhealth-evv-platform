@@ -846,6 +846,83 @@ export class ComplianceEngineRepository {
   }
 
   /**
+   * The ACTIONABLE list behind the claim-readiness counts: the specific visits
+   * that are NOT billable yet and WHY, so an owner can clear them before a claim
+   * run instead of just seeing a number. A visit blocks billing when it is:
+   *   - open    → clocked in but never clocked out (no duration to bill)
+   *   - flagged → failed an EVV check, needs review
+   *   - pending → awaiting verification
+   * Open visits are included regardless of age (a stale open shift is the worst
+   * offender); flagged/pending are scoped to the trailing 60 days. Agency-scoped
+   * via the caregiver. Capped; `truncated` signals more exist than returned.
+   */
+  async getClaimReadinessBlockers(
+    agencyId: string,
+    limit = 100,
+  ): Promise<ClaimReadinessBlockers> {
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 86_400_000).toISOString();
+
+    const rows = await this.db('evv_visits as v')
+      .join('caregivers as cg', 'cg.id', 'v.caregiver_id')
+      .leftJoin('assignments as a', 'a.id', 'v.assignment_id')
+      .leftJoin('visit_templates as vt', 'vt.id', 'a.visit_template_id')
+      .leftJoin('clients as c', 'c.id', 'vt.client_id')
+      .where('cg.agency_id', agencyId)
+      .andWhere((qb) => {
+        qb.where((open) => {
+          open.whereNotNull('v.clock_in_time').whereNull('v.clock_out_time');
+        })
+          .orWhere((flagged) => {
+            flagged.where('v.status', 'flagged').andWhere('v.clock_in_time', '>=', sixtyDaysAgo);
+          })
+          .orWhere((pending) => {
+            pending.where('v.status', 'pending').andWhere('v.clock_in_time', '>=', sixtyDaysAgo);
+          });
+      })
+      .orderByRaw('v.clock_in_time ASC NULLS LAST')
+      .limit(limit + 1)
+      .select(
+        'v.id as visit_id',
+        'v.status as status',
+        'v.clock_in_time',
+        'v.clock_out_time',
+        'cg.first_name as cg_first',
+        'cg.last_name as cg_last',
+        'c.first_name as client_first',
+        'c.last_name as client_last',
+      );
+
+    const truncated = rows.length > limit;
+    const page = truncated ? rows.slice(0, limit) : rows;
+
+    const blockers: ClaimBlocker[] = page.map((r) => {
+      const reason: ClaimBlockerReason =
+        r.clock_in_time && !r.clock_out_time
+          ? 'open'
+          : r.status === 'flagged'
+            ? 'flagged'
+            : 'pending';
+      return {
+        visitId: r.visit_id as string,
+        reason,
+        clientName: `${r.client_first ?? ''} ${r.client_last ?? ''}`.trim() || 'Unknown client',
+        caregiverName: `${r.cg_first ?? ''} ${r.cg_last ?? ''}`.trim() || 'Unknown caregiver',
+        clockInTime: r.clock_in_time ? new Date(r.clock_in_time).toISOString() : null,
+        clockOutTime: r.clock_out_time ? new Date(r.clock_out_time).toISOString() : null,
+      };
+    });
+
+    const counts = {
+      open: blockers.filter((b) => b.reason === 'open').length,
+      flagged: blockers.filter((b) => b.reason === 'flagged').length,
+      pending: blockers.filter((b) => b.reason === 'pending').length,
+      total: blockers.length,
+    };
+
+    return { counts, truncated, blockers };
+  }
+
+  /**
    * Payroll Reconciliation snapshot from EVV-verified clock events.
    * Uses Postgres `EXTRACT(EPOCH FROM (clock_out_time - clock_in_time))` to
    * compute durations. Joins `evv_visits → caregivers` for agency scope.
@@ -985,6 +1062,148 @@ export class ComplianceEngineRepository {
       vmurPending: Number(vmurRow?.count ?? 0),
     };
   }
+
+  /**
+   * Agency-wide operational snapshot of TODAY's scheduled visits — the heart of
+   * the owner command center. Joins assignments scheduled today (UTC) →
+   * visit_templates → clients (agency scope) and LEFT JOINs the latest EVV visit
+   * per assignment to classify each into one bucket:
+   *   - completed  : visit clocked out
+   *   - inProgress : clocked in, not yet out
+   *   - lateStart  : scheduled start already passed (> grace) with no clock-in — needs action NOW
+   *   - upcoming   : scheduled later today, not started
+   * `lateStart` is the actionable "no-show risk" bucket an owner must chase.
+   * Counts only — no PHI rows leave the DB.
+   */
+  async getTodaysVisitOps(agencyId: string, nowIso: string): Promise<TodaysVisitOps> {
+    const now = new Date(nowIso);
+    const graceMs = 15 * 60 * 1000;
+
+    const rows = await this.db('assignments as a')
+      .join('visit_templates as vt', 'vt.id', 'a.visit_template_id')
+      .join('clients as c', 'c.id', 'vt.client_id')
+      .leftJoin(
+        this.db.raw(
+          `(
+            SELECT DISTINCT ON (assignment_id)
+              assignment_id, clock_in_time, clock_out_time
+            FROM evv_visits
+            WHERE clock_in_time >= (now() - interval '2 days')
+            ORDER BY assignment_id, clock_in_time DESC
+          ) as v`,
+        ),
+        'v.assignment_id',
+        'a.id',
+      )
+      .where('c.agency_id', agencyId)
+      .whereRaw("a.scheduled_start_time::date = (now() AT TIME ZONE 'UTC')::date")
+      .select(
+        'a.id as assignment_id',
+        'a.scheduled_start_time',
+        'v.clock_in_time',
+        'v.clock_out_time',
+      );
+
+    let completed = 0;
+    let inProgress = 0;
+    let lateStart = 0;
+    let upcoming = 0;
+    for (const r of rows) {
+      if (r.clock_out_time) {
+        completed++;
+      } else if (r.clock_in_time) {
+        inProgress++;
+      } else {
+        const start = r.scheduled_start_time ? new Date(r.scheduled_start_time).getTime() : null;
+        if (start !== null && now.getTime() > start + graceMs) lateStart++;
+        else upcoming++;
+      }
+    }
+
+    return {
+      scheduledToday: rows.length,
+      completed,
+      inProgress,
+      lateStart,
+      upcoming,
+    };
+  }
+
+  /**
+   * Per-visit rows for today's scheduling board — the actionable drill-down
+   * behind the command-center "late to start" count. Returns client + caregiver
+   * identity (the assigned office staff are authorized to see their own agency's
+   * roster) and the raw clock timestamps; the caller derives display status via
+   * `deriveTodayVisitStatus`. Agency-scoped through clients.agency_id; ordered by
+   * scheduled time so the board reads top-to-bottom through the day.
+   */
+  async getTodaysVisitBoard(agencyId: string): Promise<TodayVisitBoardRow[]> {
+    const rows = await this.db('assignments as a')
+      .join('visit_templates as vt', 'vt.id', 'a.visit_template_id')
+      .join('clients as c', 'c.id', 'vt.client_id')
+      .join('caregivers as cg', 'cg.id', 'a.caregiver_id')
+      .leftJoin(
+        this.db.raw(
+          `(
+            SELECT DISTINCT ON (assignment_id)
+              assignment_id, clock_in_time, clock_out_time
+            FROM evv_visits
+            WHERE clock_in_time >= (now() - interval '2 days')
+            ORDER BY assignment_id, clock_in_time DESC
+          ) as v`,
+        ),
+        'v.assignment_id',
+        'a.id',
+      )
+      .where('c.agency_id', agencyId)
+      .whereRaw("a.scheduled_start_time::date = (now() AT TIME ZONE 'UTC')::date")
+      .orderByRaw('a.scheduled_start_time ASC NULLS LAST')
+      .select(
+        'a.id as assignment_id',
+        'a.scheduled_start_time',
+        'c.first_name as client_first_name',
+        'c.last_name as client_last_name',
+        'cg.first_name as caregiver_first_name',
+        'cg.last_name as caregiver_last_name',
+        'v.clock_in_time',
+        'v.clock_out_time',
+      );
+
+    return rows.map((r) => ({
+      assignmentId: r.assignment_id,
+      clientName: `${r.client_first_name ?? ''} ${r.client_last_name ?? ''}`.trim(),
+      caregiverName: `${r.caregiver_first_name ?? ''} ${r.caregiver_last_name ?? ''}`.trim(),
+      scheduledStartTime: r.scheduled_start_time
+        ? new Date(r.scheduled_start_time).toISOString()
+        : null,
+      clockInTime: r.clock_in_time ? new Date(r.clock_in_time).toISOString() : null,
+      clockOutTime: r.clock_out_time ? new Date(r.clock_out_time).toISOString() : null,
+    }));
+  }
+}
+
+/** One row of today's visit board (pre-status-derivation). */
+export interface TodayVisitBoardRow {
+  assignmentId: string;
+  clientName: string;
+  caregiverName: string;
+  scheduledStartTime: string | null;
+  clockInTime: string | null;
+  clockOutTime: string | null;
+}
+
+/** Agency-wide "today" operational counts for the command center. */
+export interface TodaysVisitOps {
+  /** Assignments scheduled for today (UTC). */
+  scheduledToday: number;
+  /** Today's visits already clocked out. */
+  completed: number;
+  /** Today's visits clocked in but not yet clocked out. */
+  inProgress: number;
+  /** Scheduled start passed (>15m grace) with no clock-in — needs action now. */
+  lateStart: number;
+  /** Scheduled later today, not started yet. */
+  upcoming: number;
 }
 
 /** Counts powering the Authorization Oversight compliance lens. */
@@ -1043,6 +1262,27 @@ export interface ClaimMatchingCounts {
   flaggedVisitsLast7d: number;
   /** EVV visits with `status='pending'` (in-flight, not yet verified). */
   pendingVisits: number;
+}
+
+/** Why a visit can't be billed yet. */
+export type ClaimBlockerReason = 'open' | 'flagged' | 'pending';
+
+/** One non-billable visit with the reason it's blocked. */
+export interface ClaimBlocker {
+  visitId: string;
+  reason: ClaimBlockerReason;
+  clientName: string;
+  caregiverName: string;
+  clockInTime: string | null;
+  clockOutTime: string | null;
+}
+
+/** Actionable claim-readiness blockers: the visits standing between you and a clean claim run. */
+export interface ClaimReadinessBlockers {
+  counts: { open: number; flagged: number; pending: number; total: number };
+  /** True when more blockers exist than were returned (refine / paginate). */
+  truncated: boolean;
+  blockers: ClaimBlocker[];
 }
 
 /** Counts powering the Payroll Reconciliation snapshot. */

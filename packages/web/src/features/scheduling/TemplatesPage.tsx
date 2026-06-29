@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { getJson, postJson, putJson, deleteJson, ApiError } from '../../lib/api-client.js';
 import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
 interface Template {
@@ -40,6 +40,9 @@ export function TemplatesPage() {
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<'success' | 'error'>('success');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   const loadTemplates = useCallback(() => {
     setLoading(true);
@@ -90,6 +93,43 @@ export function TemplatesPage() {
     setSelectedTasks(newSelected);
   };
 
+  const resetForm = () => {
+    setClientId('');
+    setName('');
+    setSelectedTasks(new Set());
+  };
+
+  const startEdit = (t: Template) => {
+    setEditingId(t.id);
+    setMessage('');
+    setConfirmDeleteId(null);
+    setClientId(t.clientId);
+    setName(t.name);
+    setSelectedTasks(new Set(t.tasks.map(taskLabel)));
+    document.getElementById('name')?.focus();
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    resetForm();
+    setMessage('');
+  };
+
+  const handleDelete = async (t: Template) => {
+    setRowError(null);
+    try {
+      await deleteJson(`/api/templates/${t.id}`);
+      setTemplates(prev => prev.filter(x => x.id !== t.id));
+      setConfirmDeleteId(null);
+      setExpandedId(null);
+      if (editingId === t.id) cancelEdit();
+      setMessage(`Template "${t.name}" removed.`);
+      setMessageKind('success');
+    } catch (err) {
+      setRowError(err instanceof ApiError ? err.message : (err as Error).message || 'Failed to delete template.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -97,17 +137,26 @@ export function TemplatesPage() {
       const tasks = Array.from(selectedTasks);
       if (tasks.length === 0) {
         setMessage('Please select at least one task');
+        setMessageKind('error');
         return;
       }
-      const newTemplate = await postJson<Template>('/api/templates', { clientId, name, tasks });
-      setTemplates(prev => [...prev, newTemplate]);
-      setClientId('');
-      setName('');
-      setSelectedTasks(new Set());
-      setMessage('Template created successfully.');
-      setMessageKind('success');
+      if (editingId) {
+        // clientId is fixed on an existing template; only name + tasks change.
+        const updated = await putJson<Template>(`/api/templates/${editingId}`, { name, tasks });
+        setTemplates(prev => prev.map(t => (t.id === editingId ? updated : t)));
+        setEditingId(null);
+        resetForm();
+        setMessage('Template updated successfully.');
+        setMessageKind('success');
+      } else {
+        const newTemplate = await postJson<Template>('/api/templates', { clientId, name, tasks });
+        setTemplates(prev => [...prev, newTemplate]);
+        resetForm();
+        setMessage('Template created successfully.');
+        setMessageKind('success');
+      }
     } catch (err) {
-      setMessage((err as Error).message || 'Failed to create template.');
+      setMessage((err as Error).message || 'Failed to save template.');
       setMessageKind('error');
     }
   };
@@ -129,7 +178,7 @@ export function TemplatesPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
         <div className="form-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>New template</h3>
+            <h3 className="section-title" style={{ margin: 0 }}>{editingId ? 'Edit template' : 'New template'}</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
               <button
                 type="button"
@@ -144,12 +193,15 @@ export function TemplatesPage() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label htmlFor="clientId" className="label">Client</label>
-              <select id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required className="select-field">
+              <select id="clientId" value={clientId} onChange={e => setClientId(e.target.value)} required disabled={!!editingId} className="select-field">
                 <option value="">Select a client…</option>
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
                 ))}
               </select>
+              {editingId && (
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Client can&apos;t be changed on an existing template.</span>
+              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -210,9 +262,14 @@ export function TemplatesPage() {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
-              Create Template
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.25rem' }}>
+              <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start' }}>
+                {editingId ? 'Save changes' : 'Create Template'}
+              </button>
+              {editingId && (
+                <button type="button" onClick={cancelEdit} className="btn-ghost btn-sm">Cancel</button>
+              )}
+            </div>
           </form>
           {message && (
             <div
@@ -320,6 +377,22 @@ export function TemplatesPage() {
                         <div>{t.name}</div>
                         <div style={{ fontWeight: 600 }}>Tasks ({t.tasks.length})</div>
                         <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: '#94A3B8' }}>none</em>}</div>
+
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+                          <button type="button" className="btn-ghost btn-sm" onClick={() => startEdit(t)}>Edit</button>
+                          {confirmDeleteId === t.id ? (
+                            <>
+                              <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this template?</span>
+                              <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(t)}>Confirm delete</button>
+                              <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>Cancel</button>
+                            </>
+                          ) : (
+                            <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(t.id); setRowError(null); }}>Delete</button>
+                          )}
+                        </div>
+                        {rowError && confirmDeleteId === t.id && (
+                          <div role="alert" style={{ gridColumn: '1 / -1', fontSize: '0.8125rem', color: '#BE123C' }}>{rowError}</div>
+                        )}
                       </div>
                     )}
                   </div>

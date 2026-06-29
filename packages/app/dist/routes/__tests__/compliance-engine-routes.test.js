@@ -668,4 +668,39 @@ describe('Compliance Engine — exceptions overview', () => {
         expect(getExceptionResolution).not.toHaveBeenCalled();
     });
 });
+describe('Compliance Engine — claim readiness blockers', () => {
+    function spyRepo(impl) {
+        vi.spyOn(core, 'ComplianceEngineRepository').mockImplementation(function ComplianceEngineRepositoryMock() {
+            return impl();
+        });
+    }
+    it('returns the actionable blocker list + counts for an admin', async () => {
+        const getClaimReadinessBlockers = vi.fn().mockResolvedValue({
+            counts: { open: 1, flagged: 1, pending: 0, total: 2 },
+            truncated: false,
+            blockers: [
+                { visitId: 'v1', reason: 'open', clientName: 'Client A', caregiverName: 'Care One', clockInTime: '2026-06-28T09:00:00Z', clockOutTime: null },
+                { visitId: 'v2', reason: 'flagged', clientName: 'Client B', caregiverName: 'Care Two', clockInTime: '2026-06-20T09:00:00Z', clockOutTime: '2026-06-20T13:00:00Z' },
+            ],
+        });
+        spyRepo(() => ({ getClaimReadinessBlockers }));
+        const response = await request(createApp())
+            .get('/api/compliance-engine/claims/blockers')
+            .set('Authorization', `Bearer ${makeToken('admin', agencyId, userId)}`);
+        expect(response.status).toBe(200);
+        expect(response.body.counts).toEqual({ open: 1, flagged: 1, pending: 0, total: 2 });
+        expect(response.body.blockers).toHaveLength(2);
+        expect(response.body.blockers[0].reason).toBe('open');
+        expect(getClaimReadinessBlockers).toHaveBeenCalledWith(agencyId);
+    });
+    it('rejects a caregiver token (lacks billing.read)', async () => {
+        const getClaimReadinessBlockers = vi.fn();
+        spyRepo(() => ({ getClaimReadinessBlockers }));
+        const response = await request(createApp())
+            .get('/api/compliance-engine/claims/blockers')
+            .set('Authorization', `Bearer ${makeToken('caregiver', agencyId, userId, 'caregiver-1')}`);
+        expect(response.status).toBe(403);
+        expect(getClaimReadinessBlockers).not.toHaveBeenCalled();
+    });
+});
 //# sourceMappingURL=compliance-engine-routes.test.js.map

@@ -1,5 +1,5 @@
 import type React from 'react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { NavLink, Link, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/AuthContext.js';
 
@@ -40,6 +40,7 @@ const LaunchPage = lazy(() => import('./features/marketing/site/LaunchPage.js').
 const AdsPage = lazy(() => import('./features/marketing/site/AdsPage.js').then((m) => ({ default: m.AdsPage })));
 const StatusPage = lazy(() => import('./features/marketing/site/StatusPage.js').then((m) => ({ default: m.StatusPage })));
 const PrivacyPage = lazy(() => import('./features/marketing/site/PrivacyPage.js').then((m) => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./features/marketing/site/TermsPage.js').then((m) => ({ default: m.TermsPage })));
 const SchedulingPage = lazy(() => import('./features/marketing/site/SchedulingPage.js').then((m) => ({ default: m.SchedulingPage })));
 const EvvSolutionPage = lazy(() => import('./features/marketing/site/EvvSolutionPage.js').then((m) => ({ default: m.EvvSolutionPage })));
 const BillingPayrollPage = lazy(() => import('./features/marketing/site/BillingPayrollPage.js').then((m) => ({ default: m.BillingPayrollPage })));
@@ -52,9 +53,13 @@ const AuditChecklistPage = lazy(() => import('./features/marketing/site/AuditChe
 const HipaaCompliancePage = lazy(() => import('./features/marketing/site/HipaaCompliancePage.js').then((m) => ({ default: m.HipaaCompliancePage })));
 const AuditRetentionPage = lazy(() => import('./features/audit/AuditRetentionPage.js').then((m) => ({ default: m.AuditRetentionPage })));
 const DashboardPage = lazy(() => import('./features/admin/DashboardPage.js').then((m) => ({ default: m.DashboardPage })));
+const CommandCenterPage = lazy(() => import('./features/admin/CommandCenterPage.js').then((m) => ({ default: m.CommandCenterPage })));
+const TodayBoardPage = lazy(() => import('./features/admin/TodayBoardPage.js').then((m) => ({ default: m.TodayBoardPage })));
 const AuditEventsPage = lazy(() => import('./features/audit/AuditEventsPage.js').then((m) => ({ default: m.AuditEventsPage })));
 const LearningHubPage = lazy(() => import('./features/learning/LearningHubPage.js').then((m) => ({ default: m.LearningHubPage })));
 const LearningPortalPage = lazy(() => import('./features/learning/LearningPortalPage.js').then((m) => ({ default: m.LearningPortalPage })));
+const CourseEditorPage = lazy(() => import('./features/learning/CourseEditorPage.js').then((m) => ({ default: m.CourseEditorPage })));
+const CertificatePage = lazy(() => import('./features/learning/CertificatePage.js').then((m) => ({ default: m.CertificatePage })));
 const ApplyPage = lazy(() => import('./features/onboarding/ApplyPage.js').then((m) => ({ default: m.ApplyPage })));
 const InterviewPage = lazy(() => import('./features/onboarding/InterviewPage.js').then((m) => ({ default: m.InterviewPage })));
 const OnboardingHubPage = lazy(() => import('./features/onboarding/OnboardingHubPage.js').then((m) => ({ default: m.OnboardingHubPage })));
@@ -261,7 +266,11 @@ interface NavGroupDef extends NavGroup {
 const navGroupDefs: NavGroupDef[] = [
   {
     label: 'Overview',
-    items: [{ to: '/admin', label: 'Dashboard', end: true, icon: icons.dashboard }],
+    items: [
+      { to: '/admin', label: 'Command Center', end: true, icon: icons.dashboard },
+      { to: '/admin/today', label: "Today's Visits", icon: icons.visit },
+      { to: '/admin/overview', label: 'Dashboard', end: true, icon: icons.dashboard },
+    ],
   },
   {
     label: 'Agency',
@@ -340,6 +349,8 @@ const navGroupDefs: NavGroupDef[] = [
 
 function AdminLayout() {
   const { logout, user } = useAuth();
+  const [navOpen, setNavOpen] = useState(false);
+  const closeNav = () => setNavOpen(false);
 
   const roleLabel = user?.role ?? 'signed in';
   const brandName = user?.agencyTheme?.logoText ?? 'RayHealth';
@@ -352,8 +363,32 @@ function AdminLayout() {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar" aria-label="Primary">
-        <Link to="/admin" className="admin-sidebar__brand">
+      {/* Mobile-only top bar; the sidebar is an off-canvas drawer below 900px. */}
+      <div className="admin-mobilebar">
+        <button
+          type="button"
+          className="admin-hamburger"
+          aria-label="Open navigation menu"
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <Link to="/admin" className="admin-sidebar__brand" style={{ margin: 0 }} onClick={closeNav}>
+          <span className="admin-sidebar__brand-mark">R</span>
+          {brandName}
+          <span className="admin-sidebar__evv-badge">EVV</span>
+        </Link>
+      </div>
+
+      {navOpen && <div className="admin-scrim" onClick={closeNav} aria-hidden />}
+
+      <aside className={`admin-sidebar${navOpen ? ' is-open' : ''}`} aria-label="Primary">
+        <Link to="/admin" className="admin-sidebar__brand" onClick={closeNav}>
           <span className="admin-sidebar__brand-mark">R</span>
           {brandName}
           <span className="admin-sidebar__evv-badge">EVV</span>
@@ -368,6 +403,7 @@ function AdminLayout() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  onClick={closeNav}
                   className={({ isActive }) =>
                     `admin-sidebar__nav-link${isActive ? ' active' : ''}`
                   }
@@ -455,6 +491,7 @@ export function App() {
       <Route path="/ads" element={<AdsPage />} />
       <Route path="/status" element={<StatusPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       {/* Marketing site — Platform / Solutions / Resources content pages */}
       <Route path="/platform/ai-automation" element={<AiAutomationPage />} />
       <Route path="/platform/compliance" element={<CompliancePlatformPage />} />
@@ -485,6 +522,7 @@ export function App() {
           <Route path="learning" element={<CaregiverLearningHubPage />} />
           <Route path="training" element={<CaregiverTrainingPage />} />
           <Route path="training/:courseId" element={<CourseDetailPage />} />
+          <Route path="training/:courseId/certificate" element={<CertificatePage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -504,6 +542,8 @@ export function App() {
           <Route path="audit-events" element={<AuditEventsPage />} />
           <Route path="audit-retention" element={<AuditRetentionPage />} />
           <Route path="learning" element={<LearningHubPage />} />
+          <Route path="learning/courses/new" element={<CourseEditorPage />} />
+          <Route path="learning/courses/:id/edit" element={<CourseEditorPage />} />
           <Route path="learning/portal" element={<LearningPortalPage />} />
           <Route path="onboarding" element={<OnboardingHubPage />} />
           <Route path="onboarding/:id" element={<ApplicantDetailPage />} />
@@ -517,7 +557,9 @@ export function App() {
           <Route path="compliance-engine/claims" element={<ClaimMatchingPage />} />
           <Route path="compliance-engine/remittances" element={<RemittancePage />} />
           <Route path="compliance-engine/credentials" element={<CredentialsPage />} />
-          <Route index element={<DashboardPage />} />
+          <Route index element={<CommandCenterPage />} />
+          <Route path="today" element={<TodayBoardPage />} />
+          <Route path="overview" element={<DashboardPage />} />
         </Route>
       </Route>
       

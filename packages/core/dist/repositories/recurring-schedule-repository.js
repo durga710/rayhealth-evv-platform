@@ -126,6 +126,63 @@ export class RecurringScheduleRepository {
         }
         return { scheduleId, created, skipped };
     }
+    /**
+     * Read-only coverage forecast: a dry-run of materialization. For every ACTIVE
+     * recurring schedule, expand its occurrences in [windowStart, windowEnd] and
+     * return the ones that have NO assignment yet (same caregiver + template) —
+     * i.e. upcoming visits that exist on paper but were never generated, so they'd
+     * silently not happen. Same dedup logic as `materialize`, but inserts nothing.
+     * Ordered by date so the soonest gap surfaces first.
+     */
+    async forecastCoverage(agencyId, windowStart, windowEnd) {
+        const scheds = (await this.db('recurring_schedules as rs')
+            .join('visit_templates as vt', 'vt.id', 'rs.visit_template_id')
+            .join('clients as c', 'c.id', 'vt.client_id')
+            .leftJoin('caregivers as cg', 'cg.id', 'rs.caregiver_id')
+            .where('rs.agency_id', agencyId)
+            .andWhere('rs.status', 'active')
+            .select('rs.id', 'rs.caregiver_id', 'rs.visit_template_id', 'rs.days_of_week', 'rs.start_time', 'rs.end_time', 'rs.start_date', 'rs.end_date', 'vt.name as template_name', 'c.first_name as client_first', 'c.last_name as client_last', 'cg.first_name as cg_first', 'cg.last_name as cg_last'));
+        const gaps = [];
+        for (const s of scheds) {
+            const daysOfWeek = typeof s.days_of_week === 'string'
+                ? JSON.parse(s.days_of_week)
+                : (s.days_of_week ?? []);
+            const occurrences = expandRecurrence({
+                daysOfWeek,
+                startTime: s.start_time,
+                endTime: s.end_time,
+                startDate: toYmd(s.start_date),
+                endDate: toYmd(s.end_date),
+            }, windowStart, windowEnd);
+            if (occurrences.length === 0)
+                continue;
+            const existingRows = (await this.db('assignments')
+                .where('caregiver_id', s.caregiver_id)
+                .andWhere('visit_template_id', s.visit_template_id)
+                .whereNotNull('scheduled_start_time')
+                .andWhere('scheduled_start_time', '>=', `${windowStart}T00:00:00.000Z`)
+                .andWhere('scheduled_start_time', '<=', `${windowEnd}T23:59:59.999Z`)
+                .select('scheduled_start_time'));
+            const existingDates = new Set(existingRows.map((r) => new Date(r.scheduled_start_time).toISOString().slice(0, 10)));
+            const caregiverName = s.cg_first || s.cg_last ? `${s.cg_first ?? ''} ${s.cg_last ?? ''}`.trim() : null;
+            const clientName = `${s.client_first ?? ''} ${s.client_last ?? ''}`.trim();
+            for (const o of occurrences) {
+                if (existingDates.has(o.date))
+                    continue;
+                gaps.push({
+                    scheduleId: s.id,
+                    caregiverName,
+                    clientName,
+                    templateName: s.template_name,
+                    date: o.date,
+                    startTime: o.startTime,
+                    endTime: o.endTime,
+                });
+            }
+        }
+        gaps.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+        return { windowStart, windowEnd, totalGaps: gaps.length, gaps };
+    }
     /** Materialize every active schedule in the agency. */
     async materializeAllActive(agencyId, windowStart, windowEnd) {
         const ids = (await this.db('recurring_schedules')

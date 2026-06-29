@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { haversineM, formatDistance } from '../../lib/geofence';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,25 +35,6 @@ function formatElapsed(seconds: number): string {
   if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
   if (m > 0) return `${m}m ${s.toString().padStart(2, '0')}s`;
   return `${s}s`;
-}
-
-function haversineM(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number }
-): number {
-  const R = 6_371_000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
-function formatDistance(m: number): string {
-  if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
-  return `${Math.round(m)} m`;
 }
 
 // ─── Geo-ring ─────────────────────────────────────────────────────────────────
@@ -153,12 +135,19 @@ export default function ClockInScreen() {
     clientLat?: string;
     clientLng?: string;
     clientGeofenceM?: string;
+    openVisitId?: string;
+    clockInTime?: string;
   }>();
 
   const assignmentId = firstParam(params.assignmentId);
   const clientName = firstParam(params.clientName);
   const scheduledTime = firstParam(params.scheduledTime);
   const serviceCode = firstParam(params.serviceCode);
+  // Open visit handed in by the dashboard so this screen can RESUME an
+  // in-progress visit (show the running timer + Clock Out) instead of offering
+  // a second clock-in that would duplicate the visit or error server-side.
+  const openVisitId = firstParam(params.openVisitId);
+  const openClockInTime = firstParam(params.clockInTime);
   const clientLat = params.clientLat ? parseFloat(firstParam(params.clientLat) ?? '') : null;
   const clientLng = params.clientLng ? parseFloat(firstParam(params.clientLng) ?? '') : null;
   const clientGeofenceM = params.clientGeofenceM
@@ -174,7 +163,11 @@ export default function ClockInScreen() {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [visit, setVisit] = useState<{ id: string; clockInTime: string } | null>(null);
+  // Seed from the resumable open visit so reopening mid-shift lands on the live
+  // timer + Clock Out, not a fresh Clock In.
+  const [visit, setVisit] = useState<{ id: string; clockInTime: string } | null>(
+    openVisitId && openClockInTime ? { id: openVisitId, clockInTime: openClockInTime } : null,
+  );
   const [elapsed, setElapsed] = useState(0);
   const [geofenceError, setGeofenceError] = useState<{
     message: string; distanceM: number; allowedM: number;

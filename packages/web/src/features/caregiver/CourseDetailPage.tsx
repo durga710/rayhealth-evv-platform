@@ -612,6 +612,21 @@ export function CourseDetailPage() {
             </>
           )}
         </div>
+        {isCompleted && (
+          <button
+            type="button"
+            onClick={() => navigate(`/portal/training/${course.id}/certificate`)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.6rem 1.4rem', fontWeight: 700, fontSize: '0.9375rem',
+              color: '#15803D', background: '#fff', border: '1px solid #BBF7D0',
+              borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            View Certificate
+          </button>
+        )}
         {!isCompleted && canMarkComplete && !quizPassed && (
           <button
             type="button"

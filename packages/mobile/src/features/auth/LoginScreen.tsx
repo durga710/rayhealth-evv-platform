@@ -62,7 +62,7 @@ export default function LoginScreen() {
                 <Text style={styles.logoText}>R</Text>
               </LinearGradient>
             </View>
-            <Text style={styles.appName}>RayHealth EVV</Text>
+            <Text style={styles.appName}>RayHealthEVV™</Text>
             <Text style={styles.tagline}>Electronic Visit Verification</Text>
           </View>
 

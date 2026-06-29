@@ -17,7 +17,17 @@ export class ClientRepository {
       date_of_birth: client.dateOfBirth,
       // Encrypt PHI Medicaid ID at write. Output is `v1:<base64>` ciphertext;
       // mapRowToClient decrypts on the way out.
-      medicaid_number: encryptCell(client.medicaidNumber)
+      medicaid_number: encryptCell(client.medicaidNumber),
+      // Service address + EVV geofence anchor. Undefined fields are dropped by
+      // knex so the DB defaults (e.g. geofence_radius_m = 150) still apply.
+      address_line_1: client.addressLine1,
+      address_line_2: client.addressLine2,
+      city: client.city,
+      state: client.state,
+      postal_code: client.postalCode,
+      latitude: client.latitude,
+      longitude: client.longitude,
+      geofence_radius_m: client.geofenceRadiusM
     }).returning('*');
 
     return this.mapRowToClient(inserted);
@@ -199,7 +209,105 @@ export class ClientRepository {
     return rows.map(row => this.mapRowToAuthorization(row));
   }
 
+  /**
+   * Tenant-scoped partial update of a client. Only provided fields are written
+   * (address + geofence anchor included), so an edit that omits the Medicaid
+   * number leaves it untouched. Returns the updated client, or null when the id
+   * does not exist in this agency.
+   */
+  async updateClient(
+    clientId: string,
+    agencyId: string,
+    patch: Partial<Client>
+  ): Promise<Client | null> {
+    const cols: Record<string, unknown> = {};
+    if (patch.firstName !== undefined) cols.first_name = patch.firstName;
+    if (patch.lastName !== undefined) cols.last_name = patch.lastName;
+    if (patch.dateOfBirth !== undefined) cols.date_of_birth = patch.dateOfBirth;
+    if (patch.medicaidNumber !== undefined) cols.medicaid_number = encryptCell(patch.medicaidNumber);
+    if (patch.addressLine1 !== undefined) cols.address_line_1 = patch.addressLine1;
+    if (patch.addressLine2 !== undefined) cols.address_line_2 = patch.addressLine2;
+    if (patch.city !== undefined) cols.city = patch.city;
+    if (patch.state !== undefined) cols.state = patch.state;
+    if (patch.postalCode !== undefined) cols.postal_code = patch.postalCode;
+    if (patch.latitude !== undefined) cols.latitude = patch.latitude;
+    if (patch.longitude !== undefined) cols.longitude = patch.longitude;
+    if (patch.geofenceRadiusM !== undefined) cols.geofence_radius_m = patch.geofenceRadiusM;
+
+    if (Object.keys(cols).length > 0) {
+      cols.updated_at = this.db.fn.now();
+      await this.db('clients').where({ id: clientId, agency_id: agencyId }).update(cols);
+    }
+    const row = await this.db('clients').where({ id: clientId, agency_id: agencyId }).first();
+    return row ? this.mapRowToClient(row) : null;
+  }
+
+  /**
+   * Delete a client, tenant-scoped. Refuses ('has_dependencies') when
+   * authorizations or visit templates still reference the client, since those
+   * carry billing / scheduling history a hard delete would orphan — the owner
+   * must remove dependents first. 'not_found' for an unknown or cross-tenant id.
+   */
+  async deleteClient(
+    clientId: string,
+    agencyId: string
+  ): Promise<'deleted' | 'not_found' | 'has_dependencies'> {
+    const row = await this.db('clients').where({ id: clientId, agency_id: agencyId }).first('id');
+    if (!row) return 'not_found';
+    const [auth, tmpl] = await Promise.all([
+      this.db('authorizations').where({ client_id: clientId }).first('id'),
+      this.db('visit_templates').where({ client_id: clientId }).first('id')
+    ]);
+    if (auth || tmpl) return 'has_dependencies';
+    await this.db('clients').where({ id: clientId }).del();
+    return 'deleted';
+  }
+
+  /**
+   * Tenant-scoped (via client join) authorization update. clientId is not
+   * reassignable. Returns null when unknown or cross-tenant.
+   */
+  async updateAuthorization(
+    authId: string,
+    agencyId: string,
+    patch: Partial<Authorization>
+  ): Promise<Authorization | null> {
+    const owned = await this.db('authorizations')
+      .join('clients', 'authorizations.client_id', 'clients.id')
+      .where('authorizations.id', authId)
+      .andWhere('clients.agency_id', agencyId)
+      .first('authorizations.id');
+    if (!owned) return null;
+
+    const cols: Record<string, unknown> = {};
+    if (patch.payerId !== undefined) cols.payer_id = patch.payerId;
+    if (patch.unitsAuthorized !== undefined) cols.units_authorized = patch.unitsAuthorized;
+    if (patch.serviceCode !== undefined) cols.service_code = patch.serviceCode;
+    if (patch.startDate !== undefined) cols.start_date = patch.startDate;
+    if (patch.endDate !== undefined) cols.end_date = patch.endDate;
+    if (Object.keys(cols).length > 0) {
+      cols.updated_at = this.db.fn.now();
+      await this.db('authorizations').where({ id: authId }).update(cols);
+    }
+    const row = await this.db('authorizations').where({ id: authId }).first();
+    return row ? this.mapRowToAuthorization(row) : null;
+  }
+
+  /** Tenant-scoped authorization delete. false when not found / cross-tenant. */
+  async deleteAuthorization(authId: string, agencyId: string): Promise<boolean> {
+    const owned = await this.db('authorizations')
+      .join('clients', 'authorizations.client_id', 'clients.id')
+      .where('authorizations.id', authId)
+      .andWhere('clients.agency_id', agencyId)
+      .first('authorizations.id');
+    if (!owned) return false;
+    await this.db('authorizations').where({ id: authId }).del();
+    return true;
+  }
+
   private mapRowToClient(row: any): Client {
+    const num = (v: unknown): number | undefined =>
+      v === null || v === undefined ? undefined : Number(v);
     return {
       id: row.id,
       firstName: row.first_name,
@@ -207,7 +315,17 @@ export class ClientRepository {
       dateOfBirth: row.date_of_birth instanceof Date ? row.date_of_birth.toISOString().split('T')[0] : row.date_of_birth,
       // Decrypt at read. Legacy plaintext values round-trip; v1: ciphertext
       // returns the original Medicaid ID. Throws if ENCRYPTION_KEY is missing.
-      medicaidNumber: decryptCell(row.medicaid_number) ?? undefined
+      medicaidNumber: decryptCell(row.medicaid_number) ?? undefined,
+      // Address + geofence anchor. pg returns decimal columns as strings, so
+      // coerce lat/long/radius back to numbers for the typed Client.
+      addressLine1: row.address_line_1 ?? undefined,
+      addressLine2: row.address_line_2 ?? undefined,
+      city: row.city ?? undefined,
+      state: row.state ?? undefined,
+      postalCode: row.postal_code ?? undefined,
+      latitude: num(row.latitude),
+      longitude: num(row.longitude),
+      geofenceRadiusM: num(row.geofence_radius_m)
     };
   }
 

@@ -55,7 +55,6 @@ const C = {
   line2: '#e1e3e8',
   sidebar: '#16181d',
   sidebarPanel: '#1d2026',
-  sideInk: '#9 aa', // placeholder overwritten below
   accent: '#0b7a52',
   accentInk: '#0b7a52',
   accentSoft: '#e8f3ee',

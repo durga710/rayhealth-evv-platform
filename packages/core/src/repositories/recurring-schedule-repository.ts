@@ -24,6 +24,24 @@ export interface MaterializeResult {
   skipped: number;
 }
 
+/** One upcoming recurring occurrence that has no assignment generated yet. */
+export interface CoverageGap {
+  scheduleId: string;
+  caregiverName: string | null;
+  clientName: string;
+  templateName: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+}
+
+export interface CoverageForecast {
+  windowStart: string;
+  windowEnd: string;
+  totalGaps: number;
+  gaps: CoverageGap[];
+}
+
 function toYmd(v: unknown): string {
   if (v instanceof Date) return v.toISOString().slice(0, 10);
   return String(v).slice(0, 10);
@@ -175,6 +193,95 @@ export class RecurringScheduleRepository {
       created += 1;
     }
     return { scheduleId, created, skipped };
+  }
+
+  /**
+   * Read-only coverage forecast: a dry-run of materialization. For every ACTIVE
+   * recurring schedule, expand its occurrences in [windowStart, windowEnd] and
+   * return the ones that have NO assignment yet (same caregiver + template) —
+   * i.e. upcoming visits that exist on paper but were never generated, so they'd
+   * silently not happen. Same dedup logic as `materialize`, but inserts nothing.
+   * Ordered by date so the soonest gap surfaces first.
+   */
+  async forecastCoverage(
+    agencyId: string,
+    windowStart: string,
+    windowEnd: string,
+  ): Promise<CoverageForecast> {
+    const scheds = (await this.db('recurring_schedules as rs')
+      .join('visit_templates as vt', 'vt.id', 'rs.visit_template_id')
+      .join('clients as c', 'c.id', 'vt.client_id')
+      .leftJoin('caregivers as cg', 'cg.id', 'rs.caregiver_id')
+      .where('rs.agency_id', agencyId)
+      .andWhere('rs.status', 'active')
+      .select(
+        'rs.id',
+        'rs.caregiver_id',
+        'rs.visit_template_id',
+        'rs.days_of_week',
+        'rs.start_time',
+        'rs.end_time',
+        'rs.start_date',
+        'rs.end_date',
+        'vt.name as template_name',
+        'c.first_name as client_first',
+        'c.last_name as client_last',
+        'cg.first_name as cg_first',
+        'cg.last_name as cg_last',
+      )) as Array<Record<string, unknown>>;
+
+    const gaps: CoverageGap[] = [];
+
+    for (const s of scheds) {
+      const daysOfWeek =
+        typeof s.days_of_week === 'string'
+          ? (JSON.parse(s.days_of_week) as number[])
+          : ((s.days_of_week as number[]) ?? []);
+
+      const occurrences = expandRecurrence(
+        {
+          daysOfWeek,
+          startTime: s.start_time as string,
+          endTime: s.end_time as string,
+          startDate: toYmd(s.start_date),
+          endDate: toYmd(s.end_date),
+        },
+        windowStart,
+        windowEnd,
+      );
+      if (occurrences.length === 0) continue;
+
+      const existingRows = (await this.db('assignments')
+        .where('caregiver_id', s.caregiver_id as string)
+        .andWhere('visit_template_id', s.visit_template_id as string)
+        .whereNotNull('scheduled_start_time')
+        .andWhere('scheduled_start_time', '>=', `${windowStart}T00:00:00.000Z`)
+        .andWhere('scheduled_start_time', '<=', `${windowEnd}T23:59:59.999Z`)
+        .select('scheduled_start_time')) as Array<{ scheduled_start_time: string | Date }>;
+      const existingDates = new Set(
+        existingRows.map((r) => new Date(r.scheduled_start_time).toISOString().slice(0, 10)),
+      );
+
+      const caregiverName =
+        s.cg_first || s.cg_last ? `${s.cg_first ?? ''} ${s.cg_last ?? ''}`.trim() : null;
+      const clientName = `${s.client_first ?? ''} ${s.client_last ?? ''}`.trim();
+
+      for (const o of occurrences) {
+        if (existingDates.has(o.date)) continue;
+        gaps.push({
+          scheduleId: s.id as string,
+          caregiverName,
+          clientName,
+          templateName: s.template_name as string,
+          date: o.date,
+          startTime: o.startTime,
+          endTime: o.endTime,
+        });
+      }
+    }
+
+    gaps.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+    return { windowStart, windowEnd, totalGaps: gaps.length, gaps };
   }
 
   /** Materialize every active schedule in the agency. */

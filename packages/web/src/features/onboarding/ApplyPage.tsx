@@ -17,6 +17,7 @@ export function ApplyPage() {
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('Direct Support Associate');
   const [coverMessage, setCoverMessage] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,10 @@ export function ApplyPage() {
     e.preventDefault();
     if (!agencyId) {
       setError('Invalid application link.');
+      return;
+    }
+    if (!agreed) {
+      setError('You must accept the Terms of Service to apply.');
       return;
     }
     setError('');
@@ -40,6 +45,7 @@ export function ApplyPage() {
           phone: phone.trim() || undefined,
           position: position.trim(),
           coverMessage: coverMessage.trim() || undefined,
+          acceptedTerms: true,
         }),
       });
 
@@ -210,7 +216,7 @@ export function ApplyPage() {
             letterSpacing: '0.04em',
           }}
         >
-          Pennsylvania &middot; Direct care employment &middot; Powered by RayHealth EVV
+          Pennsylvania &middot; Direct care employment &middot; Powered by RayHealthEVV™
         </div>
       </aside>
 
@@ -399,6 +405,25 @@ export function ApplyPage() {
                 }}
               />
             </div>
+
+            <label
+              htmlFor="agreeTerms"
+              style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5, cursor: 'pointer' }}
+            >
+              <input
+                id="agreeTerms"
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                style={{ marginTop: '2px', width: 16, height: 16, accentColor: '#107480', flexShrink: 0 }}
+              />
+              <span>
+                I confirm my information is accurate and I agree to the{' '}
+                <Link to="/terms" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>.
+              </span>
+            </label>
 
             <button
               type="submit"

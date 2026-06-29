@@ -254,7 +254,7 @@ export function HipaaCompliancePage() {
           <span className="mk-eyebrow">Compliance</span>
           <h1 className="mk-h1">HIPAA-compliant by design.</h1>
           <p className="mk-lead">
-            RayHealth EVV is engineered to meet the HIPAA Security Rule
+            RayHealthEVV™ is engineered to meet the HIPAA Security Rule
             (45 CFR § 164.308 – § 164.318) and the Privacy Rule controls
             that apply to a Business Associate handling ePHI for
             Pennsylvania home-care agencies.
@@ -303,9 +303,9 @@ export function HipaaCompliancePage() {
                     What's in scope
                   </h3>
                   <ul className="mk-checks" style={{ margin: 0 }}>
-                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>RayHealth EVV web admin application</li>
-                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>RayHealth EVV caregiver mobile application</li>
-                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>Public RayHealth EVV API and admin API</li>
+                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>RayHealthEVV™ web admin application</li>
+                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>RayHealthEVV™ caregiver mobile application</li>
+                    <li><span className="mk-ck">{mkic(MK_CHECK)}</span>Public RayHealthEVV™ API and admin API</li>
                     <li><span className="mk-ck">{mkic(MK_CHECK)}</span>Audit pipeline and `audit_events` data of record</li>
                   </ul>
                 </div>
@@ -330,7 +330,7 @@ export function HipaaCompliancePage() {
               </h2>
               <p className="mk-deck" style={{ marginTop: 12 }}>
                 Each row maps a HIPAA safeguard to the concrete control that
-                implements it inside RayHealth EVV. CFR section is cited under
+                implements it inside RayHealthEVV™. CFR section is cited under
                 each safeguard heading.
               </p>
 
@@ -362,7 +362,7 @@ export function HipaaCompliancePage() {
             <section aria-labelledby="baa-heading" className="mk-card">
               <h2 id="baa-heading" style={cardHeading}>Business Associate Agreement</h2>
               <p style={{ ...bodyText, margin: '0.75rem 0 1rem' }}>
-                RayHealth EVV signs a BAA with every customer agency before
+                RayHealthEVV™ signs a BAA with every customer agency before
                 any production ePHI is processed. The current template covers
                 the required HIPAA § 164.504(e) provisions: permitted uses,
                 safeguards, subcontractor flow-down, breach notification

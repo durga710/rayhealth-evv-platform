@@ -34,6 +34,35 @@ describe('recurring schedule routes', () => {
     expect(list).toHaveBeenCalled();
   });
 
+  it('returns the coverage forecast (ungenerated upcoming visits)', async () => {
+    const forecastCoverage = vi.fn().mockResolvedValue({
+      windowStart: '2026-06-28',
+      windowEnd: '2026-07-12',
+      totalGaps: 2,
+      gaps: [
+        { scheduleId: 'rs-1', caregiverName: 'Care One', clientName: 'Client A', templateName: 'Morning', date: '2026-06-29', startTime: '09:00', endTime: '13:00' },
+        { scheduleId: 'rs-1', caregiverName: 'Care One', clientName: 'Client A', templateName: 'Morning', date: '2026-06-30', startTime: '09:00', endTime: '13:00' },
+      ],
+    });
+    vi.spyOn(core, 'RecurringScheduleRepository').mockImplementation(() => ({ forecastCoverage } as any));
+
+    const res = await request(createApp())
+      .get('/recurring-schedules/forecast?days=14')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.totalGaps).toBe(2);
+    expect(res.body.gaps).toHaveLength(2);
+    expect(forecastCoverage).toHaveBeenCalled();
+  });
+
+  it('forbids caregivers from reading the coverage forecast', async () => {
+    const res = await request(createApp())
+      .get('/recurring-schedules/forecast')
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', 'caregiver-1')}`);
+    expect(res.status).toBe(403);
+  });
+
   it('creates a recurring schedule when caregiver and template are valid', async () => {
     const create = vi.fn().mockResolvedValue({ id: 'rs-99' });
     vi.spyOn(core, 'RecurringScheduleRepository').mockImplementation(() => ({ create } as any));

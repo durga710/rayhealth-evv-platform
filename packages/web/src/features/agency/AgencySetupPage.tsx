@@ -257,7 +257,7 @@ export function AgencySetupPage() {
                 className="input-field"
               />
               <p style={{ margin: 0, fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.5 }}>
-                State is locked to Pennsylvania. RayHealth EVV is purpose-built for PA DHS Personal Assistance Services.
+                State is locked to Pennsylvania. RayHealthEVV™ is purpose-built for PA DHS Personal Assistance Services.
               </p>
             </div>
 
@@ -299,7 +299,7 @@ export function AgencySetupPage() {
             Pennsylvania Only
           </p>
           <p style={{ margin: '0 0 1rem', color: '#94A3B8', fontSize: '0.8125rem', lineHeight: 1.6 }}>
-            RayHealth EVV is purpose-built for Pennsylvania DHS Personal Assistance Services, ensuring full compliance with state and federal requirements.
+            RayHealthEVV™ is purpose-built for Pennsylvania DHS Personal Assistance Services, ensuring full compliance with state and federal requirements.
           </p>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {[

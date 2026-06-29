@@ -48,6 +48,24 @@ router.get('/visits', requireCapability('evv.read'), async (req, res) => {
   }
 });
 
+/**
+ * Lightweight count for dashboard tiles — a SQL COUNT instead of shipping every
+ * (PHI-bearing) visit row to the client just to read its length.
+ */
+router.get('/visits/count', requireCapability('evv.read'), async (req, res) => {
+  try {
+    const db = req.app.get('db');
+    const repo = new EvvRepository(db);
+    const count =
+      req.auth.role === 'caregiver' && req.auth.caregiverId
+        ? (await repo.getVisitsForCaregiver(req.auth.caregiverId)).length
+        : await repo.countVisitsForAgency(req.auth.agencyId);
+    res.json({ count });
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 router.post('/clock-in', requireCapability('evv.write'), async (req, res) => {
   try {
     if (!req.auth.caregiverId) return res.status(403).json({ message: 'User is not authorized as a caregiver' });

@@ -175,7 +175,7 @@ export function AcceptInvitePage() {
           Set up your care account.
         </h1>
         <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
-          You've been invited to join your agency on RayHealth EVV. Create your password to finish setting up your account.
+          You've been invited to join your agency on RayHealthEVV™. Create your password to finish setting up your account.
         </p>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {[

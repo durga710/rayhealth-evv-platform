@@ -74,7 +74,7 @@ export function CaregiverPortalPage() {
           <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
             {role === 'family'
               ? "Your family member's care plan and visit history are available in the RayHealth mobile app."
-              : 'Use the RayHealth EVV mobile app to clock in, document tasks, and clock out.'}
+              : 'Use the RayHealthEVV™ mobile app to clock in, document tasks, and clock out.'}
           </p>
         </div>
 

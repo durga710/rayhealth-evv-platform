@@ -20,6 +20,22 @@ export interface MaterializeResult {
     created: number;
     skipped: number;
 }
+/** One upcoming recurring occurrence that has no assignment generated yet. */
+export interface CoverageGap {
+    scheduleId: string;
+    caregiverName: string | null;
+    clientName: string;
+    templateName: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+}
+export interface CoverageForecast {
+    windowStart: string;
+    windowEnd: string;
+    totalGaps: number;
+    gaps: CoverageGap[];
+}
 export declare class RecurringScheduleRepository {
     private readonly db;
     constructor(db: Knex);
@@ -38,6 +54,15 @@ export declare class RecurringScheduleRepository {
      * isn't in the agency.
      */
     materialize(agencyId: string, scheduleId: string, windowStart: string, windowEnd: string): Promise<MaterializeResult>;
+    /**
+     * Read-only coverage forecast: a dry-run of materialization. For every ACTIVE
+     * recurring schedule, expand its occurrences in [windowStart, windowEnd] and
+     * return the ones that have NO assignment yet (same caregiver + template) —
+     * i.e. upcoming visits that exist on paper but were never generated, so they'd
+     * silently not happen. Same dedup logic as `materialize`, but inserts nothing.
+     * Ordered by date so the soonest gap surfaces first.
+     */
+    forecastCoverage(agencyId: string, windowStart: string, windowEnd: string): Promise<CoverageForecast>;
     /** Materialize every active schedule in the agency. */
     materializeAllActive(agencyId: string, windowStart: string, windowEnd: string): Promise<MaterializeResult[]>;
 }

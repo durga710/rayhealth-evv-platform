@@ -41,7 +41,10 @@ interface RemittanceRow {
   postedAt: string | null;
 }
 
-const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const usdFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+// Guard against null/undefined/NaN cents so a malformed row renders $0.00
+// instead of "$NaN". Thousands separators come from Intl for legibility.
+const usd = (cents: number) => usdFmt.format((Number.isFinite(cents) ? cents : 0) / 100);
 
 const card: React.CSSProperties = {
   background: 'var(--color-surface, #fff)',

@@ -4,6 +4,11 @@ export declare class OnboardingRepository {
     private readonly db;
     constructor(db: Knex);
     createApplicant(data: Omit<Applicant, 'id' | 'appliedAt' | 'updatedAt'>): Promise<Applicant>;
+    /**
+     * Records that an applicant affirmatively accepted the Terms of Service when
+     * they submitted their application. Called once, right after createApplicant.
+     */
+    recordTermsAcceptance(applicantId: string, version: string): Promise<void>;
     findApplicantById(id: string, agencyId: string): Promise<Applicant | null>;
     listApplicants(agencyId: string, status?: string): Promise<Applicant[]>;
     updateApplicantStatus(id: string, agencyId: string, status: Applicant['status'], adminNotes?: string): Promise<Applicant | null>;

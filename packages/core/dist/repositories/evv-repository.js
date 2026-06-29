@@ -61,6 +61,18 @@ export class EvvRepository {
             .select('v.*');
         return rows.map((row) => this.mapRowToVisit(row));
     }
+    /**
+     * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
+     * (PHI-bearing) visit row across the wire just to read `.length`.
+     */
+    async countVisitsForAgency(agencyId) {
+        const row = await this.db('evv_visits as v')
+            .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+            .where('u.agency_id', agencyId)
+            .count('v.id as count')
+            .first();
+        return Number(row?.count ?? 0);
+    }
     /** Single visit within an agency; returns null without leaking cross-tenant existence. */
     async getVisitByIdForAgency(id, agencyId) {
         const row = await this.db('evv_visits as v')

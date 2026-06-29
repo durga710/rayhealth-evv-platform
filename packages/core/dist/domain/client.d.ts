@@ -20,6 +20,14 @@ export declare const clientSchema: z.ZodObject<{
     lastName: z.ZodString;
     dateOfBirth: z.ZodString;
     medicaidNumber: z.ZodOptional<z.ZodString>;
+    addressLine1: z.ZodOptional<z.ZodString>;
+    addressLine2: z.ZodOptional<z.ZodString>;
+    city: z.ZodOptional<z.ZodString>;
+    state: z.ZodOptional<z.ZodString>;
+    postalCode: z.ZodOptional<z.ZodString>;
+    latitude: z.ZodOptional<z.ZodNumber>;
+    longitude: z.ZodOptional<z.ZodNumber>;
+    geofenceRadiusM: z.ZodOptional<z.ZodNumber>;
 }, z.core.$strip>;
 export type Client = z.infer<typeof clientSchema>;
 //# sourceMappingURL=client.d.ts.map

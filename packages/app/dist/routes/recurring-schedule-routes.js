@@ -36,6 +36,25 @@ router.get('/', requireCapability('schedule.read'), async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+/**
+ * GET /recurring-schedules/forecast?days=14 — read-only coverage forecast.
+ * Lists upcoming recurring occurrences that have NOT been generated into
+ * assignments yet, so a coordinator can spot (and one-click fix) visits that
+ * would otherwise silently never happen. Default horizon 14 days, max 90.
+ */
+router.get('/forecast', requireCapability('agency.read'), async (req, res) => {
+    const days = Number(req.query.days);
+    const { start, end } = horizonWindow(Number.isFinite(days) ? days : undefined);
+    try {
+        const db = req.app.get('db');
+        const forecast = await new RecurringScheduleRepository(db).forecastCoverage(req.auth.agencyId, start, end);
+        res.json(forecast);
+    }
+    catch (err) {
+        safeError('coverage forecast failed', err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 router.post('/', requireCapability('schedule.write'), async (req, res) => {
     const parsed = recurringScheduleSchema.safeParse(req.body);
     if (!parsed.success) {

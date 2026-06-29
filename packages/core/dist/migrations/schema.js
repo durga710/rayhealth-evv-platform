@@ -1271,6 +1271,28 @@ export async function up(knex) {
             table.index(['username']);
         });
     }
+    // ── R23 — Terms of Service acceptance ─────────────────────────────────────
+    // Records that a principal affirmatively accepted the Terms of Service, and
+    // which version. Captured at agency signup (users) and at caregiver job
+    // application (applicants). Nullable because rows created before this column
+    // existed never went through the acceptance gate; the gate is enforced
+    // forward-only at the route layer.
+    if (await knex.schema.hasTable('users')) {
+        if (!(await knex.schema.hasColumn('users', 'terms_accepted_at'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.timestamp('terms_accepted_at', { useTz: true }).nullable();
+                t.string('terms_version', 32).nullable();
+            });
+        }
+    }
+    if (await knex.schema.hasTable('applicants')) {
+        if (!(await knex.schema.hasColumn('applicants', 'terms_accepted_at'))) {
+            await knex.schema.alterTable('applicants', (t) => {
+                t.timestamp('terms_accepted_at', { useTz: true }).nullable();
+                t.string('terms_version', 32).nullable();
+            });
+        }
+    }
 }
 export async function down(knex) {
     await knex.schema.dropTableIfExists('claim_lines');

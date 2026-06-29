@@ -43,6 +43,15 @@ export class UserRepository {
         const [{ count }] = await this.db('users').count('id as count');
         return Number(count);
     }
+    /**
+     * Records that a user affirmatively accepted the Terms of Service at signup.
+     * Idempotent-safe: callers invoke this once inside the signup transaction.
+     */
+    async recordTermsAcceptance(userId, version) {
+        await this.db('users')
+            .where({ id: userId })
+            .update({ terms_accepted_at: this.db.fn.now(), terms_version: version });
+    }
     async create(user) {
         const [row] = await this.db('users')
             .insert({

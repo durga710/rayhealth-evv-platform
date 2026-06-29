@@ -9,6 +9,7 @@ import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } 
 import { createOpaqueToken, hashOpaqueToken } from '../security/token-hashing.js';
 import { createEmailClient, buildPasswordResetUrl } from '../email/email-client.js';
 import { safeError } from '../security/safe-log.js';
+import { CURRENT_TERMS_VERSION } from '../terms.js';
 
 const router = Router();
 type AuditEventDb = ConstructorParameters<typeof AuditEventRepository>[0];
@@ -177,6 +178,8 @@ const signupSchema = z.object({
   state: z.literal('PA'),
   adminEmail: z.string().email().max(200),
   password: z.string().min(12).max(128),
+  // Affirmative Terms of Service acceptance is required to create an account.
+  acceptedTerms: z.literal(true, { message: 'You must accept the Terms of Service to continue' }),
 });
 
 // Self-serve agency signup. Creates agency + admin user atomically.
@@ -205,12 +208,14 @@ router.post('/signup', async (req, res) => {
         operatingTracks: ['personal-assistance'],
       });
       const passwordHash = await bcrypt.hash(password, 12);
-      const user = await new UserRepository(trx).create({
+      const userRepo = new UserRepository(trx);
+      const user = await userRepo.create({
         agencyId: agency.id!,
         email: adminEmail,
         passwordHash,
         role: 'admin',
       });
+      await userRepo.recordTermsAcceptance(user.id, CURRENT_TERMS_VERSION);
       return { agency, user };
     });
 
