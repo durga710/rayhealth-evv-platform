@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../lib/AuthContext.js';
+import { Link } from 'react-router-dom';
 
 const steps = ['Agency info', 'Admin account'];
 
 export function SignupPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
   const [agencyName, setAgencyName] = useState('');
   const [email, setEmail] = useState('');
@@ -44,8 +42,9 @@ export function SignupPage() {
         setError(data.message ?? 'Signup failed');
         return;
       }
-      await login(email, password);
-      navigate('/admin');
+      // The agency is created in `pending` review status — no session is issued.
+      // Show a confirmation; the admin can sign in once a super-admin approves.
+      setSubmitted(true);
     } catch {
       setError('Signup failed. Please try again.');
     } finally {
@@ -143,6 +142,32 @@ export function SignupPage() {
       {/* Form panel */}
       <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', backgroundColor: 'white' }}>
         <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {submitted ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center', padding: '1rem 0' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#107480" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div>
+                <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                  Agency registered
+                </h2>
+                <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.6 }}>
+                  Your agency is awaiting review. We&rsquo;ll email <strong>{email}</strong> once it&rsquo;s approved, and you&rsquo;ll be able to sign in.
+                </p>
+              </div>
+              <Link
+                to="/login"
+                className="btn-primary"
+                style={{ width: '100%', padding: '0.75rem', fontWeight: 600, fontSize: '0.9375rem', textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}
+              >
+                Back to sign in
+              </Link>
+            </div>
+          ) : (
+          <>
           {/* Step indicator */}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {steps.map((label, i) => (
@@ -301,6 +326,8 @@ export function SignupPage() {
             Already have an account?{' '}
             <Link to="/login" style={{ color: '#107480', fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>

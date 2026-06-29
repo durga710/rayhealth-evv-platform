@@ -85,10 +85,8 @@ router.post('/login', async (req, res) => {
 
     // If the user has TOTP 2FA enabled, do not establish a session yet — issue a
     // short-lived challenge token and require a second factor via /login/2fa.
-    const twoFa = (await db('users').where({ id: user.id }).select('totp_enabled').first()) as
-      | { totp_enabled: boolean }
-      | undefined;
-    if (twoFa?.totp_enabled) {
+    // `totpEnabled` rides along on findByEmail, so no second query is needed.
+    if (user.totpEnabled) {
       const challengeToken = jwt.sign({ sub: user.id, purpose: '2fa' }, jwtSecret(), { expiresIn: '5m' });
       res.json({ twoFactorRequired: true, challengeToken });
       return;
@@ -327,40 +325,26 @@ router.post('/signup', async (req, res) => {
       return { agency, user };
     });
 
-    const sessionToken = createOpaqueToken();
-    const csrfToken = createOpaqueToken();
-    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
-    const session = await new SessionRepository(db).create({
-      agencyId: result.user.agencyId,
-      userId: result.user.id,
-      role: result.user.role,
-      caregiverId: undefined,
-      sessionTokenHash: hashOpaqueToken(sessionToken),
-      csrfTokenHash: hashOpaqueToken(csrfToken),
-      userAgent: req.header('user-agent'),
-      ipAddress: req.ip,
-      expiresAt,
-    });
-
+    // A self-serve signup creates the agency in `review_status='pending'`. We do
+    // NOT establish a session here — the agency must be approved by a platform
+    // super-admin before anyone on it can sign in. Issuing a cookie at this point
+    // would let an unapproved tenant operate the system, bypassing the review gate.
     await recordAuditEvent(db, {
       agencyId: result.user.agencyId,
       actorId: result.user.id,
       actorType: 'user',
-      eventType: 'auth.login.success',
-      entityType: 'session',
-      entityId: session.id,
+      eventType: 'agency.review.requested',
+      entityType: 'agency',
+      entityId: result.user.agencyId,
       outcome: 'success',
-      payload: { authMethod: 'session', source: 'signup' },
+      payload: { source: 'signup' },
       occurredAt: new Date().toISOString(),
     });
 
-    res.cookie(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions());
     res.status(201).json({
-      userId: result.user.id,
-      role: result.user.role,
-      agencyId: result.user.agencyId,
-      csrfToken,
-      agencyTheme: null,
+      status: 'pending_review',
+      message:
+        'Your agency has been registered and is awaiting review. You will be able to sign in once approved.',
     });
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;

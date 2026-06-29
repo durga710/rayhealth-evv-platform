@@ -53,7 +53,7 @@ export const auditEventTypes = [
     // new agency signups; `account.suspended` / `account.reactivated` record the
     // super-admin terminating or restoring a user account.
     'platform.login.success', 'platform.login.failure',
-    'agency.review.approved', 'agency.review.rejected',
+    'agency.review.requested', 'agency.review.approved', 'agency.review.rejected',
     'account.suspended', 'account.reactivated',
 ];
 export const auditOutcomes = ['success', 'failure', 'denied'];

@@ -11,6 +11,8 @@ export interface User {
   suspendedAt?: string | null;
   /** Owning agency's review gate: 'pending' | 'approved' | 'rejected'. */
   agencyReviewStatus?: string;
+  /** True when the user has enrolled TOTP 2FA; gates the second login factor. */
+  totpEnabled?: boolean;
 }
 
 export interface NewUser {

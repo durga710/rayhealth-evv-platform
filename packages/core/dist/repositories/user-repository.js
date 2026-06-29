@@ -24,6 +24,7 @@ export class UserRepository {
                 ? (row.suspended_at instanceof Date ? row.suspended_at.toISOString() : String(row.suspended_at))
                 : null,
             agencyReviewStatus: row.agency_review_status ?? undefined,
+            totpEnabled: row.totp_enabled ?? false,
         };
     }
     async findById(id) {
