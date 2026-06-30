@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import apiClient from '../../lib/api-client';
 
@@ -70,20 +70,22 @@ export default function ProfileScreen() {
   const { logout } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const { data } = await apiClient.get<Profile>('/api/profile');
-        if (active) setProfile(data);
-      } catch {
-        // Header falls back to placeholders; sub-screens handle their own loads.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const { data } = await apiClient.get<Profile>('/api/profile');
+          if (active) setProfile(data);
+        } catch {
+          // Header falls back to placeholders; sub-screens handle their own loads.
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   const fullName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : '';
   const initials = fullName

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../lib/AuthContext';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
@@ -174,7 +174,14 @@ export default function DashboardScreen() {
     }
   };
 
-  useEffect(() => { void fetchAssignments(); }, []);
+  // Refetch on focus so visits/schedule changes made in the web app appear
+  // when the caregiver opens or returns to the dashboard — not only on a
+  // manual pull-to-refresh.
+  useFocusEffect(
+    useCallback(() => {
+      void fetchAssignments();
+    }, []),
+  );
 
   useEffect(() => {
     if (assignments.length === 0) return;
