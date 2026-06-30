@@ -1,12 +1,13 @@
 import React from 'react';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../src/lib/AuthContext';
+import LoadingScreen from '../src/features/common/LoadingScreen';
 
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
