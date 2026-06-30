@@ -7,6 +7,11 @@ let onUnauthorized: (() => void) | null = null;
 
 const apiClient: AxiosInstance = axiosCreate({
   baseURL: API_URL,
+  // Without a timeout a half-open socket (captive-portal / flaky Wi-Fi) leaves
+  // every request hanging forever — including the startup token validation,
+  // which would strand the app on a blank loading screen. Fail after 15s so
+  // the caller's catch path runs.
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   }

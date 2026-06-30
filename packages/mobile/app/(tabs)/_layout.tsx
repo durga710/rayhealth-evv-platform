@@ -2,6 +2,7 @@ import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/lib/AuthContext';
+import LoadingScreen from '../../src/features/common/LoadingScreen';
 
 // Today is the home tab. Clock-in is reached by tapping a visit (or a shift
 // notification), so it pushes over the tabs as a hidden route (href: null)
@@ -17,7 +18,7 @@ export default function AppLayout() {
   // screen, so a child doesn't fire an authenticated request before the bearer
   // token is attached on reload (which would 401 and bounce to login).
   if (isLoading) {
-    return null;
+    return <LoadingScreen />;
   }
   if (!isAuthenticated) {
     return <Redirect href="/login" />;
