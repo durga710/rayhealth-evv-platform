@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { AgencyRepository, AuditEventRepository, PasswordResetRepository, SessionRepository, UserRepository } from '@rayhealth/core';
+import { AgencyRepository, AuditEventRepository, CaregiverRepository, PasswordResetRepository, SessionRepository, UserRepository } from '@rayhealth/core';
 import { authContext } from '../middleware/auth-context.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } from '../security/cookies.js';
@@ -475,18 +475,19 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 // Protected — authContext applied directly so this route isn't bypassed by mount order.
-router.get('/me', authContext, async (req, res) => {
-    const { userId, role, agencyId } = req.auth;
+async function sendAuthProfile(req, res) {
+    const { userId, role, agencyId, caregiverId } = req.auth;
     const db = req.app.get('db');
-    const [agencyTheme, profileRow] = await Promise.all([
+    const [agencyTheme, user, caregiver] = await Promise.all([
         new AgencyRepository(db).findTheme(agencyId).catch(() => null),
-        (db('users').where({ id: userId }).select('email', 'first_name', 'last_name', 'avatar_url').first().catch(() => null)),
+        new UserRepository(db).findById(userId),
+        caregiverId ? new CaregiverRepository(db).findById(caregiverId, agencyId) : Promise.resolve(null),
     ]);
     const profile = {
-        email: profileRow?.email ?? null,
-        firstName: profileRow?.first_name ?? null,
-        lastName: profileRow?.last_name ?? null,
-        avatarUrl: profileRow?.avatar_url ?? null,
+        email: user?.email ?? null,
+        firstName: caregiver?.firstName ?? null,
+        lastName: caregiver?.lastName ?? null,
+        avatarUrl: null,
     };
     if (req.auth.authMethod === 'session' && req.auth.sessionId) {
         const csrfToken = createOpaqueToken();
@@ -495,6 +496,8 @@ router.get('/me', authContext, async (req, res) => {
         return;
     }
     res.json({ userId, role, agencyId, agencyTheme, ...profile });
-});
+}
+router.get('/me', authContext, async (req, res) => sendAuthProfile(req, res));
+router.get('/mobile/me', authContext, async (req, res) => sendAuthProfile(req, res));
 export default router;
 //# sourceMappingURL=auth-routes.js.map
