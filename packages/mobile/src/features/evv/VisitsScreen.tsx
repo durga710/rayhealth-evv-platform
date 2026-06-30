@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
@@ -22,6 +23,7 @@ interface EvvVisit {
   clockInTime: string;
   clockOutTime?: string;
   status: VisitStatus;
+  flagReason?: string | null;
 }
 
 interface CaregiverAssignmentRow {
@@ -172,6 +174,12 @@ export default function VisitsScreen() {
           <Text style={styles.cardDuration}>{ms != null ? formatHm(ms) : '—'}</Text>
         </View>
         <Text style={styles.cardService}>{service}</Text>
+        {item.status === 'flagged' && item.flagReason ? (
+          <View style={styles.flagRow}>
+            <Ionicons name="alert-circle" size={14} color="#d97706" />
+            <Text style={styles.flagText}>{item.flagReason}</Text>
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -282,6 +290,12 @@ const styles = StyleSheet.create({
   cardTime: { fontSize: 13, color: '#5a7088' },
   cardDuration: { fontSize: 15, fontWeight: '900', color: '#1a5fa8', fontVariant: ['tabular-nums'] },
   cardService: { fontSize: 12, color: '#8499ad', marginTop: 6 },
+  flagRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 10,
+    backgroundColor: '#fffbeb', borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: '#fde68a',
+  },
+  flagText: { flex: 1, fontSize: 12, color: '#b45309', lineHeight: 17, fontWeight: '600' },
 
   empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
   emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f2d52', marginBottom: 6 },
