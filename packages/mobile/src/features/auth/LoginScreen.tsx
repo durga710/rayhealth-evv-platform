@@ -15,10 +15,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../lib/AuthContext';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -39,6 +39,13 @@ export default function LoginScreen() {
     });
     return () => sub.remove();
   }, []);
+
+  // If the app ever lands on the login route while a valid session already
+  // exists (e.g. a reload restoring the last route), don't strand the user on
+  // the login form — send them straight to the dashboard.
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)/dashboard" />;
+  }
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !isSubmitting;
 

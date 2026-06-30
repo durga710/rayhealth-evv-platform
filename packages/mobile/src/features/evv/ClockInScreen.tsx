@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -127,9 +128,11 @@ function GeoRing({ status, distanceM, allowedM, accuracy }: GeoRingProps) {
 
 export default function ClockInScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     assignmentId?: string;
     clientName?: string;
+    clientAddress?: string;
     scheduledTime?: string;
     serviceCode?: string;
     clientLat?: string;
@@ -141,6 +144,7 @@ export default function ClockInScreen() {
 
   const assignmentId = firstParam(params.assignmentId);
   const clientName = firstParam(params.clientName);
+  const clientAddress = firstParam(params.clientAddress);
   const scheduledTime = firstParam(params.scheduledTime);
   const serviceCode = firstParam(params.serviceCode);
   // Open visit handed in by the dashboard so this screen can RESUME an
@@ -289,9 +293,13 @@ export default function ClockInScreen() {
   const initials = (clientName ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar style="light" />
       {/* Gradient header */}
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={styles.heroHeader}>
+      <LinearGradient
+        colors={['#0f2d52', '#1a5fa8']}
+        style={[styles.heroHeader, { paddingTop: insets.top }]}
+      >
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           onPress={() => router.back()}
@@ -306,6 +314,9 @@ export default function ClockInScreen() {
             <Text style={styles.clientAvatarText}>{initials}</Text>
           </View>
           <Text style={styles.heroClientName}>{clientName ?? '—'}</Text>
+          {clientAddress ? (
+            <Text style={styles.heroAddress}>📍 {clientAddress}</Text>
+          ) : null}
           <View style={styles.heroBadgeRow}>
             {serviceCode ? (
               <View style={styles.heroServiceBadge}>
@@ -314,7 +325,7 @@ export default function ClockInScreen() {
             ) : null}
             {hasGeolock ? (
               <View style={styles.heroGeolockBadge}>
-                <Text style={styles.heroGeolockText}>📍 Geolock</Text>
+                <Text style={styles.heroGeolockText}>GPS ✓ {clientGeofenceM}m</Text>
               </View>
             ) : (
               <View style={styles.heroNoGeolockBadge}>
@@ -439,7 +450,7 @@ export default function ClockInScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -462,8 +473,11 @@ const styles = StyleSheet.create({
   },
   clientAvatarText: { fontSize: 28, fontWeight: '900', color: '#fff' },
   heroClientName: {
-    fontSize: 24, fontWeight: '900', color: '#fff', textAlign: 'center', marginBottom: 10,
+    fontSize: 24, fontWeight: '900', color: '#fff', textAlign: 'center', marginBottom: 6,
     textShadowColor: '#00000030', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
+  heroAddress: {
+    fontSize: 13, color: '#cfe2f5', textAlign: 'center', marginBottom: 10, paddingHorizontal: 8,
   },
   heroBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   heroServiceBadge: {
