@@ -52,8 +52,15 @@ export declare class EvvRepository {
         clockOutLocation: unknown;
         status: string;
     }>>;
-    /** Visits for a single caregiver. Caller must pass req.auth.caregiverId. */
-    getVisitsForCaregiver(caregiverId: string): Promise<EvvVisit[]>;
+    /**
+     * Visits for a single caregiver. Caller must pass req.auth.caregiverId.
+     * Joins the most recent exception reason per visit so a flagged visit can
+     * explain itself on the caregiver's history screen (null when not flagged /
+     * no exception recorded).
+     */
+    getVisitsForCaregiver(caregiverId: string): Promise<Array<EvvVisit & {
+        flagReason: string | null;
+    }>>;
     private mapRowToVisit;
     /**
      * Record the outcome of a Sandata submission attempt. Only touches the two

@@ -172,12 +172,33 @@ export class EvvRepository {
     }));
   }
 
-  /** Visits for a single caregiver. Caller must pass req.auth.caregiverId. */
-  async getVisitsForCaregiver(caregiverId: string): Promise<EvvVisit[]> {
-    const rows = await this.db('evv_visits')
-      .where({ caregiver_id: caregiverId })
-      .select('*');
-    return rows.map((row) => this.mapRowToVisit(row));
+  /**
+   * Visits for a single caregiver. Caller must pass req.auth.caregiverId.
+   * Joins the most recent exception reason per visit so a flagged visit can
+   * explain itself on the caregiver's history screen (null when not flagged /
+   * no exception recorded).
+   */
+  async getVisitsForCaregiver(
+    caregiverId: string
+  ): Promise<Array<EvvVisit & { flagReason: string | null }>> {
+    const rows = await this.db('evv_visits as v')
+      .where({ 'v.caregiver_id': caregiverId })
+      .leftJoin(
+        this.db.raw(
+          `(
+            SELECT DISTINCT ON (visit_id) visit_id, reason
+            FROM evv_exceptions
+            ORDER BY visit_id, created_at DESC
+          ) as ex`
+        ),
+        'ex.visit_id',
+        'v.id'
+      )
+      .select('v.*', 'ex.reason as flag_reason');
+    return rows.map((row) => ({
+      ...this.mapRowToVisit(row),
+      flagReason: (row.flag_reason as string | null) ?? null,
+    }));
   }
 
   private mapRowToVisit(row: Record<string, unknown>): EvvVisit {
