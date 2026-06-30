@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getJson, postJson, patchJson, deleteJson } from '../../lib/api-client.js';
 import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
@@ -606,6 +607,15 @@ export function StaffPage() {
                                )}
 
                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                 {!isUser && (
+                                   <Link
+                                     to={`/admin/staff/${encodeURIComponent(s.id)}`}
+                                     className="btn-secondary btn-sm"
+                                     onClick={(e) => e.stopPropagation()}
+                                   >
+                                     View activity
+                                   </Link>
+                                 )}
                                  {isUser && (
                                    <>
                                      <select
