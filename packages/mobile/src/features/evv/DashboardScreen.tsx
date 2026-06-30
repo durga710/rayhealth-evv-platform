@@ -303,14 +303,6 @@ export default function DashboardScreen() {
             <View style={styles.sessionDot} />
             <Text style={styles.sessionPillText}>Secure Session</Text>
           </Pressable>
-          <Pressable
-            onPress={handleLogout}
-            hitSlop={12}
-            style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
-          >
-            <Text style={styles.logoutText}>Log out</Text>
-          </Pressable>
         </View>
         <Text style={styles.greeting}>{greetingFor(user)}</Text>
         <Text style={styles.dateLabel}>{todayStr}</Text>
@@ -459,8 +451,6 @@ const styles = StyleSheet.create({
     color: '#d4e8ff', fontSize: 10, fontWeight: '700',
     letterSpacing: 0.8, textTransform: 'uppercase',
   },
-  logoutBtn: { paddingVertical: 6, paddingHorizontal: 4 },
-  logoutText: { color: '#90bde0', fontSize: 14, fontWeight: '600' },
   greeting: {
     fontSize: 26, fontWeight: '900', color: '#fff',
     textShadowColor: '#00000030', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
