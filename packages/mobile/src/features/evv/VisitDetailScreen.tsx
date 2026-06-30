@@ -1,10 +1,8 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import ScreenHeader from '../common/ScreenHeader';
 
 const SERVICE_LABELS: Record<string, string> = {
   T1019: 'Personal Care',
@@ -53,8 +51,6 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function VisitDetailScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const params = useLocalSearchParams();
 
   const clientName = one(params.clientName) ?? 'Client';
@@ -78,14 +74,7 @@ export default function VisitDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color="#cfe2f5" />
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Visit details</Text>
-      </LinearGradient>
+      <ScreenHeader title="Visit details" />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Status hero */}
@@ -138,11 +127,6 @@ export default function VisitDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#eef3f8' },
-  header: { paddingHorizontal: 16, paddingBottom: 18 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 1, paddingVertical: 4, alignSelf: 'flex-start' },
-  backText: { color: '#cfe2f5', fontSize: 16, fontWeight: '700' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.3, marginTop: 6 },
-
   scroll: { padding: 16, paddingBottom: 40, gap: 14 },
 
   heroCard: {

@@ -11,12 +11,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ScreenHeader from '../common/ScreenHeader';
 
 interface Profile {
   email: string;
@@ -26,7 +23,6 @@ interface Profile {
 }
 
 export default function EditDetailsScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -81,14 +77,7 @@ export default function EditDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color="#cfe2f5" />
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Personal details</Text>
-      </LinearGradient>
+      <ScreenHeader title="Personal details" />
 
       {loading ? (
         <View style={styles.center}>
@@ -135,11 +124,6 @@ export default function EditDetailsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#eef3f8' },
   flex: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingBottom: 18 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 1, paddingVertical: 4, alignSelf: 'flex-start' },
-  backText: { color: '#cfe2f5', fontSize: 16, fontWeight: '700' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.3, marginTop: 6 },
-
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 16, paddingBottom: 40 },
   card: {
