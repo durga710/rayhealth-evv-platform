@@ -1,60 +1,39 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/lib/AuthContext';
 
-const PRIMARY = '#1a5fa8';
-const INACTIVE = '#9ab0c8';
+// The dashboard is the single home screen; clock-in is reached by tapping a
+// visit (or a shift-alert notification), so it pushes over the dashboard as a
+// stack screen rather than living in a bottom tab bar. initialRouteName keeps
+// the dashboard anchored underneath, so a cold deep-link straight to /clockin
+// still has somewhere to go "back" to.
+export const unstable_settings = {
+  initialRouteName: 'dashboard',
+};
 
-export default function TabLayout() {
+export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Auth gate for the whole tab area. If the session is lost at any point
+  // Wait for the session to finish hydrating before mounting ANY protected
+  // screen. Otherwise a child (e.g. the dashboard) mounts and fires its
+  // authenticated request before the bearer token is attached on reload — that
+  // request 401s, trips the "session was ended" handler, and bounces the user
+  // back to login even though the stored token is perfectly valid.
+  if (isLoading) {
+    return null;
+  }
+
+  // Auth gate for the whole app area. If the session is lost at any point
   // (token rejected, logout, expiry mid-use), bounce straight to login rather
   // than leaving the user on a protected screen they can't load data into.
-  if (!isLoading && !isAuthenticated) {
+  if (!isAuthenticated) {
     return <Redirect href="/login" />;
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#e8edf2',
-          borderTopWidth: 1,
-          paddingBottom: Platform.OS === 'ios' ? 8 : 4,
-          height: Platform.OS === 'ios' ? 84 : 60,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginBottom: Platform.OS === 'ios' ? 0 : 4,
-        },
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="clockin"
-        options={{
-          title: 'Clock In/Out',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="clockin" />
+    </Stack>
   );
 }

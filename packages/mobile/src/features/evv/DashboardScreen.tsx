@@ -21,6 +21,7 @@ import { deriveVisitState, type VisitState } from '../../lib/visit-state';
 interface Assignment {
   id: string;
   clientName: string;
+  clientAddress?: string;
   time?: string;
   serviceCode?: string;
   clientLat?: number | null;
@@ -37,6 +38,9 @@ interface TodayScheduleRow {
   scheduledStartTime: string | null;
   clientFirstName: string;
   clientLastName: string;
+  clientAddressLine1?: string | null;
+  clientCity?: string | null;
+  clientState?: string | null;
   clientLatitude: number | null;
   clientLongitude: number | null;
   geofenceRadiusM: number;
@@ -145,6 +149,8 @@ export default function DashboardScreen() {
       const list: Assignment[] = rows.map((r) => ({
         id: r.assignmentId,
         clientName: `${r.clientFirstName ?? ''} ${r.clientLastName ?? ''}`.trim() || 'Client',
+        clientAddress:
+          [r.clientAddressLine1, r.clientCity, r.clientState].filter(Boolean).join(', ') || undefined,
         time: r.scheduledStartTime ?? undefined,
         // serviceCode is re-derived server-side at clock-in; not needed here.
         serviceCode: undefined,
@@ -227,6 +233,7 @@ export default function DashboardScreen() {
             params: {
               assignmentId: item.id,
               clientName: item.clientName,
+              clientAddress: item.clientAddress ?? '',
               scheduledTime: item.time ?? '',
               serviceCode: item.serviceCode ?? '',
               clientLat: item.clientLat != null ? String(item.clientLat) : '',
@@ -350,6 +357,9 @@ function CardContent({
         </View>
         <View style={styles.cardCenter}>
           <Text style={styles.clientName} numberOfLines={1}>{item.clientName}</Text>
+          {item.clientAddress ? (
+            <Text style={styles.clientAddress} numberOfLines={1}>📍 {item.clientAddress}</Text>
+          ) : null}
           <Text style={styles.visitTime}>{formatTime(item.time)}</Text>
         </View>
         {item.visitState === 'in_progress' ? (
@@ -380,7 +390,7 @@ function CardContent({
         ) : null}
         {hasGeolock ? (
           <View style={styles.geolockBadge}>
-            <Text style={styles.geolockBadgeText}>📍 Geolock</Text>
+            <Text style={styles.geolockBadgeText}>GPS ✓ {item.clientGeofenceM ?? 150}m</Text>
           </View>
         ) : null}
       </View>
@@ -494,6 +504,7 @@ const styles = StyleSheet.create({
   clientInitial: { fontSize: 20, fontWeight: '800', color: PRIMARY },
   cardCenter: { flex: 1 },
   clientName: { fontSize: 16, fontWeight: '800', color: '#1a3a5c', marginBottom: 2 },
+  clientAddress: { fontSize: 12, color: '#5a7088', marginBottom: 3 },
   visitTime: { fontSize: 13, color: PRIMARY, fontWeight: '600' },
   cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
   serviceCodeBadge: {
@@ -508,7 +519,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef3c7', borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  geolockBadgeText: { color: '#92400e', fontSize: 10, fontWeight: '700' },
+  geolockBadgeText: { color: '#92400e', fontSize: 11, fontWeight: '800' },
   tapHint: { fontSize: 11, color: '#b0c4d8', fontWeight: '500' },
 
   badgeNow: {
