@@ -331,6 +331,9 @@ export default function ScheduleScreen() {
             <Pressable
               onPress={() => setMode('list')}
               style={[styles.toggleBtn, mode === 'list' && styles.toggleBtnActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === 'list' }}
+              accessibilityLabel="List view"
             >
               <Ionicons name="list" size={15} color={mode === 'list' ? '#1a5fa8' : '#cfe2f5'} />
               <Text style={[styles.toggleText, mode === 'list' && styles.toggleTextActive]}>List</Text>
@@ -338,6 +341,9 @@ export default function ScheduleScreen() {
             <Pressable
               onPress={() => setMode('calendar')}
               style={[styles.toggleBtn, mode === 'calendar' && styles.toggleBtnActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === 'calendar' }}
+              accessibilityLabel="Calendar view"
             >
               <Ionicons name="calendar" size={15} color={mode === 'calendar' ? '#1a5fa8' : '#cfe2f5'} />
               <Text style={[styles.toggleText, mode === 'calendar' && styles.toggleTextActive]}>Calendar</Text>

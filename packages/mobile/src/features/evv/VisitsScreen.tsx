@@ -241,6 +241,9 @@ export default function VisitsScreen() {
             key={f}
             onPress={() => setFilter(f)}
             style={[styles.filterChip, filter === f && styles.filterChipActive]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === f }}
+            accessibilityLabel={`Show ${f === 'all' ? 'all' : f} visits`}
           >
             <Text style={[styles.filterChipText, filter === f && styles.filterChipTextActive]}>
               {f === 'all' ? 'All' : f === 'verified' ? 'Verified' : 'Flagged'}

@@ -40,6 +40,9 @@ export default function ChangePasswordScreen() {
     setSaving(true);
     try {
       await apiClient.post('/api/profile/change-password', { currentPassword, newPassword });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirm('');
       Alert.alert('Password changed', 'Your password has been updated.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
