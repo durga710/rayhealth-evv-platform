@@ -16,6 +16,7 @@ import { RouteErrorBoundary } from './components/RouteErrorBoundary.js';
 const AgencySetupPage = lazy(() => import('./features/agency/AgencySetupPage.js').then((m) => ({ default: m.AgencySetupPage })));
 const GoLiveReadinessPage = lazy(() => import('./features/agency/GoLiveReadinessPage.js').then((m) => ({ default: m.GoLiveReadinessPage })));
 const StaffPage = lazy(() => import('./features/staff/StaffPage.js').then((m) => ({ default: m.StaffPage })));
+const CaregiverActivityPage = lazy(() => import('./features/staff/CaregiverActivityPage.js').then((m) => ({ default: m.CaregiverActivityPage })));
 const ClientsPage = lazy(() => import('./features/clients/ClientsPage.js').then((m) => ({ default: m.ClientsPage })));
 const AuthorizationsPage = lazy(() => import('./features/authorizations/AuthorizationsPage.js').then((m) => ({ default: m.AuthorizationsPage })));
 const ImportPage = lazy(() => import('./features/import/ImportPage.js').then((m) => ({ default: m.ImportPage })));
@@ -559,6 +560,7 @@ export function App() {
           <Route path="agency" element={<AgencySetupPage />} />
           <Route path="readiness" element={<GoLiveReadinessPage />} />
           <Route path="staff" element={<StaffPage />} />
+          <Route path="staff/:caregiverId" element={<CaregiverActivityPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="authorizations" element={<AuthorizationsPage />} />
           <Route path="import" element={<ImportPage />} />
