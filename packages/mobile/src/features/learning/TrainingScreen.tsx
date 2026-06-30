@@ -10,12 +10,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ScreenHeader from '../common/ScreenHeader';
 
 type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
 
@@ -63,8 +60,6 @@ function formatDue(iso: string | null): string | null {
 }
 
 export default function TrainingScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<ProgressData | null>(null);
@@ -194,17 +189,7 @@ export default function TrainingScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-          onPress={() => router.back()}
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={22} color="#cfe2f5" />
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>My Training</Text>
+      <ScreenHeader title="My Training">
         {data ? (
           <View style={[styles.complianceBanner, data.isCompliant ? styles.compliantOk : styles.compliantWarn]}>
             <Ionicons
@@ -219,7 +204,7 @@ export default function TrainingScreen() {
             </Text>
           </View>
         ) : null}
-      </LinearGradient>
+      </ScreenHeader>
 
       {loading ? (
         <View style={styles.center}>
@@ -248,10 +233,6 @@ export default function TrainingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#eef3f8' },
-  header: { paddingHorizontal: 16, paddingBottom: 18 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 1, paddingVertical: 4, alignSelf: 'flex-start' },
-  backText: { color: '#cfe2f5', fontSize: 16, fontWeight: '700' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.3, marginTop: 6 },
   complianceBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 14,
