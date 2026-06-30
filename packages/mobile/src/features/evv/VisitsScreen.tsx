@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
@@ -82,6 +83,7 @@ function startOfWeek(): number {
 
 export default function VisitsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visits, setVisits] = useState<EvvVisit[]>([]);
@@ -158,7 +160,22 @@ export default function VisitsScreen() {
     const client = item.clientId ? names[item.clientId] : undefined;
 
     return (
-      <View style={styles.card}>
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/visit-detail',
+            params: {
+              clientName: client ?? 'Client',
+              clockInTime: item.clockInTime,
+              ...(item.clockOutTime ? { clockOutTime: item.clockOutTime } : {}),
+              status: item.status,
+              ...(item.serviceCode ? { serviceCode: item.serviceCode } : {}),
+              ...(item.flagReason ? { flagReason: item.flagReason } : {}),
+            },
+          })
+        }
+        style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
+      >
         <View style={styles.cardTop}>
           <Text style={styles.cardDay}>{formatDay(item.clockInTime)}</Text>
           <View style={[styles.statusPill, { backgroundColor: `${statusColor}1a` }]}>
@@ -174,13 +191,16 @@ export default function VisitsScreen() {
           <Text style={styles.cardDuration}>{ms != null ? formatHm(ms) : '—'}</Text>
         </View>
         <Text style={styles.cardService}>{service}</Text>
-        {item.status === 'flagged' && item.flagReason ? (
+        {item.status === 'flagged' ? (
           <View style={styles.flagRow}>
             <Ionicons name="alert-circle" size={14} color="#d97706" />
-            <Text style={styles.flagText}>{item.flagReason}</Text>
+            <Text style={styles.flagText} numberOfLines={2}>
+              {item.flagReason ?? 'Flagged for review — tap to see why'}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color="#d97706" />
           </View>
         ) : null}
-      </View>
+      </Pressable>
     );
   };
 

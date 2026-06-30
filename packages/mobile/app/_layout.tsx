@@ -88,6 +88,7 @@ function RootContent() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="clockin" options={{ headerShown: false }} />
         <Stack.Screen name="training" options={{ headerShown: false }} />
+        <Stack.Screen name="visit-detail" options={{ headerShown: false }} />
         <Stack.Screen name="profile-details" options={{ headerShown: false }} />
         <Stack.Screen name="change-password" options={{ headerShown: false }} />
       </Stack>
