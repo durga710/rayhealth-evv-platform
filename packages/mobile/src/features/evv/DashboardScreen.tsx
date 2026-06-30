@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../lib/AuthContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ErrorRetry from '../common/ErrorRetry';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
 import { deriveVisitState, type VisitState } from '../../lib/visit-state';
@@ -134,6 +135,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const firedForegroundRef = useRef<Set<string>>(new Set());
 
@@ -162,12 +164,15 @@ export default function DashboardScreen() {
         clockInTime: r.currentClockInTime ?? null,
       }));
       setAssignments(list);
+      setError(null);
       const permStatus = await ensureNotificationPermission();
       if (permStatus === 'granted') {
         await scheduleShiftAlerts(list);
       }
     } catch {
-      // 401 handled centrally; other errors leave the list empty
+      // 401 redirects to login via the central handler; surface other failures
+      // so a dropped connection isn't shown as "no visits today".
+      setError('Could not load your visits.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -332,7 +337,7 @@ export default function DashboardScreen() {
         ListHeaderComponent={
           <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
-        ListEmptyComponent={loading ? null : <EmptyVisits />}
+        ListEmptyComponent={loading ? null : error ? <ErrorRetry message={error} onRetry={fetchAssignments} /> : <EmptyVisits />}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
