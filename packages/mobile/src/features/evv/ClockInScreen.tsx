@@ -251,6 +251,12 @@ export default function ClockInScreen() {
   const [geofenceError, setGeofenceError] = useState<{
     message: string; distanceM: number; allowedM: number;
   } | null>(null);
+  // Set on a successful clock-out → swaps the screen for the themed completion
+  // view instead of a bare native alert.
+  const [completed, setCompleted] = useState<{
+    totalElapsed: number; clockInTime: string; clockOutTime: string;
+  } | null>(null);
+  const completeAnim = useRef(new Animated.Value(0)).current;
 
   const locationSubRef = useRef<Location.LocationSubscription | null>(null);
 
@@ -291,6 +297,13 @@ export default function ClockInScreen() {
     const h = setInterval(tick, 1000);
     return () => clearInterval(h);
   }, [visit]);
+
+  useEffect(() => {
+    if (!completed) { completeAnim.setValue(0); return; }
+    Animated.spring(completeAnim, {
+      toValue: 1, useNativeDriver: true, friction: 7, tension: 60,
+    }).start();
+  }, [completed, completeAnim]);
 
   const handleClockIn = async () => {
     if (!assignmentId) {
@@ -337,12 +350,10 @@ export default function ClockInScreen() {
         location: { lat: currentCoords.lat, lng: currentCoords.lng, accuracy: accuracy ?? 0 },
       });
       const totalElapsed = elapsed;
+      const clockInTime = visit.clockInTime;
+      const clockOutTime = new Date().toISOString();
       setVisit(null);
-      Alert.alert(
-        'Visit complete ✓',
-        `Total visit time: ${formatElapsed(totalElapsed)}`,
-        [{ text: 'Done', onPress: () => router.back() }]
-      );
+      setCompleted({ totalElapsed, clockInTime, clockOutTime });
     } catch (err: unknown) {
       const resp = (err as {
         response?: { status?: number; data?: { code?: string; message?: string; distanceM?: number; allowedM?: number } }
@@ -513,6 +524,64 @@ export default function ClockInScreen() {
     </View>
   );
 
+  // ── Visit complete celebration ──────────────────────────────────────────────
+  if (completed) {
+    const cardStyle = {
+      opacity: completeAnim,
+      transform: [
+        { scale: completeAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) },
+      ],
+    };
+    const checkStyle = {
+      transform: [
+        { scale: completeAnim.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1.15, 1] }) },
+      ],
+    };
+    return (
+      <LinearGradient colors={['#0f2d52', '#1a5fa8', '#2d7dd2']} style={styles.doneRoot}>
+        <StatusBar style="light" />
+        <Animated.View style={[styles.doneCard, cardStyle]}>
+          <Animated.View style={[styles.doneCheck, checkStyle]}>
+            <Ionicons name="checkmark" size={50} color="#fff" />
+          </Animated.View>
+          <Text style={styles.doneTitle}>Visit Complete</Text>
+          {clientName ? <Text style={styles.doneClient}>{clientName}</Text> : null}
+
+          <View style={styles.doneTimeWrap}>
+            <Text style={styles.doneTimeLabel}>TOTAL VISIT TIME</Text>
+            <Text style={styles.doneTime}>{formatElapsed(completed.totalElapsed)}</Text>
+          </View>
+
+          <View style={styles.doneSplit}>
+            <View style={styles.doneCol}>
+              <Text style={styles.doneColLabel}>Clock in</Text>
+              <Text style={styles.doneColVal}>{formatScheduledTime(completed.clockInTime)}</Text>
+            </View>
+            <View style={styles.doneColDivider} />
+            <View style={styles.doneCol}>
+              <Text style={styles.doneColLabel}>Clock out</Text>
+              <Text style={styles.doneColVal}>{formatScheduledTime(completed.clockOutTime)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.doneVerified}>
+            <Ionicons name="shield-checkmark" size={15} color="#16a34a" />
+            <Text style={styles.doneVerifiedText}>GPS verified · EVV recorded</Text>
+          </View>
+        </Animated.View>
+
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.9 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Done"
+        >
+          <Text style={styles.doneBtnText}>Done</Text>
+        </Pressable>
+      </LinearGradient>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -564,6 +633,41 @@ export default function ClockInScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#eef3f8' },
+
+  // Visit complete celebration
+  doneRoot: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 20 },
+  doneCard: {
+    backgroundColor: '#fff', borderRadius: 28, paddingVertical: 36, paddingHorizontal: 28,
+    alignItems: 'center', width: '100%', maxWidth: 380,
+    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: 14 }, elevation: 14,
+  },
+  doneCheck: {
+    width: 96, height: 96, borderRadius: 48, backgroundColor: '#16a34a',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 18,
+    shadowColor: '#16a34a', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
+  },
+  doneTitle: { fontSize: 26, fontWeight: '900', color: '#0f2d52', letterSpacing: -0.5 },
+  doneClient: { fontSize: 15, color: '#5a7088', marginTop: 4, fontWeight: '600' },
+  doneTimeWrap: { alignItems: 'center', marginTop: 22 },
+  doneTimeLabel: { fontSize: 11, fontWeight: '800', color: '#94a3b8', letterSpacing: 1 },
+  doneTime: { fontSize: 46, fontWeight: '900', color: '#1a5fa8', fontVariant: ['tabular-nums'], marginTop: 4, lineHeight: 50 },
+  doneSplit: { flexDirection: 'row', alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
+  doneCol: { flex: 1, alignItems: 'center' },
+  doneColLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  doneColVal: { fontSize: 16, fontWeight: '800', color: '#1a3a5c', marginTop: 3 },
+  doneColDivider: { width: 1, height: 34, backgroundColor: '#e6edf4' },
+  doneVerified: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 22,
+    backgroundColor: '#f0fdf4', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: '#bbf7d0',
+  },
+  doneVerifiedText: { color: '#15803d', fontSize: 12.5, fontWeight: '700' },
+  doneBtn: {
+    backgroundColor: '#fff', borderRadius: 16, height: 54,
+    width: '100%', maxWidth: 380, justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6,
+  },
+  doneBtnText: { color: '#1a5fa8', fontSize: 17, fontWeight: '800' },
 
   // Slim header
   topBar: {
