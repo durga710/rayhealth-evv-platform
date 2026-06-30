@@ -98,7 +98,7 @@ export default function ChangePasswordScreen() {
               secureTextEntry={!showPw}
               autoCapitalize="none"
             />
-            {mismatch ? <Text style={styles.errHint}>Passwords don't match</Text> : null}
+            {mismatch ? <Text style={styles.errHint}>{"Passwords don't match"}</Text> : null}
           </View>
 
           <Pressable
