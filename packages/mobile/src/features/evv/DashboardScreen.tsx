@@ -51,8 +51,11 @@ interface TodayScheduleRow {
   currentClockOutTime: string | null;
 }
 
-const FOREGROUND_FIRE_WINDOW_MS = 32_000;
-const FOREGROUND_FIRE_MIN_MS = 28_000;
+// The fire window (8s) is wider than the tick (5s) so a tick always lands
+// inside it once as the countdown passes through — the previous 4s window could
+// be straddled and skipped. firedForegroundRef keeps it to a single haptic.
+const FOREGROUND_FIRE_WINDOW_MS = 33_000;
+const FOREGROUND_FIRE_MIN_MS = 25_000;
 const FOREGROUND_TICK_MS = 5_000;
 
 function dayKey(d: Date): string {
