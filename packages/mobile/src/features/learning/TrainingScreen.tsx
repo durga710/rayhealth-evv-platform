@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ScreenHeader from '../common/ScreenHeader';
+import ErrorRetry from '../common/ErrorRetry';
 
 type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
 
@@ -65,13 +66,15 @@ export default function TrainingScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<ProgressData | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await apiClient.get<{ success: boolean; data: ProgressData }>('/api/learning/progress');
       if (res.data?.success) setData(res.data.data);
+      setError(null);
     } catch {
-      // Leave data null; empty state covers it.
+      setError('Could not load your training.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -222,11 +225,15 @@ export default function TrainingScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="school-outline" size={40} color="#9db3c8" />
-              <Text style={styles.emptyTitle}>No training assigned</Text>
-              <Text style={styles.emptyNote}>Courses assigned by your agency will appear here.</Text>
-            </View>
+            error ? (
+              <ErrorRetry message={error} onRetry={load} />
+            ) : (
+              <View style={styles.empty}>
+                <Ionicons name="school-outline" size={40} color="#9db3c8" />
+                <Text style={styles.emptyTitle}>No training assigned</Text>
+                <Text style={styles.emptyNote}>Courses assigned by your agency will appear here.</Text>
+              </View>
+            )
           }
         />
       )}

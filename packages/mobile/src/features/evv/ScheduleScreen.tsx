@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ErrorRetry from '../common/ErrorRetry';
 
 interface ScheduleRow {
   assignmentId: string;
@@ -94,6 +95,7 @@ export default function ScheduleScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [mode, setMode] = useState<ViewMode>('list');
+  const [error, setError] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
   const [month, setMonth] = useState({ year: today.getFullYear(), m: today.getMonth() });
@@ -116,8 +118,11 @@ export default function ScheduleScreen() {
         schedule = res.data?.schedule ?? [];
       }
       setRows(schedule);
+      setError(null);
     } catch {
+      // Both /schedule and /today failed → a real connectivity/server problem.
       setRows([]);
+      setError('Could not load your schedule.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -345,6 +350,8 @@ export default function ScheduleScreen() {
         <View style={styles.center}>
           <ActivityIndicator color="#1a5fa8" />
         </View>
+      ) : error && rows.length === 0 ? (
+        <ErrorRetry message={error} onRetry={load} />
       ) : mode === 'calendar' ? (
         renderCalendar()
       ) : (

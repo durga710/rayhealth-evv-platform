@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ErrorRetry from '../common/ErrorRetry';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
 
@@ -89,6 +90,7 @@ export default function VisitsScreen() {
   const [visits, setVisits] = useState<EvvVisit[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<Filter>('all');
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -96,6 +98,8 @@ export default function VisitsScreen() {
         apiClient.get<EvvVisit[]>('/api/evv/visits'),
         apiClient.get<CaregiverAssignmentRow[]>('/api/assignments/caregiver'),
       ]);
+      // The visits call is the one that matters; a failed name-map is tolerable.
+      setError(visitsRes.status === 'fulfilled' ? null : 'Could not load your visits.');
       if (visitsRes.status === 'fulfilled') {
         const sorted = [...visitsRes.value.data].sort(
           (a, b) => new Date(b.clockInTime).getTime() - new Date(a.clockInTime).getTime(),
@@ -258,14 +262,18 @@ export default function VisitsScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No visits yet</Text>
-              <Text style={styles.emptyNote}>
-                {filter === 'all'
-                  ? 'Your completed visits will show up here.'
-                  : `No ${filter} visits.`}
-              </Text>
-            </View>
+            error ? (
+              <ErrorRetry message={error} onRetry={load} />
+            ) : (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No visits yet</Text>
+                <Text style={styles.emptyNote}>
+                  {filter === 'all'
+                    ? 'Your completed visits will show up here.'
+                    : `No ${filter} visits.`}
+                </Text>
+              </View>
+            )
           }
         />
       )}
