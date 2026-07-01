@@ -39,6 +39,15 @@ export async function up(knex) {
         WHERE ua.user_id = u.id AND ua.agency_id = u.agency_id
       )
   `);
+    // The base schema puts a GLOBAL unique on caregivers.email, which blocks the
+    // same person from being employed as a caregiver at two agencies. Drop it in
+    // favor of the per-agency caregivers_agency_email_unique (agency_id, email)
+    // composite that schema.ts already creates — its comment explicitly intends
+    // cross-agency employment to be allowed. Idempotent via IF EXISTS.
+    if (await knex.schema.hasTable('caregivers')) {
+        await knex.raw('ALTER TABLE caregivers DROP CONSTRAINT IF EXISTS caregivers_email_unique');
+        await knex.raw('DROP INDEX IF EXISTS caregivers_email_unique');
+    }
 }
 export async function down(knex) {
     await knex.schema.dropTableIfExists(TABLE);
