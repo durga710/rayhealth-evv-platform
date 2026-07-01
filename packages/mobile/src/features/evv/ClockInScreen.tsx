@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   Linking,
@@ -19,6 +18,7 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { haversineM, formatDistance } from '../../lib/geofence';
+import { showAppAlert } from '../common/alerts/appAlert';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -370,11 +370,17 @@ export default function ClockInScreen() {
 
   const handleClockIn = async () => {
     if (!assignmentId) {
-      Alert.alert('No visit selected', 'Go back and choose a scheduled visit.');
+      showAppAlert('No visit selected', 'Go back and choose a scheduled visit.', undefined, {
+        variant: 'error',
+        icon: 'calendar-outline',
+      });
       return;
     }
     if (!currentCoords) {
-      Alert.alert('No GPS signal', 'Wait for your location before clocking in.');
+      showAppAlert('Still finding your location', 'Hang tight while we lock onto GPS — this usually takes a few seconds.', undefined, {
+        variant: 'info',
+        icon: 'locate-outline',
+      });
       return;
     }
     setGeofenceError(null);
@@ -397,7 +403,12 @@ export default function ClockInScreen() {
           allowedM: resp.data.allowedM ?? clientGeofenceM,
         });
       } else {
-        Alert.alert('Clock-in failed', 'Could not record your check-in. Please try again.');
+        showAppAlert(
+          "Clock-in didn't go through",
+          "Something interrupted your check-in. Give it another try — your visit hasn't started yet.",
+          undefined,
+          { variant: 'error' },
+        );
       }
     } finally {
       setIsLoading(false);
@@ -447,7 +458,12 @@ export default function ClockInScreen() {
           allowedM: resp.data.allowedM ?? clientGeofenceM,
         });
       } else {
-        Alert.alert('Clock-out failed', 'Could not record your check-out. Please try again.');
+        showAppAlert(
+          "Clock-out didn't go through",
+          'Something interrupted your check-out. Give it another try — your visit is still open.',
+          undefined,
+          { variant: 'error' },
+        );
       }
     } finally {
       setIsLoading(false);

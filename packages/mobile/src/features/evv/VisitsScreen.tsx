@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
+import EmptyState from '../common/EmptyState';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
 
@@ -268,14 +269,15 @@ export default function VisitsScreen() {
             error ? (
               <ErrorRetry message={error} onRetry={load} />
             ) : (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>No visits yet</Text>
-                <Text style={styles.emptyNote}>
-                  {filter === 'all'
+              <EmptyState
+                icon="time-outline"
+                title="No visits yet"
+                message={
+                  filter === 'all'
                     ? 'Your completed visits will show up here.'
-                    : `No ${filter} visits.`}
-                </Text>
-              </View>
+                    : `No ${filter} visits.`
+                }
+              />
             )
           }
         />
@@ -331,8 +333,4 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#fde68a',
   },
   flagText: { flex: 1, fontSize: 12, color: '#b45309', lineHeight: 17, fontWeight: '600' },
-
-  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f2d52', marginBottom: 6 },
-  emptyNote: { fontSize: 13, color: '#5a7088', textAlign: 'center', lineHeight: 19 },
 });

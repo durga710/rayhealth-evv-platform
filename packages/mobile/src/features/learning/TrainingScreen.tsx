@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Linking,
   Pressable,
@@ -15,6 +14,8 @@ import { useFocusEffect } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ScreenHeader from '../common/ScreenHeader';
 import ErrorRetry from '../common/ErrorRetry';
+import EmptyState from '../common/EmptyState';
+import { showAppAlert, showAppToast } from '../common/alerts/appAlert';
 
 type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
 
@@ -99,11 +100,11 @@ export default function TrainingScreen() {
       if (row.course.externalUrl) {
         await Linking.openURL(row.course.externalUrl);
       } else {
-        Alert.alert('Course started', 'This course has been marked in progress.');
+        showAppToast({ message: "You're on your way — this course is now in progress.", variant: 'success', icon: 'play-circle' });
       }
       await load();
     } catch {
-      Alert.alert('Could not start', 'Please try again.');
+      showAppAlert('Could not start course', 'Please try again.', undefined, { variant: 'error' });
     } finally {
       setBusyId(null);
     }
@@ -121,12 +122,14 @@ export default function TrainingScreen() {
       const expires = c.expiresAt
         ? new Date(c.expiresAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
         : 'No expiry';
-      Alert.alert(
-        `Certificate · ${c.courseTitle}`,
-        `Completed: ${completed}\nExpires: ${expires}\nVerification: ${c.verificationCode}`,
+      showAppAlert(
+        c.courseTitle,
+        `Completed ${completed}\nExpires: ${expires}\nVerification code: ${c.verificationCode}`,
+        undefined,
+        { variant: 'success', icon: 'ribbon' },
       );
     } catch {
-      Alert.alert('No certificate', 'No completed record was found for this course.');
+      showAppAlert('No certificate yet', 'Finish the course to unlock your certificate here.', undefined, { variant: 'info' });
     } finally {
       setBusyId(null);
     }
@@ -228,11 +231,11 @@ export default function TrainingScreen() {
             error ? (
               <ErrorRetry message={error} onRetry={load} />
             ) : (
-              <View style={styles.empty}>
-                <Ionicons name="school-outline" size={40} color="#9db3c8" />
-                <Text style={styles.emptyTitle}>No training assigned</Text>
-                <Text style={styles.emptyNote}>Courses assigned by your agency will appear here.</Text>
-              </View>
+              <EmptyState
+                icon="school-outline"
+                title="No training assigned"
+                message="Courses assigned by your agency will appear here."
+              />
             )
           }
         />
@@ -280,8 +283,4 @@ const styles = StyleSheet.create({
   actionText: { fontSize: 14, fontWeight: '800' },
   actionTextPrimary: { color: '#fff' },
   actionTextGhost: { color: '#1a5fa8' },
-
-  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, gap: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f2d52', marginTop: 8 },
-  emptyNote: { fontSize: 13, color: '#5a7088', textAlign: 'center', lineHeight: 19 },
 });
