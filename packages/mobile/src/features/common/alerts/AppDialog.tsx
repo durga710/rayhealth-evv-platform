@@ -54,6 +54,13 @@ export default function AppDialog({
       badgeBounce.value = 0;
       badgeBounce.value = withDelay(60, withSequence(withTiming(1.15, { duration: 140 }), withSpring(1, { damping: 10, stiffness: 260 })));
       fireHaptic(dialog.variant);
+    } else {
+      // The queue emptied (close()'s exit animation already finished by the
+      // time onRequestClose pops it, so progress is already 0) — unmount
+      // immediately. Without this, `rendered` stays stuck on the last dialog
+      // and its full-screen backdrop Pressable keeps intercepting touches
+      // on every screen behind it, invisibly, forever.
+      setRendered(null);
     }
     // Closing is driven explicitly by close(), not by `dialog` flipping to null,
     // so a queued dialog can animate in immediately after this one animates out.

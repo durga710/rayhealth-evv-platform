@@ -26,6 +26,11 @@ export default function AppToast({ toast, onDismiss }: { toast: QueuedToast | nu
       progress.value = withTiming(1, { duration: 220 });
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => close(), toast.durationMs);
+    } else {
+      // Queue emptied after close()'s exit animation already finished —
+      // unmount immediately so the (invisible) toast Pressable stops
+      // intercepting taps near the bottom of whatever screen is under it.
+      setRendered(null);
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
