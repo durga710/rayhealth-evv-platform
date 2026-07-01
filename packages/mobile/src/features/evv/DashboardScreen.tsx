@@ -15,6 +15,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
+import EmptyState from '../common/EmptyState';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
 import { deriveVisitState, type VisitState } from '../../lib/visit-state';
@@ -116,18 +117,6 @@ function AdminScreen({ role, onLogout }: { role: string; onLogout: () => void })
           </Pressable>
         </View>
       </LinearGradient>
-    </View>
-  );
-}
-
-function EmptyVisits() {
-  return (
-    <View style={styles.emptyWrap}>
-      <View style={styles.emptyIconCircle}>
-        <Text style={styles.emptyEmoji}>📋</Text>
-      </View>
-      <Text style={styles.emptyTitle}>No visits today</Text>
-      <Text style={styles.emptyBody}>Your assigned visits will appear here once scheduled.</Text>
     </View>
   );
 }
@@ -335,7 +324,17 @@ export default function DashboardScreen() {
         ListHeaderComponent={
           <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
-        ListEmptyComponent={loading ? null : error ? <ErrorRetry message={error} onRetry={fetchAssignments} /> : <EmptyVisits />}
+        ListEmptyComponent={
+          loading ? null : error ? (
+            <ErrorRetry message={error} onRetry={fetchAssignments} />
+          ) : (
+            <EmptyState
+              icon="calendar-clear-outline"
+              title="No visits today"
+              message="Your assigned visits will appear here once scheduled."
+            />
+          )
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -559,17 +558,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#a7f3d0',
   },
   badgeCompletedText: { color: '#047857', fontSize: 11, fontWeight: '700' },
-
-  // Empty state
-  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
-  emptyIconCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#e8f0fa', justifyContent: 'center', alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyEmoji: { fontSize: 36 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1a3a5c', marginBottom: 8 },
-  emptyBody: { fontSize: 14, color: '#7a98b4', textAlign: 'center', lineHeight: 21, paddingHorizontal: 32 },
 
   // Admin screen
   adminGradient: { flex: 1 },

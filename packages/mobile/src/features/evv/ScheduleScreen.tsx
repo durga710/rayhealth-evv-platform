@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
+import EmptyState from '../common/EmptyState';
+import { colors } from '../common/tokens';
 
 interface ScheduleRow {
   assignmentId: string;
@@ -315,6 +317,7 @@ export default function ScheduleScreen() {
         selectedVisits.map(renderCard)
       ) : (
         <View style={styles.dayEmpty}>
+          <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
           <Text style={styles.dayEmptyText}>No visits scheduled</Text>
         </View>
       )}
@@ -371,11 +374,11 @@ export default function ScheduleScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="calendar-outline" size={40} color="#9db3c8" />
-              <Text style={styles.emptyTitle}>Nothing scheduled</Text>
-              <Text style={styles.emptyNote}>Your upcoming visits will appear here.</Text>
-            </View>
+            <EmptyState
+              icon="calendar-outline"
+              title="Nothing scheduled"
+              message="Your upcoming visits will appear here."
+            />
           }
         />
       )}
@@ -442,7 +445,7 @@ const styles = StyleSheet.create({
     fontSize: 13, fontWeight: '900', color: '#4a6480',
     textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 10, marginBottom: 10, marginLeft: 2,
   },
-  dayEmpty: { backgroundColor: '#fff', borderRadius: 14, padding: 20, alignItems: 'center' },
+  dayEmpty: { backgroundColor: '#fff', borderRadius: 14, padding: 20, alignItems: 'center', gap: 8 },
   dayEmptyText: { color: '#8499ad', fontSize: 13, fontWeight: '600' },
 
   // Visit card (shared)
@@ -466,8 +469,4 @@ const styles = StyleSheet.create({
   tagActiveText: { fontSize: 10, fontWeight: '800', color: '#15803d' },
   tagDone: { backgroundColor: '#e2e8f0' },
   tagDoneText: { fontSize: 10, fontWeight: '800', color: '#475569' },
-
-  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, gap: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f2d52', marginTop: 8 },
-  emptyNote: { fontSize: 13, color: '#5a7088', textAlign: 'center', lineHeight: 19 },
 });
