@@ -32,6 +32,17 @@ export declare class EvvRepository {
         offset?: number;
     }): Promise<EvvVisit[]>;
     /**
+     * One caregiver's visits, tenant-scoped to an agency (for the admin
+     * per-caregiver activity view). Combines the agency join
+     * (users.caregiver_id → users.agency_id) with the snapshotted client's name
+     * and the latest exception reason, so an admin sees a caregiver's history
+     * with client context and the reason behind any flagged visit.
+     */
+    getVisitsForCaregiverInAgency(caregiverId: string, agencyId: string): Promise<Array<EvvVisit & {
+        flagReason: string | null;
+        clientName: string | null;
+    }>>;
+    /**
      * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
      * (PHI-bearing) visit row across the wire just to read `.length`.
      */
@@ -63,8 +74,15 @@ export declare class EvvRepository {
         clockOutLocation: unknown;
         status: string;
     }>>;
-    /** Visits for a single caregiver. Caller must pass req.auth.caregiverId. */
-    getVisitsForCaregiver(caregiverId: string): Promise<EvvVisit[]>;
+    /**
+     * Visits for a single caregiver. Caller must pass req.auth.caregiverId.
+     * Joins the most recent exception reason per visit so a flagged visit can
+     * explain itself on the caregiver's history screen (null when not flagged /
+     * no exception recorded).
+     */
+    getVisitsForCaregiver(caregiverId: string): Promise<Array<EvvVisit & {
+        flagReason: string | null;
+    }>>;
     private mapRowToVisit;
     /**
      * Record the outcome of a Sandata submission attempt. Only touches the two

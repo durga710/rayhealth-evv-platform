@@ -1,18 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../lib/AuthContext';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import ErrorRetry from '../common/ErrorRetry';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
 import { deriveVisitState, type VisitState } from '../../lib/visit-state';
@@ -20,6 +22,7 @@ import { deriveVisitState, type VisitState } from '../../lib/visit-state';
 interface Assignment {
   id: string;
   clientName: string;
+  clientAddress?: string;
   time?: string;
   serviceCode?: string;
   clientLat?: number | null;
@@ -36,6 +39,9 @@ interface TodayScheduleRow {
   scheduledStartTime: string | null;
   clientFirstName: string;
   clientLastName: string;
+  clientAddressLine1?: string | null;
+  clientCity?: string | null;
+  clientState?: string | null;
   clientLatitude: number | null;
   clientLongitude: number | null;
   geofenceRadiusM: number;
@@ -45,8 +51,11 @@ interface TodayScheduleRow {
   currentClockOutTime: string | null;
 }
 
-const FOREGROUND_FIRE_WINDOW_MS = 32_000;
-const FOREGROUND_FIRE_MIN_MS = 28_000;
+// The fire window (8s) is wider than the tick (5s) so a tick always lands
+// inside it once as the countdown passes through — the previous 4s window could
+// be straddled and skipped. firedForegroundRef keeps it to a single haptic.
+const FOREGROUND_FIRE_WINDOW_MS = 33_000;
+const FOREGROUND_FIRE_MIN_MS = 25_000;
 const FOREGROUND_TICK_MS = 5_000;
 
 function dayKey(d: Date): string {
@@ -78,10 +87,12 @@ function greetingFor(user: { firstName?: string | null } | null): string {
 }
 
 function AdminScreen({ role, onLogout }: { role: string; onLogout: () => void }) {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar style="light" />
       <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={styles.adminGradient}>
-        <View style={styles.adminWrap}>
+        <View style={[styles.adminWrap, { paddingTop: insets.top + 16 }]}>
           <View style={styles.adminIconCircle}>
             <Text style={styles.adminEmoji}>🖥️</Text>
           </View>
@@ -105,7 +116,7 @@ function AdminScreen({ role, onLogout }: { role: string; onLogout: () => void })
           </Pressable>
         </View>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -124,8 +135,10 @@ function EmptyVisits() {
 export default function DashboardScreen() {
   const { logout, user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const firedForegroundRef = useRef<Set<string>>(new Set());
 
@@ -141,6 +154,8 @@ export default function DashboardScreen() {
       const list: Assignment[] = rows.map((r) => ({
         id: r.assignmentId,
         clientName: `${r.clientFirstName ?? ''} ${r.clientLastName ?? ''}`.trim() || 'Client',
+        clientAddress:
+          [r.clientAddressLine1, r.clientCity, r.clientState].filter(Boolean).join(', ') || undefined,
         time: r.scheduledStartTime ?? undefined,
         // serviceCode is re-derived server-side at clock-in; not needed here.
         serviceCode: undefined,
@@ -152,19 +167,32 @@ export default function DashboardScreen() {
         clockInTime: r.currentClockInTime ?? null,
       }));
       setAssignments(list);
+      setError(null);
       const permStatus = await ensureNotificationPermission();
       if (permStatus === 'granted') {
         await scheduleShiftAlerts(list);
       }
     } catch {
-      // 401 handled centrally; other errors leave the list empty
+      // 401 redirects to login via the central handler; surface other failures
+      // so a dropped connection isn't shown as "no visits today".
+      setError('Could not load your visits.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => { void fetchAssignments(); }, []);
+  // Refetch on focus so visits/schedule changes made in the web app appear
+  // when the caregiver opens or returns to the dashboard — not only on a
+  // manual pull-to-refresh.
+  useFocusEffect(
+    useCallback(() => {
+      // Admins/coordinators see the "use the web portal" screen, not the
+      // caregiver schedule — don't fire the caregiver-only /today request.
+      if (user?.role === 'admin' || user?.role === 'coordinator') return;
+      void fetchAssignments();
+    }, [user?.role]),
+  );
 
   useEffect(() => {
     if (assignments.length === 0) return;
@@ -223,6 +251,7 @@ export default function DashboardScreen() {
             params: {
               assignmentId: item.id,
               clientName: item.clientName,
+              clientAddress: item.clientAddress ?? '',
               scheduledTime: item.time ?? '',
               serviceCode: item.serviceCode ?? '',
               clientLat: item.clientLat != null ? String(item.clientLat) : '',
@@ -260,9 +289,10 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar style="light" />
       {/* Header */}
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={styles.header}>
+      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerTop}>
           <Pressable
             onLongPress={handleSessionPillLongPress}
@@ -272,14 +302,6 @@ export default function DashboardScreen() {
           >
             <View style={styles.sessionDot} />
             <Text style={styles.sessionPillText}>Secure Session</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleLogout}
-            hitSlop={12}
-            style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
-          >
-            <Text style={styles.logoutText}>Log out</Text>
           </Pressable>
         </View>
         <Text style={styles.greeting}>{greetingFor(user)}</Text>
@@ -313,7 +335,7 @@ export default function DashboardScreen() {
         ListHeaderComponent={
           <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
-        ListEmptyComponent={loading ? null : <EmptyVisits />}
+        ListEmptyComponent={loading ? null : error ? <ErrorRetry message={error} onRetry={fetchAssignments} /> : <EmptyVisits />}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -322,7 +344,7 @@ export default function DashboardScreen() {
           />
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -345,6 +367,9 @@ function CardContent({
         </View>
         <View style={styles.cardCenter}>
           <Text style={styles.clientName} numberOfLines={1}>{item.clientName}</Text>
+          {item.clientAddress ? (
+            <Text style={styles.clientAddress} numberOfLines={1}>📍 {item.clientAddress}</Text>
+          ) : null}
           <Text style={styles.visitTime}>{formatTime(item.time)}</Text>
         </View>
         {item.visitState === 'in_progress' ? (
@@ -375,7 +400,7 @@ function CardContent({
         ) : null}
         {hasGeolock ? (
           <View style={styles.geolockBadge}>
-            <Text style={styles.geolockBadgeText}>📍 Geolock</Text>
+            <Text style={styles.geolockBadgeText}>GPS ✓ {item.clientGeofenceM ?? 150}m</Text>
           </View>
         ) : null}
       </View>
@@ -426,8 +451,6 @@ const styles = StyleSheet.create({
     color: '#d4e8ff', fontSize: 10, fontWeight: '700',
     letterSpacing: 0.8, textTransform: 'uppercase',
   },
-  logoutBtn: { paddingVertical: 6, paddingHorizontal: 4 },
-  logoutText: { color: '#90bde0', fontSize: 14, fontWeight: '600' },
   greeting: {
     fontSize: 26, fontWeight: '900', color: '#fff',
     textShadowColor: '#00000030', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
@@ -489,6 +512,7 @@ const styles = StyleSheet.create({
   clientInitial: { fontSize: 20, fontWeight: '800', color: PRIMARY },
   cardCenter: { flex: 1 },
   clientName: { fontSize: 16, fontWeight: '800', color: '#1a3a5c', marginBottom: 2 },
+  clientAddress: { fontSize: 12, color: '#5a7088', marginBottom: 3 },
   visitTime: { fontSize: 13, color: PRIMARY, fontWeight: '600' },
   cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
   serviceCodeBadge: {
@@ -503,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef3c7', borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  geolockBadgeText: { color: '#92400e', fontSize: 10, fontWeight: '700' },
+  geolockBadgeText: { color: '#92400e', fontSize: 11, fontWeight: '800' },
   tapHint: { fontSize: 11, color: '#b0c4d8', fontWeight: '500' },
 
   badgeNow: {

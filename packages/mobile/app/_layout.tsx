@@ -1,8 +1,22 @@
 import { Stack, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { LogBox, Pressable, StyleSheet, Text, View } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../src/lib/AuthContext';
+
+// Expo Go (SDK 53+) removed remote push support, so expo-notifications' push-
+// token auto-registration logs a warning the moment the module is imported.
+// We only use LOCAL scheduled notifications (shift alerts), which still work in
+// Expo Go — so this message is expected noise *only* while running inside Expo
+// Go. It does NOT fire in a dev/production build, where remote push is
+// available, so scope the suppression to Expo Go to keep real push problems
+// visible everywhere else.
+if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+  LogBox.ignoreLogs([
+    'expo-notifications: Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go',
+  ]);
+}
 
 // Show shift-alert notifications even when the app is foregrounded so the
 // system banner + sound + vibration still fire. We mirror the haptic
@@ -45,6 +59,20 @@ export default function RootLayout() {
 
 function RootContent() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  // When the session is lost (logout, or a mid-use 401 revoke), reset the whole
+  // stack to login. The (tabs) layout already redirects, but screens pushed
+  // OVER the tabs — /clockin, /training, /visit-detail, /profile-details,
+  // /change-password — would otherwise strand the user on a now-unauthorized
+  // screen. Fire only on the authenticated→unauthenticated transition.
+  const prevAuth = useRef(isAuthenticated);
+  useEffect(() => {
+    if (prevAuth.current && !isAuthenticated) {
+      router.replace('/login');
+    }
+    prevAuth.current = isAuthenticated;
+  }, [isAuthenticated, router]);
 
   // Deep-link on notification tap. Pull the assignment data we embedded when
   // scheduling and route to /clockin with the same param shape the dashboard
@@ -71,7 +99,12 @@ function RootContent() {
     <View style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="clockin" options={{ headerShown: false }} />
+        <Stack.Screen name="training" options={{ headerShown: false }} />
+        <Stack.Screen name="visit-detail" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-details" options={{ headerShown: false }} />
+        <Stack.Screen name="change-password" options={{ headerShown: false }} />
       </Stack>
       <SessionRevokedBanner />
     </View>

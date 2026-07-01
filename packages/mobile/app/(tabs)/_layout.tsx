@@ -1,48 +1,65 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/lib/AuthContext';
+import LoadingScreen from '../../src/features/common/LoadingScreen';
 
-const PRIMARY = '#1a5fa8';
-const INACTIVE = '#9ab0c8';
+// Today is the home tab. Clock-in is reached by tapping a visit (or a shift
+// notification), so it pushes over the tabs as a hidden route (href: null)
+// rather than living in the bar.
+export const unstable_settings = {
+  initialRouteName: 'dashboard',
+};
 
-export default function TabLayout() {
+export default function AppLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Wait for the session to finish hydrating before mounting ANY protected
+  // screen, so a child doesn't fire an authenticated request before the bearer
+  // token is attached on reload (which would 401 and bounce to login).
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+  if (!isAuthenticated) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#e8edf2',
-          borderTopWidth: 1,
-          paddingBottom: Platform.OS === 'ios' ? 8 : 4,
-          height: Platform.OS === 'ios' ? 84 : 60,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginBottom: Platform.OS === 'ios' ? 0 : 4,
-        },
         headerShown: false,
+        tabBarActiveTintColor: '#1a5fa8',
+        tabBarInactiveTintColor: '#90a4b8',
+        tabBarStyle: { borderTopWidth: 1, borderTopColor: '#e2eaf2', paddingTop: 6 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
+          title: 'Today',
+          tabBarIcon: ({ color, size }) => <Ionicons name="today-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="clockin"
+        name="schedule"
         options={{
-          title: 'Clock In/Out',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
-          ),
+          title: 'Schedule',
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="visits"
+        options={{
+          title: 'Visits',
+          tabBarIcon: ({ color, size }) => <Ionicons name="checkbox-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Me',
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }}
       />
     </Tabs>
