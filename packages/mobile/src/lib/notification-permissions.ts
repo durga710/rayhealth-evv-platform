@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { showAppAlert } from '../features/common/alerts/appAlert';
 
 /**
  * Notification permission flow.
@@ -39,16 +40,17 @@ async function writeCachedStatus(status: PersistedPermStatus): Promise<void> {
 }
 
 /**
- * Resolve once the user dismisses the explainer Alert. iOS / Android both
- * render this as a native modal — no UI flash on the calling component.
+ * Resolve once the user dismisses the branded explainer dialog. Rendered
+ * through the app's own AppDialog rather than a native Alert — no UI flash
+ * on the calling component either way.
  */
 function showExplainer(): Promise<void> {
   return new Promise((resolve) => {
-    Alert.alert(
+    showAppAlert(
       'Enable shift reminders',
-      'Allow notifications so we can remind you 30 seconds before each shift.',
+      "Allow notifications so we can nudge you 30 seconds before each shift starts.",
       [{ text: 'Continue', onPress: () => resolve() }],
-      { cancelable: false, onDismiss: () => resolve() }
+      { variant: 'info', icon: 'notifications-outline', cancelable: false }
     );
   });
 }
