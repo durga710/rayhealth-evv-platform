@@ -16,6 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import apiClient from '../../lib/api-client';
 import { showAppAlert } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow, gradients, alpha } from '../common/tokens';
 
 interface Profile {
   email: string;
@@ -50,7 +51,7 @@ function Row({
       disabled={!onPress}
       style={({ pressed }) => [styles.row, pressed && onPress ? styles.rowPressed : null]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: `${tint}1a` }]}>
+      <View style={[styles.rowIcon, { backgroundColor: `${tint}${alpha.tint}` }]}>
         <Ionicons name={icon} size={18} color={tint} />
       </View>
       <View style={styles.rowText}>
@@ -58,7 +59,7 @@ function Row({
         {subtitle ? <Text style={styles.rowSub}>{subtitle}</Text> : null}
       </View>
       {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-      {onPress ? <Ionicons name="chevron-forward" size={18} color="#bcccdc" /> : null}
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={colors.chevron} /> : null}
       {!isLast ? <View style={styles.rowDivider} /> : null}
     </Pressable>
   );
@@ -115,7 +116,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 18 }]}>
+      <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 18 }]}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
@@ -133,14 +134,14 @@ export default function ProfileScreen() {
         <View style={styles.group}>
           <Row
             icon="person-outline"
-            tint="#1a5fa8"
+            tint={colors.brandBlue}
             title="Personal details"
             subtitle="Name and phone number"
             onPress={() => router.push('/profile-details')}
           />
           <Row
             icon="business-outline"
-            tint="#0f766e"
+            tint={colors.teal}
             title="Linked agencies"
             subtitle={
               user?.agencyName
@@ -153,7 +154,7 @@ export default function ProfileScreen() {
           />
           <Row
             icon="lock-closed-outline"
-            tint="#7c3aed"
+            tint={colors.purple}
             title="Password & security"
             subtitle="Change your password"
             onPress={() => router.push('/change-password')}
@@ -165,7 +166,7 @@ export default function ProfileScreen() {
         <View style={styles.group}>
           <Row
             icon="school-outline"
-            tint="#16a34a"
+            tint={colors.success}
             title="My Training"
             subtitle="Courses & certificates"
             onPress={() => router.push('/training')}
@@ -177,21 +178,21 @@ export default function ProfileScreen() {
         <View style={styles.group}>
           <Row
             icon="book-outline"
-            tint="#0891b2"
+            tint={colors.cyan}
             title="Help & User Guide"
             subtitle="How to use RayHealthEVV"
             onPress={() => router.push('/help')}
           />
           <Row
             icon="help-buoy-outline"
-            tint="#d97706"
+            tint={colors.amber}
             title="Contact Support"
             subtitle="Email RayHealthEVV support"
             onPress={openSupport}
           />
           <Row
             icon="information-circle-outline"
-            tint="#64748b"
+            tint={colors.slate}
             title="About"
             value={`v${version}`}
             isLast
@@ -202,7 +203,7 @@ export default function ProfileScreen() {
           onPress={confirmLogout}
           style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
         >
-          <Ionicons name="log-out-outline" size={18} color="#b91c1c" />
+          <Ionicons name="log-out-outline" size={18} color={colors.danger} />
           <Text style={styles.logoutText}>Log out</Text>
         </Pressable>
 
@@ -213,7 +214,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
 
   header: { alignItems: 'center', paddingBottom: 24, paddingHorizontal: 24 },
   avatar: {
@@ -222,42 +223,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginBottom: 12,
   },
   avatarText: { fontSize: 28, fontWeight: '900', color: '#fff' },
-  headerName: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: -0.3 },
-  headerEmail: { fontSize: 13, color: '#cfe2f5', marginTop: 3 },
+  headerName: { ...typography.title, color: '#fff' },
+  headerEmail: { ...typography.sub, color: colors.onGradientSoft, marginTop: 3 },
   rolePill: {
-    marginTop: 10, backgroundColor: '#ffffff1f', borderRadius: 999,
+    marginTop: 10, backgroundColor: '#ffffff1f', borderRadius: radii.pill,
     paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: '#ffffff2b',
   },
   rolePillText: { color: '#bfdbfe', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
 
   scroll: { padding: 16, paddingBottom: 36 },
   sectionLabel: {
-    fontSize: 12, fontWeight: '900', color: '#4a6480',
-    textTransform: 'uppercase', letterSpacing: 0.7, marginLeft: 4, marginBottom: 8, marginTop: 12,
+    ...typography.label, color: colors.textSecondary,
+    marginLeft: 4, marginBottom: 8, marginTop: 12,
   },
   group: {
-    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, overflow: 'hidden',
+    ...shadow.card,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingHorizontal: 14, paddingVertical: 14 },
-  rowPressed: { backgroundColor: '#f5f9fd' },
-  rowIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  rowPressed: { backgroundColor: colors.pressedBg },
+  rowIcon: { width: 36, height: 36, borderRadius: radii.sm, justifyContent: 'center', alignItems: 'center' },
   rowText: { flex: 1 },
-  rowTitle: { fontSize: 15, fontWeight: '700', color: '#0f2d52' },
-  rowSub: { fontSize: 12, color: '#5a7088', marginTop: 2 },
-  rowValue: { fontSize: 14, color: '#8499ad', fontWeight: '600', marginRight: 2 },
+  rowTitle: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
+  rowSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  rowValue: { fontSize: 14, color: colors.textMuted, fontWeight: '600', marginRight: 2 },
   rowDivider: {
     position: 'absolute', left: 63, right: 0, bottom: 0, height: StyleSheet.hairlineWidth,
-    backgroundColor: '#e6edf4',
+    backgroundColor: colors.border,
   },
 
   logoutBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
-    height: 52, borderRadius: 14, backgroundColor: '#fff5f5',
-    borderWidth: 1, borderColor: '#fecaca', marginTop: 24,
+    height: 52, borderRadius: radii.md, backgroundColor: colors.dangerBg,
+    borderWidth: 1, borderColor: colors.dangerBorder, marginTop: 24,
   },
-  logoutText: { color: '#b91c1c', fontSize: 15, fontWeight: '800' },
+  logoutText: { color: colors.danger, fontSize: 15, fontWeight: '800' },
 
-  footer: { textAlign: 'center', color: '#9db3c8', fontSize: 12, marginTop: 18 },
+  footer: { textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: 18 },
 });

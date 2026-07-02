@@ -16,6 +16,7 @@ import ScreenHeader from '../common/ScreenHeader';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
 import { showAppAlert, showAppToast } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow, alpha } from '../common/tokens';
 
 type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
 
@@ -47,11 +48,11 @@ interface ProgressData {
 }
 
 const STATUS_META: Record<EnrollmentStatus, { label: string; color: string }> = {
-  completed: { label: 'Completed', color: '#16a34a' },
-  in_progress: { label: 'In progress', color: '#1a5fa8' },
-  not_started: { label: 'Not started', color: '#64748b' },
-  overdue: { label: 'Overdue', color: '#dc2626' },
-  expired: { label: 'Expired', color: '#d97706' },
+  completed: { label: 'Completed', color: colors.success },
+  in_progress: { label: 'In progress', color: colors.brandBlue },
+  not_started: { label: 'Not started', color: colors.slate },
+  overdue: { label: 'Overdue', color: colors.danger },
+  expired: { label: 'Expired', color: colors.amber },
 };
 
 function formatDue(iso: string | null): string | null {
@@ -152,7 +153,7 @@ export default function TrainingScreen() {
               </View>
             ) : null}
           </View>
-          <View style={[styles.statusPill, { backgroundColor: `${meta.color}1a` }]}>
+          <View style={[styles.statusPill, { backgroundColor: `${meta.color}${alpha.tint}` }]}>
             <Text style={[styles.statusText, { color: meta.color }]}>{meta.label}</Text>
           </View>
         </View>
@@ -163,7 +164,10 @@ export default function TrainingScreen() {
 
         <View style={styles.cardMetaRow}>
           {item.course.durationMinutes > 0 ? (
-            <Text style={styles.metaText}>⏱ {item.course.durationMinutes} min</Text>
+            <View style={styles.metaItem}>
+              <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+              <Text style={styles.metaText}>{item.course.durationMinutes} min</Text>
+            </View>
           ) : null}
           {due ? <Text style={styles.metaText}>Due {due}</Text> : null}
         </View>
@@ -178,13 +182,13 @@ export default function TrainingScreen() {
           ]}
         >
           {busy ? (
-            <ActivityIndicator color={isCompleted ? '#1a5fa8' : '#fff'} size="small" />
+            <ActivityIndicator color={isCompleted ? colors.brandBlue : '#fff'} size="small" />
           ) : (
             <>
               <Ionicons
                 name={isCompleted ? 'ribbon-outline' : 'play-circle-outline'}
                 size={16}
-                color={isCompleted ? '#1a5fa8' : '#fff'}
+                color={isCompleted ? colors.brandBlue : '#fff'}
               />
               <Text style={[styles.actionText, isCompleted ? styles.actionTextGhost : styles.actionTextPrimary]}>
                 {isCompleted ? 'View certificate' : item.enrollment.status === 'in_progress' ? 'Continue' : 'Start course'}
@@ -204,7 +208,7 @@ export default function TrainingScreen() {
             <Ionicons
               name={data.isCompliant ? 'shield-checkmark' : 'alert-circle'}
               size={16}
-              color={data.isCompliant ? '#bbf7d0' : '#fde68a'}
+              color={data.isCompliant ? colors.successBorder : colors.amberBorder}
             />
             <Text style={styles.complianceText}>
               {data.isCompliant
@@ -217,7 +221,7 @@ export default function TrainingScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#1a5fa8" />
+          <ActivityIndicator color={colors.brandBlue} />
         </View>
       ) : (
         <FlatList
@@ -226,7 +230,7 @@ export default function TrainingScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandBlue} />}
           ListEmptyComponent={
             error ? (
               <ErrorRetry message={error} onRetry={load} />
@@ -245,42 +249,42 @@ export default function TrainingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   complianceBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 14,
     borderWidth: 1,
   },
-  compliantOk: { backgroundColor: '#16a34a22', borderColor: '#16a34a45' },
+  compliantOk: { backgroundColor: `${colors.success}22`, borderColor: `${colors.success}45` },
   compliantWarn: { backgroundColor: '#f59e0b22', borderColor: '#f59e0b45' },
-  complianceText: { color: '#fff', fontSize: 13, fontWeight: '700', flex: 1 },
+  complianceText: { color: '#fff', ...typography.sub, fontWeight: '700', flex: 1 },
 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 16, gap: 12 },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 16,
+    ...shadow.card,
   },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   titleWrap: { flex: 1, gap: 6 },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: '#0f2d52', lineHeight: 20 },
-  reqPill: { alignSelf: 'flex-start', backgroundColor: '#fef3c7', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
-  reqText: { fontSize: 9, fontWeight: '900', color: '#b45309', letterSpacing: 0.5 },
-  statusPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  statusText: { fontSize: 11, fontWeight: '800' },
-  cardDesc: { fontSize: 13, color: '#5a7088', lineHeight: 18, marginTop: 10 },
-  cardMetaRow: { flexDirection: 'row', gap: 14, marginTop: 10 },
-  metaText: { fontSize: 12, color: '#8499ad', fontWeight: '600' },
+  cardTitle: { ...typography.heading, color: colors.textPrimary, lineHeight: 21 },
+  reqPill: { alignSelf: 'flex-start', backgroundColor: colors.amberBg, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: colors.amberBorder },
+  reqText: { fontSize: 9, fontWeight: '900', color: colors.amberDark, letterSpacing: 0.5 },
+  statusPill: { borderRadius: radii.pill, paddingHorizontal: 10, paddingVertical: 5 },
+  statusText: { ...typography.caption, fontWeight: '800' },
+  cardDesc: { ...typography.sub, color: colors.textSecondary, lineHeight: 18, marginTop: 10 },
+  cardMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
 
   actionBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 7,
     height: 44, borderRadius: 12, marginTop: 14,
   },
-  actionBtnPrimary: { backgroundColor: '#1a5fa8' },
+  actionBtnPrimary: { backgroundColor: colors.brandBlue },
   actionBtnGhost: { backgroundColor: '#f0f6fd', borderWidth: 1, borderColor: '#d6e6f7' },
   actionText: { fontSize: 14, fontWeight: '800' },
   actionTextPrimary: { color: '#fff' },
-  actionTextGhost: { color: '#1a5fa8' },
+  actionTextGhost: { color: colors.brandBlue },
 });

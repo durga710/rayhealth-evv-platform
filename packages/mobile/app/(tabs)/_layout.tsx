@@ -1,8 +1,10 @@
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/lib/AuthContext';
 import LoadingScreen from '../../src/features/common/LoadingScreen';
+import { colors } from '../../src/features/common/tokens';
 
 // Today is the home tab. Clock-in is reached by tapping a visit (or a shift
 // notification), so it pushes over the tabs as a hidden route (href: null)
@@ -34,38 +36,47 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1a5fa8',
-        tabBarInactiveTintColor: '#90a4b8',
-        tabBarStyle: { borderTopWidth: 1, borderTopColor: '#e2eaf2', paddingTop: 6 },
+        tabBarActiveTintColor: colors.brandBlue,
+        tabBarInactiveTintColor: colors.tabInactive,
+        tabBarStyle: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6 },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
+      screenListeners={{ tabPress: () => { void Haptics.selectionAsync(); } }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color, size }) => <Ionicons name="today-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'today' : 'today-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="schedule"
         options={{
           title: 'Schedule',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="visits"
         options={{
           title: 'Visits',
-          tabBarIcon: ({ color, size }) => <Ionicons name="checkbox-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'checkbox' : 'checkbox-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Me',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

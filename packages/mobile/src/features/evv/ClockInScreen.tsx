@@ -15,10 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Circle, Marker } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { haversineM, formatDistance } from '../../lib/geofence';
 import { showAppAlert } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -232,7 +234,7 @@ function GeoMap({
           accessibilityRole="button"
           accessibilityLabel="Center map on my location"
         >
-          <Ionicons name="locate" size={19} color={hasUser ? '#1a5fa8' : '#a8bdd4'} />
+          <Ionicons name="locate" size={19} color={hasUser ? colors.brandBlue : colors.disabled} />
         </Pressable>
         <Pressable
           onPress={() => fitToZone(true)}
@@ -240,7 +242,7 @@ function GeoMap({
           accessibilityRole="button"
           accessibilityLabel="Center map on the client zone"
         >
-          <Ionicons name="home" size={17} color="#1a5fa8" />
+          <Ionicons name="home" size={17} color={colors.brandBlue} />
         </Pressable>
       </View>
     </View>
@@ -385,6 +387,7 @@ export default function ClockInScreen() {
     }
     setGeofenceError(null);
     setIsLoading(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const { data } = await apiClient.post('/api/evv/clock-in', {
         assignmentId,
@@ -392,11 +395,13 @@ export default function ClockInScreen() {
         location: { lat: currentCoords.lat, lng: currentCoords.lng, accuracy: accuracy ?? 0 },
       });
       setVisit({ id: data.id, clockInTime: data.clockInTime ?? new Date().toISOString() });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: unknown) {
       const resp = (err as {
         response?: { status?: number; data?: { code?: string; message?: string; distanceM?: number; allowedM?: number } }
       })?.response;
       if (resp?.status === 422 && resp.data?.code === 'GEOFENCE_OUT_OF_BOUNDS') {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         setGeofenceError({
           message: resp.data.message ?? 'You are outside the allowed zone.',
           distanceM: resp.data.distanceM ?? 0,
@@ -419,6 +424,7 @@ export default function ClockInScreen() {
     if (!visit) return;
     setGeofenceError(null);
     setIsLoading(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       // A caregiver must always be able to END a shift. Use the live fix if we
       // have one, otherwise fall back to last-known (they almost certainly had
@@ -447,11 +453,13 @@ export default function ClockInScreen() {
       const clockOutTime = new Date().toISOString();
       setVisit(null);
       setCompleted({ totalElapsed, clockInTime, clockOutTime });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: unknown) {
       const resp = (err as {
         response?: { status?: number; data?: { code?: string; message?: string; distanceM?: number; allowedM?: number } }
       })?.response;
       if (resp?.status === 422 && resp.data?.code === 'GEOFENCE_OUT_OF_BOUNDS') {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         setGeofenceError({
           message: resp.data.message ?? 'You are outside the allowed zone.',
           distanceM: resp.data.distanceM ?? 0,
@@ -489,7 +497,7 @@ export default function ClockInScreen() {
           <Text style={styles.clientName} numberOfLines={1}>{clientName ?? '—'}</Text>
           {clientAddress ? (
             <View style={styles.addrRow}>
-              <Ionicons name="location-outline" size={13} color="#5a7088" />
+              <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
               <Text style={styles.clientAddr} numberOfLines={2}>{clientAddress}</Text>
             </View>
           ) : null}
@@ -498,12 +506,12 @@ export default function ClockInScreen() {
       <View style={styles.chipRow}>
         {serviceCode ? (
           <View style={styles.chip}>
-            <Ionicons name="medkit-outline" size={12} color="#1a5fa8" />
+            <Ionicons name="medkit-outline" size={12} color={colors.brandBlue} />
             <Text style={styles.chipText}>{serviceCode}</Text>
           </View>
         ) : null}
         <View style={styles.chip}>
-          <Ionicons name="time-outline" size={12} color="#1a5fa8" />
+          <Ionicons name="time-outline" size={12} color={colors.brandBlue} />
           <Text style={styles.chipText}>{formatScheduledTime(scheduledTime)}</Text>
         </View>
         {!hasGeolock ? (
@@ -544,7 +552,7 @@ export default function ClockInScreen() {
 
   const geofenceBanner = geofenceError ? (
     <View style={styles.geofenceBanner}>
-      <Text style={styles.geofenceBannerTitle}>⛔ Outside allowed zone</Text>
+      <Text style={styles.geofenceBannerTitle}>Outside allowed zone</Text>
       <Text style={styles.geofenceBannerMsg}>{geofenceError.message}</Text>
       <View style={styles.geofenceBannerStats}>
         <View style={styles.geofenceStat}>
@@ -564,16 +572,20 @@ export default function ClockInScreen() {
     <Pressable
       onPress={handleClockIn}
       disabled={!canClockIn}
+      style={({ pressed }) => [
+        styles.actionBtnWrap,
+        pressed && canClockIn && { transform: [{ scale: 0.98 }], opacity: 0.95 },
+      ]}
       accessibilityRole="button"
       accessibilityLabel="Clock in"
     >
       <LinearGradient
-        colors={canClockIn ? ['#1a5fa8', '#0f3d72'] : ['#a8bdd4', '#8ea8bf']}
+        colors={canClockIn ? gradients.cta : gradients.ctaDisabled}
         style={styles.actionBtn}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
-        <Ionicons name="location" size={20} color="#fff" />
+        <Ionicons name="location" size={20} color={colors.onGradient} />
         <Text style={styles.actionBtnText}>
           {isLoading
             ? 'Clocking in…'
@@ -589,16 +601,20 @@ export default function ClockInScreen() {
     <Pressable
       onPress={handleClockOut}
       disabled={!canClockOut}
+      style={({ pressed }) => [
+        styles.actionBtnWrap,
+        pressed && canClockOut && { transform: [{ scale: 0.98 }], opacity: 0.95 },
+      ]}
       accessibilityRole="button"
       accessibilityLabel="Clock out"
     >
       <LinearGradient
-        colors={canClockOut ? ['#16a34a', '#15803d'] : ['#86b89a', '#70a080']}
+        colors={canClockOut ? gradients.ctaSuccess : ['#86b89a', '#70a080']}
         style={styles.actionBtn}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
-        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+        <Ionicons name="checkmark-circle" size={22} color={colors.onGradient} />
         <Text style={styles.actionBtnText}>{isLoading ? 'Clocking out…' : 'Clock Out'}</Text>
       </LinearGradient>
     </Pressable>
@@ -633,7 +649,7 @@ export default function ClockInScreen() {
 
   const evvNote = (
     <View style={styles.evvNote}>
-      <Ionicons name="lock-closed" size={13} color="#7a98b4" style={{ marginTop: 1 }} />
+      <Ionicons name="lock-closed" size={13} color={colors.textMuted} style={{ marginTop: 1 }} />
       <Text style={styles.evvNoteText}>
         GPS is captured at clock-in and clock-out for PA EVV compliance.
         {hasGeolock
@@ -657,11 +673,11 @@ export default function ClockInScreen() {
       ],
     };
     return (
-      <LinearGradient colors={['#0f2d52', '#1a5fa8', '#2d7dd2']} style={styles.doneRoot}>
+      <LinearGradient colors={gradients.hero} style={styles.doneRoot}>
         <StatusBar style="light" />
         <Animated.View style={[styles.doneCard, cardStyle]}>
           <Animated.View style={[styles.doneCheck, checkStyle]}>
-            <Ionicons name="checkmark" size={50} color="#fff" />
+            <Ionicons name="checkmark" size={50} color={colors.onGradient} />
           </Animated.View>
           <Text style={styles.doneTitle}>Visit Complete</Text>
           {clientName ? <Text style={styles.doneClient}>{clientName}</Text> : null}
@@ -684,7 +700,7 @@ export default function ClockInScreen() {
           </View>
 
           <View style={styles.doneVerified}>
-            <Ionicons name="shield-checkmark" size={15} color="#16a34a" />
+            <Ionicons name="shield-checkmark" size={15} color={colors.success} />
             <Text style={styles.doneVerifiedText}>GPS verified · EVV recorded</Text>
           </View>
         </Animated.View>
@@ -707,7 +723,7 @@ export default function ClockInScreen() {
 
       {/* Slim header — back + geofence pill; client detail lives in the card below */}
       <LinearGradient
-        colors={['#0f2d52', '#1a5fa8']}
+        colors={gradients.header}
         style={[styles.topBar, { paddingTop: insets.top + 8 }]}
       >
         <Pressable
@@ -722,7 +738,10 @@ export default function ClockInScreen() {
         </Pressable>
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {isClockedIn ? (
           <>
             {timerCard}
@@ -751,42 +770,42 @@ export default function ClockInScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
 
   // Visit complete celebration
   doneRoot: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 20 },
   doneCard: {
-    backgroundColor: '#fff', borderRadius: 28, paddingVertical: 36, paddingHorizontal: 28,
+    backgroundColor: colors.cardBg, borderRadius: 28, paddingVertical: 36, paddingHorizontal: 28,
     alignItems: 'center', width: '100%', maxWidth: 380,
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: 14 }, elevation: 14,
+    ...shadow.floating,
   },
   doneCheck: {
-    width: 96, height: 96, borderRadius: 48, backgroundColor: '#16a34a',
+    width: 96, height: 96, borderRadius: 48, backgroundColor: colors.success,
     justifyContent: 'center', alignItems: 'center', marginBottom: 18,
-    shadowColor: '#16a34a', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
+    shadowColor: colors.success, shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
-  doneTitle: { fontSize: 26, fontWeight: '900', color: '#0f2d52', letterSpacing: -0.5 },
-  doneClient: { fontSize: 15, color: '#5a7088', marginTop: 4, fontWeight: '600' },
+  doneTitle: { ...typography.hero, fontSize: 26, letterSpacing: -0.5, color: colors.textPrimary },
+  doneClient: { ...typography.body, color: colors.textSecondary, marginTop: 4 },
   doneTimeWrap: { alignItems: 'center', marginTop: 22 },
-  doneTimeLabel: { fontSize: 11, fontWeight: '800', color: '#94a3b8', letterSpacing: 1 },
-  doneTime: { fontSize: 46, fontWeight: '900', color: '#1a5fa8', fontVariant: ['tabular-nums'], marginTop: 4, lineHeight: 50 },
+  doneTimeLabel: { ...typography.label, letterSpacing: 1, color: colors.textMuted },
+  doneTime: { fontSize: 46, fontWeight: '900', color: colors.brandBlue, fontVariant: ['tabular-nums'], marginTop: 4, lineHeight: 50 },
   doneSplit: { flexDirection: 'row', alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
   doneCol: { flex: 1, alignItems: 'center' },
-  doneColLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  doneColVal: { fontSize: 16, fontWeight: '800', color: '#1a3a5c', marginTop: 3 },
-  doneColDivider: { width: 1, height: 34, backgroundColor: '#e6edf4' },
+  doneColLabel: { ...typography.label, fontWeight: '700', letterSpacing: 0.5, color: colors.textMuted },
+  doneColVal: { ...typography.heading, color: colors.textPrimary, marginTop: 3 },
+  doneColDivider: { width: 1, height: 34, backgroundColor: colors.border },
   doneVerified: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 22,
-    backgroundColor: '#f0fdf4', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1, borderColor: '#bbf7d0',
+    backgroundColor: colors.successBg, borderRadius: radii.pill, paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: colors.successBorder,
   },
-  doneVerifiedText: { color: '#15803d', fontSize: 12.5, fontWeight: '700' },
+  doneVerifiedText: { color: colors.successDark, fontSize: 12.5, fontWeight: '700' },
   doneBtn: {
-    backgroundColor: '#fff', borderRadius: 16, height: 54,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, height: 54,
     width: '100%', maxWidth: 380, justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6,
   },
-  doneBtnText: { color: '#1a5fa8', fontSize: 17, fontWeight: '800' },
+  doneBtnText: { color: colors.brandBlue, fontSize: 17, fontWeight: '800' },
 
   // Slim header
   topBar: {
@@ -803,9 +822,8 @@ const styles = StyleSheet.create({
 
   // Client card
   card: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 16,
-    shadowColor: '#0f2d52', shadowOpacity: 0.06, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.xl, padding: 16,
+    ...shadow.card,
   },
   clientRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatar: {
@@ -813,26 +831,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#eaf2fb', borderWidth: 1, borderColor: '#d6e6f7',
     justifyContent: 'center', alignItems: 'center',
   },
-  avatarText: { fontSize: 18, fontWeight: '900', color: '#1a5fa8' },
+  avatarText: { fontSize: 18, fontWeight: '900', color: colors.brandBlue },
   clientInfo: { flex: 1, gap: 3 },
-  clientName: { fontSize: 18, fontWeight: '900', color: '#0f2d52', letterSpacing: -0.3 },
+  clientName: { ...typography.heading, fontSize: 18, fontWeight: '900', letterSpacing: -0.3, color: colors.textPrimary },
   addrRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
-  clientAddr: { flex: 1, fontSize: 12.5, color: '#5a7088', lineHeight: 17 },
+  clientAddr: { flex: 1, fontSize: 12.5, color: colors.textSecondary, lineHeight: 17 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#f0f6fd', borderRadius: 999,
+    backgroundColor: '#f0f6fd', borderRadius: radii.pill,
     paddingHorizontal: 11, paddingVertical: 6,
     borderWidth: 1, borderColor: '#e0ecf8',
   },
-  chipText: { fontSize: 12, fontWeight: '800', color: '#1a5fa8', letterSpacing: 0.2 },
+  chipText: { fontSize: 12, fontWeight: '800', color: colors.brandBlue, letterSpacing: 0.2 },
   chipMuted: { backgroundColor: '#f3f4f6', borderColor: '#e5e7eb' },
-  chipMutedText: { fontSize: 12, fontWeight: '700', color: '#94a3b8' },
+  chipMutedText: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
 
   // Live geofence map + floating status pill
   mapWrap: {
-    height: 300, borderRadius: 18, overflow: 'hidden',
-    backgroundColor: '#e3e9f0', borderWidth: 1, borderColor: '#dce4ec',
+    height: 300, borderRadius: radii.xl, overflow: 'hidden',
+    backgroundColor: '#e3e9f0', borderWidth: 1, borderColor: colors.border,
   },
   map: { flex: 1 },
   mapPill: {
@@ -852,67 +870,67 @@ const styles = StyleSheet.create({
   mapAccuracyText: { color: '#dbe6f1', fontSize: 11, fontWeight: '700' },
   mapControls: { position: 'absolute', right: 12, bottom: 12, gap: 8 },
   mapBtn: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff',
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.cardBg,
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4,
   },
   mapBtnDisabled: { backgroundColor: '#eef2f6' },
 
-  // Active timer
+  // Active timer (green-tinted shadow is intentional — matches the timer surface)
   timerCard: {
-    borderRadius: 20, paddingVertical: 24, paddingHorizontal: 20, alignItems: 'center',
+    borderRadius: radii.xl, paddingVertical: 24, paddingHorizontal: 20, alignItems: 'center',
     borderWidth: 1, borderColor: '#a7f3d0',
-    shadowColor: '#16a34a', shadowOpacity: 0.12, shadowRadius: 14,
+    shadowColor: colors.success, shadowOpacity: 0.12, shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   timerHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  timerPulse: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#16a34a' },
-  timerLabel: { color: '#15803d', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  timerPulse: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.success },
+  timerLabel: { ...typography.label, letterSpacing: 1, fontSize: 12, color: colors.successDark },
   timerValue: { color: '#166534', fontSize: 54, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 58 },
   timerSub: { color: '#3f9d6b', fontSize: 12, fontWeight: '600', marginTop: 6, textAlign: 'center' },
 
   // Geofence banner
   geofenceBanner: {
-    backgroundColor: '#fff5f5',
-    borderRadius: 16, padding: 18,
-    borderWidth: 1, borderColor: '#fecaca',
+    backgroundColor: colors.dangerBg,
+    borderRadius: radii.lg, padding: 18,
+    borderWidth: 1, borderColor: colors.dangerBorder,
   },
-  geofenceBannerTitle: { color: '#991b1b', fontWeight: '800', fontSize: 15, marginBottom: 6 },
-  geofenceBannerMsg: { color: '#b91c1c', fontSize: 13, lineHeight: 19, marginBottom: 14 },
+  geofenceBannerTitle: { color: colors.dangerDark, fontWeight: '800', fontSize: 15, marginBottom: 6 },
+  geofenceBannerMsg: { ...typography.sub, color: colors.danger, lineHeight: 19, marginBottom: 14 },
   geofenceBannerStats: { flexDirection: 'row', alignItems: 'center' },
   geofenceStat: { flex: 1, alignItems: 'center' },
-  geofenceStatLabel: { color: '#f87171', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
-  geofenceStatVal: { color: '#991b1b', fontSize: 18, fontWeight: '900' },
-  geofenceStatDivider: { width: 1, height: 32, backgroundColor: '#fecaca' },
+  geofenceStatLabel: { ...typography.label, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, color: '#f87171', marginBottom: 3 },
+  geofenceStatVal: { color: colors.dangerDark, fontSize: 18, fontWeight: '900' },
+  geofenceStatDivider: { width: 1, height: 32, backgroundColor: colors.dangerBorder },
 
   // Action button
+  actionBtnWrap: { borderRadius: radii.lg },
   actionBtn: {
-    borderRadius: 16, height: 60,
+    borderRadius: radii.lg, height: 60,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10,
-    shadowColor: '#0f3d72', shadowOpacity: 0.25, shadowRadius: 12,
+    shadowColor: colors.brandBlueDark, shadowOpacity: 0.25, shadowRadius: 12,
     shadowOffset: { width: 0, height: 5 }, elevation: 5,
   },
-  actionBtnText: { color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.2 },
+  actionBtnText: { color: colors.onGradient, fontSize: 17, fontWeight: '800', letterSpacing: 0.2 },
 
   // Denied
   deniedBox: {
-    backgroundColor: '#fff5f5', borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: '#fecaca',
+    backgroundColor: colors.dangerBg, borderRadius: radii.md, padding: 14,
+    borderWidth: 1, borderColor: colors.dangerBorder,
   },
-  deniedTitle: { color: '#991b1b', fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  deniedNote: { color: '#b91c1c', fontSize: 13, lineHeight: 19 },
+  deniedTitle: { color: colors.dangerDark, fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  deniedNote: { ...typography.sub, color: colors.danger, lineHeight: 19 },
   deniedActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  deniedBtn: { backgroundColor: '#b91c1c', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 9 },
-  deniedBtnText: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  deniedBtnGhost: { borderWidth: 1, borderColor: '#fca5a5', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 9 },
-  deniedBtnGhostText: { color: '#b91c1c', fontSize: 13, fontWeight: '800' },
+  deniedBtn: { backgroundColor: colors.danger, borderRadius: radii.sm, paddingHorizontal: 16, paddingVertical: 9 },
+  deniedBtnText: { ...typography.sub, fontWeight: '800', color: colors.onGradient },
+  deniedBtnGhost: { borderWidth: 1, borderColor: '#fca5a5', borderRadius: radii.sm, paddingHorizontal: 16, paddingVertical: 9 },
+  deniedBtnGhostText: { ...typography.sub, fontWeight: '800', color: colors.danger },
 
   // EVV note
   evvNote: {
     flexDirection: 'row', gap: 9, alignItems: 'flex-start',
-    backgroundColor: '#fff', borderRadius: 14, padding: 14,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 }, elevation: 1,
+    backgroundColor: colors.cardBg, borderRadius: radii.md, padding: 14,
+    ...shadow.subtle,
   },
-  evvNoteText: { flex: 1, color: '#7a98b4', fontSize: 12, lineHeight: 18 },
+  evvNoteText: { flex: 1, color: colors.textMuted, fontSize: 12, lineHeight: 18 },
 });

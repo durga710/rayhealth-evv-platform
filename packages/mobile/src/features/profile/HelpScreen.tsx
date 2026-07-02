@@ -14,6 +14,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import ScreenHeader from '../common/ScreenHeader';
 import EmptyState from '../common/EmptyState';
 import { showAppAlert } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow, alpha } from '../common/tokens';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -39,7 +40,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'agency-selection',
     icon: 'business-outline',
-    tint: '#1a5fa8',
+    tint: colors.brandBlue,
     title: 'Agency Selection',
     summary: 'Working with more than one agency',
     blocks: [
@@ -71,7 +72,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'home',
     icon: 'home-outline',
-    tint: '#0891b2',
+    tint: colors.cyan,
     title: 'Home Screen',
     summary: 'Finding your way around',
     blocks: [
@@ -90,7 +91,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'schedule',
     icon: 'calendar-outline',
-    tint: '#16a34a',
+    tint: colors.success,
     title: "Today's Schedule & Visit Indicators",
     summary: 'Visit list, TS / M / L markers, status colors',
     blocks: [
@@ -130,7 +131,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'visit-details',
     icon: 'time-outline',
-    tint: '#7c3aed',
+    tint: colors.purple,
     title: 'Visit Details & Clock In / Out',
     summary: 'Verifying visits, care plan tasks, notes',
     blocks: [
@@ -180,7 +181,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'unscheduled',
     icon: 'add-circle-outline',
-    tint: '#b45309',
+    tint: colors.amber,
     title: 'Unscheduled Visits',
     summary: 'Starting a visit that was not scheduled',
     blocks: [
@@ -238,7 +239,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'messages',
     icon: 'chatbubbles-outline',
-    tint: '#2d7dd2',
+    tint: colors.brandBlueLight,
     title: 'Messages',
     summary: 'Secure agency communication',
     blocks: [
@@ -264,7 +265,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'profile',
     icon: 'person-outline',
-    tint: '#0f766e',
+    tint: colors.teal,
     title: 'Your Profile & Linked Agencies',
     summary: 'Profile details, connecting agencies',
     blocks: [
@@ -293,7 +294,7 @@ const HELP_SECTIONS: HelpSection[] = [
   {
     key: 'support',
     icon: 'help-buoy-outline',
-    tint: '#d97706',
+    tint: colors.amber,
     title: 'Support',
     summary: 'Who to contact and when',
     blocks: [
@@ -334,7 +335,7 @@ function Block({ block, tint }: { block: HelpBlock; tint: string }) {
       ))}
       {block.note ? (
         <View style={styles.noteBox}>
-          <Ionicons name="information-circle" size={15} color="#1a5fa8" style={styles.noteIcon} />
+          <Ionicons name="information-circle" size={15} color={colors.brandBlue} style={styles.noteIcon} />
           <Text style={styles.noteText}>{block.note}</Text>
         </View>
       ) : null}
@@ -368,7 +369,7 @@ export default function HelpScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.introCard}>
           <View style={styles.introIcon}>
-            <Ionicons name="book" size={22} color="#1a5fa8" />
+            <Ionicons name="book" size={22} color={colors.brandBlue} />
           </View>
           <View style={styles.introText}>
             <Text style={styles.introTitle}>RayHealthEVV™ Mobile User Guide</Text>
@@ -380,11 +381,11 @@ export default function HelpScreen() {
         </View>
 
         <View style={styles.searchWrap}>
-          <Ionicons name="search" size={17} color="#6898c0" />
+          <Ionicons name="search" size={17} color={colors.onGradientFaint} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search the guide…"
-            placeholderTextColor="#b0c4d8"
+            placeholderTextColor={colors.placeholder}
             value={query}
             onChangeText={setQuery}
             autoCapitalize="none"
@@ -392,7 +393,7 @@ export default function HelpScreen() {
           />
           {query ? (
             <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Clear search">
-              <Ionicons name="close-circle" size={18} color="#8499ad" />
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           ) : null}
         </View>
@@ -418,7 +419,7 @@ export default function HelpScreen() {
                     accessibilityState={{ expanded: isOpen }}
                     accessibilityLabel={section.title}
                   >
-                    <View style={[styles.sectionIcon, { backgroundColor: `${section.tint}1a` }]}>
+                    <View style={[styles.sectionIcon, { backgroundColor: `${section.tint}${alpha.tint}` }]}>
                       <Ionicons name={section.icon} size={18} color={section.tint} />
                     </View>
                     <View style={styles.sectionText}>
@@ -428,7 +429,7 @@ export default function HelpScreen() {
                     <Ionicons
                       name={isOpen ? 'chevron-up' : 'chevron-down'}
                       size={18}
-                      color="#bcccdc"
+                      color={colors.chevron}
                     />
                   </Pressable>
                   {isOpen ? (
@@ -470,79 +471,77 @@ export default function HelpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   scroll: { padding: 16, paddingBottom: 40 },
 
   introCard: {
     flexDirection: 'row', gap: 13, alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 16,
+    ...shadow.card,
   },
   introIcon: {
-    width: 44, height: 44, borderRadius: 12, backgroundColor: '#1a5fa81a',
+    width: 44, height: 44, borderRadius: 12, backgroundColor: `${colors.brandBlue}${alpha.tint}`,
     justifyContent: 'center', alignItems: 'center',
   },
   introText: { flex: 1 },
-  introTitle: { fontSize: 15, fontWeight: '800', color: '#0f2d52' },
-  introSub: { fontSize: 12, color: '#5a7088', marginTop: 3, lineHeight: 17 },
+  introTitle: { ...typography.heading, color: colors.textPrimary },
+  introSub: { fontSize: 12, color: colors.textSecondary, marginTop: 3, lineHeight: 17 },
 
   searchWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 9,
-    backgroundColor: '#fff', borderRadius: 13, borderWidth: 1.5, borderColor: '#dce8f2',
+    backgroundColor: colors.cardBg, borderRadius: radii.md, borderWidth: 1.5, borderColor: colors.inputBorder,
     paddingHorizontal: 13, height: 48, marginTop: 14,
   },
-  searchInput: { flex: 1, fontSize: 15, color: '#1a3a5c' },
+  searchInput: { flex: 1, fontSize: 15, color: colors.inputText },
 
   emptyWrap: { marginTop: 22 },
 
   sectionList: { gap: 10, marginTop: 14 },
   sectionCard: {
-    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, overflow: 'hidden',
+    ...shadow.card,
   },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 13, padding: 14 },
-  sectionHeadPressed: { backgroundColor: '#f5f9fd' },
+  sectionHeadPressed: { backgroundColor: colors.pressedBg },
   sectionIcon: {
-    width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center',
+    width: 36, height: 36, borderRadius: radii.sm, justifyContent: 'center', alignItems: 'center',
   },
   sectionText: { flex: 1 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#0f2d52' },
-  sectionSummary: { fontSize: 12, color: '#5a7088', marginTop: 2 },
+  sectionTitle: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
+  sectionSummary: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   sectionBody: {
     paddingHorizontal: 16, paddingBottom: 16, paddingTop: 2,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#e6edf4',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
   },
 
   block: { marginTop: 12 },
-  blockHeading: { fontSize: 13.5, fontWeight: '800', color: '#0f2d52', marginBottom: 5 },
-  blockText: { fontSize: 13.5, color: '#3d5570', lineHeight: 20 },
+  blockHeading: { fontSize: 13.5, fontWeight: '800', color: colors.textPrimary, marginBottom: 5 },
+  blockText: { fontSize: 13.5, color: colors.textSecondary, lineHeight: 20 },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginTop: 6, paddingRight: 6 },
   bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7 },
-  bulletText: { flex: 1, fontSize: 13.5, color: '#3d5570', lineHeight: 20 },
+  bulletText: { flex: 1, fontSize: 13.5, color: colors.textSecondary, lineHeight: 20 },
   noteBox: {
     flexDirection: 'row', gap: 8, alignItems: 'flex-start',
-    backgroundColor: '#f0f6ff', borderRadius: 10, padding: 11, marginTop: 9,
+    backgroundColor: '#f0f6ff', borderRadius: radii.sm, padding: 11, marginTop: 9,
     borderWidth: 1, borderColor: '#dbeafe',
   },
   noteIcon: { marginTop: 1.5 },
   noteText: { flex: 1, fontSize: 12.5, color: '#1e4976', lineHeight: 18 },
 
   supportCard: {
-    backgroundColor: '#0f2d52', borderRadius: 18, padding: 20, marginTop: 20,
-    shadowColor: '#0f2d52', shadowOpacity: 0.25, shadowRadius: 14,
+    backgroundColor: colors.navy, borderRadius: radii.xl, padding: 20, marginTop: 20,
+    shadowColor: colors.navy, shadowOpacity: 0.25, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 5,
   },
   supportTitle: { color: '#fff', fontSize: 17, fontWeight: '900' },
-  supportText: { color: '#a8c8e8', fontSize: 13, lineHeight: 19, marginTop: 6 },
+  supportText: { ...typography.sub, color: colors.onGradientSoft, lineHeight: 19, marginTop: 6 },
   supportBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
-    backgroundColor: '#1a5fa8', borderRadius: 12, height: 48, marginTop: 14,
+    backgroundColor: colors.brandBlue, borderRadius: 12, height: 48, marginTop: 14,
   },
   supportBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
 
   footer: {
-    textAlign: 'center', color: '#9db3c8', fontSize: 11.5, lineHeight: 17, marginTop: 20,
+    textAlign: 'center', color: colors.textMuted, fontSize: 11.5, lineHeight: 17, marginTop: 20,
   },
 });

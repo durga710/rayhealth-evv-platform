@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ScreenHeader from '../common/ScreenHeader';
 import { showAppAlert, showAppToast } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow } from '../common/tokens';
 
 interface Profile {
   email: string;
@@ -80,7 +81,7 @@ export default function EditDetailsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#1a5fa8" />
+          <ActivityIndicator color={colors.brandBlue} />
         </View>
       ) : (
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={8}>
@@ -97,13 +98,13 @@ export default function EditDetailsScreen() {
               ) : null}
 
               <Text style={styles.label}>First name</Text>
-              <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="First name" placeholderTextColor="#9db3c8" autoCapitalize="words" />
+              <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="First name" placeholderTextColor={colors.placeholder} autoCapitalize="words" />
 
               <Text style={styles.label}>Last name</Text>
-              <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Last name" placeholderTextColor="#9db3c8" autoCapitalize="words" />
+              <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Last name" placeholderTextColor={colors.placeholder} autoCapitalize="words" />
 
               <Text style={styles.label}>Phone</Text>
-              <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="(555) 555-5555" placeholderTextColor="#9db3c8" keyboardType="phone-pad" />
+              <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="(555) 555-5555" placeholderTextColor={colors.placeholder} keyboardType="phone-pad" />
             </View>
 
             <Pressable
@@ -121,29 +122,28 @@ export default function EditDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   flex: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 16, paddingBottom: 40 },
   card: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 18,
-    shadowColor: '#0f2d52', shadowOpacity: 0.06, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 18,
+    ...shadow.card,
   },
   label: {
-    fontSize: 11, fontWeight: '700', color: '#4a6480',
-    textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6, marginTop: 6,
+    ...typography.label, color: colors.textSecondary,
+    marginBottom: 6, marginTop: 6,
   },
   input: {
-    height: 50, borderColor: '#dce8f2', borderWidth: 1.5, borderRadius: 12,
-    paddingHorizontal: 14, backgroundColor: '#f7fafd', fontSize: 16, color: '#1a3a5c', marginBottom: 6,
+    height: 50, borderColor: colors.inputBorder, borderWidth: 1.5, borderRadius: 12,
+    paddingHorizontal: 14, backgroundColor: colors.inputBg, fontSize: 16, color: colors.inputText, marginBottom: 6,
     justifyContent: 'center',
   },
   inputReadonly: { backgroundColor: '#eef2f6', borderColor: '#e2e8f0' },
-  readonlyText: { fontSize: 16, color: '#64748b' },
-  helper: { fontSize: 12, color: '#8499ad', marginBottom: 6 },
+  readonlyText: { fontSize: 16, color: colors.slate },
+  helper: { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
 
-  primaryBtn: { height: 52, borderRadius: 14, backgroundColor: '#1a5fa8', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
+  primaryBtn: { height: 52, borderRadius: radii.md, backgroundColor: colors.brandBlue, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
   primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  btnDisabled: { backgroundColor: '#a8bdd4' },
+  btnDisabled: { backgroundColor: colors.disabled },
 });

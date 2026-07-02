@@ -17,7 +17,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
-import { colors } from '../common/tokens';
+import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 
 interface ScheduleRow {
   assignmentId: string;
@@ -208,7 +208,12 @@ export default function ScheduleScreen() {
           <Text style={styles.clientName} numberOfLines={1}>
             {`${item.clientFirstName} ${item.clientLastName}`.trim()}
           </Text>
-          {address ? <Text style={styles.addr} numberOfLines={1}>📍 {address}</Text> : null}
+          {address ? (
+            <View style={styles.addrRow}>
+              <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+              <Text style={styles.addr} numberOfLines={1}>{address}</Text>
+            </View>
+          ) : null}
           <View style={styles.tagRow}>
             <Text style={styles.template} numberOfLines={1}>{item.templateName}</Text>
             {inProgress ? (
@@ -222,7 +227,7 @@ export default function ScheduleScreen() {
             ) : null}
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={18} color="#bcccdc" />
+        <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
       </Pressable>
     );
   };
@@ -259,16 +264,16 @@ export default function ScheduleScreen() {
     <ScrollView
       contentContainerStyle={styles.calScroll}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandBlue} />}
     >
       <View style={styles.calCard}>
         <View style={styles.monthRow}>
           <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} style={styles.monthArrow}>
-            <Ionicons name="chevron-back" size={20} color="#1a5fa8" />
+            <Ionicons name="chevron-back" size={20} color={colors.brandBlue} />
           </Pressable>
           <Text style={styles.monthTitle}>{MONTHS[month.m]} {month.year}</Text>
           <Pressable onPress={() => shiftMonth(1)} hitSlop={10} style={styles.monthArrow}>
-            <Ionicons name="chevron-forward" size={20} color="#1a5fa8" />
+            <Ionicons name="chevron-forward" size={20} color={colors.brandBlue} />
           </Pressable>
         </View>
 
@@ -327,7 +332,7 @@ export default function ScheduleScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 14 }]}>
+      <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 14 }]}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Schedule</Text>
           <View style={styles.toggle}>
@@ -338,7 +343,7 @@ export default function ScheduleScreen() {
               accessibilityState={{ selected: mode === 'list' }}
               accessibilityLabel="List view"
             >
-              <Ionicons name="list" size={15} color={mode === 'list' ? '#1a5fa8' : '#cfe2f5'} />
+              <Ionicons name="list" size={15} color={mode === 'list' ? colors.brandBlue : '#cfe2f5'} />
               <Text style={[styles.toggleText, mode === 'list' && styles.toggleTextActive]}>List</Text>
             </Pressable>
             <Pressable
@@ -348,7 +353,7 @@ export default function ScheduleScreen() {
               accessibilityState={{ selected: mode === 'calendar' }}
               accessibilityLabel="Calendar view"
             >
-              <Ionicons name="calendar" size={15} color={mode === 'calendar' ? '#1a5fa8' : '#cfe2f5'} />
+              <Ionicons name="calendar" size={15} color={mode === 'calendar' ? colors.brandBlue : '#cfe2f5'} />
               <Text style={[styles.toggleText, mode === 'calendar' && styles.toggleTextActive]}>Calendar</Text>
             </Pressable>
           </View>
@@ -357,7 +362,7 @@ export default function ScheduleScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#1a5fa8" />
+          <ActivityIndicator color={colors.brandBlue} />
         </View>
       ) : error && rows.length === 0 ? (
         <ErrorRetry message={error} onRetry={load} />
@@ -372,7 +377,7 @@ export default function ScheduleScreen() {
           contentContainerStyle={styles.list}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandBlue} />}
           ListEmptyComponent={
             <EmptyState
               icon="calendar-outline"
@@ -387,86 +392,87 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   header: { paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
+  headerTitle: { ...typography.title, color: colors.onGradient },
 
   toggle: {
-    flexDirection: 'row', backgroundColor: '#ffffff1f', borderRadius: 999, padding: 3,
+    flexDirection: 'row', backgroundColor: '#ffffff1f', borderRadius: radii.pill, padding: 3,
     borderWidth: 1, borderColor: '#ffffff2b',
   },
   toggleBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill,
   },
-  toggleBtnActive: { backgroundColor: '#fff' },
+  toggleBtnActive: { backgroundColor: colors.cardBg },
   toggleText: { fontSize: 12, fontWeight: '800', color: '#cfe2f5' },
-  toggleTextActive: { color: '#1a5fa8' },
+  toggleTextActive: { color: colors.brandBlue },
 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   // List
   list: { padding: 16, paddingBottom: 40 },
   sectionHeader: {
-    fontSize: 13, fontWeight: '900', color: '#4a6480',
-    textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 14, marginBottom: 8,
+    ...typography.label,
+    color: colors.textSecondary,
+    marginTop: 14, marginBottom: 8,
   },
 
   // Calendar
   calScroll: { padding: 16, paddingBottom: 40 },
   calCard: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 14,
-    shadowColor: '#0f2d52', shadowOpacity: 0.06, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 2, marginBottom: 8,
+    backgroundColor: colors.cardBg, borderRadius: radii.xl, padding: 14,
+    ...shadow.card, marginBottom: 8,
   },
   monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: 12 },
   monthArrow: {
     width: 34, height: 34, borderRadius: 17, backgroundColor: '#f0f6fd',
     justifyContent: 'center', alignItems: 'center',
   },
-  monthTitle: { fontSize: 16, fontWeight: '900', color: '#0f2d52' },
+  monthTitle: { ...typography.heading, fontWeight: '900', color: colors.textPrimary },
   weekdayRow: { flexDirection: 'row', marginBottom: 4 },
-  weekday: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '800', color: '#9db3c8' },
+  weekday: { flex: 1, textAlign: 'center', ...typography.caption, fontWeight: '800', color: colors.textMuted },
   gridWrap: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 4 },
   dayCircle: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center' },
   dayToday: { backgroundColor: '#eaf2fb' },
-  daySelected: { backgroundColor: '#1a5fa8' },
-  dayNum: { fontSize: 14, fontWeight: '700', color: '#1a3a5c' },
+  daySelected: { backgroundColor: colors.brandBlue },
+  dayNum: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   dayDim: { color: '#c2cfdc' },
-  dayTodayNum: { color: '#1a5fa8', fontWeight: '900' },
-  daySelectedNum: { color: '#fff', fontWeight: '900' },
+  dayTodayNum: { color: colors.brandBlue, fontWeight: '900' },
+  daySelectedNum: { color: colors.onGradient, fontWeight: '900' },
   dot: { width: 5, height: 5, borderRadius: 3, marginTop: 3, backgroundColor: 'transparent' },
-  dotOn: { backgroundColor: '#1a5fa8' },
-  dotOnSelected: { backgroundColor: '#fff' },
+  dotOn: { backgroundColor: colors.brandBlue },
+  dotOnSelected: { backgroundColor: colors.onGradient },
 
   dayHeading: {
-    fontSize: 13, fontWeight: '900', color: '#4a6480',
-    textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 10, marginBottom: 10, marginLeft: 2,
+    ...typography.label,
+    color: colors.textSecondary,
+    marginTop: 10, marginBottom: 10, marginLeft: 2,
   },
-  dayEmpty: { backgroundColor: '#fff', borderRadius: 14, padding: 20, alignItems: 'center', gap: 8 },
-  dayEmptyText: { color: '#8499ad', fontSize: 13, fontWeight: '600' },
+  dayEmpty: { backgroundColor: colors.cardBg, borderRadius: radii.md, padding: 20, alignItems: 'center', gap: 8 },
+  dayEmptyText: { ...typography.sub, fontWeight: '600', color: colors.textMuted },
 
   // Visit card (shared)
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10,
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 14, marginBottom: 10,
+    ...shadow.card,
   },
   timeCol: { width: 64, alignItems: 'center' },
-  timeText: { fontSize: 14, fontWeight: '900', color: '#1a5fa8' },
-  timeEnd: { fontSize: 11, color: '#8499ad', marginTop: 2 },
-  divider: { width: 1, alignSelf: 'stretch', backgroundColor: '#eaf0f6' },
+  timeText: { fontSize: 14, fontWeight: '900', color: colors.brandBlue },
+  timeEnd: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
+  divider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.border },
   infoCol: { flex: 1, gap: 3 },
-  clientName: { fontSize: 15, fontWeight: '800', color: '#0f2d52' },
-  addr: { fontSize: 12, color: '#5a7088' },
+  clientName: { ...typography.heading, color: colors.textPrimary },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  addr: { flex: 1, fontSize: 12, color: colors.textSecondary },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
-  template: { flex: 1, fontSize: 12, color: '#8499ad' },
-  statusTag: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  template: { flex: 1, fontSize: 12, color: colors.textMuted },
+  statusTag: { borderRadius: radii.pill, paddingHorizontal: 8, paddingVertical: 3 },
   tagActive: { backgroundColor: '#dcfce7' },
-  tagActiveText: { fontSize: 10, fontWeight: '800', color: '#15803d' },
+  tagActiveText: { fontSize: 10, fontWeight: '800', color: colors.successDark },
   tagDone: { backgroundColor: '#e2e8f0' },
   tagDoneText: { fontSize: 10, fontWeight: '800', color: '#475569' },
 });

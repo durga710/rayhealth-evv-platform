@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ScreenHeader from '../common/ScreenHeader';
 import { showAppAlert, showAppToast } from '../common/alerts/appAlert';
+import { colors, typography, radii, shadow } from '../common/tokens';
 
 const MIN_PASSWORD = 12;
 
@@ -68,7 +69,7 @@ export default function ChangePasswordScreen() {
               value={currentPassword}
               onChangeText={setCurrentPassword}
               placeholder="Current password"
-              placeholderTextColor="#9db3c8"
+              placeholderTextColor={colors.placeholder}
               secureTextEntry={!showPw}
               autoCapitalize="none"
             />
@@ -80,12 +81,12 @@ export default function ChangePasswordScreen() {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder={`At least ${MIN_PASSWORD} characters`}
-                placeholderTextColor="#9db3c8"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPw}
                 autoCapitalize="none"
               />
               <Pressable onPress={() => setShowPw((v) => !v)} hitSlop={10} style={styles.eyeBtn}>
-                <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color="#6898c0" />
+                <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.onGradientFaint} />
               </Pressable>
             </View>
             {tooShort ? <Text style={styles.errHint}>{MIN_PASSWORD - newPassword.length} more character(s) needed</Text> : null}
@@ -96,7 +97,7 @@ export default function ChangePasswordScreen() {
               value={confirm}
               onChangeText={setConfirm}
               placeholder="Re-enter new password"
-              placeholderTextColor="#9db3c8"
+              placeholderTextColor={colors.placeholder}
               secureTextEntry={!showPw}
               autoCapitalize="none"
             />
@@ -117,32 +118,31 @@ export default function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   flex: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 40 },
   card: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 18,
-    shadowColor: '#0f2d52', shadowOpacity: 0.06, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 18,
+    ...shadow.card,
   },
   label: {
-    fontSize: 11, fontWeight: '700', color: '#4a6480',
-    textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6, marginTop: 6,
+    ...typography.label, color: colors.textSecondary,
+    marginBottom: 6, marginTop: 6,
   },
   input: {
-    height: 50, borderColor: '#dce8f2', borderWidth: 1.5, borderRadius: 12,
-    paddingHorizontal: 14, backgroundColor: '#f7fafd', fontSize: 16, color: '#1a3a5c', marginBottom: 6,
+    height: 50, borderColor: colors.inputBorder, borderWidth: 1.5, borderRadius: 12,
+    paddingHorizontal: 14, backgroundColor: colors.inputBg, fontSize: 16, color: colors.inputText, marginBottom: 6,
   },
   pwRow: {
     flexDirection: 'row', alignItems: 'center',
-    borderColor: '#dce8f2', borderWidth: 1.5, borderRadius: 12,
-    backgroundColor: '#f7fafd', paddingRight: 10, marginBottom: 6,
+    borderColor: colors.inputBorder, borderWidth: 1.5, borderRadius: 12,
+    backgroundColor: colors.inputBg, paddingRight: 10, marginBottom: 6,
   },
-  pwInput: { flex: 1, height: 50, paddingHorizontal: 14, fontSize: 16, color: '#1a3a5c' },
+  pwInput: { flex: 1, height: 50, paddingHorizontal: 14, fontSize: 16, color: colors.inputText },
   eyeBtn: { padding: 4 },
-  errHint: { color: '#b45309', fontSize: 12, marginBottom: 6 },
+  errHint: { color: colors.danger, fontSize: 12, marginBottom: 6 },
 
-  primaryBtn: { height: 52, borderRadius: 14, backgroundColor: '#1a5fa8', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
+  primaryBtn: { height: 52, borderRadius: radii.md, backgroundColor: colors.brandBlue, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
   primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  btnDisabled: { backgroundColor: '#a8bdd4' },
+  btnDisabled: { backgroundColor: colors.disabled },
 });

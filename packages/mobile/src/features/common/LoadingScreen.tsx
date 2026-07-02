@@ -2,14 +2,15 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors, gradients } from './tokens';
 
 // Branded full-screen loading state shown while the session hydrates, so a slow
 // or hanging network shows a spinner instead of a blank white screen.
 export default function LoadingScreen() {
   return (
-    <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={styles.root}>
+    <LinearGradient colors={gradients.header} style={styles.root}>
       <StatusBar style="light" />
-      <ActivityIndicator size="large" color="#ffffff" />
+      <ActivityIndicator size="large" color={colors.onGradient} />
     </LinearGradient>
   );
 }
