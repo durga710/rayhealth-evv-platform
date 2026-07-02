@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -12,10 +11,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
+import { SkeletonList } from '../common/Skeleton';
+import { colors, typography, radii, shadow, gradients, alpha } from '../common/tokens';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
 
@@ -153,11 +156,11 @@ export default function VisitsScreen() {
     return visits.filter((v) => v.status === filter);
   }, [visits, filter]);
 
-  const renderItem = ({ item }: { item: EvvVisit }) => {
+  const renderItem = ({ item, index }: { item: EvvVisit; index: number }) => {
     const ms = durationMs(item);
     const inProgress = !item.clockOutTime;
     const statusColor =
-      item.status === 'verified' ? '#16a34a' : item.status === 'flagged' ? '#d97706' : '#64748b';
+      item.status === 'verified' ? colors.success : item.status === 'flagged' ? colors.amber : colors.slate;
     const statusLabel = inProgress
       ? 'In progress'
       : item.status === 'verified'
@@ -169,6 +172,7 @@ export default function VisitsScreen() {
     const client = item.clientId ? names[item.clientId] : undefined;
 
     return (
+      <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 60).duration(300)}>
       <Pressable
         onPress={() =>
           router.push({
@@ -187,7 +191,7 @@ export default function VisitsScreen() {
       >
         <View style={styles.cardTop}>
           <Text style={styles.cardDay}>{formatDay(item.clockInTime)}</Text>
-          <View style={[styles.statusPill, { backgroundColor: `${statusColor}1a` }]}>
+          <View style={[styles.statusPill, { backgroundColor: `${statusColor}${alpha.tint}` }]}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
           </View>
@@ -202,21 +206,22 @@ export default function VisitsScreen() {
         <Text style={styles.cardService}>{service}</Text>
         {item.status === 'flagged' ? (
           <View style={styles.flagRow}>
-            <Ionicons name="alert-circle" size={14} color="#d97706" />
+            <Ionicons name="alert-circle" size={14} color={colors.amber} />
             <Text style={styles.flagText} numberOfLines={2}>
               {item.flagReason ?? 'Flagged for review — tap to see why'}
             </Text>
-            <Ionicons name="chevron-forward" size={14} color="#d97706" />
+            <Ionicons name="chevron-forward" size={14} color={colors.amber} />
           </View>
         ) : null}
       </Pressable>
+      </Animated.View>
     );
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 16 }]}>
+      <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.headerTitle}>Visits</Text>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
@@ -240,8 +245,16 @@ export default function VisitsScreen() {
         {(['all', 'verified', 'flagged'] as Filter[]).map((f) => (
           <Pressable
             key={f}
-            onPress={() => setFilter(f)}
-            style={[styles.filterChip, filter === f && styles.filterChipActive]}
+            onPress={() => {
+              if (filter === f) return;
+              void Haptics.selectionAsync();
+              setFilter(f);
+            }}
+            style={({ pressed }) => [
+              styles.filterChip,
+              filter === f && styles.filterChipActive,
+              pressed && { transform: [{ scale: 0.96 }] },
+            ]}
             accessibilityRole="button"
             accessibilityState={{ selected: filter === f }}
             accessibilityLabel={`Show ${f === 'all' ? 'all' : f} visits`}
@@ -254,8 +267,8 @@ export default function VisitsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color="#1a5fa8" />
+        <View style={styles.skeletonPad}>
+          <SkeletonList count={5} />
         </View>
       ) : (
         <FlatList
@@ -264,7 +277,7 @@ export default function VisitsScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1a5fa8" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandBlue} />}
           ListEmptyComponent={
             error ? (
               <ErrorRetry message={error} onRetry={load} />
@@ -287,50 +300,49 @@ export default function VisitsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.3, marginBottom: 16 },
+  headerTitle: { ...typography.title, color: colors.onGradient, marginBottom: 16 },
   summaryRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#ffffff14', borderRadius: 16, paddingVertical: 14,
+    backgroundColor: '#ffffff14', borderRadius: radii.lg, paddingVertical: 14,
     borderWidth: 1, borderColor: '#ffffff1f',
   },
   summaryItem: { flex: 1, alignItems: 'center' },
-  summaryVal: { color: '#fff', fontSize: 20, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  summaryLabel: { color: '#a8c8e8', fontSize: 11, fontWeight: '600', marginTop: 3 },
+  summaryVal: { color: colors.onGradient, fontSize: 20, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  summaryLabel: { ...typography.caption, color: colors.onGradientSoft, marginTop: 3 },
   summaryDivider: { width: 1, height: 30, backgroundColor: '#ffffff24' },
 
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   filterChip: {
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#dce4ec',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: radii.pill,
+    backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border,
   },
-  filterChipActive: { backgroundColor: '#1a5fa8', borderColor: '#1a5fa8' },
-  filterChipText: { fontSize: 13, fontWeight: '700', color: '#5a7088' },
-  filterChipTextActive: { color: '#fff' },
+  filterChipActive: { backgroundColor: colors.brandBlue, borderColor: colors.brandBlue },
+  filterChipText: { ...typography.sub, fontWeight: '700', color: colors.textSecondary },
+  filterChipTextActive: { color: colors.onGradient },
 
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  skeletonPad: { padding: 16, paddingTop: 10 },
   list: { padding: 16, paddingTop: 10, gap: 12 },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 16,
+    ...shadow.card,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardDay: { fontSize: 14, fontWeight: '800', color: '#0f2d52' },
-  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  cardDay: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radii.pill, paddingHorizontal: 10, paddingVertical: 4 },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
-  statusText: { fontSize: 11, fontWeight: '800' },
-  cardClient: { fontSize: 15, fontWeight: '700', color: '#1a3a5c', marginTop: 8 },
+  statusText: { ...typography.caption, fontWeight: '800' },
+  cardClient: { ...typography.heading, color: colors.textPrimary, marginTop: 8 },
   cardMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  cardTime: { fontSize: 13, color: '#5a7088' },
-  cardDuration: { fontSize: 15, fontWeight: '900', color: '#1a5fa8', fontVariant: ['tabular-nums'] },
-  cardService: { fontSize: 12, color: '#8499ad', marginTop: 6 },
+  cardTime: { ...typography.sub, color: colors.textSecondary },
+  cardDuration: { fontSize: 15, fontWeight: '900', color: colors.brandBlue, fontVariant: ['tabular-nums'] },
+  cardService: { fontSize: 12, color: colors.textMuted, marginTop: 6 },
   flagRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 10,
-    backgroundColor: '#fffbeb', borderRadius: 10, padding: 10,
-    borderWidth: 1, borderColor: '#fde68a',
+    backgroundColor: colors.amberBg, borderRadius: radii.sm, padding: 10,
+    borderWidth: 1, borderColor: colors.amberBorder,
   },
-  flagText: { flex: 1, fontSize: 12, color: '#b45309', lineHeight: 17, fontWeight: '600' },
+  flagText: { flex: 1, fontSize: 12, color: colors.amberDark, lineHeight: 17, fontWeight: '600' },
 });

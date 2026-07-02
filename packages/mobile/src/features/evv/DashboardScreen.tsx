@@ -10,12 +10,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '../../lib/AuthContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
+import { SkeletonList } from '../common/Skeleton';
+import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
 import { deriveVisitState, resumableVisit, type VisitState } from '../../lib/visit-state';
@@ -92,10 +96,10 @@ function AdminScreen({ role, onLogout }: { role: string; onLogout: () => void })
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={styles.adminGradient}>
+      <LinearGradient colors={gradients.header} style={styles.adminGradient}>
         <View style={[styles.adminWrap, { paddingTop: insets.top + 16 }]}>
           <View style={styles.adminIconCircle}>
-            <Text style={styles.adminEmoji}>🖥️</Text>
+            <Ionicons name="desktop-outline" size={40} color={colors.onGradient} />
           </View>
           <Text style={styles.adminTitle}>
             {role === 'admin' ? 'Admin Portal' : 'Coordinator Portal'}
@@ -228,13 +232,14 @@ export default function DashboardScreen() {
   const nowCount = assignments.filter(a => getVisitStatus(a.time) === 'now').length;
   const upcomingCount = assignments.filter(a => getVisitStatus(a.time) === 'upcoming').length;
 
-  const renderItem = ({ item }: { item: Assignment }) => {
+  const renderItem = ({ item, index }: { item: Assignment; index: number }) => {
     const status = getVisitStatus(item.time);
     const hasGeolock = item.clientLat != null && item.clientLng != null;
     const isNow = status === 'now';
     const isPast = status === 'past';
 
     return (
+      <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 60).duration(300)}>
       <Pressable
         style={({ pressed }) => [styles.card, pressed && { opacity: 0.92, transform: [{ scale: 0.99 }] }]}
         onPress={() =>
@@ -277,6 +282,7 @@ export default function DashboardScreen() {
           isNow ? styles.stripeNow : isPast ? styles.stripePast : styles.stripeUpcoming,
         ]} />
       </Pressable>
+      </Animated.View>
     );
   };
 
@@ -284,7 +290,7 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       {/* Header */}
-      <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerTop}>
           <Pressable
             onLongPress={handleSessionPillLongPress}
@@ -328,7 +334,9 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
         ListEmptyComponent={
-          loading ? null : error ? (
+          loading ? (
+            <SkeletonList count={4} />
+          ) : error ? (
             <ErrorRetry message={error} onRetry={fetchAssignments} />
           ) : (
             <EmptyState
@@ -342,7 +350,7 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); void fetchAssignments(true); }}
-            tintColor="#1a5fa8"
+            tintColor={colors.brandBlue}
           />
         }
       />
@@ -370,7 +378,10 @@ function CardContent({
         <View style={styles.cardCenter}>
           <Text style={styles.clientName} numberOfLines={1}>{item.clientName}</Text>
           {item.clientAddress ? (
-            <Text style={styles.clientAddress} numberOfLines={1}>📍 {item.clientAddress}</Text>
+            <View style={styles.addrRow}>
+              <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+              <Text style={styles.clientAddress} numberOfLines={1}>{item.clientAddress}</Text>
+            </View>
           ) : null}
           <Text style={styles.visitTime}>{formatTime(item.time)}</Text>
         </View>
@@ -381,7 +392,7 @@ function CardContent({
           </View>
         ) : item.visitState === 'completed' ? (
           <View style={styles.badgeCompleted}>
-            <Text style={styles.badgeCompletedText}>Completed ✓</Text>
+            <Text style={styles.badgeCompletedText}>Completed</Text>
           </View>
         ) : status === 'now' ? (
           <View style={styles.badgeNow}>
@@ -402,7 +413,7 @@ function CardContent({
         ) : null}
         {hasGeolock ? (
           <View style={styles.geolockBadge}>
-            <Text style={styles.geolockBadgeText}>GPS ✓ {item.clientGeofenceM ?? 150}m</Text>
+            <Text style={styles.geolockBadgeText}>GPS {item.clientGeofenceM ?? 150}m</Text>
           </View>
         ) : null}
       </View>
@@ -419,11 +430,10 @@ function CardContent({
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY = '#1a5fa8';
 const SESSION_GREEN = '#22c55e';
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
 
   // Header
   header: {
@@ -441,7 +451,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff18',
-    borderRadius: 999,
+    borderRadius: radii.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
     gap: 6,
@@ -450,51 +460,51 @@ const styles = StyleSheet.create({
   },
   sessionDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: SESSION_GREEN },
   sessionPillText: {
-    color: '#d4e8ff', fontSize: 10, fontWeight: '700',
-    letterSpacing: 0.8, textTransform: 'uppercase',
+    ...typography.label,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#d4e8ff',
   },
   greeting: {
-    fontSize: 26, fontWeight: '900', color: '#fff',
+    ...typography.hero,
+    color: colors.onGradient,
     textShadowColor: '#00000030', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  dateLabel: { fontSize: 13, color: '#90bde0', marginTop: 3, marginBottom: 12 },
+  dateLabel: { ...typography.sub, color: colors.onGradientSoft, marginTop: 3, marginBottom: 12 },
   statsRow: { flexDirection: 'row', gap: 8 },
   statChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#ffffff18', borderRadius: 999,
+    backgroundColor: '#ffffff18', borderRadius: radii.pill,
     paddingHorizontal: 12, paddingVertical: 5,
     borderWidth: 1, borderColor: '#ffffff20',
   },
   statChipBlue: { backgroundColor: '#ffffff10' },
   statDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fb923c' },
-  statText: { color: '#fed7aa', fontSize: 11, fontWeight: '700' },
-  statTextBlue: { color: '#bfdbfe', fontSize: 11, fontWeight: '700' },
+  statText: { ...typography.caption, fontWeight: '700', color: '#fed7aa' },
+  statTextBlue: { ...typography.caption, fontWeight: '700', color: '#bfdbfe' },
 
   // List
   listContent: { paddingHorizontal: 16, paddingBottom: 40, paddingTop: 4 },
   sectionTitle: {
-    fontSize: 11, fontWeight: '800', color: '#7a98b4',
-    textTransform: 'uppercase', letterSpacing: 1.2,
+    ...typography.label,
+    letterSpacing: 1.2,
+    color: colors.textMuted,
     marginTop: 20, marginBottom: 12,
   },
 
   // Cards
   card: {
-    borderRadius: 16,
+    borderRadius: radii.lg,
     marginBottom: 12,
     flexDirection: 'row',
     overflow: 'hidden',
-    shadowColor: '#1a3a5c',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...shadow.card,
   },
   cardStripe: { width: 5 },
-  stripeUpcoming: { backgroundColor: PRIMARY },
+  stripeUpcoming: { backgroundColor: colors.brandBlue },
   stripeNow: { backgroundColor: '#f97316' },
   stripePast: { backgroundColor: '#cbd5e1' },
-  cardInner: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  cardInner: { flex: 1, padding: 16, backgroundColor: colors.cardBg },
   cardInnerPast: { backgroundColor: '#fafafa' },
   cardTop: {
     flexDirection: 'row',
@@ -511,56 +521,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
   },
-  clientInitial: { fontSize: 20, fontWeight: '800', color: PRIMARY },
+  clientInitial: { fontSize: 20, fontWeight: '800', color: colors.brandBlue },
   cardCenter: { flex: 1 },
-  clientName: { fontSize: 16, fontWeight: '800', color: '#1a3a5c', marginBottom: 2 },
-  clientAddress: { fontSize: 12, color: '#5a7088', marginBottom: 3 },
-  visitTime: { fontSize: 13, color: PRIMARY, fontWeight: '600' },
+  clientName: { ...typography.heading, color: colors.textPrimary, marginBottom: 2 },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 3 },
+  clientAddress: { flex: 1, fontSize: 12, color: colors.textSecondary },
+  visitTime: { ...typography.sub, fontWeight: '600', color: colors.brandBlue },
   cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
   serviceCodeBadge: {
     backgroundColor: '#e8f0fa', borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3,
   },
   serviceCodeText: {
-    color: PRIMARY, fontSize: 10, fontWeight: '800',
-    letterSpacing: 0.6, textTransform: 'uppercase',
+    ...typography.label,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    color: colors.brandBlue,
   },
   geolockBadge: {
-    backgroundColor: '#fef3c7', borderRadius: 6,
+    backgroundColor: colors.amberBg, borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  geolockBadgeText: { color: '#92400e', fontSize: 11, fontWeight: '800' },
-  tapHint: { fontSize: 11, color: '#b0c4d8', fontWeight: '500' },
+  geolockBadgeText: { ...typography.caption, fontWeight: '800', color: colors.amberDark },
+  tapHint: { ...typography.caption, fontWeight: '500', color: colors.placeholder },
 
   badgeNow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#fff7ed',
-    borderRadius: 999,
+    borderRadius: radii.pill,
     paddingHorizontal: 10, paddingVertical: 4, gap: 5,
     borderWidth: 1, borderColor: '#fed7aa',
   },
   badgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#f97316' },
-  badgeNowText: { color: '#ea580c', fontSize: 11, fontWeight: '800' },
+  badgeNowText: { ...typography.caption, fontWeight: '800', color: '#ea580c' },
   badgePast: {
-    backgroundColor: '#f1f5f9', borderRadius: 999,
+    backgroundColor: '#f1f5f9', borderRadius: radii.pill,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  badgePastText: { color: '#94a3b8', fontSize: 11, fontWeight: '700' },
+  badgePastText: { ...typography.caption, fontWeight: '700', color: colors.textMuted },
   badgeInProgress: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#f0fdf4',
-    borderRadius: 999,
+    backgroundColor: colors.successBg,
+    borderRadius: radii.pill,
     paddingHorizontal: 10, paddingVertical: 4, gap: 5,
-    borderWidth: 1, borderColor: '#bbf7d0',
+    borderWidth: 1, borderColor: colors.successBorder,
   },
-  badgeDotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#16a34a' },
-  badgeInProgressText: { color: '#15803d', fontSize: 11, fontWeight: '800' },
+  badgeDotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
+  badgeInProgressText: { ...typography.caption, fontWeight: '800', color: colors.successDark },
   badgeCompleted: {
-    backgroundColor: '#ecfdf5', borderRadius: 999,
+    backgroundColor: colors.successBg, borderRadius: radii.pill,
     paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1, borderColor: '#a7f3d0',
+    borderWidth: 1, borderColor: colors.successBorder,
   },
-  badgeCompletedText: { color: '#047857', fontSize: 11, fontWeight: '700' },
+  badgeCompletedText: { ...typography.caption, fontWeight: '700', color: colors.successDark },
 
   // Admin screen
   adminGradient: { flex: 1 },
@@ -570,19 +583,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff18', justifyContent: 'center', alignItems: 'center',
     marginBottom: 20, borderWidth: 1, borderColor: '#ffffff30',
   },
-  adminEmoji: { fontSize: 44 },
-  adminTitle: { fontSize: 24, fontWeight: '900', color: '#fff', textAlign: 'center', marginBottom: 12 },
-  adminBody: { color: '#90bde0', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  adminTitle: { ...typography.title, color: colors.onGradient, textAlign: 'center', marginBottom: 12 },
+  adminBody: { color: colors.onGradientSoft, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   adminUrlCard: {
-    backgroundColor: '#ffffff18', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 16,
+    backgroundColor: '#ffffff18', borderRadius: radii.md, paddingHorizontal: 28, paddingVertical: 16,
     alignItems: 'center', marginBottom: 32, borderWidth: 1, borderColor: '#ffffff25',
   },
-  adminUrlLabel: { color: '#90bde0', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-  adminUrl: { color: '#fff', fontWeight: '900', fontSize: 18 },
+  adminUrlLabel: {
+    ...typography.label,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: colors.onGradientSoft,
+    marginBottom: 4,
+  },
+  adminUrl: { color: colors.onGradient, fontWeight: '900', fontSize: 18 },
   logoutCardBtn: {
     paddingHorizontal: 32, paddingVertical: 14,
     backgroundColor: '#ffffff15', borderRadius: 12,
     borderWidth: 1, borderColor: '#ffffff30',
   },
-  logoutCardBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  logoutCardBtnText: { ...typography.body, fontWeight: '700', color: colors.onGradient },
 });

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { colors, gradients } from './tokens';
 
 /**
  * Standard gradient nav header for pushed sub-screens: a back button on the
@@ -16,7 +17,7 @@ export default function ScreenHeader({ title, children }: { title: string; child
   const insets = useSafeAreaInsets();
   const router = useRouter();
   return (
-    <LinearGradient colors={['#0f2d52', '#1a5fa8']} style={[styles.header, { paddingTop: insets.top + 6 }]}>
+    <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 6 }]}>
       <StatusBar style="light" />
       <View style={styles.bar}>
         <Pressable
@@ -26,7 +27,7 @@ export default function ScreenHeader({ title, children }: { title: string; child
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={24} color="#cfe2f5" />
+          <Ionicons name="chevron-back" size={24} color={colors.onGradientSoft} />
           <Text style={styles.backText}>Back</Text>
         </Pressable>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -43,6 +44,6 @@ const styles = StyleSheet.create({
     position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 2,
     flexDirection: 'row', alignItems: 'center', gap: 1, paddingRight: 12,
   },
-  backText: { color: '#cfe2f5', fontSize: 16, fontWeight: '700' },
-  title: { textAlign: 'center', color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: -0.2, paddingHorizontal: 76 },
+  backText: { color: colors.onGradientSoft, fontSize: 16, fontWeight: '700' },
+  title: { textAlign: 'center', color: colors.onGradient, fontSize: 17, fontWeight: '800', letterSpacing: -0.2, paddingHorizontal: 76 },
 });

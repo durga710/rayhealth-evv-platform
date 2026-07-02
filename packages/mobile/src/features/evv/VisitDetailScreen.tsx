@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import ScreenHeader from '../common/ScreenHeader';
+import { colors, typography, radii, shadow, alpha } from '../common/tokens';
 
 const SERVICE_LABELS: Record<string, string> = {
   T1019: 'Personal Care',
@@ -63,12 +64,12 @@ export default function VisitDetailScreen() {
   const inProgress = !clockOutTime;
   const meta =
     status === 'verified'
-      ? { color: '#16a34a', label: 'Verified', icon: 'shield-checkmark' as const, sub: 'GPS confirmed at clock-in and clock-out.' }
+      ? { color: colors.success, label: 'Verified', icon: 'shield-checkmark' as const, sub: 'GPS confirmed at clock-in and clock-out.' }
       : status === 'flagged'
-      ? { color: '#d97706', label: 'Flagged', icon: 'alert-circle' as const, sub: 'This visit needs a coordinator review.' }
+      ? { color: colors.amber, label: 'Flagged', icon: 'alert-circle' as const, sub: 'This visit needs a coordinator review.' }
       : inProgress
-      ? { color: '#1a5fa8', label: 'In progress', icon: 'time' as const, sub: 'This visit is currently underway.' }
-      : { color: '#64748b', label: 'Pending', icon: 'ellipse' as const, sub: 'Awaiting verification.' };
+      ? { color: colors.brandBlue, label: 'In progress', icon: 'time' as const, sub: 'This visit is currently underway.' }
+      : { color: colors.slate, label: 'Pending', icon: 'ellipse' as const, sub: 'Awaiting verification.' };
 
   const service = serviceCode ? SERVICE_LABELS[serviceCode] ?? serviceCode : 'Visit';
 
@@ -79,11 +80,11 @@ export default function VisitDetailScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Status hero */}
         <View style={styles.heroCard}>
-          <View style={[styles.heroIcon, { backgroundColor: `${meta.color}1a` }]}>
+          <View style={[styles.heroIcon, { backgroundColor: `${meta.color}${alpha.tint}` }]}>
             <Ionicons name={meta.icon} size={28} color={meta.color} />
           </View>
           <Text style={styles.heroClient}>{clientName}</Text>
-          <View style={[styles.heroPill, { backgroundColor: `${meta.color}1a` }]}>
+          <View style={[styles.heroPill, { backgroundColor: `${meta.color}${alpha.tint}` }]}>
             <Text style={[styles.heroPillText, { color: meta.color }]}>{meta.label}</Text>
           </View>
           <Text style={styles.heroSub}>{meta.sub}</Text>
@@ -93,7 +94,7 @@ export default function VisitDetailScreen() {
         {status === 'flagged' ? (
           <View style={styles.flagCard}>
             <View style={styles.flagHead}>
-              <Ionicons name="alert-circle" size={18} color="#b45309" />
+              <Ionicons name="alert-circle" size={18} color={colors.amberDark} />
               <Text style={styles.flagTitle}>Why was this flagged?</Text>
             </View>
             <Text style={styles.flagBody}>
@@ -115,7 +116,7 @@ export default function VisitDetailScreen() {
         </View>
 
         <View style={styles.evvNote}>
-          <Ionicons name="lock-closed" size={13} color="#7a98b4" style={{ marginTop: 1 }} />
+          <Ionicons name="lock-closed" size={13} color={colors.textMuted} style={{ marginTop: 1 }} />
           <Text style={styles.evvNoteText}>
             Clock-in and clock-out GPS are recorded for PA EVV compliance and cannot be edited from the app.
           </Text>
@@ -126,44 +127,44 @@ export default function VisitDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef3f8' },
+  container: { flex: 1, backgroundColor: colors.screenBg },
   scroll: { padding: 16, paddingBottom: 40, gap: 14 },
 
   heroCard: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 22, alignItems: 'center',
-    shadowColor: '#0f2d52', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.xl, padding: 22, alignItems: 'center',
+    ...shadow.card,
   },
   heroIcon: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  heroClient: { fontSize: 20, fontWeight: '900', color: '#0f2d52', textAlign: 'center' },
-  heroPill: { marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
-  heroPillText: { fontSize: 13, fontWeight: '800' },
-  heroSub: { fontSize: 13, color: '#5a7088', textAlign: 'center', marginTop: 10, lineHeight: 18 },
+  heroClient: { fontSize: 20, fontWeight: '900', color: colors.textPrimary, textAlign: 'center' },
+  heroPill: { marginTop: 10, borderRadius: radii.pill, paddingHorizontal: 14, paddingVertical: 6 },
+  heroPillText: { ...typography.sub, fontWeight: '800' },
+  heroSub: { ...typography.sub, color: colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 18 },
 
   flagCard: {
-    backgroundColor: '#fffbeb', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#fde68a',
+    backgroundColor: colors.amberBg, borderRadius: radii.lg, padding: 16,
+    borderWidth: 1, borderColor: colors.amberBorder,
   },
   flagHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  flagTitle: { fontSize: 15, fontWeight: '900', color: '#b45309' },
-  flagBody: { fontSize: 14, color: '#92400e', lineHeight: 20, fontWeight: '600' },
-  flagNote: { fontSize: 12, color: '#b45309', lineHeight: 17, marginTop: 10 },
+  flagTitle: { ...typography.body, fontWeight: '900', color: colors.amberDark },
+  flagBody: { fontSize: 14, color: colors.amberDark, lineHeight: 20, fontWeight: '600' },
+  flagNote: { fontSize: 12, color: colors.amberDark, lineHeight: 17, marginTop: 10 },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 18,
-    shadowColor: '#0f2d52', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    backgroundColor: colors.cardBg, borderRadius: radii.lg, padding: 18,
+    ...shadow.card,
   },
-  cardTitle: { fontSize: 14, fontWeight: '900', color: '#0f2d52', marginBottom: 12 },
+  cardTitle: { fontSize: 14, fontWeight: '900', color: colors.textPrimary, marginBottom: 12 },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#e6edf4',
+    paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
   },
-  rowLabel: { fontSize: 13, color: '#5a7088', fontWeight: '600' },
-  rowValue: { fontSize: 14, color: '#1a3a5c', fontWeight: '800' },
+  rowLabel: { ...typography.sub, fontWeight: '600', color: colors.textSecondary },
+  rowValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '800' },
 
   evvNote: {
     flexDirection: 'row', gap: 9, alignItems: 'flex-start',
-    backgroundColor: '#fff', borderRadius: 14, padding: 14,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 1,
+    backgroundColor: colors.cardBg, borderRadius: radii.md, padding: 14,
+    ...shadow.subtle,
   },
-  evvNoteText: { flex: 1, color: '#7a98b4', fontSize: 12, lineHeight: 18 },
+  evvNoteText: { flex: 1, color: colors.textMuted, fontSize: 12, lineHeight: 18 },
 });
