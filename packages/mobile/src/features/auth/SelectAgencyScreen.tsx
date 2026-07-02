@@ -16,6 +16,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAuth, AgencyMembership } from '../../lib/AuthContext';
 import { showAppToast } from '../common/alerts/appAlert';
+import { SkeletonCard } from '../common/Skeleton';
 import { colors, typography, radii, shadow, gradients, alpha } from '../common/tokens';
 
 // Rotating accent tints so adjacent agency cards read as distinct at a glance.
@@ -142,9 +143,10 @@ export default function SelectAgencyScreen() {
         </Animated.View>
 
         {isRefreshing && sorted.length === 0 ? (
-          <View style={styles.loadingBlock}>
-            <ActivityIndicator color="#fff" size="large" />
-            <Text style={styles.loadingText}>Loading your agencies…</Text>
+          <View style={styles.cardList}>
+            {[0, 1, 2].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </View>
         ) : (
           <View style={styles.cardList}>
@@ -236,9 +238,6 @@ const styles = StyleSheet.create({
     textShadowColor: '#00000040', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
   heroSub: { ...typography.sub, color: colors.onGradientSoft, textAlign: 'center', marginTop: 8, lineHeight: 20 },
-
-  loadingBlock: { alignItems: 'center', paddingVertical: 48, gap: 14 },
-  loadingText: { ...typography.sub, color: colors.onGradientSoft, fontWeight: '600' },
 
   cardList: { gap: 12 },
   card: {

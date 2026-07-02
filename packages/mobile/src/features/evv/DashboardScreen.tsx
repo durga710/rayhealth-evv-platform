@@ -17,6 +17,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
+import { SkeletonList } from '../common/Skeleton';
 import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
@@ -330,7 +331,9 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
         }
         ListEmptyComponent={
-          loading ? null : error ? (
+          loading ? (
+            <SkeletonList count={4} />
+          ) : error ? (
             <ErrorRetry message={error} onRetry={fetchAssignments} />
           ) : (
             <EmptyState

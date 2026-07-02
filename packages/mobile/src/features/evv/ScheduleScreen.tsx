@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -17,6 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
+import { SkeletonList } from '../common/Skeleton';
 import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 
 interface ScheduleRow {
@@ -361,8 +361,8 @@ export default function ScheduleScreen() {
       </LinearGradient>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.brandBlue} />
+        <View style={styles.skeletonPad}>
+          <SkeletonList count={5} />
         </View>
       ) : error && rows.length === 0 ? (
         <ErrorRetry message={error} onRetry={load} />
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 12, fontWeight: '800', color: '#cfe2f5' },
   toggleTextActive: { color: colors.brandBlue },
 
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  skeletonPad: { padding: 16 },
 
   // List
   list: { padding: 16, paddingBottom: 40 },

@@ -16,6 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import apiClient from '../../lib/api-client';
 import { showAppAlert } from '../common/alerts/appAlert';
+import { Skeleton } from '../common/Skeleton';
 import { colors, typography, radii, shadow, gradients, alpha } from '../common/tokens';
 
 interface Profile {
@@ -117,16 +118,26 @@ export default function ProfileScreen() {
       <StatusBar style="light" />
 
       <LinearGradient colors={gradients.header} style={[styles.header, { paddingTop: insets.top + 18 }]}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
-        <Text style={styles.headerName} numberOfLines={1}>{fullName || 'Your profile'}</Text>
-        {profile?.email ? <Text style={styles.headerEmail} numberOfLines={1}>{profile.email}</Text> : null}
-        {profile?.role ? (
-          <View style={styles.rolePill}>
-            <Text style={styles.rolePillText}>{profile.role.toUpperCase()}</Text>
-          </View>
-        ) : null}
+        {profile ? (
+          <>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
+            <Text style={styles.headerName} numberOfLines={1}>{fullName || 'Your profile'}</Text>
+            {profile.email ? <Text style={styles.headerEmail} numberOfLines={1}>{profile.email}</Text> : null}
+            {profile.role ? (
+              <View style={styles.rolePill}>
+                <Text style={styles.rolePillText}>{profile.role.toUpperCase()}</Text>
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Skeleton width={76} height={76} radius={38} color="#ffffff33" style={styles.avatarSkeleton} />
+            <Skeleton width={120} height={16} radius={8} color="#ffffff2e" />
+            <Skeleton width={160} height={12} radius={6} color="#ffffff2e" style={styles.lineSkeleton} />
+          </>
+        )}
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -230,6 +241,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: '#ffffff2b',
   },
   rolePillText: { color: '#bfdbfe', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
+  avatarSkeleton: { marginBottom: 12 },
+  lineSkeleton: { marginTop: 8 },
 
   scroll: { padding: 16, paddingBottom: 36 },
   sectionLabel: {

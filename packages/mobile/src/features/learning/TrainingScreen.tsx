@@ -16,6 +16,7 @@ import ScreenHeader from '../common/ScreenHeader';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
 import { showAppAlert, showAppToast } from '../common/alerts/appAlert';
+import { SkeletonList } from '../common/Skeleton';
 import { colors, typography, radii, shadow, alpha } from '../common/tokens';
 
 type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
@@ -220,8 +221,8 @@ export default function TrainingScreen() {
       </ScreenHeader>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.brandBlue} />
+        <View style={styles.skeletonPad}>
+          <SkeletonList count={4} />
         </View>
       ) : (
         <FlatList
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   compliantWarn: { backgroundColor: '#f59e0b22', borderColor: '#f59e0b45' },
   complianceText: { color: '#fff', ...typography.sub, fontWeight: '700', flex: 1 },
 
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  skeletonPad: { padding: 16 },
   list: { padding: 16, gap: 12 },
 
   card: {

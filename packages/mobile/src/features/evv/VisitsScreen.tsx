@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -16,6 +15,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import ErrorRetry from '../common/ErrorRetry';
 import EmptyState from '../common/EmptyState';
+import { SkeletonList } from '../common/Skeleton';
 import { colors, typography, radii, shadow, gradients, alpha } from '../common/tokens';
 
 type VisitStatus = 'pending' | 'verified' | 'flagged';
@@ -255,8 +255,8 @@ export default function VisitsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.brandBlue} />
+        <View style={styles.skeletonPad}>
+          <SkeletonList count={5} />
         </View>
       ) : (
         <FlatList
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   filterChipText: { ...typography.sub, fontWeight: '700', color: colors.textSecondary },
   filterChipTextActive: { color: colors.onGradient },
 
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  skeletonPad: { padding: 16, paddingTop: 10 },
   list: { padding: 16, paddingTop: 10, gap: 12 },
 
   card: {

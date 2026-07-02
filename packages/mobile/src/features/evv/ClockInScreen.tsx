@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   Linking,
@@ -9,6 +10,18 @@ import {
   Text,
   View,
 } from 'react-native';
+import Reanimated, {
+  FadeIn,
+  FadeInDown,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -246,6 +259,64 @@ function GeoMap({
         </Pressable>
       </View>
     </View>
+  );
+}
+
+// ─── Motion helpers (Reanimated) ──────────────────────────────────────────────
+
+// Live "recording" dot next to "Visit in progress" — gently swells and dims on
+// a loop so the running timer reads as alive, not a static badge.
+function PulseDot() {
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 600 }),
+        withTiming(0, { duration: 600 }),
+      ),
+      -1,
+    );
+    return () => cancelAnimation(pulse);
+  }, [pulse]);
+  const style = useAnimatedStyle(() => ({
+    opacity: 1 - pulse.value * 0.45,
+    transform: [{ scale: 1 + pulse.value * 0.35 }],
+  }));
+  return <Reanimated.View style={[styles.timerPulse, style]} />;
+}
+
+// Celebration sparkles around the completion check — same pattern as
+// AppDialog's SPARKLE_DOTS: tiny dots springing in on a stagger.
+// Positions are relative to the 96px doneCheck circle.
+const DONE_SPARKLES = [
+  { top: -14, left: 6, size: 8, color: colors.amber, delay: 120 },
+  { top: -8, left: 86, size: 9, color: colors.brandBlueLight, delay: 200 },
+  { top: 40, left: 106, size: 6, color: colors.success, delay: 300 },
+  { top: 94, left: 90, size: 8, color: colors.amber, delay: 260 },
+  { top: 86, left: -14, size: 7, color: colors.brandBlueLight, delay: 340 },
+  { top: 24, left: -18, size: 9, color: colors.success, delay: 160 },
+] as const;
+
+function SparkleDot({ top, left, size, color, delay }: {
+  top: number; left: number; size: number; color: string; delay: number;
+}) {
+  const anim = useSharedValue(0);
+  useEffect(() => {
+    anim.value = withDelay(delay, withSpring(1, { damping: 9, stiffness: 180 }));
+  }, [anim, delay]);
+  const style = useAnimatedStyle(() => ({
+    opacity: anim.value,
+    transform: [{ scale: anim.value }],
+  }));
+  return (
+    <Reanimated.View
+      pointerEvents="none"
+      style={[
+        styles.doneSparkle,
+        { top, left, width: size, height: size, borderRadius: size / 2, backgroundColor: color },
+        style,
+      ]}
+    />
   );
 }
 
@@ -538,20 +609,22 @@ export default function ClockInScreen() {
     ) : null;
 
   const timerCard = isClockedIn ? (
-    <LinearGradient colors={['#ecfdf5', '#d1fae5']} style={styles.timerCard}>
-      <View style={styles.timerHeader}>
-        <View style={styles.timerPulse} />
-        <Text style={styles.timerLabel}>Visit in progress</Text>
-      </View>
-      <Text style={styles.timerValue}>{formatElapsed(elapsed)}</Text>
-      <Text style={styles.timerSub}>
-        Started {formatScheduledTime(visit?.clockInTime)} · tap Clock Out when done
-      </Text>
-    </LinearGradient>
+    <Reanimated.View entering={FadeInDown.springify().damping(16)}>
+      <LinearGradient colors={['#ecfdf5', '#d1fae5']} style={styles.timerCard}>
+        <View style={styles.timerHeader}>
+          <PulseDot />
+          <Text style={styles.timerLabel}>Visit in progress</Text>
+        </View>
+        <Text style={styles.timerValue}>{formatElapsed(elapsed)}</Text>
+        <Text style={styles.timerSub}>
+          Started {formatScheduledTime(visit?.clockInTime)} · tap Clock Out when done
+        </Text>
+      </LinearGradient>
+    </Reanimated.View>
   ) : null;
 
   const geofenceBanner = geofenceError ? (
-    <View style={styles.geofenceBanner}>
+    <Reanimated.View entering={FadeIn.duration(200)} style={styles.geofenceBanner}>
       <Text style={styles.geofenceBannerTitle}>Outside allowed zone</Text>
       <Text style={styles.geofenceBannerMsg}>{geofenceError.message}</Text>
       <View style={styles.geofenceBannerStats}>
@@ -565,7 +638,7 @@ export default function ClockInScreen() {
           <Text style={styles.geofenceStatVal}>{formatDistance(geofenceError.allowedM)}</Text>
         </View>
       </View>
-    </View>
+    </Reanimated.View>
   ) : null;
 
   const actionButton = !isClockedIn ? (
@@ -585,7 +658,11 @@ export default function ClockInScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
-        <Ionicons name="location" size={20} color={colors.onGradient} />
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.onGradient} />
+        ) : (
+          <Ionicons name="location" size={20} color={colors.onGradient} />
+        )}
         <Text style={styles.actionBtnText}>
           {isLoading
             ? 'Clocking in…'
@@ -614,14 +691,18 @@ export default function ClockInScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
-        <Ionicons name="checkmark-circle" size={22} color={colors.onGradient} />
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.onGradient} />
+        ) : (
+          <Ionicons name="checkmark-circle" size={22} color={colors.onGradient} />
+        )}
         <Text style={styles.actionBtnText}>{isLoading ? 'Clocking out…' : 'Clock Out'}</Text>
       </LinearGradient>
     </Pressable>
   );
 
   const deniedBox = geoStatus === 'denied' ? (
-    <View style={styles.deniedBox}>
+    <Reanimated.View entering={FadeIn.duration(200)} style={styles.deniedBox}>
       <Text style={styles.deniedTitle}>Location access required</Text>
       <Text style={styles.deniedNote}>
         {"EVV compliance needs your location to confirm you're at the client's address. Enable it, then tap Retry."}
@@ -644,7 +725,7 @@ export default function ClockInScreen() {
           <Text style={styles.deniedBtnGhostText}>Open Settings</Text>
         </Pressable>
       </View>
-    </View>
+    </Reanimated.View>
   ) : null;
 
   const evvNote = (
@@ -675,10 +756,16 @@ export default function ClockInScreen() {
     return (
       <LinearGradient colors={gradients.hero} style={styles.doneRoot}>
         <StatusBar style="light" />
+        <Reanimated.View entering={FadeIn.duration(250)} style={styles.doneContent}>
         <Animated.View style={[styles.doneCard, cardStyle]}>
-          <Animated.View style={[styles.doneCheck, checkStyle]}>
-            <Ionicons name="checkmark" size={50} color={colors.onGradient} />
-          </Animated.View>
+          <View style={styles.doneCheckWrap}>
+            {DONE_SPARKLES.map((dot, i) => (
+              <SparkleDot key={i} {...dot} />
+            ))}
+            <Animated.View style={[styles.doneCheck, checkStyle]}>
+              <Ionicons name="checkmark" size={50} color={colors.onGradient} />
+            </Animated.View>
+          </View>
           <Text style={styles.doneTitle}>Visit Complete</Text>
           {clientName ? <Text style={styles.doneClient}>{clientName}</Text> : null}
 
@@ -713,6 +800,7 @@ export default function ClockInScreen() {
         >
           <Text style={styles.doneBtnText}>Done</Text>
         </Pressable>
+        </Reanimated.View>
       </LinearGradient>
     );
   }
@@ -774,14 +862,17 @@ const styles = StyleSheet.create({
 
   // Visit complete celebration
   doneRoot: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 20 },
+  doneContent: { width: '100%', alignItems: 'center', gap: 20 },
   doneCard: {
     backgroundColor: colors.cardBg, borderRadius: 28, paddingVertical: 36, paddingHorizontal: 28,
     alignItems: 'center', width: '100%', maxWidth: 380,
     ...shadow.floating,
   },
+  doneCheckWrap: { marginBottom: 18 },
+  doneSparkle: { position: 'absolute' },
   doneCheck: {
     width: 96, height: 96, borderRadius: 48, backgroundColor: colors.success,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 18,
+    justifyContent: 'center', alignItems: 'center',
     shadowColor: colors.success, shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
   doneTitle: { ...typography.hero, fontSize: 26, letterSpacing: -0.5, color: colors.textPrimary },
