@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "vitest": "^1.4.0"
+    "vitest": "^3.2.6"
   },
   "dependencies": {
     "knex": "^3.2.10",
