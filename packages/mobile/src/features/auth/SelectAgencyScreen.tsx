@@ -12,7 +12,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  withSpring,
+  withTiming,
+  EntryExitAnimationFunction,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAuth, AgencyMembership } from '../../lib/AuthContext';
 import { showAppToast } from '../common/alerts/appAlert';
@@ -33,6 +39,19 @@ function agencyInitials(name: string): string {
     .toUpperCase() || words[0][0].toUpperCase();
 }
 
+// Gentle spring pop (scale 0.8 → 1) for the handoff overlay's avatar and
+// success check — softer than ZoomIn's full 0 → 1 blowup.
+const SpringPopIn: EntryExitAnimationFunction = () => {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.8 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 180 }),
+      transform: [{ scale: withSpring(1, { damping: 14, stiffness: 180 }) }],
+    },
+  };
+};
+
 export default function SelectAgencyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -43,6 +62,11 @@ export default function SelectAgencyScreen() {
   const [list, setList] = useState<AgencyMembership[]>(agencies);
   const [isRefreshing, setIsRefreshing] = useState(agencies.length === 0);
   const [switchingTo, setSwitchingTo] = useState<string | null>(null);
+  // Full-screen "workspace handoff" overlay shown while the switch is in
+  // flight; `done` flips it to the success beat before we navigate away.
+  const [handoff, setHandoff] = useState<
+    { agency: AgencyMembership; tint: string; done: boolean } | null
+  >(null);
 
   // Always re-fetch on mount so a newly linked (or disconnected) agency shows
   // up without re-logging in; the cached list renders instantly meanwhile.
@@ -74,26 +98,27 @@ export default function SelectAgencyScreen() {
   );
 
   const handlePick = useCallback(
-    async (agency: AgencyMembership) => {
+    async (agency: AgencyMembership, tint: string) => {
       if (switchingTo) return;
       void Haptics.selectionAsync();
       const alreadyActive = agency.agencyId === currentAgencyId;
+      // Re-picking the current agency from Settings just pops back — no
+      // handoff moment for a no-op.
+      const showHandoff = !(isSwitch && alreadyActive);
       setSwitchingTo(agency.agencyId);
+      if (showHandoff) setHandoff({ agency, tint, done: false });
       try {
         await selectAgency(agency.agencyId);
         if (isSwitch && alreadyActive) {
           router.back();
           return;
         }
-        if (!alreadyActive) {
-          showAppToast({
-            message: `Now viewing ${agency.agencyName || 'your agency'}.`,
-            variant: 'success',
-            icon: 'business-outline',
-          });
-        }
+        setHandoff((h) => (h ? { ...h, done: true } : h));
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
         router.replace('/(tabs)/dashboard');
       } catch {
+        setHandoff(null);
         showAppToast({
           message: "Couldn't switch agencies. Check your connection and try again.",
           variant: 'warning',
@@ -160,7 +185,7 @@ export default function SelectAgencyScreen() {
                   entering={FadeInDown.delay(80 + index * 70).springify().damping(16)}
                 >
                   <Pressable
-                    onPress={() => void handlePick(agency)}
+                    onPress={() => void handlePick(agency, tint)}
                     disabled={switchingTo !== null}
                     style={({ pressed }) => [
                       styles.card,
@@ -215,6 +240,38 @@ export default function SelectAgencyScreen() {
           </Text>
         </Animated.View>
       </ScrollView>
+
+      {/* Workspace handoff — a deliberate full-screen beat while the switch
+          lands, replacing a toast that used to clip against the nav
+          transition. Unmounting on error handles the fade-out. */}
+      {handoff ? (
+        <Animated.View
+          entering={FadeIn.duration(220)}
+          style={styles.handoffOverlay}
+          accessibilityLiveRegion="polite"
+        >
+          <LinearGradient colors={gradients.hero} style={StyleSheet.absoluteFill} />
+          <Animated.View entering={SpringPopIn} style={[styles.handoffAvatar, { backgroundColor: handoff.tint }]}>
+            <Text style={styles.handoffAvatarText}>{agencyInitials(handoff.agency.agencyName)}</Text>
+          </Animated.View>
+          <Text style={styles.handoffName} numberOfLines={2}>
+            {handoff.agency.agencyName || 'Agency'}
+          </Text>
+          {handoff.done ? (
+            <Animated.View entering={SpringPopIn} style={styles.handoffStatusRow}>
+              <View style={styles.handoffCheck}>
+                <Ionicons name="checkmark" size={18} color={colors.onGradient} />
+              </View>
+              <Text style={styles.handoffStatusDone}>You're all set</Text>
+            </Animated.View>
+          ) : (
+            <View style={styles.handoffStatusRow}>
+              <ActivityIndicator size="small" color={colors.onGradientSoft} />
+              <Text style={styles.handoffStatusText}>Switching workspace…</Text>
+            </View>
+          )}
+        </Animated.View>
+      ) : null}
     </LinearGradient>
   );
 }
@@ -272,4 +329,31 @@ const styles = StyleSheet.create({
   },
   noteIcon: { marginTop: 1 },
   noteText: { flex: 1, ...typography.sub, color: colors.onGradientSoft, lineHeight: 19 },
+
+  handoffOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    elevation: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  handoffAvatar: {
+    width: 76, height: 76, borderRadius: 20,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 20,
+    ...shadow.floating,
+  },
+  handoffAvatarText: { fontSize: 26, fontWeight: '900', letterSpacing: 0.5, color: colors.onGradient },
+  handoffName: {
+    ...typography.hero, fontSize: 22,
+    color: colors.onGradient, textAlign: 'center', paddingHorizontal: 32,
+  },
+  handoffStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, minHeight: 28 },
+  handoffStatusText: { ...typography.body, color: colors.onGradientSoft },
+  handoffStatusDone: { ...typography.body, color: colors.onGradient },
+  handoffCheck: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.success,
+    justifyContent: 'center', alignItems: 'center',
+  },
 });
