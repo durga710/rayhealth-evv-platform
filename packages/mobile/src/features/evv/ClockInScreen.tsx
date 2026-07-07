@@ -706,9 +706,9 @@ export default function ClockInScreen() {
 
   const deniedBox = geoStatus === 'denied' ? (
     <Reanimated.View entering={FadeIn.duration(200)} style={styles.deniedBox}>
-      <Text style={styles.deniedTitle}>Location access required</Text>
+      <Text style={styles.deniedTitle}>Turn on location to clock in</Text>
       <Text style={styles.deniedNote}>
-        {"EVV compliance needs your location to confirm you're at the client's address. Enable it, then tap Retry."}
+        {"Pennsylvania EVV rules require confirming you're at the client's home when a visit starts — so location has to be on to clock in. It's used only at clock-in and clock-out, never to track you between visits. Enable location, then tap Retry."}
       </Text>
       <View style={styles.deniedActions}>
         <Pressable
@@ -735,13 +735,44 @@ export default function ClockInScreen() {
     <View style={styles.evvNote}>
       <Ionicons name="lock-closed" size={13} color={colors.textMuted} style={{ marginTop: 1 }} />
       <Text style={styles.evvNoteText}>
-        GPS is captured at clock-in and clock-out for PA EVV compliance.
+        Your location is captured only at clock-in and clock-out — never in between — to meet PA EVV
+        requirements.{' '}
         {hasGeolock
-          ? ` A ${formatDistance(clientGeofenceM)} presence radius is enforced for this client.`
-          : ' No radius is configured — location is still recorded.'}
+          ? `Clock-in confirms you're within ${formatDistance(clientGeofenceM)} of the client's address; it's checked on our servers, so the map here is just your guide.`
+          : 'This client has no location radius set, so your GPS is recorded without a distance check.'}
       </Text>
     </View>
   );
+
+  // Plain-language explanation of the button's state, so the caregiver never
+  // faces a disabled Clock In without knowing why. Purely UX — the server is
+  // still the geofence authority. Hidden once clocked in (Clock Out is never
+  // gated on the fence, so a "move closer" nudge there would be misleading).
+  const statusHint =
+    !isClockedIn && !geofenceError && geoStatus !== 'denied' ? (
+      geoStatus === 'outside' && distanceM != null ? (
+        <View style={[styles.hintRow, styles.hintOutside]}>
+          <Ionicons name="walk-outline" size={16} color={colors.amberDark} />
+          <Text style={[styles.hintText, { color: colors.amberDark }]}>
+            {`You're ${formatDistance(distanceM)} away. Clock In turns on once you're within ${formatDistance(clientGeofenceM)} of ${clientName ?? 'the client'}.`}
+          </Text>
+        </View>
+      ) : geoStatus === 'inside' ? (
+        <View style={[styles.hintRow, styles.hintInside]}>
+          <Ionicons name="checkmark-circle" size={16} color={colors.successDark} />
+          <Text style={[styles.hintText, { color: colors.successDark }]}>
+            {"You're inside the client's zone — you're good to clock in."}
+          </Text>
+        </View>
+      ) : (
+        <View style={[styles.hintRow, styles.hintNeutral]}>
+          <ActivityIndicator size="small" color={colors.brandBlue} />
+          <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+            Finding your location to confirm you&apos;re at the address…
+          </Text>
+        </View>
+      )
+    ) : null;
 
   // ── Visit complete celebration ──────────────────────────────────────────────
   if (completed) {
@@ -803,14 +834,41 @@ export default function ClockInScreen() {
           </View>
         </Animated.View>
 
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.9 }]}
-          accessibilityRole="button"
-          accessibilityLabel="Done"
-        >
-          <Text style={styles.doneBtnText}>Done</Text>
-        </Pressable>
+        <View style={styles.doneActions}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.9 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Return to today's visits"
+          >
+            <Ionicons name="today-outline" size={18} color={colors.brandBlue} />
+            <Text style={styles.doneBtnText}>Return to today&apos;s visits</Text>
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              // Route to the existing visit-detail screen (no separate summary
+              // route exists). Status is 'pending' — the visit was just recorded
+              // and the office verifies it; claiming "verified" here would be
+              // dishonest, consistent with the completion badge's GPS honesty.
+              router.replace({
+                pathname: '/visit-detail',
+                params: {
+                  clientName: clientName ?? 'Client',
+                  clockInTime: completed.clockInTime,
+                  clockOutTime: completed.clockOutTime,
+                  status: 'pending',
+                  ...(serviceCode ? { serviceCode } : {}),
+                },
+              })
+            }
+            style={({ pressed }) => [styles.doneBtnGhost, pressed && { opacity: 0.85 }]}
+            accessibilityRole="button"
+            accessibilityLabel="View visit summary"
+          >
+            <Ionicons name="document-text-outline" size={18} color={colors.onGradient} />
+            <Text style={styles.doneBtnGhostText}>View visit summary</Text>
+          </Pressable>
+        </View>
         </Reanimated.View>
       </LinearGradient>
     );
@@ -856,6 +914,7 @@ export default function ClockInScreen() {
             {clientCard}
             {mapBlock}
             {geofenceBanner}
+            {statusHint}
             {actionButton}
             {deniedBox}
             {evvNote}
@@ -902,12 +961,21 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.successBorder,
   },
   doneVerifiedText: { color: colors.successDark, fontSize: 12.5, fontWeight: '700' },
+  doneActions: { width: '100%', maxWidth: 380, gap: 12 },
   doneBtn: {
+    flexDirection: 'row', gap: 8,
     backgroundColor: colors.cardBg, borderRadius: radii.lg, height: 54,
-    width: '100%', maxWidth: 380, justifyContent: 'center', alignItems: 'center',
+    width: '100%', justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6,
   },
   doneBtnText: { color: colors.brandBlue, fontSize: 17, fontWeight: '800' },
+  doneBtnGhost: {
+    flexDirection: 'row', gap: 8,
+    borderRadius: radii.lg, height: 52, width: '100%',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#ffffff55',
+  },
+  doneBtnGhostText: { color: colors.onGradient, fontSize: 16, fontWeight: '800' },
 
   // Slim header
   topBar: {
@@ -1035,4 +1103,15 @@ const styles = StyleSheet.create({
     ...shadow.subtle,
   },
   evvNoteText: { flex: 1, color: colors.textMuted, fontSize: 12, lineHeight: 18 },
+
+  // Button-state hint
+  hintRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 9,
+    borderRadius: radii.md, paddingVertical: 12, paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  hintText: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  hintOutside: { backgroundColor: colors.amberBg, borderColor: colors.amberBorder },
+  hintInside: { backgroundColor: colors.successBg, borderColor: colors.successBorder },
+  hintNeutral: { backgroundColor: colors.cardBg, borderColor: colors.border },
 });
