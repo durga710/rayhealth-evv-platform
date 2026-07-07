@@ -43,6 +43,11 @@ describe('TrustCenterPage', () => {
     expect(screen.queryByText(/guaranteed compliance/i)).not.toBeInTheDocument();
   });
 
+  it('states admin assistant transcript text is not retained', () => {
+    renderPage();
+    expect(screen.getByText(/Admin-assistant transcript text is not retained/i)).toBeInTheDocument();
+  });
+
   it('mirrors PrivacyPage subprocessor BAA posture (Neon and AWS active, others in progress)', () => {
     renderPage();
     expect(screen.getByRole('cell', { name: /Neon/i })).toBeInTheDocument();

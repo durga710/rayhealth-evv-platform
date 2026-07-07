@@ -160,7 +160,7 @@ const aiPolicy: readonly AiPolicyPoint[] = [
   },
   {
     title: 'AI actions are audit-logged',
-    detail: 'Copilot queries and approved actions are recorded in the same append-only audit trail as every other state change; assistant conversations are logged with session and model metadata. An AI-approved change is as traceable as a manual one.',
+    detail: 'Copilot queries, approved actions, assistant requests, and command-center briefings are recorded with hash, length, session, and model metadata. Admin-assistant transcript text is not retained.',
   },
 ];
 

@@ -304,7 +304,7 @@ export function createApp() {
     app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);
     app.use(`${prefix}/admin/audit-packet`, adminAuditLimiter, auditPacketRoutes);
     app.use(`${prefix}/learning`, learningRoutes);
-    app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
+    app.use(`${prefix}/admin-assistant`, copilotLimiter, adminAssistantRoutes);
     app.use(`${prefix}/copilot`, copilotLimiter, copilotRoutes);
     app.use(`${prefix}/billing`, billingRoutes);
     app.use(`${prefix}/billing`, billingClaimsRoutes);
@@ -312,7 +312,7 @@ export function createApp() {
     app.use(`${prefix}/profile`, profileRoutes);
     app.use(`${prefix}/settings`, settingsRoutes);
     app.use(`${prefix}/compliance-engine`, complianceEngineRoutes);
-    app.use(`${prefix}/command-center`, commandCenterRoutes);
+    app.use(`${prefix}/command-center`, copilotLimiter, commandCenterRoutes);
     app.use(`${prefix}/documents`, documentRoutes);
   }
 

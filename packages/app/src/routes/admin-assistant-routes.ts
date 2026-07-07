@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { generateText, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
+import { AuditEventRepository } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 import { aiModel } from '../ai.js';
 import { requireCapability } from '../middleware/require-capability.js';
@@ -23,6 +24,20 @@ When unsure, call a tool. Keep replies concise (3-5 sentences). End feature-rela
 interface ToolContext {
   db: unknown;
   agencyId: string;
+}
+
+function sha256(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function redactedTurnContent(kind: 'user' | 'assistant', content: string): string {
+  return JSON.stringify({
+    redacted: true,
+    surface: 'admin-assistant',
+    kind,
+    sha256: sha256(content),
+    length: content.length,
+  });
 }
 
 async function runTool(
@@ -59,6 +74,7 @@ async function runTool(
          join evv_visits v on v.id = e.visit_id
          join users u on u.caregiver_id = v.caregiver_id
          where u.agency_id = $1
+           and e.approved_at is null
          group by exception_type
          order by count desc`,
         [ctx.agencyId]
@@ -185,14 +201,40 @@ router.post('/chat', async (req, res) => {
       res.status(502).json({ message: 'Empty model response.' });
       return;
     }
+    const userMessage = incoming[incoming.length - 1].content;
+    const modelName = process.env.BEDROCK_MODEL_ID ?? 'bedrock';
 
     try {
-      const ip = req.header('cf-connecting-ip') ?? req.ip ?? null;
+      await new AuditEventRepository(db).create({
+        agencyId: req.auth.agencyId,
+        actorId: req.auth.userId,
+        actorType: 'user',
+        eventType: 'copilot.query',
+        entityType: 'admin_assistant',
+        entityId: req.auth.agencyId,
+        outcome: 'success',
+        payload: {
+          sessionId,
+          surface: 'admin-assistant',
+          model: modelName,
+          promptHash: sha256(userMessage),
+          promptLength: userMessage.length,
+          responseHash: sha256(text),
+          responseLength: text.length,
+        },
+      });
+    } catch (err) {
+      safeError('admin-assistant audit insert failed', err);
+      res.status(500).json({ message: 'Assistant response could not be audited.' });
+      return;
+    }
+
+    try {
       await (db as (table: string) => { insert: (rows: unknown[]) => Promise<unknown> })(
         'support_conversations'
       ).insert([
-        { id: randomUUID(), session_id: sessionId, role: 'user',      content: incoming[incoming.length - 1].content, model: process.env.BEDROCK_MODEL_ID ?? 'bedrock', ip_address: ip },
-        { id: randomUUID(), session_id: sessionId, role: 'assistant', content: text,                                  model: process.env.BEDROCK_MODEL_ID ?? 'bedrock', ip_address: ip },
+        { id: randomUUID(), session_id: sessionId, role: 'user',      content: redactedTurnContent('user', userMessage),      model: modelName, ip_address: null },
+        { id: randomUUID(), session_id: sessionId, role: 'assistant', content: redactedTurnContent('assistant', text), model: modelName, ip_address: null },
       ]);
     } catch (err) {
       safeError('admin-assistant log insert failed', err);
