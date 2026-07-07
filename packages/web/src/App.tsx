@@ -43,6 +43,7 @@ const LaunchPage = lazy(() => import('./features/marketing/site/LaunchPage.js').
 const AdsPage = lazy(() => import('./features/marketing/site/AdsPage.js').then((m) => ({ default: m.AdsPage })));
 const StatusPage = lazy(() => import('./features/marketing/site/StatusPage.js').then((m) => ({ default: m.StatusPage })));
 const PrivacyPage = lazy(() => import('./features/marketing/site/PrivacyPage.js').then((m) => ({ default: m.PrivacyPage })));
+const TrustCenterPage = lazy(() => import('./features/marketing/site/TrustCenterPage.js').then((m) => ({ default: m.TrustCenterPage })));
 const TermsPage = lazy(() => import('./features/marketing/site/TermsPage.js').then((m) => ({ default: m.TermsPage })));
 const SchedulingPage = lazy(() => import('./features/marketing/site/SchedulingPage.js').then((m) => ({ default: m.SchedulingPage })));
 const EvvSolutionPage = lazy(() => import('./features/marketing/site/EvvSolutionPage.js').then((m) => ({ default: m.EvvSolutionPage })));
@@ -60,6 +61,7 @@ const DashboardPage = lazy(() => import('./features/admin/DashboardPage.js').the
 const CommandCenterPage = lazy(() => import('./features/admin/CommandCenterPage.js').then((m) => ({ default: m.CommandCenterPage })));
 const TodayBoardPage = lazy(() => import('./features/admin/TodayBoardPage.js').then((m) => ({ default: m.TodayBoardPage })));
 const AuditEventsPage = lazy(() => import('./features/audit/AuditEventsPage.js').then((m) => ({ default: m.AuditEventsPage })));
+const AuditPacketPage = lazy(() => import('./features/compliance-engine/AuditPacketPage.js').then((m) => ({ default: m.AuditPacketPage })));
 const LearningHubPage = lazy(() => import('./features/learning/LearningHubPage.js').then((m) => ({ default: m.LearningHubPage })));
 const LearningPortalPage = lazy(() => import('./features/learning/LearningPortalPage.js').then((m) => ({ default: m.LearningPortalPage })));
 const CourseEditorPage = lazy(() => import('./features/learning/CourseEditorPage.js').then((m) => ({ default: m.CourseEditorPage })));
@@ -354,6 +356,7 @@ const navGroupDefs: NavGroupDef[] = [
     allowedRoles: ['admin'],
     items: [
       { to: '/admin/audit-events', label: 'Audit Events', icon: icons.audit },
+      { to: '/admin/audit-packet', label: 'Audit Packet', icon: icons.audit },
       { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
     ],
   },
@@ -516,6 +519,7 @@ export function App() {
       <Route path="/ads" element={<AdsPage />} />
       <Route path="/status" element={<StatusPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/trust" element={<TrustCenterPage />} />
       <Route path="/terms" element={<TermsPage />} />
       {/* Marketing site — Platform / Solutions / Resources content pages */}
       <Route path="/rayverify" element={<RayVerifyPage />} />
@@ -569,6 +573,8 @@ export function App() {
           <Route path="recurring-schedules" element={<RecurringSchedulesPage />} />
           <Route path="review" element={<VisitReviewPage />} />
           <Route path="audit-events" element={<AuditEventsPage />} />
+          <Route path="audit-packet" element={<AuditPacketPage />} />
+          <Route path="audit-packet/:visitId" element={<AuditPacketPage />} />
           <Route path="audit-retention" element={<AuditRetentionPage />} />
           <Route path="learning" element={<LearningHubPage />} />
           <Route path="learning/courses/new" element={<CourseEditorPage />} />

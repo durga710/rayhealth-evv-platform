@@ -34,6 +34,7 @@ export const NAV = {
     { label: 'Contact', to: '/contact' },
     { label: 'Request a demo', to: '/demo' },
     { label: 'Sign in', to: '/login' },
+    { label: 'Trust Center', to: '/trust' },
     { label: 'HIPAA', to: '/compliance/hipaa' },
     { label: 'Privacy', to: '/privacy' },
     { label: 'Terms', to: '/terms' },

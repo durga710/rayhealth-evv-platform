@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getJson, postJson } from '../../lib/api-client.js';
 import { EmptyState, LoadingSkeleton, ErrorRetry } from '../../components/state/index.js';
 
@@ -186,20 +187,25 @@ export function VisitReviewPage() {
                   <span className={statusBadgeClass(visit.status)} style={{ textTransform: 'capitalize' }}>{visit.status}</span>
                 </td>
                 <td>
-                  {(visit.status === 'pending' || visit.status === 'flagged') && (
-                    <button
-                      onClick={() => handleRequestCorrection(visit.id)}
-                      className="btn-ghost btn-sm"
-                    >
-                      Request Correction
-                    </button>
-                  )}
-                  {visit.status === 'verified' && (
-                    <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Closed</span>
-                  )}
-                  {visit.status === 'corrected' && (
-                    <span style={{ fontSize: '0.8125rem', color: '#0c5d66' }}>Corrected</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {(visit.status === 'pending' || visit.status === 'flagged') && (
+                      <button
+                        onClick={() => handleRequestCorrection(visit.id)}
+                        className="btn-ghost btn-sm"
+                      >
+                        Request Correction
+                      </button>
+                    )}
+                    {visit.status === 'verified' && (
+                      <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Closed</span>
+                    )}
+                    {visit.status === 'corrected' && (
+                      <span style={{ fontSize: '0.8125rem', color: '#0c5d66' }}>Corrected</span>
+                    )}
+                    <Link to={`/admin/audit-packet/${visit.id}`} className="btn-ghost btn-sm">
+                      Audit packet
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}
