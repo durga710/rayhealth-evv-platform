@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { toEmbedUrl } from './video-embed';
+import { extractYouTubeId, toEmbedUrl } from './video-embed';
+
+describe('extractYouTubeId', () => {
+  it('extracts ids from watch, short, and embed URLs', () => {
+    expect(extractYouTubeId('https://www.youtube.com/watch?v=d914EnpU4Fo')).toBe('d914EnpU4Fo');
+    expect(extractYouTubeId('https://youtu.be/d914EnpU4Fo')).toBe('d914EnpU4Fo');
+    expect(extractYouTubeId('https://www.youtube-nocookie.com/embed/d914EnpU4Fo')).toBe('d914EnpU4Fo');
+    expect(extractYouTubeId('https://www.youtube.com/watch?v=abc123XYZ_-&t=30s')).toBe('abc123XYZ_-');
+  });
+
+  it('returns null for non-YouTube URLs', () => {
+    expect(extractYouTubeId('https://videos.example.com/training.mp4')).toBeNull();
+  });
+});
 
 describe('toEmbedUrl', () => {
   it('transforms a canonical watch URL to a nocookie embed with player params', () => {

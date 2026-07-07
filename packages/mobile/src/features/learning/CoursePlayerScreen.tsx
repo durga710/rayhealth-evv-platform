@@ -21,6 +21,15 @@ import {
 import { emptyAnswers, gradeQuiz, type QuizGrade } from '../../lib/quiz';
 import { parseLessonContent, sectionIcon, type LessonBlock } from '../../lib/lesson-format';
 import {
+  foldVideoEvent,
+  initialVideoProgress,
+  isVideoSatisfied,
+  needsRewatchWarning,
+  REQUIRED_WATCH_FRACTION,
+  type VideoBridgeEvent,
+  type VideoProgress,
+} from '../../lib/video-progress';
+import {
   parsePreset,
   PRESET_LABELS,
   PRESETS,
@@ -39,7 +48,7 @@ import { alpha, colors, gradients, radii, shadow, space, typography } from '../c
 /**
  * Guided in-app course player: overview → one lesson section per screen →
  * video → quiz (one question at a time) → completion. Designed for caregivers
- * who aren't confident with technology — one thing on screen at a time, big
+ * who aren't confident with technology, one thing on screen at a time, big
  * pinned Back/Next buttons, an always-visible progress bar, and a text-size
  * control on the lesson text.
  */
@@ -99,6 +108,8 @@ export default function CoursePlayerScreen() {
   const [grade, setGrade] = useState<QuizGrade | null>(null);
   const [completionState, setCompletionState] = useState<CompletionState>('idle');
   const [textPreset, setTextPreset] = useState<TextSizePreset>('standard');
+  const [video, setVideo] = useState<VideoProgress>(initialVideoProgress());
+  const [videoKey, setVideoKey] = useState(0);
   const startedRef = useRef(false);
   const submittedRef = useRef(false);
   const celebrationHapticRef = useRef(false);
@@ -191,7 +202,7 @@ export default function CoursePlayerScreen() {
     [row],
   );
 
-  // Passing the quiz completes the course automatically — no extra button.
+  // Passing the quiz completes the course automatically, no extra button.
   useEffect(() => {
     if (grade?.passed && !alreadyCompleted && completionState === 'idle') {
       void submitCompletion(grade);
@@ -237,6 +248,16 @@ export default function CoursePlayerScreen() {
     goTo(firstQuizIndex(steps));
   };
 
+  const handleVideoEvent = useCallback((event: VideoBridgeEvent) => {
+    setVideo((prev) => foldVideoEvent(prev, event));
+  }, []);
+
+  const handleRewatch = () => {
+    void Haptics.selectionAsync();
+    setVideo(initialVideoProgress());
+    setVideoKey((k) => k + 1);
+  };
+
   const selectAnswer = (questionIndex: number, optionIndex: number) => {
     void Haptics.selectionAsync();
     setAnswers((prev) => {
@@ -280,8 +301,10 @@ export default function CoursePlayerScreen() {
         : step.kind === 'quiz-result'
           ? 'Finish'
           : 'Next';
+  const videoSatisfied = isCompleted || isVideoSatisfied(video);
   const nextDisabled =
     !canAdvance(step, answers) ||
+    (step.kind === 'video' && !videoSatisfied) ||
     (step.kind === 'quiz-result' && !alreadyCompleted && completionState !== 'done');
   const footerVisible =
     step.kind !== 'done' && !(step.kind === 'quiz-result' && grade != null && !grade.passed);
@@ -466,15 +489,51 @@ export default function CoursePlayerScreen() {
     );
   };
 
-  const renderVideo = () => (
-    <View style={styles.videoWrap}>
-      <Text style={[styles.sectionTitle, readingHeading]}>Watch the training video</Text>
-      <CourseVideo videoUrl={modules.videoUrl as string} />
-      <Text style={styles.videoHint}>
-        Tap the video to play it. When you&apos;re done watching, press Next.
-      </Text>
-    </View>
-  );
+  const renderVideo = () => {
+    const showRewatch = needsRewatchWarning(video) && !isCompleted;
+    const watchedPercent = Math.round(video.watchedPct * 100);
+    return (
+      <View style={styles.videoWrap}>
+        <Text style={[styles.sectionTitle, readingHeading]}>Watch the training video</Text>
+        <CourseVideo key={videoKey} videoUrl={modules.videoUrl as string} onEvent={handleVideoEvent} />
+        {showRewatch ? (
+          <View style={styles.rewatchCard}>
+            <Ionicons name="alert-circle" size={22} color={colors.amberDark} style={styles.bulletIcon} />
+            <View style={{ flex: 1, gap: space.sm }}>
+              <Text style={styles.rewatchText}>
+                It looks like part of the video was skipped. Please watch it through so nothing
+                important is missed.
+              </Text>
+              <Pressable
+                onPress={handleRewatch}
+                style={({ pressed }) => [styles.rewatchBtn, pressed && { opacity: 0.9 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Rewatch the video"
+              >
+                <Ionicons name="refresh" size={16} color={colors.onGradient} />
+                <Text style={styles.rewatchBtnText}>Rewatch video</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : videoSatisfied ? (
+          <View style={styles.videoStatusRow}>
+            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+            <Text style={[styles.videoHint, { color: colors.successDark }]}>
+              {video.error
+                ? 'Video unavailable right now. You can continue.'
+                : 'Nice work. Press Next to continue.'}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.videoHint}>
+            {watchedPercent > 0
+              ? `Watched ${watchedPercent}%. Keep going, Next unlocks at ${Math.round(REQUIRED_WATCH_FRACTION * 100)}%.`
+              : 'Tap the video to play it. Next unlocks after you watch it.'}
+          </Text>
+        )}
+      </View>
+    );
+  };
 
   const renderQuizQuestion = (questionIndex: number) => {
     const q = quiz[questionIndex];
@@ -542,7 +601,7 @@ export default function CoursePlayerScreen() {
           </View>
           <Text style={styles.resultTitle}>You passed!</Text>
           <Text style={[styles.readingText, readingBody, { textAlign: 'center' }]}>
-            {grade.correctCount} of {grade.total} correct — {grade.scorePercent}%
+            {grade.correctCount} of {grade.total} correct, {grade.scorePercent}%
           </Text>
           {completionState === 'submitting' ? (
             <View style={styles.savingRow}>
@@ -575,7 +634,7 @@ export default function CoursePlayerScreen() {
             {grade.correctCount} of {grade.total} correct
           </Text>
           <Text style={[styles.readingText, readingBody]}>
-            You need 80% to pass. Review the answers below, then try again — you can retry as many
+            You need 80% to pass. Review the answers below, then try again, you can retry as many
             times as you like.
           </Text>
         </View>
@@ -629,7 +688,7 @@ export default function CoursePlayerScreen() {
           <Text style={styles.resultTitle}>Course complete!</Text>
           <Text style={[styles.readingText, readingBody, { textAlign: 'center' }]}>
             {grade
-              ? `Great work — you scored ${grade.scorePercent}%.`
+              ? `Great work, you scored ${grade.scorePercent}%.`
               : 'Great work. This course is now marked complete.'}
           </Text>
           <Pressable
@@ -920,6 +979,30 @@ const styles = StyleSheet.create({
   // Video
   videoWrap: { gap: space.md },
   videoHint: { ...typography.sub, color: colors.textSecondary, textAlign: 'center' },
+  videoStatusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  rewatchCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: space.sm,
+    backgroundColor: colors.amberBg,
+    borderWidth: 1,
+    borderColor: colors.amberBorder,
+    borderRadius: radii.md,
+    padding: space.lg,
+  },
+  rewatchText: { ...typography.body, color: colors.amberDark, lineHeight: 21 },
+  rewatchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.amber,
+    borderRadius: radii.sm,
+    paddingHorizontal: space.md,
+    height: 40,
+  },
+  rewatchBtnText: { ...typography.sub, color: colors.onGradient, fontWeight: '800' },
 
   // Quiz
   quizHint: { ...typography.sub, color: colors.textSecondary },
