@@ -10,7 +10,23 @@ import { colors, radii, shadow, typography } from '../common/tokens';
  * Inline training video for the course player: a tap-to-play poster that swaps
  * to a WebView on the privacy-enhanced YouTube embed (autoplay once tapped).
  * Nothing loads until the caregiver explicitly taps play.
+ *
+ * The embed is wrapped in a minimal HTML page loaded with a baseUrl so the
+ * iframe request carries a real referring origin — loading the embed URL
+ * directly has no referer and YouTube rejects it with "Error 153: video
+ * player configuration error".
  */
+function embedHtml(videoUrl: string): string {
+  const src = toEmbedUrl(videoUrl);
+  return `<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;padding:0;height:100%;background:#0f2d52;overflow:hidden}
+iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}</style>
+</head><body>
+<iframe src="${src}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</body></html>`;
+}
+
 export default function CourseVideo({ videoUrl }: { videoUrl: string }) {
   const [started, setStarted] = useState(false);
 
@@ -36,7 +52,8 @@ export default function CourseVideo({ videoUrl }: { videoUrl: string }) {
   return (
     <View style={styles.frame}>
       <WebView
-        source={{ uri: toEmbedUrl(videoUrl) }}
+        source={{ html: embedHtml(videoUrl), baseUrl: 'https://rayhealthevv.com' }}
+        originWhitelist={['*']}
         style={styles.webview}
         allowsFullscreenVideo
         allowsInlineMediaPlayback
