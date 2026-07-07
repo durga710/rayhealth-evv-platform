@@ -39,12 +39,12 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'Your role in home care',
           content:
-            'As a direct care worker you support clients with activities of daily living (ADLs) such as bathing, dressing, mobility, meal preparation, and light housekeeping. You are the agency’s eyes and ears in the home: report changes in a client’s condition, home safety hazards, or anything that concerns you. Always work within your assigned care plan — never perform tasks outside your training or the plan.',
+            'As a direct care worker you support clients with activities of daily living (ADLs) such as bathing, dressing, mobility, meal preparation, and light housekeeping. You are the agency’s eyes and ears in the home: report changes in a client’s condition, home safety hazards, or anything that concerns you. Always work within your assigned care plan. Never perform tasks outside your training or the plan.',
         },
         {
           title: 'Client rights & dignity',
           content:
-            'Every client has the right to be treated with respect, to privacy, to participate in their own care decisions, and to be free from abuse, neglect, and exploitation. Knock before entering, explain what you are doing, and honor reasonable preferences. Protect health information — never discuss a client’s situation with anyone outside the care team.',
+            'Every client has the right to be treated with respect, to privacy, to participate in their own care decisions, and to be free from abuse, neglect, and exploitation. Knock before entering, explain what you are doing, and honor reasonable preferences. Protect health information. Never discuss a client’s situation with anyone outside the care team.',
         },
         {
           title: 'Communication & emergencies',
@@ -103,7 +103,7 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'What is PHI?',
           content:
-            'PHI is any health information that can identify a person — names, addresses, Medicaid IDs, diagnoses, visit notes, and even photos. You may only access and use PHI as needed to do your job. This is the “minimum necessary” rule: don’t look at records you don’t need, and don’t share more than required.',
+            'PHI is any health information that can identify a person: names, addresses, Medicaid IDs, diagnoses, visit notes, and even photos. You may only access and use PHI as needed to do your job. This is the “minimum necessary” rule: don’t look at records you don’t need, and don’t share more than required.',
         },
         {
           title: 'Protecting PHI in the field',
@@ -113,7 +113,7 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'Reporting incidents',
           content:
-            'A breach is any unauthorized access, use, or disclosure of PHI — a lost phone, an email to the wrong person, or talking about a client in public. If you think a breach may have happened, report it to your privacy officer right away. Prompt reporting protects clients and limits harm; you will not be punished for reporting in good faith.',
+            'A breach is any unauthorized access, use, or disclosure of PHI: a lost phone, an email to the wrong person, or talking about a client in public. If you think a breach may have happened, report it to your privacy officer right away. Prompt reporting protects clients and limits harm; you will not be punished for reporting in good faith.',
         },
       ],
       quiz: [
@@ -204,12 +204,12 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'Types and signs',
           content:
-            'Abuse can be physical, emotional, or sexual; neglect is the failure to provide for basic needs; exploitation is the misuse of a person’s money or property. Warning signs include unexplained bruises, fearfulness, poor hygiene, weight loss, missing belongings, or sudden changes in finances. Trust your instincts — you do not need proof to report a concern.',
+            'Abuse can be physical, emotional, or sexual; neglect is the failure to provide for basic needs; exploitation is the misuse of a person’s money or property. Warning signs include unexplained bruises, fearfulness, poor hygiene, weight loss, missing belongings, or sudden changes in finances. Trust your instincts. You do not need proof to report a concern.',
         },
         {
           title: 'Your duty to report',
           content:
-            'Direct care workers are expected to report suspected abuse, neglect, or exploitation. Report concerns to your supervisor and, when required, to the appropriate authorities. In Pennsylvania, suspected abuse of an older adult can be reported to the statewide elder abuse hotline at 1-800-490-8505. When in doubt, report — reports made in good faith are protected.',
+            'Direct care workers are expected to report suspected abuse, neglect, or exploitation. Report concerns to your supervisor and, when required, to the appropriate authorities. In Pennsylvania, suspected abuse of an older adult can be reported to the statewide elder abuse hotline at 1-800-490-8505. When in doubt, report. Reports made in good faith are protected.',
         },
       ],
       quiz: [
@@ -255,13 +255,13 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'Clocking in and out',
           content:
-            'Open the app at the client’s home and clock in when the visit begins; clock out when it ends. Allow location access so the visit location can be verified — location is captured only at clock-in and clock-out, never tracked in between. If you forget to clock in, clock in as soon as you remember and tell your coordinator so the visit can be corrected properly.',
+            'Open the app at the client’s home and clock in when the visit begins; clock out when it ends. Allow location access so the visit location can be verified. Location is captured only at clock-in and clock-out, never tracked in between. If you forget to clock in, clock in as soon as you remember and tell your coordinator so the visit can be corrected properly.',
         },
       ],
       quiz: [
         {
           question: 'EVV is required by:',
-          options: ['The 21st Century Cures Act', 'Your phone carrier', 'No one — it is optional'],
+          options: ['The 21st Century Cures Act', 'Your phone carrier', 'No one. It is optional'],
           correct: 0,
         },
         {
@@ -301,13 +301,13 @@ const CATALOG: NewLearningCourse[] = [
         {
           title: 'About this certification',
           content:
-            'CPR and First Aid certification must be earned through an approved in-person or blended provider (for example, the American Red Cross or American Heart Association) because it requires a hands-on skills check. Use the official resource link to find and complete a class, then provide your certification card to the agency so your record can be updated. Certifications typically last two years — renew before the expiry date to stay eligible for assignments.',
+            'CPR and First Aid certification requires a hands-on skills check, so it must be earned through an approved in-person or blended provider such as the American Red Cross or American Heart Association.\n\nWhat to do: find and complete a class using the official resource link, provide your certification card to the agency so your record can be updated, and renew before the expiry date (certifications typically last about two years).',
         },
       ],
       quiz: [
         {
           question: 'CPR certification requires:',
-          options: ['Only watching a video', 'An approved hands-on skills check', 'Nothing — self-study is enough'],
+          options: ['Only watching a video', 'An approved hands-on skills check', 'Nothing. Self-study is enough'],
           correct: 1,
         },
         {
