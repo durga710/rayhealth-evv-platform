@@ -67,6 +67,13 @@ export declare const evvVisitSchema: z.ZodObject<{
         rejected: "rejected";
     }>>>;
     sandataConfirmationId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    hhaexchangeStatus: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+        pending: "pending";
+        accepted: "accepted";
+        submitted: "submitted";
+        rejected: "rejected";
+    }>>>;
+    hhaexchangeConfirmationId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, z.core.$strip>;
 export type EvvVisit = z.infer<typeof evvVisitSchema>;
 export type EvvClockInInput = z.infer<typeof evvClockInInputSchema>;

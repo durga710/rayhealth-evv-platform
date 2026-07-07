@@ -20,6 +20,15 @@ export declare class AuditEventRepository {
     constructor(db: Knex);
     create(event: NewAuditEvent): Promise<AuditEvent>;
     findByEntity(entityType: string, entityId: string): Promise<AuditEvent[]>;
+    /**
+     * Agency-scoped variant of {@link findByEntity}. `findByEntity` filters only
+     * by entity type/id and is therefore forbidden for any surface that reads
+     * across tenants — a visit id or assignment id guessed (or leaked) from
+     * another agency would otherwise return that agency's audit rows. The
+     * audit packet route (`GET /admin/audit-packet/:visitId`) uses this
+     * method exclusively.
+     */
+    findByEntityForAgency(agencyId: string, entityType: string, entityId: string): Promise<AuditEvent[]>;
     findByAgency(agencyId: string, limit?: number): Promise<AuditEvent[]>;
     /**
      * Paginated timeline list for the admin Audit Events page.

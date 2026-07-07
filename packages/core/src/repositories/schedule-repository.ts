@@ -84,6 +84,32 @@ export class ScheduleRepository {
     };
   }
 
+  /**
+   * Scheduled start/end for one assignment, tenant-scoped via
+   * assignments -> visit_templates -> clients.agency_id (same join used by
+   * {@link assignmentInAgency}). Used by the audit packet route to show
+   * scheduled-vs-actual alongside a visit's clock-in/out. Null when the
+   * assignment is unknown / cross-tenant — the caller treats that as "no
+   * schedule data", not an error.
+   */
+  async getAssignmentScheduleForAgency(
+    assignmentId: string,
+    agencyId: string
+  ): Promise<{ scheduledStartTime: string | null; scheduledEndTime: string | null } | null> {
+    const row = await this.db('assignments as a')
+      .join('visit_templates as vt', 'vt.id', 'a.visit_template_id')
+      .join('clients as c', 'c.id', 'vt.client_id')
+      .where('c.agency_id', agencyId)
+      .andWhere('a.id', assignmentId)
+      .select('a.scheduled_start_time', 'a.scheduled_end_time')
+      .first();
+    if (!row) return null;
+    return {
+      scheduledStartTime: toIsoOrNull(row.scheduled_start_time),
+      scheduledEndTime: toIsoOrNull(row.scheduled_end_time)
+    };
+  }
+
   /** True when the client exists and belongs to the given agency. */
   async clientBelongsToAgency(clientId: string, agencyId: string): Promise<boolean> {
     const row = await this.db('clients')

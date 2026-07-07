@@ -305,7 +305,9 @@ export class EvvRepository {
           : (outLoc as EvvVisit['clockOutLocation']),
       status: row.status as EvvVisit['status'],
       sandataStatus: (row.sandata_status as EvvVisit['sandataStatus']) ?? null,
-      sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null
+      sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null,
+      hhaexchangeStatus: (row.hhaexchange_status as EvvVisit['hhaexchangeStatus']) ?? null,
+      hhaexchangeConfirmationId: (row.hhaexchange_confirmation_id as string | null) ?? null
     };
   }
 

@@ -75,6 +75,26 @@ export class ClientRepository {
         };
     }
     /**
+     * Minimum-necessary client identity for evidence surfaces (the audit
+     * packet's `client: { id, name }` field) — first/last name only, never the
+     * full client row (no address, DOB, Medicaid number). Tenant-scoped via
+     * `agency_id` so a visit's `clientId` from another tenant can never be
+     * resolved to a name here.
+     */
+    async getClientNameForAgency(clientId, agencyId) {
+        const row = await this.db('clients')
+            .where({ id: clientId, agency_id: agencyId })
+            .select('id', 'first_name', 'last_name')
+            .first();
+        if (!row)
+            return undefined;
+        return {
+            id: row.id,
+            firstName: row.first_name,
+            lastName: row.last_name
+        };
+    }
+    /**
      * True when the client exists and belongs to the given agency. Used to guard
      * cross-tenant writes (e.g. creating an authorization for a clientId that
      * belongs to another agency).

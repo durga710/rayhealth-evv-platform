@@ -58,6 +58,25 @@ export class AuditEventRepository {
     return rows.map((row) => this.mapRow(row));
   }
 
+  /**
+   * Agency-scoped variant of {@link findByEntity}. `findByEntity` filters only
+   * by entity type/id and is therefore forbidden for any surface that reads
+   * across tenants — a visit id or assignment id guessed (or leaked) from
+   * another agency would otherwise return that agency's audit rows. The
+   * audit packet route (`GET /admin/audit-packet/:visitId`) uses this
+   * method exclusively.
+   */
+  async findByEntityForAgency(
+    agencyId: string,
+    entityType: string,
+    entityId: string
+  ): Promise<AuditEvent[]> {
+    const rows = await this.db('audit_events')
+      .where({ agency_id: agencyId, entity_type: entityType, entity_id: entityId })
+      .orderBy('occurred_at', 'desc');
+    return rows.map((row) => this.mapRow(row));
+  }
+
   async findByAgency(agencyId: string, limit = 100): Promise<AuditEvent[]> {
     const rows = await this.db('audit_events')
       .where({ agency_id: agencyId })

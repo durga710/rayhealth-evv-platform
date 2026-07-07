@@ -31,6 +31,10 @@ export const evvVisitSchema = z.object({
     // Aggregator submission lifecycle. Null until the background job first
     // attempts submission; 'accepted' means Sandata returned a confirmation ID.
     sandataStatus: z.enum(['pending', 'submitted', 'accepted', 'rejected']).nullable().optional(),
-    sandataConfirmationId: z.string().nullable().optional()
+    sandataConfirmationId: z.string().nullable().optional(),
+    // HHAeXchange analogue of the Sandata pair above, for agencies routed
+    // through that aggregator instead.
+    hhaexchangeStatus: z.enum(['pending', 'submitted', 'accepted', 'rejected']).nullable().optional(),
+    hhaexchangeConfirmationId: z.string().nullable().optional()
 });
 //# sourceMappingURL=evv.js.map
