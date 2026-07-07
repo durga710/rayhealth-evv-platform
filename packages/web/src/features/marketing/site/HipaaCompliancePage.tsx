@@ -15,9 +15,11 @@ import { SiteLayout, mkic, MK_CHECK } from './SiteLayout.js';
  * Language guardrails:
  *  - We never use "HIPAA certified" — HHS does not issue HIPAA
  *    certifications, and the term carries legal exposure.
- *  - We use "HIPAA-compliant", "HIPAA-aligned", "Engineered to HIPAA
- *    Security and Privacy Rule controls", and "Documented HIPAA Security
- *    Rule controls" instead.
+ *  - We never claim "HIPAA compliant"/"fully compliant" as a finished
+ *    state. We use "HIPAA-ready architecture", "Designed with HIPAA-grade
+ *    controls", "Engineered to HIPAA Security and Privacy Rule controls",
+ *    and "Documented HIPAA Security Rule controls" instead, and describe
+ *    operational readiness as in progress.
  *  - Where a third-party assurance would normally be cited, we publish
  *    "Third-party attestation: <pending>" until an actual auditor
  *    completes work; we do not invent cert names.
@@ -39,13 +41,6 @@ interface SafeguardGroup {
   safeguard: string;
   cfr: string;
   rows: readonly ControlRow[];
-}
-
-interface Subprocessor {
-  name: string;
-  role: string;
-  region: string;
-  dataClass: string;
 }
 
 const safeguards: readonly SafeguardGroup[] = [
@@ -150,28 +145,6 @@ const safeguards: readonly SafeguardGroup[] = [
   }
 ] as const;
 
-const subprocessors: readonly Subprocessor[] = [
-  {
-    name: 'Vercel',
-    role: 'Web hosting and edge network',
-    region: 'US (multi-region edge)',
-    dataClass: 'Encrypted ePHI in transit; no plaintext at rest in edge caches'
-  },
-  {
-    name: 'Postgres provider (Neon or equivalent)',
-    role: 'Primary database — application state, audit log, ePHI',
-    region: 'US (customer-selectable)',
-    dataClass:
-      'ePHI at rest, encrypted by the provider; application-layer AES-256-GCM for sensitive identifiers'
-  },
-  {
-    name: 'Expo',
-    role: 'Mobile build infrastructure for the caregiver app',
-    region: 'US',
-    dataClass: 'Build artifacts only; no production ePHI is processed by Expo'
-  }
-] as const;
-
 const trustLabels: readonly string[] = [
   'Encryption at rest',
   'Audit trail',
@@ -252,7 +225,7 @@ export function HipaaCompliancePage() {
         <div className="mk-hero-grid" aria-hidden />
         <div className="mk-heroin">
           <span className="mk-eyebrow">Compliance</span>
-          <h1 className="mk-h1">HIPAA-compliant by design.</h1>
+          <h1 className="mk-h1">Designed with HIPAA-grade controls.</h1>
           <p className="mk-lead">
             RayHealthEVV™ is engineered to meet the HIPAA Security Rule
             (45 CFR § 164.308 – § 164.318) and the Privacy Rule controls
@@ -362,8 +335,8 @@ export function HipaaCompliancePage() {
             <section aria-labelledby="baa-heading" className="mk-card">
               <h2 id="baa-heading" style={cardHeading}>Business Associate Agreement</h2>
               <p style={{ ...bodyText, margin: '0.75rem 0 1rem' }}>
-                RayHealthEVV™ signs a BAA with every customer agency before
-                any production ePHI is processed. The current template covers
+                RayHealthEVV™ executes a BAA with every agency before any PHI
+                is processed. The current template covers
                 the required HIPAA § 164.504(e) provisions: permitted uses,
                 safeguards, subcontractor flow-down, breach notification
                 within 60 days, and return or destruction of PHI on
@@ -402,29 +375,15 @@ export function HipaaCompliancePage() {
               <h2 id="subproc-heading" style={cardHeading}>Subprocessors</h2>
               <p style={{ ...mutedLead, marginTop: '0.5rem', marginBottom: '1rem' }}>
                 We disclose every subprocessor that handles ePHI or hosts
-                customer data. Customers may request the current
-                authoritative list at any time.
+                customer data, together with its per-vendor BAA status. To
+                avoid two lists drifting out of sync, the canonical, dated
+                subprocessor register lives on our{' '}
+                <Link to="/privacy" style={linkStyle}>Privacy page</Link>{' '}
+                (mirrored on the{' '}
+                <Link to="/trust" style={linkStyle}>Trust Center</Link>).
+                Customers may request the current authoritative list at any
+                time.
               </p>
-              <table className="mk-tbl">
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Region</th>
-                    <th scope="col">Data class</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subprocessors.map((s) => (
-                    <tr key={s.name}>
-                      <td>{s.name}</td>
-                      <td>{s.role}</td>
-                      <td>{s.region}</td>
-                      <td>{s.dataClass}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </section>
 
             {/* Third-party attestation */}

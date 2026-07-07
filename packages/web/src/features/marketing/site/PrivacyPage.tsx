@@ -36,11 +36,14 @@ export function PrivacyPage() {
             </span>
 
             <p className="lead">
-              RayHealthEVV™ is a HIPAA-aware Electronic Visit Verification (EVV)
-              and home-care operations platform. We handle Protected Health
-              Information (PHI) on behalf of the home-care agencies that license
-              us as a Business Associate. This page summarizes how that
-              information is collected, used, stored, and protected. The full
+              RayHealthEVV™ is a HIPAA-ready Electronic Visit Verification (EVV)
+              and home-care operations platform. It is built to handle Protected
+              Health Information (PHI) on behalf of the home-care agencies that
+              license us as a Business Associate. Until our operational HIPAA
+              readiness milestones (see <Link to="/trust">Trust Center</Link>)
+              are complete, no real PHI should be loaded into the
+              platform. This page summarizes how that information is collected,
+              used, stored, and protected. The full
               engineering record — including subprocessor list, encryption
               verification matrix, and incident-response plan — lives in our
               source repository under <code>docs/compliance/hipaa/</code>.
