@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, { FadeInRight, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import apiClient from '../../lib/api-client';
 import {
@@ -37,6 +38,8 @@ import {
   TEXT_SIZE_KEY,
   type TextSizePreset,
 } from '../../lib/text-size';
+import { useAuth } from '../../lib/AuthContext';
+import { isTestingAccount } from '../../lib/test-account';
 import ScreenHeader from '../common/ScreenHeader';
 import ErrorRetry from '../common/ErrorRetry';
 import { SkeletonList } from '../common/Skeleton';
@@ -110,6 +113,9 @@ export default function CoursePlayerScreen() {
   const [textPreset, setTextPreset] = useState<TextSizePreset>('standard');
   const [video, setVideo] = useState<VideoProgress>(initialVideoProgress());
   const [videoKey, setVideoKey] = useState(0);
+  const [videoFullscreen, setVideoFullscreen] = useState(false);
+  const { user } = useAuth();
+  const canSkipVideo = isTestingAccount(user);
   const startedRef = useRef(false);
   const submittedRef = useRef(false);
   const celebrationHapticRef = useRef(false);
@@ -256,6 +262,44 @@ export default function CoursePlayerScreen() {
     void Haptics.selectionAsync();
     setVideo(initialVideoProgress());
     setVideoKey((k) => k + 1);
+  };
+
+  // Course screens may rotate freely; the rest of the app stays portrait.
+  useFocusEffect(
+    useCallback(() => {
+      void ScreenOrientation.unlockAsync();
+      return () => {
+        void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      };
+    }, []),
+  );
+
+  const enterFullscreen = () => {
+    void Haptics.selectionAsync();
+    setVideoFullscreen(true);
+    void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+  };
+
+  const exitFullscreen = useCallback(() => {
+    setVideoFullscreen(false);
+    void ScreenOrientation.unlockAsync();
+  }, []);
+
+  // Hardware back leaves fullscreen instead of leaving the course.
+  useEffect(() => {
+    if (!videoFullscreen) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      exitFullscreen();
+      return true;
+    });
+    return () => sub.remove();
+  }, [videoFullscreen, exitFullscreen]);
+
+  // Testing accounts only: mark the video fully watched without sitting
+  // through it. Real caregiver accounts never see this control.
+  const handleSkipVideo = () => {
+    void Haptics.selectionAsync();
+    setVideo((v) => foldVideoEvent(v, { kind: 'progress', watchedPct: 1, skipped: false, ended: true }));
   };
 
   const selectAnswer = (questionIndex: number, optionIndex: number) => {
@@ -493,10 +537,50 @@ export default function CoursePlayerScreen() {
     const showRewatch = needsRewatchWarning(video) && !isCompleted;
     const watchedPercent = Math.round(video.watchedPct * 100);
     return (
-      <View style={styles.videoWrap}>
-        <Text style={[styles.sectionTitle, readingHeading]}>Watch the training video</Text>
+      <View style={videoFullscreen ? styles.videoWrapFs : styles.videoWrap}>
+        {!videoFullscreen && (
+          <Text style={[styles.sectionTitle, readingHeading]}>Watch the training video</Text>
+        )}
         <CourseVideo key={videoKey} videoUrl={modules.videoUrl as string} onEvent={handleVideoEvent} />
-        {showRewatch ? (
+        {videoFullscreen ? (
+          <Pressable
+            onPress={exitFullscreen}
+            style={({ pressed }) => [
+              styles.fsExitBtn,
+              { top: Math.max(insets.top, space.md) },
+              pressed && { opacity: 0.85 },
+            ]}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Exit full screen"
+          >
+            <Ionicons name="contract" size={22} color={colors.onGradient} />
+          </Pressable>
+        ) : (
+          <View style={styles.videoCtrlRow}>
+            <Pressable
+              onPress={enterFullscreen}
+              style={({ pressed }) => [styles.videoCtrlBtn, pressed && { opacity: 0.9 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Play video full screen"
+            >
+              <Ionicons name="expand" size={16} color={colors.brandBlue} />
+              <Text style={styles.videoCtrlText}>Full screen</Text>
+            </Pressable>
+            {canSkipVideo && !videoSatisfied ? (
+              <Pressable
+                onPress={handleSkipVideo}
+                style={({ pressed }) => [styles.videoCtrlBtn, styles.skipBtn, pressed && { opacity: 0.9 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Skip video, testing accounts only"
+              >
+                <Ionicons name="play-skip-forward" size={16} color={colors.amberDark} />
+                <Text style={[styles.videoCtrlText, { color: colors.amberDark }]}>Skip (testing)</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        )}
+        {videoFullscreen ? null : showRewatch ? (
           <View style={styles.rewatchCard}>
             <Ionicons name="alert-circle" size={22} color={colors.amberDark} style={styles.bulletIcon} />
             <View style={{ flex: 1, gap: space.sm }}>
@@ -755,7 +839,8 @@ export default function CoursePlayerScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, videoFullscreen && { backgroundColor: colors.navy }]}>
+      {videoFullscreen ? null : (
       <ScreenHeader title={row.course.title}>
         <View style={styles.headerExtra}>
           <View style={styles.progressTrack}>
@@ -794,17 +879,26 @@ export default function CoursePlayerScreen() {
           </View>
         </View>
       </ScreenHeader>
+      )}
 
-      <ScrollView
-        key={stepIndex}
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View entering={FadeInRight.duration(220)}>{renderStep()}</Animated.View>
-      </ScrollView>
+      {step.kind === 'video' ? (
+        // The video step lives outside the ScrollView so the player never
+        // remounts (and never loses watch progress) when toggling fullscreen.
+        <View style={videoFullscreen ? styles.fsBody : [styles.body, styles.bodyContent]}>
+          {renderVideo()}
+        </View>
+      ) : (
+        <ScrollView
+          key={stepIndex}
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View entering={FadeInRight.duration(220)}>{renderStep()}</Animated.View>
+        </ScrollView>
+      )}
 
-      {footerVisible ? (
+      {footerVisible && !videoFullscreen ? (
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
           {stepIndex > 0 ? (
             <Pressable
@@ -978,6 +1072,33 @@ const styles = StyleSheet.create({
 
   // Video
   videoWrap: { gap: space.md },
+  videoWrapFs: { flex: 1, justifyContent: 'center' },
+  fsBody: { flex: 1, backgroundColor: colors.navy, justifyContent: 'center', padding: space.sm },
+  fsExitBtn: {
+    position: 'absolute',
+    right: space.md,
+    zIndex: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: `${colors.navy}cc`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoCtrlRow: { flexDirection: 'row', justifyContent: 'center', gap: space.md },
+  videoCtrlBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    height: 40,
+    paddingHorizontal: space.md,
+    borderRadius: radii.sm,
+    backgroundColor: colors.pressedBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+  },
+  videoCtrlText: { ...typography.sub, color: colors.brandBlue, fontWeight: '800' },
+  skipBtn: { backgroundColor: colors.amberBg, borderColor: colors.amberBorder },
   videoHint: { ...typography.sub, color: colors.textSecondary, textAlign: 'center' },
   videoStatusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   rewatchCard: {
