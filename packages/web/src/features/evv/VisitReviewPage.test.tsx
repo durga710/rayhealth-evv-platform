@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { VisitReviewPage } from './VisitReviewPage.js';
 
 describe('VisitReviewPage', () => {
@@ -39,7 +40,11 @@ describe('VisitReviewPage', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    render(<VisitReviewPage />);
+    render(
+      <MemoryRouter>
+        <VisitReviewPage />
+      </MemoryRouter>
+    );
 
     const correctionButton = await screen.findByRole('button', { name: /request correction/i });
     fireEvent.click(correctionButton);

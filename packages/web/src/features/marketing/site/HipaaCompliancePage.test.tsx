@@ -13,16 +13,22 @@ describe('HipaaCompliancePage', () => {
     );
   }
 
-  it('renders the hero heading "HIPAA-compliant by design."', () => {
+  it('renders the hero heading "Designed with HIPAA-grade controls."', () => {
     renderPage();
     expect(
-      screen.getByRole('heading', { name: /HIPAA-compliant by design\./i, level: 1 })
+      screen.getByRole('heading', { name: /Designed with HIPAA-grade controls\./i, level: 1 })
     ).toBeInTheDocument();
   });
 
-  it('does not use the prohibited phrase "HIPAA certified"', () => {
-    renderPage();
-    expect(screen.queryByText(/HIPAA[\s-]?certified/i)).not.toBeInTheDocument();
+  it('does not use prohibited finished-state compliance phrases', () => {
+    const { container } = renderPage();
+    const text = container.textContent ?? '';
+    expect(text).not.toMatch(/HIPAA[\s-]?certified/i);
+    expect(text).not.toMatch(/fully HIPAA[\s-]?compliant/i);
+    expect(text).not.toMatch(/guaranteed compliance/i);
+    // "signs a BAA" (habitual present, zero executed BAAs) must be phrased
+    // as the approved commitment form instead.
+    expect(text).toMatch(/executes a BAA with every agency before any PHI is processed/i);
   });
 
   it('renders the controls table with each Security Rule safeguard group', () => {

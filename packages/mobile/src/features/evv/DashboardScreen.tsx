@@ -85,6 +85,47 @@ function getVisitStatus(iso: string | undefined): 'upcoming' | 'now' | 'past' {
   return 'upcoming';
 }
 
+/** Compact "time until" / "time since" label for the next-visit countdown. */
+function formatCountdown(ms: number): string {
+  const abs = Math.abs(ms);
+  const totalMin = Math.floor(abs / 60_000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
+  if (totalMin > 0) return `${totalMin} min`;
+  return `${Math.max(0, Math.floor(abs / 1000))}s`;
+}
+
+/** Running clock since clock-in, for the in-progress hero. */
+function formatElapsed(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
+  if (m > 0) return `${m}m ${s.toString().padStart(2, '0')}s`;
+  return `${s}s`;
+}
+
+/**
+ * Choose the single visit the hero card should surface: an in-progress visit
+ * first (the caregiver is mid-shift), otherwise the soonest visit that is not
+ * yet completed. Returns null when nothing is actionable today.
+ */
+function pickHeroVisit(assignments: Assignment[]): Assignment | null {
+  const inProgress = assignments.find((a) => a.visitState === 'in_progress');
+  if (inProgress) return inProgress;
+  const actionable = assignments
+    .filter((a) => a.visitState !== 'completed')
+    .filter((a) => getVisitStatus(a.time) !== 'past')
+    .sort((a, b) => {
+      const ta = a.time ? new Date(a.time).getTime() : Number.POSITIVE_INFINITY;
+      const tb = b.time ? new Date(b.time).getTime() : Number.POSITIVE_INFINITY;
+      return ta - tb;
+    });
+  return actionable[0] ?? null;
+}
+
 function greetingFor(user: { firstName?: string | null } | null): string {
   const hour = new Date().getHours();
   const timeGreet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -133,6 +174,9 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // Drives the live next-visit countdown / in-progress elapsed clock on the
+  // hero card. Ticks once a second only while there are visits to count toward.
+  const [nowTs, setNowTs] = useState(() => Date.now());
   const firedForegroundRef = useRef<Set<string>>(new Set());
 
   const fetchAssignments = async (quiet = false) => {
@@ -212,9 +256,40 @@ export default function DashboardScreen() {
     return () => clearInterval(handle);
   }, [assignments]);
 
+  // Second-resolution clock for the hero countdown/elapsed readout. Gated on
+  // having at least one visit so an empty day doesn't re-render every second.
+  useEffect(() => {
+    if (assignments.length === 0) return;
+    const handle = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(handle);
+  }, [assignments.length]);
+
   const handleLogout = () => {
     void logout().finally(() => router.replace('/login'));
   };
+
+  // Single source of truth for opening a visit's clock screen — used by both
+  // the hero primary action and each timeline card so their params never drift.
+  const openVisit = useCallback(
+    (item: Assignment) => {
+      router.push({
+        pathname: '/clockin',
+        params: {
+          assignmentId: item.id,
+          clientName: item.clientName,
+          clientAddress: item.clientAddress ?? '',
+          scheduledTime: item.time ?? '',
+          serviceCode: item.serviceCode ?? '',
+          clientLat: item.clientLat != null ? String(item.clientLat) : '',
+          clientLng: item.clientLng != null ? String(item.clientLng) : '',
+          clientGeofenceM: item.clientGeofenceM != null ? String(item.clientGeofenceM) : '150',
+          openVisitId: item.openVisitId ?? '',
+          clockInTime: item.clockInTime ?? '',
+        },
+      });
+    },
+    [router],
+  );
 
   if (user?.role === 'admin' || user?.role === 'coordinator') {
     return <AdminScreen role={user.role} onLogout={handleLogout} />;
@@ -231,6 +306,8 @@ export default function DashboardScreen() {
 
   const nowCount = assignments.filter(a => getVisitStatus(a.time) === 'now').length;
   const upcomingCount = assignments.filter(a => getVisitStatus(a.time) === 'upcoming').length;
+  const doneCount = assignments.filter(a => a.visitState === 'completed').length;
+  const heroVisit = pickHeroVisit(assignments);
 
   const renderItem = ({ item, index }: { item: Assignment; index: number }) => {
     const status = getVisitStatus(item.time);
@@ -242,24 +319,7 @@ export default function DashboardScreen() {
       <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 60).duration(300)}>
       <Pressable
         style={({ pressed }) => [styles.card, pressed && { opacity: 0.92, transform: [{ scale: 0.99 }] }]}
-        onPress={() =>
-          router.push({
-            pathname: '/clockin',
-            params: {
-              assignmentId: item.id,
-              clientName: item.clientName,
-              clientAddress: item.clientAddress ?? '',
-              scheduledTime: item.time ?? '',
-              serviceCode: item.serviceCode ?? '',
-              clientLat: item.clientLat != null ? String(item.clientLat) : '',
-              clientLng: item.clientLng != null ? String(item.clientLng) : '',
-              clientGeofenceM: item.clientGeofenceM != null ? String(item.clientGeofenceM) : '150',
-              // Resume an in-progress visit when one is open.
-              openVisitId: item.openVisitId ?? '',
-              clockInTime: item.clockInTime ?? '',
-            },
-          })
-        }
+        onPress={() => openVisit(item)}
         accessibilityRole="button"
         accessibilityLabel={`Visit with ${item.clientName}, tap to open`}
       >
@@ -301,6 +361,16 @@ export default function DashboardScreen() {
             <View style={styles.sessionDot} />
             <Text style={styles.sessionPillText}>Secure Session</Text>
           </Pressable>
+          <Pressable
+            onPress={() => router.push('/help')}
+            hitSlop={10}
+            style={({ pressed }) => [styles.helpBtn, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Get help"
+          >
+            <Ionicons name="help-circle-outline" size={18} color="#d4e8ff" />
+            <Text style={styles.helpBtnText}>Help</Text>
+          </Pressable>
         </View>
         <Text style={styles.greeting}>{greetingFor(user)}</Text>
         <Text style={styles.dateLabel}>{todayStr}</Text>
@@ -331,7 +401,16 @@ export default function DashboardScreen() {
           assignments.length === 0 && { flex: 1 },
         ]}
         ListHeaderComponent={
-          <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
+          assignments.length > 0 ? (
+            <View>
+              {heroVisit ? (
+                <NextVisitHero visit={heroVisit} nowTs={nowTs} onPress={() => openVisit(heroVisit)} />
+              ) : (
+                <AllDoneHero doneCount={doneCount} />
+              )}
+              <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           loading ? (
@@ -339,11 +418,22 @@ export default function DashboardScreen() {
           ) : error ? (
             <ErrorRetry message={error} onRetry={fetchAssignments} />
           ) : (
-            <EmptyState
-              icon="calendar-clear-outline"
-              title="No visits today"
-              message="Your assigned visits will appear here once scheduled."
-            />
+            <View style={styles.emptyWrap}>
+              <EmptyState
+                icon="calendar-clear-outline"
+                title="No visits today"
+                message="You're all clear. Assigned visits appear here as soon as your coordinator schedules them — pull down to refresh."
+              />
+              <Pressable
+                onPress={() => router.push('/help')}
+                style={({ pressed }) => [styles.emptyHelpBtn, pressed && { opacity: 0.85 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open help"
+              >
+                <Ionicons name="help-buoy-outline" size={16} color={colors.brandBlue} />
+                <Text style={styles.emptyHelpText}>Something look wrong? Get help</Text>
+              </Pressable>
+            </View>
           )
         }
         refreshControl={
@@ -428,6 +518,142 @@ function CardContent({
   );
 }
 
+// ─── Next-visit hero ────────────────────────────────────────────────────────
+// The single most important thing on the screen: what to do next, when, and one
+// clear tap to act. Shows a live countdown before the shift, a running elapsed
+// clock while in progress, a structured route-preview slot (placeholder for a
+// future map — deliberately not a faked live route), and an unmistakable
+// clock-in / clock-out affordance.
+function NextVisitHero({
+  visit,
+  nowTs,
+  onPress,
+}: {
+  visit: Assignment;
+  nowTs: number;
+  onPress: () => void;
+}) {
+  const inProgress = visit.visitState === 'in_progress';
+  const startMs = visit.time ? new Date(visit.time).getTime() : NaN;
+  const hasTime = Number.isFinite(startMs);
+  const status = getVisitStatus(visit.time);
+  const startsSoon = hasTime && startMs - nowTs <= 1_800_000 && startMs - nowTs > 0;
+
+  // Countdown / elapsed line.
+  let timingLabel: string;
+  let timingValue: string;
+  if (inProgress && visit.clockInTime) {
+    const inMs = new Date(visit.clockInTime).getTime();
+    timingLabel = 'Elapsed';
+    timingValue = Number.isFinite(inMs) ? formatElapsed(nowTs - inMs) : '—';
+  } else if (!hasTime) {
+    timingLabel = 'Scheduled';
+    timingValue = 'Time TBD';
+  } else if (startMs <= nowTs) {
+    timingLabel = 'Starts';
+    timingValue = 'Now';
+  } else {
+    timingLabel = 'Starts in';
+    timingValue = formatCountdown(startMs - nowTs);
+  }
+
+  const eyebrow = inProgress
+    ? 'Visit in progress'
+    : status === 'now' || startsSoon
+    ? 'Up next · starting soon'
+    : 'Up next';
+
+  const actionLabel = inProgress ? 'Tap to clock out' : 'Tap to clock in';
+  const actionIcon = inProgress ? 'stop-circle' : 'location';
+
+  return (
+    <Animated.View entering={FadeInDown.duration(320)}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [pressed && { transform: [{ scale: 0.995 }], opacity: 0.97 }]}
+        accessibilityRole="button"
+        accessibilityLabel={`${eyebrow}. ${visit.clientName}. ${timingLabel} ${timingValue}. ${actionLabel}.`}
+      >
+        <LinearGradient
+          colors={inProgress ? gradients.ctaSuccess : gradients.hero}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroInner}
+        >
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroEyebrowWrap}>
+              {inProgress ? <View style={styles.heroLiveDot} /> : null}
+              <Text style={styles.heroEyebrow}>{eyebrow.toUpperCase()}</Text>
+            </View>
+            <View style={styles.heroTiming}>
+              <Text style={styles.heroTimingLabel}>{timingLabel.toUpperCase()}</Text>
+              <Text style={styles.heroTimingValue}>{timingValue}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.heroClient} numberOfLines={1}>{visit.clientName}</Text>
+          <View style={styles.heroMetaRow}>
+            <Ionicons name="time-outline" size={13} color={colors.onGradientSoft} />
+            <Text style={styles.heroMeta}>{formatTime(visit.time)}</Text>
+            {visit.clientAddress ? (
+              <>
+                <Text style={styles.heroMetaDivider}>·</Text>
+                <Ionicons name="location-outline" size={13} color={colors.onGradientSoft} />
+                <Text style={styles.heroMeta} numberOfLines={1}>{visit.clientAddress}</Text>
+              </>
+            ) : null}
+          </View>
+
+          {/* Route preview — structured slot for a future map. Intentionally a
+              labelled placeholder, never a fabricated live route. */}
+          <View style={styles.routePreview}>
+            <View style={styles.routePreviewIcon}>
+              <Ionicons name="map-outline" size={18} color={colors.onGradientSoft} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.routePreviewTitle}>Route preview</Text>
+              <Text style={styles.routePreviewSub}>
+                {visit.clientLat != null && visit.clientLng != null
+                  ? 'Live map opens on the clock-in screen'
+                  : 'No location on file for this client yet'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.heroCta}>
+            <Ionicons name={actionIcon} size={18} color={colors.onGradient} />
+            <Text style={styles.heroCtaText}>{actionLabel}</Text>
+            <Ionicons name="arrow-forward" size={17} color={colors.onGradient} />
+          </View>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// Shown in the hero slot when every scheduled visit today is already done — the
+// caregiver's "you're covered" moment, not a blank space.
+function AllDoneHero({ doneCount }: { doneCount: number }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(320)}>
+      <LinearGradient colors={gradients.ctaSuccess} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroInner}>
+        <View style={styles.heroTopRow}>
+          <View style={styles.heroEyebrowWrap}>
+            <Ionicons name="checkmark-circle" size={16} color={colors.onGradient} />
+            <Text style={styles.heroEyebrow}>ALL VISITS DONE</Text>
+          </View>
+        </View>
+        <Text style={styles.heroClient}>You&apos;re all caught up</Text>
+        <Text style={styles.heroMeta}>
+          {doneCount > 0
+            ? `${doneCount} ${doneCount === 1 ? 'visit' : 'visits'} completed and recorded today.`
+            : 'Nothing left to clock in for right now.'}
+        </Text>
+      </LinearGradient>
+    </Animated.View>
+  );
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const SESSION_GREEN = '#22c55e';
@@ -447,6 +673,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  helpBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#ffffff18', borderRadius: radii.pill,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderWidth: 1, borderColor: '#ffffff25',
+  },
+  helpBtnText: { ...typography.caption, fontWeight: '800', color: '#d4e8ff' },
   sessionPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -491,6 +724,55 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 20, marginBottom: 12,
   },
+
+  // Next-visit hero
+  heroInner: {
+    borderRadius: radii.hero,
+    padding: 18,
+    marginTop: 16,
+    ...shadow.raised,
+  },
+  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
+  heroEyebrowWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  heroLiveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#bbf7d0' },
+  heroEyebrow: { ...typography.label, fontSize: 11, letterSpacing: 1, color: colors.onGradientSoft },
+  heroTiming: { alignItems: 'flex-end' },
+  heroTimingLabel: { ...typography.caption, fontSize: 9, letterSpacing: 0.8, color: colors.onGradientSoft },
+  heroTimingValue: { color: colors.onGradient, fontSize: 20, fontWeight: '900', fontVariant: ['tabular-nums'], marginTop: 1 },
+  heroClient: { ...typography.hero, fontSize: 24, color: colors.onGradient, letterSpacing: -0.4 },
+  heroMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, flexWrap: 'wrap' },
+  heroMeta: { ...typography.sub, color: colors.onGradientSoft, flexShrink: 1 },
+  heroMetaDivider: { color: colors.onGradientSoft, marginHorizontal: 2 },
+  routePreview: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#ffffff14', borderRadius: radii.md,
+    padding: 12, marginTop: 14,
+    borderWidth: 1, borderColor: '#ffffff20',
+  },
+  routePreviewIcon: {
+    width: 38, height: 38, borderRadius: radii.sm,
+    backgroundColor: '#ffffff1a', justifyContent: 'center', alignItems: 'center',
+  },
+  routePreviewTitle: { ...typography.caption, fontWeight: '800', color: colors.onGradient },
+  routePreviewSub: { ...typography.caption, color: colors.onGradientSoft, marginTop: 2 },
+  heroCta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#ffffff26', borderRadius: radii.md,
+    height: 50, marginTop: 14,
+    borderWidth: 1, borderColor: '#ffffff33',
+  },
+  heroCtaText: { color: colors.onGradient, fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
+
+  // Empty state
+  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyHelpBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    backgroundColor: colors.cardBg, borderRadius: radii.pill,
+    paddingHorizontal: 18, paddingVertical: 11,
+    borderWidth: 1, borderColor: colors.border,
+    ...shadow.subtle,
+  },
+  emptyHelpText: { ...typography.sub, fontWeight: '800', color: colors.brandBlue },
 
   // Cards
   card: {

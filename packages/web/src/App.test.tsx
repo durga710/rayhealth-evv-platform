@@ -22,11 +22,11 @@ describe('admin app shell', () => {
       </AuthProvider>
     );
 
-    // Hero h1 uses a <br />, so match by role to avoid text-node split issues.
+    // Hero h1 wraps a <span>, so match by role to avoid text-node split issues.
     const h1 = await screen.findByRole('heading', { level: 1 });
     expect(h1).toBeInTheDocument();
-    expect(h1).toHaveTextContent(/operating system/i);
-    expect(h1).toHaveTextContent(/home-care/i);
+    expect(h1).toHaveTextContent(/calm command center/i);
+    expect(h1).toHaveTextContent(/pennsylvania homecare/i);
     // Sign-in link(s) confirm the full marketing shell rendered.
     expect(screen.getAllByRole('link', { name: /sign in/i }).length).toBeGreaterThan(0);
     // A demo CTA confirms the conversion-focused shell rendered.

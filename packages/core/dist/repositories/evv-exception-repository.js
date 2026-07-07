@@ -19,6 +19,25 @@ export class EvvExceptionRepository {
     // ComplianceEngineRepository.acknowledgeException(agencyId, id, actorId),
     // which joins evv_exceptions -> evv_visits -> caregivers and re-checks the
     // agency. Add new exception mutations there (scoped), not here.
+    /**
+     * Agency-scoped exception read for a single visit — used by the audit
+     * packet route (`GET /admin/audit-packet/:visitId`). Joins
+     * evv_exceptions -> evv_visits -> caregivers and filters on
+     * caregivers.agency_id, the same authorization pattern as
+     * ComplianceEngineRepository.acknowledgeException. This is the only
+     * sanctioned scoped-by-visit read on this table; do not add another
+     * unscoped one (see the NOTE above).
+     */
+    async findExceptionsByVisitForAgency(visitId, agencyId) {
+        const rows = await this.db('evv_exceptions as e')
+            .join('evv_visits as v', 'v.id', 'e.visit_id')
+            .join('caregivers as c', 'c.id', 'v.caregiver_id')
+            .where('c.agency_id', agencyId)
+            .andWhere('e.visit_id', visitId)
+            .orderBy('e.created_at', 'desc')
+            .select('e.*');
+        return rows.map((row) => this.mapRow(row));
+    }
     mapRow(row) {
         return {
             id: row.id,

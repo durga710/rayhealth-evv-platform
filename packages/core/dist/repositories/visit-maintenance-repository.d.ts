@@ -32,6 +32,22 @@ export declare class VisitMaintenanceRepository {
         start: string;
         end: string;
     }): Promise<VisitMaintenance | null>;
+    /**
+     * Agency-scoped VMUR read for a single visit — the accountability trail
+     * for the audit packet (`GET /admin/audit-packet/:visitId`). Uses the same
+     * `evv_visits -> caregivers.agency_id` authorization join as every other
+     * method on this repository (never `visit_maintenance.agency_id` alone,
+     * since older rows may predate that denormalized column). Left-joins
+     * `users` twice (requester, approver) to surface a display name — those
+     * names are not stored on the visit_maintenance row itself.
+     *
+     * Ordered newest-first so the packet renders the most recent correction
+     * activity at the top of the VMUR trail.
+     */
+    findByVisitIdForAgency(visitId: string, agencyId: string): Promise<Array<VisitMaintenance & {
+        requesterName: string | null;
+        approverName: string | null;
+    }>>;
     private mapRowToMaintenance;
 }
 //# sourceMappingURL=visit-maintenance-repository.d.ts.map

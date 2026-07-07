@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white" alt="Express" />
   <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/Capacitor-119EFF?logo=capacitor&logoColor=white" alt="Capacitor" />
+  <img src="https://img.shields.io/badge/Expo-000020?logo=expo&logoColor=white" alt="Expo" />
 </p>
 
 </div>
@@ -51,7 +51,7 @@ Turbo-managed npm workspaces:
 | [`packages/core`](packages/core) | Domain entities (Zod-validated), repositories, migrations, the state-strategy registry (PA, NJ, …), and aggregator integration contracts. |
 | [`packages/app`](packages/app) | Express REST API — auth, capability RBAC, audit middleware, billing, EVV export/submission, AI runtimes. |
 | [`packages/web`](packages/web) | React + Vite admin console for agency owners and coordinators. |
-| [`packages/mobile`](packages/mobile) | Capacitor iOS/Android caregiver app. |
+| [`packages/mobile`](packages/mobile) | Expo (React Native) iOS/Android caregiver app, via Expo Router. |
 
 ## Quickstart
 
@@ -77,7 +77,7 @@ npm run check                   # typecheck · lint · security:scan · all work
 ## Architecture
 
 - **Web auth** — HttpOnly `rayhealth_session` cookie + CSRF token. No bearer tokens in browser storage; `scripts/security-surface-scan.ts` fails CI if a `localStorage` session pattern reappears.
-- **Mobile auth** — JWT from `/auth/mobile/login`, stored in iOS Keychain / Android Keystore via `@aparajita/capacitor-secure-storage`.
+- **Mobile auth** — JWT from `/auth/mobile/login`, stored in iOS Keychain / Android Keystore via `expo-secure-store`.
 - **Server auth** — session cookie first, bearer fallback; every protected route is gated by `requireCapability(...)`.
 - **Audit immutability** — `audit_events` is append-only via a mutation-blocking trigger; the retention sweep writes its own `audit_retention_runs` record inside a transaction.
 - **Aggregator transmission** — per-agency config split across `agency_evv_config` (which aggregator), `agency_sandata_config`, and `agency_hhaexchange_config`; the state registry decides whether an agency may choose (PA: yes; NJ: forced HHAeXchange).

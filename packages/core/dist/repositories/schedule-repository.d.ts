@@ -30,6 +30,18 @@ export declare class ScheduleRepository {
     createTemplate(template: any): Promise<any>;
     getTemplates(agencyId: string): Promise<any[]>;
     createAssignment(assignment: AssignmentInput): Promise<any>;
+    /**
+     * Scheduled start/end for one assignment, tenant-scoped via
+     * assignments -> visit_templates -> clients.agency_id (same join used by
+     * {@link assignmentInAgency}). Used by the audit packet route to show
+     * scheduled-vs-actual alongside a visit's clock-in/out. Null when the
+     * assignment is unknown / cross-tenant — the caller treats that as "no
+     * schedule data", not an error.
+     */
+    getAssignmentScheduleForAgency(assignmentId: string, agencyId: string): Promise<{
+        scheduledStartTime: string | null;
+        scheduledEndTime: string | null;
+    } | null>;
     /** True when the client exists and belongs to the given agency. */
     clientBelongsToAgency(clientId: string, agencyId: string): Promise<boolean>;
     /** Resolve the client a visit template belongs to, scoped to the agency. */

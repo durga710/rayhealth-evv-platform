@@ -25,6 +25,7 @@ import maintenanceRoutes from './routes/maintenance-routes.js';
 import taskRoutes from './routes/task-routes.js';
 import auditRetentionRoutes from './routes/audit-retention-routes.js';
 import auditEventsRoutes from './routes/audit-events-routes.js';
+import auditPacketRoutes from './routes/audit-packet-routes.js';
 import learningRoutes from './routes/learning-routes.js';
 import adminAssistantRoutes from './routes/admin-assistant-routes.js';
 import marketingRoutes from './routes/marketing-routes.js';
@@ -301,6 +302,7 @@ export function createApp() {
     app.use(`${prefix}/tasks`, taskRoutes);
     app.use(`${prefix}/admin/audit-retention`, adminAuditLimiter, auditRetentionRoutes);
     app.use(`${prefix}/admin/audit-events`, adminAuditLimiter, auditEventsRoutes);
+    app.use(`${prefix}/admin/audit-packet`, adminAuditLimiter, auditPacketRoutes);
     app.use(`${prefix}/learning`, learningRoutes);
     app.use(`${prefix}/admin-assistant`, adminAssistantRoutes);
     app.use(`${prefix}/copilot`, copilotLimiter, copilotRoutes);

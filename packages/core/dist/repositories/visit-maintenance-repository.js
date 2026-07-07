@@ -70,6 +70,34 @@ export class VisitMaintenanceRepository {
             .returning('*');
         return updated ? this.mapRowToMaintenance(updated) : null;
     }
+    /**
+     * Agency-scoped VMUR read for a single visit — the accountability trail
+     * for the audit packet (`GET /admin/audit-packet/:visitId`). Uses the same
+     * `evv_visits -> caregivers.agency_id` authorization join as every other
+     * method on this repository (never `visit_maintenance.agency_id` alone,
+     * since older rows may predate that denormalized column). Left-joins
+     * `users` twice (requester, approver) to surface a display name — those
+     * names are not stored on the visit_maintenance row itself.
+     *
+     * Ordered newest-first so the packet renders the most recent correction
+     * activity at the top of the VMUR trail.
+     */
+    async findByVisitIdForAgency(visitId, agencyId) {
+        const rows = await this.db('visit_maintenance as m')
+            .join('evv_visits as v', 'v.id', 'm.visit_id')
+            .join('caregivers as c', 'c.id', 'v.caregiver_id')
+            .leftJoin('users as ru', 'ru.id', 'm.requester_id')
+            .leftJoin('users as au', 'au.id', 'm.approver_id')
+            .where('c.agency_id', agencyId)
+            .andWhere('m.visit_id', visitId)
+            .orderBy('m.created_at', 'desc')
+            .select('m.*', 'ru.first_name as requester_first_name', 'ru.last_name as requester_last_name', 'au.first_name as approver_first_name', 'au.last_name as approver_last_name');
+        return rows.map((row) => {
+            const requesterName = joinName(row.requester_first_name, row.requester_last_name);
+            const approverName = joinName(row.approver_first_name, row.approver_last_name);
+            return { ...this.mapRowToMaintenance(row), requesterName, approverName };
+        });
+    }
     mapRowToMaintenance(row) {
         const toIso = (v) => v == null ? undefined : v instanceof Date ? v.toISOString() : new Date(v).toISOString();
         return {
@@ -78,12 +106,25 @@ export class VisitMaintenanceRepository {
             agencyId: row.agency_id ?? undefined,
             requesterId: row.requester_id,
             reason: row.reason,
+            reasonCategoryCode: row.reason_category_code ?? undefined,
+            correctionCode: row.correction_code ?? undefined,
+            originatorRole: row.originator_role ?? undefined,
             status: row.status,
+            originalStartTime: toIso(row.original_start_time),
+            originalEndTime: toIso(row.original_end_time),
             adjustedStartTime: toIso(row.adjusted_start_time),
             adjustedEndTime: toIso(row.adjusted_end_time),
+            caregiverSignaturePresent: row.caregiver_signature_present ?? undefined,
+            clientSignaturePresent: row.client_signature_present ?? undefined,
+            incompleteSignatureReason: row.incomplete_signature_reason ?? undefined,
             approverId: row.approver_id ?? undefined,
             approvedAt: toIso(row.approved_at)
         };
     }
+}
+/** Joins first/last name parts, dropping either side that is missing; null when both are. */
+function joinName(first, last) {
+    const parts = [first, last].filter((p) => Boolean(p && p.trim().length > 0));
+    return parts.length > 0 ? parts.join(' ') : null;
 }
 //# sourceMappingURL=visit-maintenance-repository.js.map

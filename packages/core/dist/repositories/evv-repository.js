@@ -233,7 +233,9 @@ export class EvvRepository {
                 : outLoc,
             status: row.status,
             sandataStatus: row.sandata_status ?? null,
-            sandataConfirmationId: row.sandata_confirmation_id ?? null
+            sandataConfirmationId: row.sandata_confirmation_id ?? null,
+            hhaexchangeStatus: row.hhaexchange_status ?? null,
+            hhaexchangeConfirmationId: row.hhaexchange_confirmation_id ?? null
         };
     }
     /**
