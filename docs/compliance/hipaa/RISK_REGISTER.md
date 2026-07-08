@@ -78,7 +78,7 @@ Residual risk reflects the risk after current controls, not the original threat.
 | R-008 | Database snapshot exposes PHI because not all PHI fields are application-encrypted | High | Medicaid IDs and caregiver NPIs use AES-256-GCM application-layer encryption; Neon storage encryption under active BAA / HIPAA mode for remaining fields | Medium | **Accepted pending officer approval.** Keep evidence in vault and reassess whether additional field encryption is warranted |
 | R-009 | Mobile device loss exposes caregiver session or cached PHI | High | Expo SecureStore for auth token storage; no offline PHI visit cache currently committed | Medium | **Mitigate.** Add mobile device/security policy before agency rollout; reassess if offline PHI cache ships |
 | R-010 | Production outage, database issue, or failed deploy interrupts EVV operations | High | Vercel deploys from source; Neon PITR; disaster-recovery runbook; scheduled health/db/audit smoke workflow | Medium | **Open.** Rehearse restore, document RTO/RPO evidence, and add dedicated uptime alerting before PHI |
-| R-011 | Admin or operator credential compromise | High | HttpOnly cookie sessions; CSRF; console MFA expectations; encrypted Vercel env vars; bootstrap secret disabled after first admin | Medium | **Mitigate.** Create workforce access roster, enforce least privilege, and document quarterly access reviews |
+| R-011 | Admin or operator credential compromise | High | HttpOnly cookie sessions; CSRF; console MFA expectations; encrypted Vercel env vars; bootstrap secret disabled after first admin; workforce access roster/procedure template exists | Medium | **Mitigate.** Complete private roster entries, enforce least privilege, and document quarterly access reviews |
 | R-012 | Unremediated application vulnerability before launch | High | Unit/integration tests; security surface scanner; dependency overrides; public support/admin AI hardened | High | **Open.** Complete independent penetration test and remediation before real PHI |
 | R-013 | Incident-response plan is drafted but not rehearsed | High | Incident response plan and monitoring runbook exist; production smoke workflow captures baseline signals | High | **Open.** Run tabletop exercise, assign contacts, and preserve exercise evidence before real PHI |
 | R-014 | Notification or email payload discloses PHI through a pending or misconfigured vendor | High | Firebase push payloads are designed to avoid PHI; BAA tracker keeps Google and Resend/replacement email processor as pending | Medium | **Open.** Keep PHI out of notification/email payloads until BAA and payload review are complete |
@@ -94,7 +94,8 @@ Residual risk reflects the risk after current controls, not the original threat.
   remediated.
 - [ ] Restore rehearsal completed and evidence retained.
 - [ ] Incident-response tabletop completed and evidence retained.
-- [ ] Workforce access roster and training records created.
+- [ ] Workforce access roster completed with real private entries and training
+  records.
 - [ ] DB-backed cross-tenant isolation tests run against real Postgres.
 
 ## Review Log

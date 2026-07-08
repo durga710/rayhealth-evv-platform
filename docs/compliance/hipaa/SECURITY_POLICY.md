@@ -58,8 +58,8 @@ Until headcount supports separate Security and Privacy Officers:
 - **Privacy Officer:** Founder of RayHealth EVV
 - **Security Officer:** Founder of RayHealth EVV
 - **Workforce members with PHI access:** documented in
-  [WORKFORCE_ACCESS.md](./WORKFORCE_ACCESS.md) (created when first additional
-  workforce member is added)
+  [WORKFORCE_ACCESS.md](./WORKFORCE_ACCESS.md); real personnel evidence is
+  maintained in the private compliance vault
 
 The Privacy/Security Officer is accountable for:
 
@@ -342,8 +342,7 @@ set:
 - [Disaster Recovery (`docs/DISASTER_RECOVERY.md`)](../../DISASTER_RECOVERY.md)
 - [Organization Scoping Security (`docs/security/ORGANIZATION_SCOPING_SECURITY.md`)](../../security/ORGANIZATION_SCOPING_SECURITY.md)
 - [Risk assessment / risk register (`RISK_REGISTER.md`)](./RISK_REGISTER.md)
-- Workforce access roster (`WORKFORCE_ACCESS.md` — created when first
-  additional workforce member is added)
+- [Workforce access roster (`WORKFORCE_ACCESS.md`)](./WORKFORCE_ACCESS.md)
 - Training completion records (private workforce records system)
 - Signed BAAs (private vault — never committed to git)
 
@@ -361,3 +360,4 @@ All documents are retained for at least 6 years per §164.316(b)(2).
 | 2026-06-30 | Security audit | Removed two AWS IAM access key IDs that had been recorded in plaintext in this row (the original rotation entry above). Both were committed to git history and must be treated as compromised: rotate the active key in IAM immediately, and never record access key IDs in this file going forward — reference the secret manager or an incident ticket instead. |
 | 2026-07-07 | Founder + assistant | Aligned this policy with current production posture: Neon BAA active and HIPAA mode complete, Bedrock default model updated to Claude Haiku 4.5, PHI-read audit coverage summarized from current middleware, and Vercel deploys documented as source-built, lockfile-driven deploys. |
 | 2026-07-08 | Founder + assistant | Added `RISK_REGISTER.md` as the active draft risk-analysis artifact and replaced the stale inline risk table with current open risk themes and signoff gates. |
+| 2026-07-08 | Founder + assistant | Added `WORKFORCE_ACCESS.md` as the workforce access roster/procedure template and clarified that real personnel evidence stays in the private compliance vault. |
