@@ -339,41 +339,57 @@ const CATALOG: NewLearningCourse[] = [
       sections: [
         {
           title: 'Role of the Direct Care Worker',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-1-role.jpg',
+          imageAlt: 'A caregiver visits with an older adult at home, offering support and companionship.',
           content:
             'Direct care workers help participants remain safe, healthy, and independent in their homes. Caregivers must follow the participant’s Plan of Care, agency policies, and Chapter 611 requirements.\n\nYou may assist with approved personal care tasks only when the task is part of the participant’s Plan of Care and you have received proper training. Always respect participant dignity, privacy, independence, culture, and personal choices.\n\nNever permitted: diagnosing medical conditions, prescribing medications, administering medications, changing medication dosages, performing nursing tasks, or completing duties outside of your training.\n\nCorrect: A participant is weaker than usual and having difficulty walking. The caregiver reports the change to the agency immediately.\nIncorrect: The caregiver notices the participant is struggling but does not report it, hoping it may get better.\n\nWhen in doubt, contact the agency. Never guess about your role.',
         },
         {
           title: 'Assistance with Self Administered Medications',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-2-medications.jpg',
+          imageAlt: 'Prescription medication containers and a weekly pill organizer used for self administered medication.',
           content:
             'Direct care workers may assist participants with self administered medications, but they may not administer medications.\n\nYou may help by: (1) Reminding the participant that it is time for medication. (2) Opening medication containers when requested. (3) Reading the medication label to the participant when requested. (4) Handing the medication container to the participant. (5) Helping the participant locate medication. (6) Reporting medication refusal or concerns to the agency.\n\nNever allowed: giving injections, placing medication into the participant’s mouth, deciding medication dosage, changing the medication schedule, crushing medication without authorization, administering eye drops, or giving medication directly to the participant.\n\nCorrect: The participant says they cannot open a bottle. The caregiver opens the bottle and hands it back, and the participant takes the medication independently.\nIncorrect: The caregiver removes the pills and places them into the participant’s mouth.\n\nCorrect: The participant refuses medication. The caregiver does not force the participant, and documents and reports the refusal to the agency.\nIncorrect: The caregiver argues with the participant or hides medication in food.\n\nYou assist only, and you never administer medication yourself.',
         },
         {
           title: 'Bathing, Shaving, Grooming, and Dressing',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-3-grooming.jpg',
+          imageAlt: 'A caregiver assists an older adult with grooming and personal care.',
           content:
             'Bathing, shaving, grooming, and dressing must always be provided with dignity, privacy, respect, and safety. Encourage the participant to do as much as they can safely do independently, assist only where help is needed, and respect participant preferences.\n\nWays you may assist: bathing support, washing hard to reach areas, shaving assistance when permitted, brushing hair, washing the face, and helping with clothing (buttons, zippers, socks, and shoes).\n\nCorrect: The participant can wash their face and arms but needs help washing their back. The caregiver lets the participant do what they can and assists only with the back.\nIncorrect: The caregiver rushes the participant and completes every task without allowing independence.\n\nPromote independence while keeping the participant safe. Never rush personal care.',
         },
         {
           title: 'Hair, Skin, and Mouth Care',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-4-skin.jpg',
+          imageAlt: 'Care supplies used for hair, skin, and mouth care.',
           content:
             'Hair, skin, and mouth care help prevent infection, discomfort, and skin breakdown.\n\nHair care may include: brushing hair, washing hair when assigned, and observing the condition of the scalp.\n\nMouth care may include brushing teeth and denture care. Watch the mouth for: bleeding gums, mouth sores, pain, odor, or difficulty eating.\n\nSkin care means keeping skin clean and dry. Watch the skin for: redness, swelling, bruising, wounds, skin tears, pressure areas, rash, or signs of infection.\n\nCorrect: While assisting with dressing, the caregiver notices redness on the participant’s heel and reports it to the agency right away.\nIncorrect: The caregiver ignores the redness because the participant says it does not hurt.\n\nSmall skin problems can become serious quickly. Never ignore a skin change; report it to the agency immediately.',
         },
         {
           title: 'Ambulation and Transfers',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-5-transfers.jpg',
+          imageAlt: 'A helper steadies an older adult during a wheelchair transfer.',
           content:
             'Ambulation means helping a participant walk safely. A transfer means helping a participant move from one place or position to another, such as bed to wheelchair, wheelchair to toilet, or chair to standing.\n\nFor every transfer: follow the Plan of Care, use proper body mechanics, keep pathways clear, use equipment as directed, and use a gait belt when the Plan of Care requires one.\n\nNever do any of the following: pull a participant by the arms, rush a transfer, attempt a transfer alone when assistance is required, or attempt a transfer you are not trained to perform.\n\nCorrect: The Plan of Care requires a gait belt. The caregiver uses the gait belt and assists the participant slowly and safely.\nIncorrect: The caregiver pulls the participant up by the arms because it is faster.\n\nAn unsafe transfer can injure both the participant and the caregiver.',
         },
         {
           title: 'Toileting and Incontinence Care',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-6-toileting.jpg',
+          imageAlt: 'Disposable gloves are put on before providing personal care.',
           content:
             'Toileting and incontinence care must protect participant dignity, privacy, comfort, and health.\n\nDuring toileting care: wear gloves when appropriate, provide privacy, assist with bathroom transfers when assigned, clean the skin properly, change soiled clothing or incontinence products promptly, and report any skin concerns.\n\nNever leave a participant in soiled clothing or briefs. Delays can cause discomfort, odor, infection, and skin breakdown.\n\nCorrect: The caregiver assists the participant to the bathroom, provides privacy, helps with hygiene as needed, and reports redness noticed during care.\nIncorrect: The caregiver delays care and leaves the participant in soiled clothing for an extended period.\n\nToileting care must be respectful, timely, and clean.',
         },
         {
           title: 'Meal Preparation and Feeding',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-7-meals.jpg',
+          imageAlt: 'A healthy meal is prepared in a home kitchen.',
           content:
             'Meal preparation and feeding help support participant health, energy, and independence.\n\nWhen preparing meals: follow the participant’s dietary instructions and restrictions, practice safe food handling, check dates and never serve spoiled food, respect food allergies, and prepare foods the participant can chew and swallow safely.\n\nIf the participant has a special diet (for example low sodium or diabetic): follow the dietary instructions in the Plan of Care exactly, and never add restricted ingredients.\n\nWhen assisting with eating: encourage the participant to eat independently when possible, offer small bites at a comfortable pace, stay attentive for choking risks, and never rush or force feed a participant.\n\nCorrect: The participant has a low sodium diet. The caregiver prepares the meal without added salt and follows the dietary instructions.\nIncorrect: The caregiver adds extra salt without checking the Plan of Care or contacting the agency.\n\nReport appetite changes, swallowing problems, or choking episodes to the agency.',
         },
         {
           title: 'Hand Hygiene, Documentation, and Reporting',
+          imageUrl: 'https://rayhealthevv.com/training/pa611/module-8-hygiene.jpg',
+          imageAlt: 'Hands are washed with soap and running water at a sink.',
           content:
             'Clean hands protect you and your participant. Perform hand hygiene at these times: before and after providing care, after removing gloves, after toileting assistance, and before preparing or serving food. Wear gloves whenever exposure to bodily fluids may occur.\n\nDocumentation must be accurate, complete, and timely. Record care during or right after your visit, never from memory days later.\n\nReport to the agency immediately: sudden weakness or confusion, falls or injuries, skin changes, medication refusals or concerns, changes in appetite or swallowing, and any new needs in the participant’s Plan of Care.\n\nIf a participant falls during your shift: make sure the participant is safe, report the incident to the agency immediately, and document exactly what happened.\n\nIf the Plan of Care changes: notify the agency so the change can be reviewed and training can be provided before you perform any new task.\n\nCorrect: A participant seems suddenly confused. The caregiver reports it to the agency the same day and documents what they observed.\nIncorrect: The caregiver waits several days and then documents the change from memory.',
         },
