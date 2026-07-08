@@ -75,20 +75,16 @@ The Privacy/Security Officer is accountable for:
 
 A risk assessment is conducted at least annually and after any material
 architecture change. The risk register lives at
-[RISK_REGISTER.md](./RISK_REGISTER.md) (to be authored in the next compliance
-update cycle).
+[RISK_REGISTER.md](./RISK_REGISTER.md). The register is the source of truth
+for current risks, residual-risk decisions, and pre-PHI approval gates.
 
-High-priority risks identified as of 2026-05-09:
+Top open risk themes as of 2026-07-08:
 
-| Risk | Mitigation in place | Residual risk |
-|---|---|---|
-| Compromised vendor credentials | All secrets in Vercel encrypted env vars; rotated when exposed; `BOOTSTRAP_SECRET` removed from env after first admin bootstrap | Low |
-| Audit log tampering | Postgres BEFORE-trigger `audit_events_block_mutation_trg` rejects UPDATE/DELETE/TRUNCATE on `audit_events` (§4.5) | Very low |
-| EVV record back-dating | Postgres BEFORE-trigger `evv_visits_enforce_immutability_trg` blocks mutation of clock-in/out/location columns; corrections are routed through `visit_maintenance` | Very low |
-| Cross-tenant PHI leak | All repository methods take `agencyId` and SQL-bind it into the WHERE clause; see [`docs/security/ORGANIZATION_SCOPING_SECURITY.md`](../../security/ORGANIZATION_SCOPING_SECURITY.md) | Low |
-| PHI sent to non-BAA AI vendor | Both AI surfaces (`/api/support/chat`, `/api/admin-assistant/chat`) call AWS Bedrock via `@aws-sdk/client-bedrock-runtime`; no fallback to non-BAA vendors. Endpoints return 503 when AWS is not configured rather than failing open. | Low (assuming AWS BAA active) |
-| Plaintext PHI at rest in highly-sensitive columns | AES-256-GCM application-layer encryption (`cell-cipher.ts`) on `clients.medicaid_number` and `caregivers.npi`; vendor-managed encryption (Neon) for the rest | Medium — see [ENCRYPTION_VERIFICATION.md](./ENCRYPTION_VERIFICATION.md) |
-| Phishing of admin accounts | MFA on Vercel, AWS, Neon, Firebase, Cloudflare consoles | Medium |
+- Remaining vendor and customer BAA execution before real PHI
+- Officer review/signoff of the risk register
+- Third-party penetration test and remediation
+- Restore rehearsal, incident-response tabletop, and dedicated alerting
+- DB-backed cross-tenant isolation test execution against real Postgres
 
 ---
 
@@ -345,8 +341,7 @@ set:
 - [BAA tracking (`BAA_REQUEST_EMAILS.md`)](./BAA_REQUEST_EMAILS.md)
 - [Disaster Recovery (`docs/DISASTER_RECOVERY.md`)](../../DISASTER_RECOVERY.md)
 - [Organization Scoping Security (`docs/security/ORGANIZATION_SCOPING_SECURITY.md`)](../../security/ORGANIZATION_SCOPING_SECURITY.md)
-- Risk assessment / risk register (`RISK_REGISTER.md` — to be authored in next
-  cycle)
+- [Risk assessment / risk register (`RISK_REGISTER.md`)](./RISK_REGISTER.md)
 - Workforce access roster (`WORKFORCE_ACCESS.md` — created when first
   additional workforce member is added)
 - Training completion records (private workforce records system)
@@ -365,3 +360,4 @@ All documents are retained for at least 6 years per §164.316(b)(2).
 | 2026-05-09 | Founder + assistant | AWS access key rotated (old key had been exposed in a chat session) on Vercel project `prj_Y0bFZJZND68I4eBeBfE2oqCzo5OG`. Local `BedrockRuntimeClient` smoke confirmed the new key has `bedrock:InvokeModel` permission; production `/api/support/chat` returned a clean Claude Haiku 4.5 response post-redeploy. Old key deactivation in IAM is a pending founder action; this row will be amended once that confirmation is in. Nightly `verify-audit-triggers.yml` GitHub Actions workflow added — runs the §5.6 verifier every 03:17 UTC so audit-trigger regressions surface within 24h instead of at the next annual review. Key material/IDs are intentionally not recorded in this document — see secret manager / IAM console for current credentials. |
 | 2026-06-30 | Security audit | Removed two AWS IAM access key IDs that had been recorded in plaintext in this row (the original rotation entry above). Both were committed to git history and must be treated as compromised: rotate the active key in IAM immediately, and never record access key IDs in this file going forward — reference the secret manager or an incident ticket instead. |
 | 2026-07-07 | Founder + assistant | Aligned this policy with current production posture: Neon BAA active and HIPAA mode complete, Bedrock default model updated to Claude Haiku 4.5, PHI-read audit coverage summarized from current middleware, and Vercel deploys documented as source-built, lockfile-driven deploys. |
+| 2026-07-08 | Founder + assistant | Added `RISK_REGISTER.md` as the active draft risk-analysis artifact and replaced the stale inline risk table with current open risk themes and signoff gates. |
