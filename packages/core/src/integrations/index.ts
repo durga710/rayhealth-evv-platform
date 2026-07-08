@@ -10,6 +10,9 @@ export * from './url-guard.js';
 export * as SandataClient from './sandata-client.js';
 export * as HhaexchangeClient from './hhaexchange-client.js';
 export * as ClearinghouseClient from './clearinghouse-client.js';
+export * from './clearinghouse-transport.js';
+export * as ClearinghouseSandbox from './clearinghouse-sandbox.js';
+export type { SftpLike, SftpFactory } from './clearinghouse-sftp.js';
 
 /**
  * Real Sandata Alternate-EVV (async POST → UUID → poll). Phase 1 = types +

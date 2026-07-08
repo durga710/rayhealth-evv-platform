@@ -1538,9 +1538,41 @@ export async function up(knex: Knex): Promise<void> {
       t.timestamps(true, true);
     });
   }
+
+  // ── R27. Clearinghouse transmission: claim transport ref + 835 ledger ────
+  // The automated submit route stores the transport reference (SFTP remote
+  // filename, HTTP reference id, or sandbox reference) on the claim. The
+  // remittance sweep records every ingested 835 by content hash so a file
+  // re-downloaded on the next sweep is skipped: ingestion stays idempotent
+  // even though postEra is not.
+  if (
+    (await knex.schema.hasTable('claims')) &&
+    !(await knex.schema.hasColumn('claims', 'transport_reference'))
+  ) {
+    await knex.schema.alterTable('claims', (t) => {
+      t.string('transport_reference', 160).nullable();
+    });
+  }
+
+  if (!(await knex.schema.hasTable('clearinghouse_remittance_files'))) {
+    await knex.schema.createTable('clearinghouse_remittance_files', (t) => {
+      t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+      t.uuid('agency_id').notNullable().references('id').inTable('agencies').onDelete('CASCADE');
+      t.string('file_name', 255).notNullable();
+      t.string('sha256', 64).notNullable();
+      t.string('transport', 16).notNullable();
+      t.integer('claim_count').notNullable().defaultTo(0);
+      t.integer('matched_count').notNullable().defaultTo(0);
+      t.integer('total_paid_cents').notNullable().defaultTo(0);
+      t.string('trace_number', 50).nullable();
+      t.timestamp('ingested_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+      t.unique(['agency_id', 'sha256']);
+    });
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('clearinghouse_remittance_files');
   await knex.schema.dropTableIfExists('sandata_exception_queue');
   await knex.schema.dropTableIfExists('sandata_transmission_record');
   await knex.schema.dropTableIfExists('sandata_transmission');
