@@ -50,6 +50,45 @@ export async function postJson(
   }
 }
 
+export interface PostTextOptions {
+  contentType?: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+}
+
+/**
+ * POST a raw text body (e.g. an EDI X12 document). Same contract as
+ * `postJson`: never throws on a non-2xx status, only a network/abort failure
+ * rejects.
+ */
+export async function postText(
+  url: string,
+  body: string,
+  options: PostTextOptions = {},
+): Promise<HttpJsonResponse> {
+  const { contentType = 'text/plain', headers = {}, timeoutMs = 20_000 } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': contentType, accept: 'application/json', ...headers },
+      body,
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let parsed: unknown;
+    try {
+      parsed = text ? JSON.parse(text) : undefined;
+    } catch {
+      parsed = undefined;
+    }
+    return { status: res.status, ok: res.ok, body: parsed, text };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export interface GetJsonOptions {
   headers?: Record<string, string>;
   timeoutMs?: number;
