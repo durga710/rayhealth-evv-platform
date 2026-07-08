@@ -1,5 +1,7 @@
 # RayHealth EVV — HIPAA Incident Response Plan
 
+**Authored by Durga Ghimeray**
+
 **Version:** 1.0
 **Effective:** 2026-05-09
 **Owner:** RayHealth EVV Privacy Officer / Security Officer
@@ -40,7 +42,7 @@ This plan applies to:
 Systems in scope:
 
 - `rayhealthevv.com` web app and API (Vercel project `rayhealth-evv-platform-app`)
-- Mobile caregiver app (Capacitor + Vite + React, project `rayhealth-evv-mobile`)
+- Mobile caregiver app (Expo / React Native / Expo Router, package `packages/mobile`)
 - AWS Bedrock-backed AI inference (`/api/support/chat`, `/api/admin-assistant/chat`)
 - Neon Postgres (project `late-art-87716813`)
 - Cloudflare edge (DNS + TLS termination)
@@ -117,6 +119,19 @@ Potential incident signals include:
 - CI/CD or migration anomalies affecting auth, audit, or access controls
 
 If an alert may involve PHI, treat it as SEV-2 or higher until disproven.
+
+---
+
+## 4.1 Tabletop Rehearsal
+
+At least annually, and after any material incident or architecture change, run
+an incident-response tabletop using
+[OPERATIONAL_DRILLS.md](./OPERATIONAL_DRILLS.md). The exercise must use
+synthetic facts only, assign named response roles, test evidence-preservation
+steps, and store the signed outcome record in the private compliance vault.
+
+The tabletop template exists, but the control is not complete until an exercise
+has been run and evidence retained.
 
 ---
 
@@ -390,3 +405,4 @@ Retain incident documentation for **at least 6 years** (HIPAA §164.530(j)).
 |---|---|---|
 | 2026-05-07 | Founder (predecessor repo) | Initial plan authored |
 | 2026-05-08 | Founder + assistant | Ported into `rayhealth-evv-clean`; replaced predecessor `audit_revisions` / `auth_events` references with the single `audit_events` table that ships in this repo; pinned the trigger verifier script path; added Cloudflare to subprocessor list; pinned the active Bedrock model ID; cross-referenced `ORGANIZATION_SCOPING_SECURITY.md` for tenant-isolation recovery checks |
+| 2026-07-07 | Founder + assistant | Corrected the mobile scope from a predecessor Capacitor project to the current `packages/mobile` Expo / React Native app. |

@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import { createHash } from 'node:crypto';
 import type { Knex } from 'knex';
 import { requireCapability } from '../middleware/require-capability.js';
 import {
+  AuditEventRepository,
   ComplianceEngineRepository,
   LearningRepository,
   RecurringScheduleRepository,
@@ -13,6 +15,10 @@ import { askAI, isAIConfigured } from '../ai.js';
 import { safeError } from '../security/safe-log.js';
 
 const router = Router();
+
+function sha256(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
 
 /**
  * Compose the full command-center snapshot (counts only, no PHI) for an agency.
@@ -105,6 +111,25 @@ router.post('/briefing', requireCapability('agency.read'), async (req, res) => {
       systemInstruction: system,
       prompt,
       maxOutputTokens: 350,
+    });
+
+    await new AuditEventRepository(db).create({
+      agencyId: req.auth.agencyId,
+      actorId: req.auth.userId,
+      actorType: 'user',
+      eventType: 'copilot.query',
+      entityType: 'command_center_briefing',
+      entityId: req.auth.agencyId,
+      outcome: 'success',
+      payload: {
+        surface: 'command-center-briefing',
+        promptHash: sha256(prompt),
+        promptLength: prompt.length,
+        responseHash: sha256(result.text),
+        responseLength: result.text.length,
+        model: result.model,
+        provider: result.provider,
+      },
     });
 
     res.json({

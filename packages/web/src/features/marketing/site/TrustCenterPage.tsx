@@ -63,7 +63,7 @@ const securityControls: readonly SecurityControl[] = [
   {
     icon: 'file-text',
     label: 'Append-only audit log',
-    detail: 'Every state change is written to an audit table a Postgres trigger refuses to UPDATE or DELETE, the log cannot be edited, even by us.',
+    detail: 'Every state change is written to an audit table a Postgres trigger refuses to UPDATE or DELETE, so the application cannot edit the log.',
     tone: 'primary',
   },
   {
@@ -160,7 +160,7 @@ const aiPolicy: readonly AiPolicyPoint[] = [
   },
   {
     title: 'AI actions are audit-logged',
-    detail: 'Copilot queries and approved actions are recorded in the same append-only audit trail as every other state change; assistant conversations are logged with session and model metadata. An AI-approved change is as traceable as a manual one.',
+    detail: 'Copilot queries, approved actions, assistant requests, and command-center briefings are recorded with hash, length, session, and model metadata. Admin-assistant transcript text is not retained.',
   },
 ];
 

@@ -1,5 +1,7 @@
 # RayHealth EVV — Disaster Recovery Runbook
 
+**Authored by Durga Ghimeray**
+
 **Version:** 1.0
 **Effective:** 2026-05-09
 **Owner:** RayHealth EVV Security Officer
@@ -27,8 +29,9 @@ data-loss, corruption, or compute-layer outage event. It fulfills HIPAA
 | Transactional email | Resend | sending domain `send.rayhealthevv.com` |
 
 Code lives in GitHub: `github.com/durga710/rayhealth-evv-platform`. Vercel
-deploys on push to `main`. Pre-built `dist/` artifacts are committed so
-Vercel skips the build step (`vercel.json` `buildCommand` is a no-op).
+deploys on push to `main`. Vercel installs with `npm ci` and builds the
+web/app dependency graph through `vercel.json`:
+`npx turbo build --filter=@rayhealth/web... --filter=@rayhealth/app...`.
 
 ---
 
@@ -155,9 +158,9 @@ becomes a Neon support escalation.
 | Schema migrations | `packages/core/src/migrations/schema.ts` (single idempotent file in repo) | Same as code |
 | Database WAL | Neon PITR | 7 days (default), 30 days (Scale tier) |
 | Database internal | Neon nightly backups | per Neon retention policy |
-| Pre-built `dist/` artifacts | Committed to repo | Same as code |
+| Build artifacts | Rebuilt by Vercel from source during deploy | Same as code + dependency lockfile |
 | Vercel env vars | Manually exported quarterly to encrypted password manager | up to one quarter old in worst case |
-| Mobile app source | `~/Documents/rayhealth-evv-mobile` git repo (initialized 2026-05-08) | Forever once pushed to a remote |
+| Mobile app source | `packages/mobile` in this repository | Same as code |
 
 **Quarterly env var export (manual procedure):**
 
@@ -214,7 +217,13 @@ Once per year (target: each February, before the audit cycle):
 2. Practice a full PITR to a 30-minute-ago timestamp on that branch
 3. Run `verify-audit-triggers.mjs` against the restored branch
 4. Run a synthetic EVV cycle against the restored branch
-5. Document the drill outcome in `RISK_REGISTER.md` (when authored)
+5. Document the drill outcome with
+   [`OPERATIONAL_DRILLS.md`](./compliance/hipaa/OPERATIONAL_DRILLS.md) and
+   update [`RISK_REGISTER.md`](./compliance/hipaa/RISK_REGISTER.md) if the
+   drill changes residual risk
+
+The template exists, but the drill is not complete until evidence and signoff
+are stored in the private compliance vault.
 
 The drill is a control under `SECURITY_POLICY.md` §5.6 (annual
 evaluation) and must be retained as evidence per HIPAA §164.316.

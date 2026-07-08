@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const SCAN_DIRS = ['packages/web/src', 'packages/mobile/src'];
@@ -26,14 +26,50 @@ function filesUnder(relativeDir: string): string[] {
 }
 
 const failures: string[] = [];
+const sourceFiles = SCAN_DIRS.flatMap(filesUnder);
 
-for (const file of SCAN_DIRS.flatMap(filesUnder)) {
+function repoPath(path: string): string {
+  return relative(ROOT, path).replace(/\\/g, '/');
+}
+
+for (const file of sourceFiles) {
   const source = readFileSync(file, 'utf8');
   for (const { pattern, message } of bannedPatterns) {
     if (pattern.test(source)) {
-      failures.push(`${file}: ${message}`);
+      failures.push(`${repoPath(file)}: ${message}`);
     }
     pattern.lastIndex = 0;
+  }
+}
+
+const webMainPath = join(ROOT, 'packages/web/src/main.tsx');
+const webMainSource = readFileSync(webMainPath, 'utf8');
+const analyticsImportFiles = sourceFiles.filter((file) =>
+  readFileSync(file, 'utf8').includes('@vercel/analytics')
+);
+
+for (const file of analyticsImportFiles) {
+  if (file !== webMainPath) {
+    failures.push(`${repoPath(file)}: Vercel Analytics must stay centralized in main.tsx`);
+  }
+}
+
+if (webMainSource.includes('@vercel/analytics/react')) {
+  const compactMain = webMainSource.replace(/\s+/g, ' ');
+  const importsPrivacyGate = webMainSource.includes(
+    "import { dropAuthenticatedEvents } from './lib/analytics.js';"
+  );
+  const guardedAnalyticsMount =
+    /<Analytics\b[^>]*\bbeforeSend=\{dropAuthenticatedEvents\}[^>]*\/>/.test(compactMain);
+
+  if (!importsPrivacyGate) {
+    failures.push('packages/web/src/main.tsx: Analytics mount must import dropAuthenticatedEvents');
+  }
+
+  if (!guardedAnalyticsMount) {
+    failures.push(
+      'packages/web/src/main.tsx: Analytics mount must use beforeSend={dropAuthenticatedEvents}'
+    );
   }
 }
 

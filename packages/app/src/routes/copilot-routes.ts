@@ -289,6 +289,26 @@ router.post('/execute', async (req: Request, res: Response) => {
     }
 
     const db = req.app.get('db') as Knex
+    // Audit the human confirmation BEFORE executing. If the append-only audit
+    // write fails, no DB mutation or external reminder dispatch is attempted.
+    // Failed execution after a successful confirmation is recorded below as
+    // `copilot.action.declined`.
+    const auditRepo = new AuditEventRepository(db)
+    await auditRepo.create({
+      agencyId: req.auth.agencyId,
+      actorId: req.auth.userId,
+      actorType: 'user',
+      eventType: 'copilot.action.confirmed',
+      entityType: 'copilot_action',
+      entityId: req.auth.agencyId,
+      outcome: 'success',
+      payload: {
+        actionType: action.type,
+        action,
+        status: 'confirmed_by_user',
+      },
+    })
+
     const result = await executeCopilotAction(action, {
       db,
       agencyId: req.auth.agencyId,
@@ -296,35 +316,14 @@ router.post('/execute', async (req: Request, res: Response) => {
       actorUserId: req.auth.userId,
     })
 
-    // Audit the confirmed action with the result summary.
-    try {
-      const auditRepo = new AuditEventRepository(db)
-      await auditRepo.create({
-        agencyId: req.auth.agencyId,
-        actorId: req.auth.userId,
-        actorType: 'user',
-        eventType: 'copilot.action.confirmed',
-        entityType: 'copilot_action',
-        entityId: req.auth.agencyId,
-        outcome: 'success',
-        payload: {
-          actionType: action.type,
-          action,
-          summary: result.summary,
-          outcome: result.outcome,
-        },
-      })
-    } catch (auditErr: unknown) {
-      process.stderr.write(
-        `[audit-write-failed] copilot.action.confirmed err=${auditErr instanceof Error ? auditErr.message : 'unknown'}\n`,
-      )
-    }
-
     res.json({ success: true, data: result })
   } catch (error: unknown) {
     // Audit declined/failed actions so the trail captures every attempt.
     const db = req.app.get('db') as Knex | undefined
-    if (db) {
+    if (
+      db &&
+      (error instanceof ActionAuthorizationError || error instanceof ActionExecutionError)
+    ) {
       try {
         const auditRepo = new AuditEventRepository(db)
         await auditRepo.create({
@@ -338,7 +337,7 @@ router.post('/execute', async (req: Request, res: Response) => {
           payload: {
             actionType: action.type,
             action,
-            reason: error instanceof Error ? error.message : 'unknown error',
+            reason: error.message,
           },
         })
       } catch {
