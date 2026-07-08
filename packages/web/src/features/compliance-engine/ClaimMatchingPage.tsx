@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getJson, postJson } from '../../lib/api-client.js';
+import { ApiError, getJson, postJson } from '../../lib/api-client.js';
 import {
   ComplianceEmptyQueue,
   ComplianceModuleLayout,
@@ -145,6 +145,7 @@ export function ClaimMatchingPage() {
   const [generating, setGenerating] = useState(false);
   const [genResult, setGenResult] = useState<GenerateResult | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [blockers, setBlockers] = useState<BlockersResponse | null>(null);
 
@@ -228,6 +229,25 @@ export function ClaimMatchingPage() {
       await loadClaims();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Status change failed');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const submitToClearinghouse = async (id: string) => {
+    setBusyId(id);
+    setActionError(null);
+    setSubmitNotice(null);
+    try {
+      const result = await postJson<{ reference?: string }>(`/api/billing/claims/${id}/submit`, {});
+      setSubmitNotice(`Claim transmitted. Clearinghouse reference: ${result.reference ?? 'recorded'}`);
+      await loadClaims();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setActionError('Clearinghouse is not configured. Set it up under Compliance Engine, Clearinghouse, then try again.');
+      } else {
+        setActionError(err instanceof Error ? err.message : 'Clearinghouse submission failed');
+      }
     } finally {
       setBusyId(null);
     }
@@ -397,6 +417,24 @@ export function ClaimMatchingPage() {
         </div>
       ) : null}
 
+      {submitNotice ? (
+        <div
+          role="status"
+          style={{
+            backgroundColor: 'var(--color-success-bg, #ECFDF5)',
+            border: '1px solid var(--color-success, #047857)',
+            borderRadius: 10,
+            color: 'var(--color-success, #047857)',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            marginTop: '1rem',
+            padding: '0.75rem 1rem',
+          }}
+        >
+          {submitNotice}
+        </div>
+      ) : null}
+
       {/* Claims list */}
       <div style={{ ...sectionCard, marginTop: '1rem' }}>
         <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
@@ -447,9 +485,14 @@ export function ClaimMatchingPage() {
                             </button>
                           ) : null}
                           {c.status === 'ready' ? (
-                            <button type="button" disabled={busyId === c.id} onClick={() => void setStatus(c.id, 'submitted')} style={ghostButtonStyle}>
-                              Mark submitted
-                            </button>
+                            <>
+                              <button type="button" disabled={busyId === c.id} onClick={() => void submitToClearinghouse(c.id)} style={ghostButtonStyle}>
+                                Submit to clearinghouse
+                              </button>
+                              <button type="button" disabled={busyId === c.id} onClick={() => void setStatus(c.id, 'submitted')} style={ghostButtonStyle} title="Use when uploading the 837 to a portal manually">
+                                Mark submitted
+                              </button>
+                            </>
                           ) : null}
                           <button type="button" disabled={busyId === c.id} onClick={() => void download837(c)} style={ghostButtonStyle}>
                             837
