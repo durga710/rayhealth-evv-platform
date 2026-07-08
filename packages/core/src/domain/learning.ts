@@ -12,7 +12,7 @@
  *   - The pair lets us reconstruct who knew what when, for audit purposes
  */
 
-export type CourseCadence = 'one_time' | 'annual' | 'biennial' | 'certification';
+export type CourseCadence = 'one_time' | 'semi_annual' | 'annual' | 'biennial' | 'certification';
 export type EnrollmentStatus = 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'expired';
 
 export interface CourseModule {
