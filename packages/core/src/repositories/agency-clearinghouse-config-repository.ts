@@ -117,6 +117,14 @@ export class AgencyClearinghouseConfigRepository {
     }
   }
 
+  /** Agencies with the integration switched on, for the remittance sweep. */
+  async listEnabledAgencyIds(): Promise<string[]> {
+    const rows = (await this.db('agency_clearinghouse_config')
+      .where({ enabled: true })
+      .select('agency_id')) as Array<{ agency_id: string }>
+    return rows.map((r) => r.agency_id)
+  }
+
   async upsert(input: ClearinghouseConfigUpsert): Promise<PartialClearinghouseConfig> {
     const payload: Record<string, unknown> = {
       agency_id: input.agencyId,

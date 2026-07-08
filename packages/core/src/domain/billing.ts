@@ -80,6 +80,8 @@ export const claimSchema = z.object({
   payerClaimId: z.string().nullable().optional(),
   /** Rejection / denial reason text, populated on rejected/denied. */
   statusReason: z.string().nullable().optional(),
+  /** Clearinghouse transport reference from an automated submission. */
+  transportReference: z.string().nullable().optional(),
   submittedAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
