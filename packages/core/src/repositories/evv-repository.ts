@@ -63,6 +63,9 @@ export class EvvRepository {
     if (visit.clockOutLocation)
       updateData.clock_out_location = JSON.stringify(visit.clockOutLocation);
     if (visit.status) updateData.status = visit.status;
+    if (visit.tasks !== undefined)
+      updateData.tasks = visit.tasks === null ? null : JSON.stringify(visit.tasks);
+    if (visit.visitNote !== undefined) updateData.visit_note = visit.visitNote;
 
     const allowedIds = this.db('evv_visits as v')
       .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
@@ -304,6 +307,11 @@ export class EvvRepository {
           ? JSON.parse(outLoc)
           : (outLoc as EvvVisit['clockOutLocation']),
       status: row.status as EvvVisit['status'],
+      tasks:
+        typeof row.tasks === 'string'
+          ? JSON.parse(row.tasks)
+          : ((row.tasks as EvvVisit['tasks']) ?? null),
+      visitNote: (row.visit_note as string | null | undefined) ?? null,
       sandataStatus: (row.sandata_status as EvvVisit['sandataStatus']) ?? null,
       sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null,
       hhaexchangeStatus: (row.hhaexchange_status as EvvVisit['hhaexchangeStatus']) ?? null,

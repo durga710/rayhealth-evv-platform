@@ -16,8 +16,24 @@ export const evvClockInInputSchema = z.object({
   serviceCode: evvServiceCodeSchema.optional()
 });
 
+/**
+ * A task documented as performed during a visit. Snapshotted from the PA
+ * task catalog ({id, duty}) at clock-out so the visit row stands alone for
+ * audit-packet and aggregator use, same philosophy as the Cures-Act
+ * service-code/client snapshots taken at clock-in.
+ */
+export const evvVisitTaskSchema = z.object({
+  id: z.string().min(1),
+  duty: z.string().min(1)
+});
+
 export const evvClockOutInputSchema = z.object({
-  location: evvLocationSchema
+  location: evvLocationSchema,
+  // Optional service documentation captured with the clock-out. taskIds are
+  // PA task-catalog IDs; the route resolves them against paTasks and rejects
+  // unknown codes, so the DB only ever stores catalog-backed snapshots.
+  taskIds: z.array(z.string().min(1).max(16)).max(100).optional(),
+  note: z.string().trim().max(2000).optional()
 });
 
 export const evvVisitSchema = z.object({
@@ -33,6 +49,11 @@ export const evvVisitSchema = z.object({
   clockInLocation: evvLocationSchema,
   clockOutLocation: evvLocationSchema.optional(),
   status: z.enum(['pending', 'verified', 'flagged']).default('pending'),
+  // Service documentation recorded at clock-out: catalog-snapshotted tasks
+  // performed and a free-text note. Null/absent on visits documented before
+  // this feature or when the caregiver skipped documentation.
+  tasks: z.array(evvVisitTaskSchema).nullable().optional(),
+  visitNote: z.string().nullable().optional(),
   // Aggregator submission lifecycle. Null until the background job first
   // attempts submission; 'accepted' means Sandata returned a confirmation ID.
   sandataStatus: z.enum(['pending', 'submitted', 'accepted', 'rejected']).nullable().optional(),
