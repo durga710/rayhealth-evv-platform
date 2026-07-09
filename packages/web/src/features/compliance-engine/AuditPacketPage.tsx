@@ -50,6 +50,14 @@ interface AuditPacketResponse {
     clockOutTime: string | null;
     tasks?: { id: string; duty: string }[] | null;
     visitNote?: string | null;
+    signature?: {
+      strokes: [number, number][][];
+      width: number;
+      height: number;
+      signerRole: 'client' | 'representative';
+      signerName?: string | null;
+      signedAt: string;
+    } | null;
   };
   caregiver: { id: string; name: string };
   client: { id: string | null; name: string | null };
@@ -387,9 +395,40 @@ export function AuditPacketPage() {
                 {data.visit.visitNote}
               </p>
             ) : null}
-            {!(data.visit.tasks && data.visit.tasks.length > 0) && !data.visit.visitNote ? (
+            {data.visit.signature ? (
+              <div style={{ marginTop: data.visit.tasks?.length || data.visit.visitNote ? '1rem' : 0 }}>
+                <strong style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                  Verification of service
+                </strong>
+                <svg
+                  viewBox={`0 0 ${data.visit.signature.width} ${data.visit.signature.height}`}
+                  style={{ width: '100%', maxWidth: 340, height: 'auto', display: 'block', background: 'var(--color-surface, #fff)', border: '1px solid var(--color-border, #E2E8F0)', borderRadius: 8 }}
+                  role="img"
+                  aria-label="Captured signature"
+                >
+                  {data.visit.signature.strokes.map((stroke, i) => (
+                    <polyline
+                      key={i}
+                      points={stroke.map(([x, y]) => `${x},${y}`).join(' ')}
+                      fill="none"
+                      stroke="var(--color-text, #0F172A)"
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ))}
+                </svg>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                  Signed by {data.visit.signature.signerRole === 'client' ? 'the client' : 'a representative'}
+                  {data.visit.signature.signerName ? ` (${data.visit.signature.signerName})` : ''}
+                  {' · '}
+                  {formatDateTime(data.visit.signature.signedAt)}
+                </p>
+              </div>
+            ) : null}
+            {!(data.visit.tasks && data.visit.tasks.length > 0) && !data.visit.visitNote && !data.visit.signature ? (
               <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-                No tasks or note were documented at clock-out.
+                No tasks, note, or signature were documented at clock-out.
               </p>
             ) : null}
           </SectionCard>
