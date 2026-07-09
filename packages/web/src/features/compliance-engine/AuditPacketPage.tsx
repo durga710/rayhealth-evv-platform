@@ -48,6 +48,8 @@ interface AuditPacketResponse {
     scheduledEndTime: string | null;
     clockInTime: string;
     clockOutTime: string | null;
+    tasks?: { id: string; duty: string }[] | null;
+    visitNote?: string | null;
   };
   caregiver: { id: string; name: string };
   client: { id: string | null; name: string | null };
@@ -367,6 +369,29 @@ export function AuditPacketPage() {
                 ]}
               />
             </div>
+          </SectionCard>
+
+          <SectionCard title="Service documentation">
+            {data.visit.tasks && data.visit.tasks.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {data.visit.tasks.map((t) => (
+                  <StatusPill key={t.id} label={t.duty} tone="neutral" />
+                ))}
+              </div>
+            ) : null}
+            {data.visit.visitNote ? (
+              <p style={{ margin: data.visit.tasks && data.visit.tasks.length > 0 ? '0.85rem 0 0' : 0, color: 'var(--color-text)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.25rem' }}>
+                  Caregiver note
+                </strong>
+                {data.visit.visitNote}
+              </p>
+            ) : null}
+            {!(data.visit.tasks && data.visit.tasks.length > 0) && !data.visit.visitNote ? (
+              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                No tasks or note were documented at clock-out.
+              </p>
+            ) : null}
           </SectionCard>
 
           <SectionCard title="21st Century Cures Act elements">
