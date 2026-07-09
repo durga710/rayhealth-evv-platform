@@ -26,6 +26,14 @@ interface Visit {
   flagReason: string | null;
   tasks?: { id: string; duty: string }[] | null;
   visitNote?: string | null;
+  signature?: {
+    strokes: [number, number][][];
+    width: number;
+    height: number;
+    signerRole: 'client' | 'representative';
+    signerName?: string | null;
+    signedAt: string;
+  } | null;
 }
 interface Credential {
   id: string;
@@ -264,7 +272,7 @@ export function CaregiverActivityPage() {
                       const ms = durationMs(v);
                       const inProgress = !v.clockOutTime;
                       const isOpen = expanded === v.id;
-                      const hasDocs = Boolean((v.tasks && v.tasks.length > 0) || v.visitNote);
+                      const hasDocs = Boolean((v.tasks && v.tasks.length > 0) || v.visitNote || v.signature);
                       const expandable = v.status === 'flagged' || hasDocs;
                       return [
                         <tr key={v.id} onClick={() => expandable && setExpanded(isOpen ? null : v.id)} style={{ cursor: expandable ? 'pointer' : 'default' }}>
@@ -307,6 +315,32 @@ export function CaregiverActivityPage() {
                                 <div style={{ marginTop: v.tasks && v.tasks.length > 0 ? '0.5rem' : 0, fontSize: '0.8rem', color: '#475569' }}>
                                   <strong style={{ color: '#0F172A' }}>Visit note: </strong>
                                   {v.visitNote}
+                                </div>
+                              ) : null}
+                              {v.signature ? (
+                                <div style={{ marginTop: '0.6rem' }}>
+                                  <strong style={{ color: '#0F172A', fontSize: '0.8rem' }}>
+                                    Signed by {v.signature.signerRole === 'client' ? 'the client' : 'a representative'}
+                                    {v.signature.signerName ? ` (${v.signature.signerName})` : ''}:
+                                  </strong>
+                                  <svg
+                                    viewBox={`0 0 ${v.signature.width} ${v.signature.height}`}
+                                    style={{ display: 'block', width: 220, height: 'auto', marginTop: '0.35rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 6 }}
+                                    role="img"
+                                    aria-label="Captured signature"
+                                  >
+                                    {v.signature.strokes.map((stroke, i) => (
+                                      <polyline
+                                        key={i}
+                                        points={stroke.map(([x, y]) => `${x},${y}`).join(' ')}
+                                        fill="none"
+                                        stroke="#0F172A"
+                                        strokeWidth={2.5}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    ))}
+                                  </svg>
                                 </div>
                               ) : null}
                             </td>

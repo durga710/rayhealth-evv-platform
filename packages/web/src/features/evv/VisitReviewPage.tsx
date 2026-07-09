@@ -12,6 +12,7 @@ interface EvvVisit {
   status: 'pending' | 'verified' | 'flagged' | 'corrected';
   tasks?: { id: string; duty: string }[] | null;
   visitNote?: string | null;
+  signature?: { signerRole: 'client' | 'representative'; signerName?: string | null } | null;
 }
 
 interface StaffMember { id: string; email: string; role: string; }
@@ -204,7 +205,15 @@ export function VisitReviewPage() {
                       “{visit.visitNote}”
                     </div>
                   ) : null}
-                  {!(visit.tasks && visit.tasks.length > 0) && !visit.visitNote ? (
+                  {visit.signature ? (
+                    <span
+                      title={`Signed by ${visit.signature.signerRole === 'client' ? 'the client' : 'a representative'}${visit.signature.signerName ? ` (${visit.signature.signerName})` : ''}`}
+                      style={{ display: 'inline-block', marginTop: '0.15rem', fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)', borderRadius: '999px', padding: '0.12rem 0.5rem' }}
+                    >
+                      Signed
+                    </span>
+                  ) : null}
+                  {!(visit.tasks && visit.tasks.length > 0) && !visit.visitNote && !visit.signature ? (
                     <em style={{ color: '#94A3B8', fontSize: '0.78rem' }}>None</em>
                   ) : null}
                 </td>
