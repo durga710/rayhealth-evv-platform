@@ -176,6 +176,112 @@ describe('evv routes', () => {
     expect(mockUpdateVisit).not.toHaveBeenCalled();
   });
 
+  it('honors an in-window offline capturedAt at clock-in', async () => {
+    const capturedAt = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1h ago
+    const mockCreateVisit = vi.fn().mockImplementation((v) => Promise.resolve({ ...v, id: visitId }));
+    vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+      findOpenVisitForAssignment: vi.fn().mockResolvedValue(undefined),
+      createVisit: mockCreateVisit
+    } as any));
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      getAssignmentForCaregiver: vi.fn().mockResolvedValue({
+        id: assignmentId,
+        caregiverId,
+        clientId: 'ffffffff-ffff-4fff-afff-ffffffffffff',
+        serviceCode: 'T1019'
+      })
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getClientGeofence: vi.fn().mockResolvedValue(undefined)
+    } as any));
+
+    const response = await request(createApp())
+      .post('/evv/clock-in')
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({
+        assignmentId,
+        location: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+        capturedAt
+      });
+
+    expect(response.status).toBe(201);
+    expect(mockCreateVisit).toHaveBeenCalledWith(
+      expect.objectContaining({ clockInTime: capturedAt })
+    );
+  });
+
+  it('rejects a future capturedAt at clock-in', async () => {
+    const mockCreateVisit = vi.fn();
+    vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+      findOpenVisitForAssignment: vi.fn().mockResolvedValue(undefined),
+      createVisit: mockCreateVisit
+    } as any));
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      getAssignmentForCaregiver: vi.fn().mockResolvedValue({
+        id: assignmentId,
+        caregiverId,
+        clientId: 'ffffffff-ffff-4fff-afff-ffffffffffff',
+        serviceCode: 'T1019'
+      })
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getClientGeofence: vi.fn().mockResolvedValue(undefined)
+    } as any));
+
+    const response = await request(createApp())
+      .post('/evv/clock-in')
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({
+        assignmentId,
+        location: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+        capturedAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 min ahead
+      });
+
+    expect(response.status).toBe(400);
+    expect(mockCreateVisit).not.toHaveBeenCalled();
+  });
+
+  it('honors an in-window capturedAt at clock-out and rejects one before clock-in', async () => {
+    const clockInTime = new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(); // 5h ago
+    const capturedOut = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(); // 2h ago
+    const mockGetVisitByIdForAgency = vi.fn().mockResolvedValue({
+      id: visitId,
+      assignmentId,
+      caregiverId,
+      clockInTime,
+      clockInLocation: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+      status: 'pending'
+    });
+    const mockUpdateVisit = vi.fn().mockImplementation((_id, _agency, patch) =>
+      Promise.resolve({ id: visitId, assignmentId, caregiverId, clockInTime, clockInLocation: { lat: 40.4406, lng: -79.9959, accuracy: 10 }, ...patch })
+    );
+    vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+      getVisitByIdForAgency: mockGetVisitByIdForAgency,
+      updateVisit: mockUpdateVisit
+    } as any));
+
+    const token = makeToken('caregiver', 'agency-1', 'user-1', caregiverId);
+    const good = await request(createApp())
+      .post(`/evv/clock-out/${visitId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ location: { lat: 40.4407, lng: -79.996, accuracy: 12 }, capturedAt: capturedOut });
+    expect(good.status).toBe(200);
+    expect(mockUpdateVisit).toHaveBeenCalledWith(
+      visitId,
+      'agency-1',
+      expect.objectContaining({ clockOutTime: capturedOut })
+    );
+
+    mockUpdateVisit.mockClear();
+    const beforeClockIn = new Date(Date.parse(clockInTime) - 60 * 1000).toISOString();
+    const bad = await request(createApp())
+      .post(`/evv/clock-out/${visitId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ location: { lat: 40.4407, lng: -79.996, accuracy: 12 }, capturedAt: beforeClockIn });
+    expect(bad.status).toBe(400);
+    expect(mockUpdateVisit).not.toHaveBeenCalled();
+  });
+
   it('returns an agency visit count via COUNT (no full fetch)', async () => {
     const countVisitsForAgency = vi.fn().mockResolvedValue(42);
     const getVisitsForAgency = vi.fn();

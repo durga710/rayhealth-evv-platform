@@ -32,6 +32,33 @@ function geofenceRejection(envelope: { distanceM: number; allowedM: number }) {
   };
 }
 
+// Store-and-forward window bounds. A replayed offline punch may not claim a
+// future capture time (small allowance for device clock skew) and may not be
+// older than the retention window, a queue should drain well within 72h and
+// anything older needs a manual VMUR correction, not a silent backdate.
+const CAPTURED_AT_MAX_SKEW_MS = 5 * 60 * 1000;
+const CAPTURED_AT_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+
+/**
+ * Resolve the effective punch time: the client-supplied offline capture time
+ * when present and within bounds, otherwise the server clock. Returns an
+ * error string for out-of-window values so callers reject rather than
+ * silently substituting server time (the client should hear its stamp was
+ * refused).
+ */
+function resolvePunchTime(capturedAt: string | undefined): { time: string } | { error: string } {
+  if (!capturedAt) return { time: new Date().toISOString() };
+  const captured = Date.parse(capturedAt);
+  const now = Date.now();
+  if (captured > now + CAPTURED_AT_MAX_SKEW_MS) {
+    return { error: 'capturedAt is in the future' };
+  }
+  if (captured < now - CAPTURED_AT_MAX_AGE_MS) {
+    return { error: 'capturedAt is older than the 72h offline window; file a visit correction instead' };
+  }
+  return { time: new Date(captured).toISOString() };
+}
+
 router.get('/visits', requireCapability('evv.read'), async (req, res) => {
   try {
     const db = req.app.get('db');
@@ -161,12 +188,18 @@ router.post('/clock-in', requireCapability('evv.write'), async (req, res) => {
       });
     }
 
+    // Offline store-and-forward punches replay with their original capture
+    // time so the visit reflects when care actually started, not when the
+    // phone regained signal. created_at (server time) preserves the sync lag.
+    const punchTime = resolvePunchTime(parsed.data.capturedAt);
+    if ('error' in punchTime) return res.status(400).json({ message: punchTime.error });
+
     const visit = await repo.createVisit({
       assignmentId: parsed.data.assignmentId,
       caregiverId: req.auth.caregiverId,
       clientId: assignment.clientId,
       serviceCode,
-      clockInTime: new Date().toISOString(),
+      clockInTime: punchTime.time,
       clockInLocation: parsed.data.location,
       status: 'pending'
     });
@@ -264,7 +297,14 @@ router.post('/clock-out/:id', requireCapability('evv.write'), async (req, res) =
       }
     }
 
-    const clockOutTime = new Date().toISOString();
+    // Offline store-and-forward: honor the original capture time within the
+    // window, and never let a clock-out land before its own clock-in.
+    const punchTime = resolvePunchTime(parsed.data.capturedAt);
+    if ('error' in punchTime) return res.status(400).json({ message: punchTime.error });
+    if (Date.parse(punchTime.time) <= Date.parse(existing.clockInTime)) {
+      return res.status(400).json({ message: 'capturedAt is before this visit clocked in' });
+    }
+    const clockOutTime = punchTime.time;
 
     // Best-effort scheduled-start lookup for late-clock-in detection.
     let scheduledStartTime: string | null = null;

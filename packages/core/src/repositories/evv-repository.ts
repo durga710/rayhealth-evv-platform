@@ -315,7 +315,11 @@ export class EvvRepository {
       sandataStatus: (row.sandata_status as EvvVisit['sandataStatus']) ?? null,
       sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null,
       hhaexchangeStatus: (row.hhaexchange_status as EvvVisit['hhaexchangeStatus']) ?? null,
-      hhaexchangeConfirmationId: (row.hhaexchange_confirmation_id as string | null) ?? null
+      hhaexchangeConfirmationId: (row.hhaexchange_confirmation_id as string | null) ?? null,
+      createdAt:
+        row.created_at instanceof Date
+          ? row.created_at.toISOString()
+          : ((row.created_at as string | undefined) ?? undefined)
     };
   }
 
