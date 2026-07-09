@@ -11,7 +11,8 @@ import {
   evvClockInInputSchema,
   evvClockOutInputSchema,
   evvServiceCodeSchema,
-  evvVisitIdSchema
+  evvVisitIdSchema,
+  paTasks
 } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 
@@ -185,6 +186,28 @@ router.post('/clock-out/:id', requireCapability('evv.write'), async (req, res) =
       return res.status(400).json({ message: 'Valid visit id and GPS location are required' });
     }
 
+    // Resolve documented task IDs against the PA task catalog and snapshot
+    // {id, duty} onto the visit (self-contained for audit packet/aggregator,
+    // same philosophy as the clock-in service-code snapshot). Unknown codes
+    // are rejected rather than silently dropped, a client sending garbage
+    // should hear about it before the visit is closed.
+    let tasks: Array<{ id: string; duty: string }> | undefined;
+    if (parsed.data.taskIds && parsed.data.taskIds.length > 0) {
+      const catalog = new Map(paTasks.map((t) => [t.id, t]));
+      const unknown = parsed.data.taskIds.filter((taskId) => !catalog.has(taskId));
+      if (unknown.length > 0) {
+        return res.status(400).json({
+          message: `Unknown task code(s): ${unknown.join(', ')}`,
+          code: 'UNKNOWN_TASK_CODE'
+        });
+      }
+      tasks = [...new Set(parsed.data.taskIds)].map((taskId) => {
+        const t = catalog.get(taskId)!;
+        return { id: t.id, duty: t.duty };
+      });
+    }
+    const visitNote = parsed.data.note ? parsed.data.note : undefined;
+
     const db = req.app.get('db');
     const repo = new EvvRepository(db);
     const existing = await repo.getVisitByIdForAgency(id.data, req.auth.agencyId);
@@ -272,7 +295,9 @@ router.post('/clock-out/:id', requireCapability('evv.write'), async (req, res) =
     const visit = await repo.updateVisit(id.data, req.auth.agencyId, {
       clockOutTime,
       clockOutLocation: parsed.data.location,
-      status
+      status,
+      ...(tasks ? { tasks } : {}),
+      ...(visitNote ? { visitNote } : {})
     });
     if (!visit) return res.status(404).json({ message: 'Visit not found' });
 

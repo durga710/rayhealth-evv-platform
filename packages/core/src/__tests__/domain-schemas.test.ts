@@ -5,6 +5,7 @@ import {
   authorizationSchema,
   caregiverCredentialSchema,
   evvClockInInputSchema,
+  evvClockOutInputSchema,
   hasCapability
 } from '../index.js';
 
@@ -84,6 +85,26 @@ describe('Pennsylvania domain schemas', () => {
         serviceCode: 'BAD',
         location: { lat: 140, lng: -79.9959, accuracy: -1 }
       })
+    ).toThrow();
+  });
+
+  it('accepts optional visit documentation at clock-out and bounds the note', () => {
+    const location = { lat: 40.4406, lng: -79.9959, accuracy: 10 };
+
+    // Documentation is optional, a bare clock-out still validates.
+    expect(() => evvClockOutInputSchema.parse({ location })).not.toThrow();
+
+    const documented = evvClockOutInputSchema.parse({
+      location,
+      taskIds: ['134', '115'],
+      note: '  Client ate well.  '
+    });
+    expect(documented.taskIds).toEqual(['134', '115']);
+    // Note is trimmed at the schema boundary.
+    expect(documented.note).toBe('Client ate well.');
+
+    expect(() =>
+      evvClockOutInputSchema.parse({ location, note: 'x'.repeat(2001) })
     ).toThrow();
   });
 });

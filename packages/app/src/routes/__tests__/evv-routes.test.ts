@@ -105,6 +105,77 @@ describe('evv routes', () => {
     expect(mockCreateVisit).not.toHaveBeenCalled();
   });
 
+  it('snapshots documented tasks and note onto the visit at clock-out', async () => {
+    // No clientId on the open visit → geofence check is skipped, keeping this
+    // test focused on the documentation path.
+    const mockGetVisitByIdForAgency = vi.fn().mockResolvedValue({
+      id: visitId,
+      assignmentId,
+      caregiverId,
+      clockInTime: '2026-05-20T14:00:00.000Z',
+      clockInLocation: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+      status: 'pending'
+    });
+    const mockUpdateVisit = vi.fn().mockImplementation((_id, _agency, patch) =>
+      Promise.resolve({
+        id: visitId,
+        assignmentId,
+        caregiverId,
+        clockInTime: '2026-05-20T14:00:00.000Z',
+        clockInLocation: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+        ...patch
+      })
+    );
+    vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+      getVisitByIdForAgency: mockGetVisitByIdForAgency,
+      updateVisit: mockUpdateVisit
+    } as any));
+
+    const response = await request(createApp())
+      .post(`/evv/clock-out/${visitId}`)
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({
+        location: { lat: 40.4407, lng: -79.996, accuracy: 12 },
+        // '134' repeated to prove dedupe; snapshot resolves duty names.
+        taskIds: ['134', '115', '134'],
+        note: 'Client ate well and walked to the porch.'
+      });
+
+    expect(response.status).toBe(200);
+    expect(mockUpdateVisit).toHaveBeenCalledWith(
+      visitId,
+      'agency-1',
+      expect.objectContaining({
+        tasks: [
+          { id: '134', duty: 'Bathing' },
+          { id: '115', duty: 'Meal-Preparation' }
+        ],
+        visitNote: 'Client ate well and walked to the porch.'
+      })
+    );
+    expect(response.body.tasks).toHaveLength(2);
+    expect(response.body.visitNote).toBe('Client ate well and walked to the porch.');
+  });
+
+  it('rejects unknown task codes at clock-out without closing the visit', async () => {
+    const mockUpdateVisit = vi.fn();
+    vi.spyOn(core, 'EvvRepository').mockImplementation(() => ({
+      updateVisit: mockUpdateVisit
+    } as any));
+
+    const response = await request(createApp())
+      .post(`/evv/clock-out/${visitId}`)
+      .set('Authorization', `Bearer ${makeToken('caregiver', 'agency-1', 'user-1', caregiverId)}`)
+      .send({
+        location: { lat: 40.4407, lng: -79.996, accuracy: 12 },
+        taskIds: ['134', '999']
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('UNKNOWN_TASK_CODE');
+    expect(mockUpdateVisit).not.toHaveBeenCalled();
+  });
+
   it('returns an agency visit count via COUNT (no full fetch)', async () => {
     const countVisitsForAgency = vi.fn().mockResolvedValue(42);
     const getVisitsForAgency = vi.fn();
