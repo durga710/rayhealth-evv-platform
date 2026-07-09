@@ -13,7 +13,12 @@ export const evvLocationSchema = z.object({
 export const evvClockInInputSchema = z.object({
   assignmentId: z.string().uuid(),
   location: evvLocationSchema,
-  serviceCode: evvServiceCodeSchema.optional()
+  serviceCode: evvServiceCodeSchema.optional(),
+  // Store-and-forward: when the mobile app captured this punch offline, the
+  // original capture moment rides along at replay so the visit carries the
+  // real punch time, not the sync time. The route bounds the window (no
+  // future stamps beyond clock skew, nothing older than 72h).
+  capturedAt: z.string().datetime().optional()
 });
 
 /**
@@ -33,7 +38,9 @@ export const evvClockOutInputSchema = z.object({
   // PA task-catalog IDs; the route resolves them against paTasks and rejects
   // unknown codes, so the DB only ever stores catalog-backed snapshots.
   taskIds: z.array(z.string().min(1).max(16)).max(100).optional(),
-  note: z.string().trim().max(2000).optional()
+  note: z.string().trim().max(2000).optional(),
+  // Store-and-forward capture time, see evvClockInInputSchema.capturedAt.
+  capturedAt: z.string().datetime().optional()
 });
 
 export const evvVisitSchema = z.object({
@@ -61,7 +68,11 @@ export const evvVisitSchema = z.object({
   // HHAeXchange analogue of the Sandata pair above, for agencies routed
   // through that aggregator instead.
   hhaexchangeStatus: z.enum(['pending', 'submitted', 'accepted', 'rejected']).nullable().optional(),
-  hhaexchangeConfirmationId: z.string().nullable().optional()
+  hhaexchangeConfirmationId: z.string().nullable().optional(),
+  // Server insert time. For an offline store-and-forward punch this trails
+  // clockInTime by the sync delay, making delayed submissions auditable
+  // without a separate flag.
+  createdAt: z.string().datetime().optional()
 });
 
 export type EvvVisit = z.infer<typeof evvVisitSchema>;
