@@ -6,6 +6,7 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 // react@19.1.0 lives here — matches the renderer bundled in react-native@0.81.5
 const LOCAL_REACT = path.resolve(projectRoot, 'node_modules/react');
+const LOCAL_REACT_DOM = path.resolve(projectRoot, 'node_modules/react-dom');
 
 const config = getDefaultConfig(projectRoot);
 
@@ -29,6 +30,18 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
   if (moduleName === 'react/jsx-dev-runtime') {
     return { filePath: path.resolve(LOCAL_REACT, 'jsx-dev-runtime.js'), type: 'sourceFile' };
+  }
+  if (moduleName === 'react-dom') {
+    return { filePath: path.resolve(LOCAL_REACT_DOM, 'index.js'), type: 'sourceFile' };
+  }
+  if (moduleName === 'react-dom/client') {
+    return { filePath: path.resolve(LOCAL_REACT_DOM, 'client.js'), type: 'sourceFile' };
+  }
+  if (moduleName === 'react-dom/server') {
+    return {
+      filePath: path.resolve(LOCAL_REACT_DOM, platform === 'web' ? 'server.browser.js' : 'server.node.js'),
+      type: 'sourceFile',
+    };
   }
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, moduleName, platform);
