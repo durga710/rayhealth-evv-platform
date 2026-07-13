@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ import { createEmailClient, buildPasswordResetUrl } from '../email/email-client.
 import { safeError } from '../security/safe-log.js';
 import { CURRENT_TERMS_VERSION } from '../terms.js';
 import { verifySync } from 'otplib';
+import { getMobileSessionStore } from '../services/mobile-session-store.js';
 const router = Router();
 /**
  * A valid cost-12 bcrypt hash (of a throwaway string, NOT a real credential)
@@ -248,8 +249,22 @@ async function listMobileAgencies(db, user) {
     }
     return [{ agencyId: user.agencyId, agencyName, role: user.role }];
 }
-function signMobileToken(claims) {
-    return jwt.sign(claims, jwtSecret(), { expiresIn: '8h', algorithm: 'HS256' });
+async function issueMobileToken(mobileSessions, claims) {
+    const tokenJti = randomUUID();
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+    const session = await mobileSessions.create({
+        userId: claims.sub,
+        tokenJti,
+        expiresAt,
+    });
+    if (!session.id) {
+        throw new Error('Mobile session creation did not return an id');
+    }
+    const token = jwt.sign({ ...claims, jti: tokenJti }, jwtSecret(), {
+        expiresIn: '8h',
+        algorithm: 'HS256',
+    });
+    return { token, sessionId: session.id, tokenJti };
 }
 router.post('/mobile/login', async (req, res) => {
     const { email, password } = req.body ?? {};
@@ -272,7 +287,7 @@ router.post('/mobile/login', async (req, res) => {
             res.status(403).json({ code: gate.code, message: gate.message });
             return;
         }
-        const token = signMobileToken({
+        const { token } = await issueMobileToken(getMobileSessionStore(req), {
             sub: user.id,
             agencyId: user.agencyId,
             role: user.role,
@@ -452,6 +467,36 @@ router.post('/logout', authContext, requireCsrf, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+// Mobile bearer logout revokes the server-side jti before the device deletes
+// its local token. A copied token therefore stops working immediately instead
+// of remaining valid for the rest of its eight-hour lifetime.
+router.post('/mobile/logout', authContext, async (req, res) => {
+    if (req.auth.authMethod !== 'bearer' ||
+        !req.auth.tokenJti ||
+        !req.auth.mobileSessionId) {
+        res.status(401).json({ message: 'Invalid or expired token' });
+        return;
+    }
+    try {
+        const db = req.app.get('db');
+        await getMobileSessionStore(req).revokeByJti(req.auth.tokenJti, new Date().toISOString());
+        await recordAuditEvent(db, {
+            agencyId: req.auth.agencyId,
+            actorId: req.auth.userId,
+            actorType: 'user',
+            eventType: 'session.revoked',
+            entityType: 'mobile_session',
+            entityId: req.auth.mobileSessionId,
+            outcome: 'success',
+            payload: { authMethod: 'bearer' },
+            occurredAt: new Date().toISOString(),
+        });
+        res.status(204).send();
+    }
+    catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 const forgotPasswordSchema = z.object({
     email: z.string().email().max(200),
 });
@@ -609,12 +654,19 @@ router.post('/mobile/switch-agency', authContext, requireCsrf, async (req, res) 
             res.status(403).json({ code: 'AGENCY_ACCESS_DENIED', message: 'You do not have access to this agency.' });
             return;
         }
-        const token = signMobileToken({
+        const mobileSessions = getMobileSessionStore(req);
+        const { token } = await issueMobileToken(mobileSessions, {
             sub: userId,
             agencyId: membership.agencyId,
             role: membership.role,
             caregiverId: membership.caregiverId,
         });
+        // Switching agency scopes replaces the current bearer session. Revoke the
+        // old jti only after the new session row exists so a transient insert
+        // failure cannot strand the caregiver without a usable token.
+        if (req.auth.tokenJti) {
+            await mobileSessions.revokeByJti(req.auth.tokenJti, new Date().toISOString());
+        }
         await recordAuditEvent(db, {
             agencyId: membership.agencyId,
             actorId: userId,

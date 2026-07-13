@@ -8,6 +8,7 @@ export interface AuthContext {
     sessionId?: string;
     csrfTokenHash?: string;
     tokenJti?: string;
+    mobileSessionId?: string;
 }
 /** Platform super-admin context — set only by requirePlatformAdmin. */
 export interface PlatformAdminContext {

@@ -152,7 +152,7 @@ const inviteAcceptanceLimiter = rateLimit({
     // could trip the limit. Production still gets the protection.
     skip: () => process.env.NODE_ENV === 'test',
 });
-export function createApp() {
+export function createApp(options = {}) {
     if (!process.env.JWT_SECRET)
         throw new Error('JWT_SECRET env var must be set before starting');
     // Fail closed in production. A missing ALLOWED_ORIGINS in prod silently
@@ -175,6 +175,29 @@ export function createApp() {
     const app = express();
     const db = createDb();
     app.set('db', db);
+    if (options.mobileSessionStore) {
+        app.set('mobileSessionStore', options.mobileSessionStore);
+    }
+    else if (process.env.NODE_ENV === 'test') {
+        // Unit/integration route tests do not connect to Postgres. Their signed
+        // test JWTs still traverse the jti enforcement path through this explicit
+        // in-memory adapter; session-lifecycle tests inject stricter variants.
+        app.set('mobileSessionStore', {
+            findActiveByJti: async (tokenJti) => ({
+                id: '00000000-0000-4000-8000-000000000098',
+                userId: 'user-1',
+                tokenJti,
+                expiresAt: '2099-01-01T00:00:00.000Z',
+                createdAt: '2026-07-12T00:00:00.000Z',
+            }),
+            create: async (input) => ({
+                id: '00000000-0000-4000-8000-000000000098',
+                ...input,
+                createdAt: '2026-07-12T00:00:00.000Z',
+            }),
+            revokeByJti: async () => undefined,
+        });
+    }
     // Behind Vercel / Neon, we sit one proxy hop deep. Trust ONE hop so
     // `req.ip` reflects the real client (used by rate limiters and the
     // ip_address audit field). Trusting all proxies is a spoofing risk.
