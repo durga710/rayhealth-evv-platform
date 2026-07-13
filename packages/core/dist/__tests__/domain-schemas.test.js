@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agencySchema, assignmentInputSchema, authorizationSchema, caregiverCredentialSchema, evvClockInInputSchema, hasCapability } from '../index.js';
+import { agencySchema, assignmentInputSchema, authorizationSchema, caregiverCredentialSchema, evvClockInInputSchema, hasCapability, visitTaskCompletionBatchSchema, } from '../index.js';
 describe('Pennsylvania domain schemas', () => {
     it('accepts only Pennsylvania agencies', () => {
         expect(() => agencySchema.parse({ name: 'Keystone Care', state: 'OH', operatingTracks: ['home-health'] })).toThrow('Pennsylvania');
@@ -52,6 +52,34 @@ describe('Pennsylvania domain schemas', () => {
             assignmentId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             serviceCode: 'BAD',
             location: { lat: 140, lng: -79.9959, accuracy: -1 }
+        })).toThrow();
+    });
+    it('validates idempotent visit task completion batches', () => {
+        expect(visitTaskCompletionBatchSchema.parse({
+            completions: [
+                {
+                    clientEventId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+                    taskCode: '122',
+                    taskLabel: 'Hygiene',
+                    status: 'performed',
+                },
+                {
+                    clientEventId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+                    taskCode: '134',
+                    taskLabel: 'Bathing',
+                    status: 'refused',
+                },
+            ],
+        }).completions).toHaveLength(2);
+        expect(() => visitTaskCompletionBatchSchema.parse({
+            completions: [
+                {
+                    clientEventId: 'not-a-uuid',
+                    taskCode: 'BAD',
+                    taskLabel: '',
+                    status: 'done',
+                },
+            ],
         })).toThrow();
     });
 });

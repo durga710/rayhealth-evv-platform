@@ -172,7 +172,7 @@ export default function ClockInScreen() {
   // Set on a successful clock-out → swaps the screen for the themed completion
   // view instead of a bare native alert.
   const [completed, setCompleted] = useState<{
-    totalElapsed: number; clockInTime: string; clockOutTime: string;
+    visitId: string; totalElapsed: number; clockInTime: string; clockOutTime: string;
   } | null>(null);
   const completeAnim = useRef(new Animated.Value(0)).current;
 
@@ -315,10 +315,11 @@ export default function ClockInScreen() {
           : { lat: 0, lng: 0, accuracy: 0 },
       });
       const totalElapsed = elapsed;
+      const visitId = visit.id;
       const clockInTime = visit.clockInTime;
       const clockOutTime = new Date().toISOString();
       setVisit(null);
-      setCompleted({ totalElapsed, clockInTime, clockOutTime });
+      setCompleted({ visitId, totalElapsed, clockInTime, clockOutTime });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: unknown) {
       const resp = (err as {
@@ -588,12 +589,15 @@ export default function ClockInScreen() {
         </Animated.View>
 
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.replace({
+            pathname: '/visit-tasks',
+            params: { visitId: completed.visitId, clientName: clientName ?? 'Client' },
+          })}
           style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.9 }]}
           accessibilityRole="button"
-          accessibilityLabel="Done"
+          accessibilityLabel="Complete care-plan tasks"
         >
-          <Text style={styles.doneBtnText}>Done</Text>
+          <Text style={styles.doneBtnText}>Complete care-plan tasks</Text>
         </Pressable>
         </Reanimated.View>
       </LinearGradient>

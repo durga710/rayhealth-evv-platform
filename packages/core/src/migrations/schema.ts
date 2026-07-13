@@ -139,6 +139,33 @@ export async function up(knex: Knex): Promise<void> {
     });
   }
 
+  // Care-plan task outcomes are stored separately from the immutable EVV
+  // punch so caregivers can record performed/refused status after clock-out.
+  // client_event_id makes offline retries idempotent; agency_id is duplicated
+  // intentionally so every query can enforce tenancy without a fragile join.
+  if (!(await knex.schema.hasTable('visit_task_completions'))) {
+    await knex.schema.createTable('visit_task_completions', (table) => {
+      table.uuid('id').primary();
+      table.uuid('agency_id').notNullable().references('id').inTable('agencies');
+      table.uuid('visit_id').notNullable().references('id').inTable('evv_visits');
+      table.uuid('caregiver_id').notNullable();
+      table.uuid('client_event_id').notNullable().unique();
+      table.string('task_code', 3).nullable();
+      table.string('task_label', 200).notNullable();
+      table.string('status', 20).notNullable();
+      table.timestamp('recorded_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+      table.timestamps(true, true);
+      table.unique(['visit_id', 'task_label']);
+      table.index(['agency_id', 'visit_id']);
+      table.index(['caregiver_id', 'recorded_at']);
+      table.check(
+        "status in ('performed','refused','not_performed')",
+        [],
+        'visit_task_completions_status_check',
+      );
+    });
+  }
+
   if (!(await knex.schema.hasTable('sessions'))) {
     await knex.schema.createTable('sessions', (table) => {
       table.uuid('id').primary();
@@ -1566,6 +1593,7 @@ export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists('sessions');
   await knex.schema.dropTableIfExists('users');
   await knex.schema.dropTableIfExists('visit_maintenance');
+  await knex.schema.dropTableIfExists('visit_task_completions');
   await knex.schema.dropTableIfExists('evv_visits');
   await knex.schema.dropTableIfExists('assignments');
   await knex.schema.dropTableIfExists('visit_templates');

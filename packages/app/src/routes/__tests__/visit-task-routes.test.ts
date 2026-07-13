@@ -41,8 +41,8 @@ function mockTaskRepository(overrides: Record<string, unknown> = {}) {
     },
   ]);
 
-  vi.spyOn(core as unknown as Record<string, unknown>, 'VisitTaskCompletionRepository').mockImplementation(
-    () => ({ getForVisit, upsertBatch, ...overrides }),
+  vi.spyOn(core, 'VisitTaskCompletionRepository').mockImplementation(
+    () => ({ getForVisit, upsertBatch, ...overrides } as never),
   );
   return { getForVisit, upsertBatch };
 }

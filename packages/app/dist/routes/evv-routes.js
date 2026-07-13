@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireCapability } from '../middleware/require-capability.js';
-import { AuditEventRepository, ClientRepository, EvvExceptionRepository, EvvRepository, ScheduleRepository, checkGeofence, detectVisitExceptions, evvClockInInputSchema, evvClockOutInputSchema, evvServiceCodeSchema, evvVisitIdSchema } from '@rayhealth/core';
+import { AuditEventRepository, ClientRepository, EvvExceptionRepository, EvvRepository, ScheduleRepository, VisitTaskCompletionRepository, checkGeofence, detectVisitExceptions, evvClockInInputSchema, evvClockOutInputSchema, evvServiceCodeSchema, evvVisitIdSchema, visitTaskCompletionBatchSchema, } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 const router = Router();
 /**
@@ -46,6 +46,83 @@ router.get('/visits/count', requireCapability('evv.read'), async (req, res) => {
         res.json({ count });
     }
     catch {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+router.get('/visits/:id/tasks', requireCapability('evv.read'), async (req, res) => {
+    try {
+        const rawId = typeof req.params.id === 'string' ? req.params.id : req.params.id[0];
+        const id = evvVisitIdSchema.safeParse(rawId);
+        if (!id.success)
+            return res.status(400).json({ message: 'Valid visit id is required' });
+        const db = req.app.get('db');
+        const visit = await new EvvRepository(db).getVisitByIdForAgency(id.data, req.auth.agencyId);
+        if (!visit)
+            return res.status(404).json({ message: 'Visit not found' });
+        if (req.auth.role === 'caregiver' && visit.caregiverId !== req.auth.caregiverId) {
+            return res.status(404).json({ message: 'Visit not found' });
+        }
+        const result = await new VisitTaskCompletionRepository(db).getForVisit(id.data, req.auth.agencyId);
+        res.json(result);
+    }
+    catch (error) {
+        safeError('Failed to load visit task completion state', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+router.put('/visits/:id/tasks', requireCapability('evv.write'), async (req, res) => {
+    try {
+        if (!req.auth.caregiverId) {
+            return res.status(403).json({ message: 'User is not authorized as a caregiver' });
+        }
+        const rawId = typeof req.params.id === 'string' ? req.params.id : req.params.id[0];
+        const id = evvVisitIdSchema.safeParse(rawId);
+        const parsed = visitTaskCompletionBatchSchema.safeParse(req.body ?? {});
+        if (!id.success || !parsed.success) {
+            return res.status(400).json({ message: 'Valid visit id and task completions are required' });
+        }
+        const db = req.app.get('db');
+        const visit = await new EvvRepository(db).getVisitByIdForAgency(id.data, req.auth.agencyId);
+        if (!visit || visit.caregiverId !== req.auth.caregiverId) {
+            return res.status(404).json({ message: 'Visit not found' });
+        }
+        const repo = new VisitTaskCompletionRepository(db);
+        const current = await repo.getForVisit(id.data, req.auth.agencyId);
+        const allowed = new Set(current.plan.map((task) => `${task.taskCode ?? ''}:${task.taskLabel.toLowerCase()}`));
+        const hasUnknownTask = parsed.data.completions.some((task) => !allowed.has(`${task.taskCode ?? ''}:${task.taskLabel.toLowerCase()}`));
+        if (hasUnknownTask) {
+            return res.status(422).json({ message: 'Every completion must match the visit care plan' });
+        }
+        const completions = await repo.upsertBatch({
+            agencyId: req.auth.agencyId,
+            visitId: id.data,
+            caregiverId: req.auth.caregiverId,
+            completions: parsed.data.completions,
+        });
+        const statusCounts = completions.reduce((counts, item) => {
+            counts[item.status] = (counts[item.status] ?? 0) + 1;
+            return counts;
+        }, {});
+        try {
+            await new AuditEventRepository(db).create({
+                agencyId: req.auth.agencyId,
+                actorId: req.auth.userId,
+                actorType: 'user',
+                eventType: 'evv.tasks.completed',
+                entityType: 'evv.visit',
+                entityId: id.data,
+                outcome: 'success',
+                payload: { completionCount: completions.length, statusCounts },
+                occurredAt: new Date().toISOString(),
+            });
+        }
+        catch (error) {
+            safeError('Failed to audit visit task completions', error);
+        }
+        res.json({ completions });
+    }
+    catch (error) {
+        safeError('Failed to persist visit task completions', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
