@@ -1176,6 +1176,31 @@ export async function up(knex: Knex): Promise<void> {
     }
   }
 
+  // Archived audit rows remain compliance evidence for their entire
+  // retention period. Protect the cold table with the same database-level
+  // mutation barrier as the hot audit_events table; the retention sweep can
+  // still perform its controlled move because it runs with triggers disabled
+  // only inside its transaction.
+  await knex.raw(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='public' AND table_name='audit_events_archive') THEN
+        CREATE OR REPLACE FUNCTION audit_events_archive_block_mutation() RETURNS trigger AS $f$
+        BEGIN
+          RAISE EXCEPTION 'audit_events_archive is append-only; UPDATE/DELETE refused';
+        END;
+        $f$ LANGUAGE plpgsql;
+
+        DROP TRIGGER IF EXISTS audit_events_archive_block_mutation_trg ON audit_events_archive;
+        CREATE TRIGGER audit_events_archive_block_mutation_trg
+          BEFORE UPDATE OR DELETE OR TRUNCATE ON audit_events_archive
+          FOR EACH STATEMENT
+          EXECUTE FUNCTION audit_events_archive_block_mutation();
+      END IF;
+    END$$;
+  `);
+
   if (!(await knex.schema.hasTable('audit_retention_runs'))) {
     await knex.schema.createTable('audit_retention_runs', (table) => {
       table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
