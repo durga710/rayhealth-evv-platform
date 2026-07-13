@@ -287,7 +287,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = async () => {
-    await clearLocalState();
+    try {
+      await apiClient.post('/api/auth/mobile/logout');
+    } finally {
+      // A network outage must not trap a caregiver in the app. The local
+      // credential is always removed; an unreachable server-side session
+      // expires after its normal eight-hour maximum.
+      await clearLocalState();
+    }
   };
 
   return (

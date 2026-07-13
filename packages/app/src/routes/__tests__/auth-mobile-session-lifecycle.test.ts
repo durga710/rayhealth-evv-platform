@@ -4,6 +4,7 @@ import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as core from '@rayhealth/core';
 import { createApp } from '../../app.js';
+import type { MobileSessionStore } from '../../services/mobile-session-store.js';
 import { makeToken, setTestJwtSecret, TEST_MOBILE_JTI } from './test-helpers.js';
 
 beforeAll(() => setTestJwtSecret());
@@ -15,6 +16,25 @@ afterEach(() => {
 const userId = '00000000-0000-4000-8000-000000000081';
 const agencyId = '00000000-0000-4000-8000-000000000082';
 const caregiverId = '00000000-0000-4000-8000-000000000083';
+
+function sessionStore(overrides: Partial<MobileSessionStore> = {}): MobileSessionStore {
+  return {
+    findActiveByJti: vi.fn().mockImplementation(async (tokenJti: string) => ({
+      id: '00000000-0000-4000-8000-000000000084',
+      userId,
+      tokenJti,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      createdAt: '2026-07-12T00:00:00.000Z',
+    })),
+    create: vi.fn().mockImplementation(async (input) => ({
+      id: '00000000-0000-4000-8000-000000000084',
+      ...input,
+      createdAt: '2026-07-12T00:00:00.000Z',
+    })),
+    revokeByJti: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
 
 function mockProfile(): void {
   vi.spyOn(core, 'UserRepository').mockImplementation(
@@ -46,9 +66,11 @@ describe('mobile session lifecycle', () => {
 
   it('rejects a revoked or unknown mobile session', async () => {
     mockProfile();
-    vi.spyOn(core.MobileSessionRepository.prototype, 'findActiveByJti').mockResolvedValue(undefined);
+    const mobileSessionStore = sessionStore({
+      findActiveByJti: vi.fn().mockResolvedValue(undefined),
+    });
 
-    const response = await request(createApp())
+    const response = await request(createApp({ mobileSessionStore }))
       .get('/auth/mobile/me')
       .set('Authorization', `Bearer ${makeToken('caregiver', agencyId, userId, caregiverId)}`);
 
@@ -76,18 +98,14 @@ describe('mobile session lifecycle', () => {
     vi.spyOn(core, 'AgencyRepository').mockImplementation(
       () => ({ findById: vi.fn().mockResolvedValue({ id: agencyId, name: 'Ray Home Care' }) }) as unknown as core.AgencyRepository,
     );
-    const create = vi.fn().mockResolvedValue({
+    const create = vi.fn().mockImplementation(async (input) => ({
       id: '00000000-0000-4000-8000-000000000084',
-      userId,
-      tokenJti: TEST_MOBILE_JTI,
-      expiresAt: '2099-01-01T00:00:00.000Z',
+      ...input,
       createdAt: '2026-07-12T00:00:00.000Z',
-    });
-    vi.spyOn(core, 'MobileSessionRepository').mockImplementation(
-      () => ({ create }) as unknown as core.MobileSessionRepository,
-    );
+    }));
+    const mobileSessionStore = sessionStore({ create });
 
-    const response = await request(createApp())
+    const response = await request(createApp({ mobileSessionStore }))
       .post('/auth/mobile/login')
       .send({ email: 'caregiver@rayhealth.example', password: 'correct-password' });
 
@@ -102,12 +120,12 @@ describe('mobile session lifecycle', () => {
 
   it('revokes the current jti on mobile logout', async () => {
     const revokeByJti = vi.fn().mockResolvedValue(undefined);
-    vi.spyOn(core.MobileSessionRepository.prototype, 'revokeByJti').mockImplementation(revokeByJti);
+    const mobileSessionStore = sessionStore({ revokeByJti });
     vi.spyOn(core, 'AuditEventRepository').mockImplementation(
       () => ({ create: vi.fn().mockResolvedValue({}) }) as unknown as core.AuditEventRepository,
     );
 
-    const response = await request(createApp())
+    const response = await request(createApp({ mobileSessionStore }))
       .post('/auth/mobile/logout')
       .set('Authorization', `Bearer ${makeToken('caregiver', agencyId, userId, caregiverId)}`);
 

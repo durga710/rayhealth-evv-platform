@@ -46,6 +46,7 @@ import importRoutes from './routes/import-routes.js';
 import recurringScheduleRoutes from './routes/recurring-schedule-routes.js';
 import superadminRoutes from './routes/superadmin-routes.js';
 import documentRoutes from './routes/documents.js';
+import type { MobileSessionStore } from './services/mobile-session-store.js';
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
@@ -164,7 +165,7 @@ const inviteAcceptanceLimiter = rateLimit({
   skip: () => process.env.NODE_ENV === 'test',
 });
 
-export function createApp() {
+export function createApp(options: { mobileSessionStore?: MobileSessionStore } = {}) {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var must be set before starting');
 
   // Fail closed in production. A missing ALLOWED_ORIGINS in prod silently
@@ -193,6 +194,28 @@ export function createApp() {
   const db = createDb();
 
   app.set('db', db);
+  if (options.mobileSessionStore) {
+    app.set('mobileSessionStore', options.mobileSessionStore);
+  } else if (process.env.NODE_ENV === 'test') {
+    // Unit/integration route tests do not connect to Postgres. Their signed
+    // test JWTs still traverse the jti enforcement path through this explicit
+    // in-memory adapter; session-lifecycle tests inject stricter variants.
+    app.set('mobileSessionStore', {
+      findActiveByJti: async (tokenJti: string) => ({
+        id: '00000000-0000-4000-8000-000000000098',
+        userId: 'user-1',
+        tokenJti,
+        expiresAt: '2099-01-01T00:00:00.000Z',
+        createdAt: '2026-07-12T00:00:00.000Z',
+      }),
+      create: async (input: { userId: string; tokenJti: string; deviceLabel?: string; expiresAt: string }) => ({
+        id: '00000000-0000-4000-8000-000000000098',
+        ...input,
+        createdAt: '2026-07-12T00:00:00.000Z',
+      }),
+      revokeByJti: async () => undefined,
+    } satisfies MobileSessionStore);
+  }
 
   // Behind Vercel / Neon, we sit one proxy hop deep. Trust ONE hop so
   // `req.ip` reflects the real client (used by rate limiters and the

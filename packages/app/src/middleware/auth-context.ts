@@ -3,12 +3,14 @@ import jwt from 'jsonwebtoken';
 import { SessionRepository, type AppRole } from '@rayhealth/core';
 import { readCookie, SESSION_COOKIE_NAME } from '../security/cookies.js';
 import { hashOpaqueToken } from '../security/token-hashing.js';
+import { getMobileSessionStore } from '../services/mobile-session-store.js';
 
 interface JwtPayload {
   sub: string;
   agencyId: string;
   role: AppRole;
   caregiverId?: string;
+  jti?: string;
 }
 
 export async function authContext(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -55,12 +57,26 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
     // algorithm the token declares, which enables the classic "alg=none"
     // bypass and the RS256-to-HS256 key-confusion attack.
     const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtPayload;
+    if (!payload.jti) {
+      res.status(401).json({ message: 'Invalid or expired token' });
+      return;
+    }
+    const mobileSession = await getMobileSessionStore(req).findActiveByJti(
+      payload.jti,
+      new Date().toISOString(),
+    );
+    if (!mobileSession) {
+      res.status(401).json({ message: 'Invalid or expired token' });
+      return;
+    }
     req.auth = {
       agencyId: payload.agencyId,
       role: payload.role,
       userId: payload.sub,
       caregiverId: payload.caregiverId,
-      authMethod: 'bearer'
+      authMethod: 'bearer',
+      tokenJti: payload.jti,
+      mobileSessionId: mobileSession.id,
     };
     next();
   } catch {

@@ -16,8 +16,7 @@
  * Detection of arrow-vs-regular: only arrow functions lack a
  * `.prototype` property in modern JS engines.
  */
-import { beforeEach, vi } from 'vitest';
-import { MobileSessionRepository } from '@rayhealth/core';
+import { vi } from 'vitest';
 
 const realSpyOn = vi.spyOn.bind(vi);
 (vi as unknown as { spyOn: (...a: unknown[]) => unknown }).spyOn = function patchedSpyOn(
@@ -39,17 +38,3 @@ const realSpyOn = vi.spyOn.bind(vi);
   };
   return spy;
 } as unknown as typeof vi.spyOn;
-
-// Route tests use signed bearer tokens without a database. Model an active
-// mobile-session row by default so auth middleware exercises the same jti
-// lookup as production. Security-specific tests override this result to cover
-// missing and revoked sessions.
-beforeEach(() => {
-  vi.spyOn(MobileSessionRepository.prototype, 'findActiveByJti').mockResolvedValue({
-    id: '00000000-0000-4000-8000-000000000098',
-    userId: 'user-1',
-    tokenJti: '00000000-0000-4000-8000-000000000099',
-    expiresAt: '2099-01-01T00:00:00.000Z',
-    createdAt: '2026-07-12T00:00:00.000Z',
-  });
-});
