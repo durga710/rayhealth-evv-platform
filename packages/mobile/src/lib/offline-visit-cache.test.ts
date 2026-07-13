@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EvvQueueItem, EvvQueueStore } from './offline-evv-queue';
 import {
   cacheVisitSchedule,
+  clearCachedVisitSchedule,
   mergeQueuedVisitState,
   readCachedVisitSchedule,
   type CachedVisitScheduleRow,
@@ -39,6 +40,18 @@ describe('encrypted offline visit cache', () => {
 
     expect(await readCachedVisitSchedule(store, scope)).toEqual([row]);
     expect(await readCachedVisitSchedule(store, { ...scope, agencyId: 'agency-2' })).toEqual([]);
+  });
+
+  it('removes cached client schedule data for only the signed-out scope', async () => {
+    const store = memoryStore();
+    const otherScope = { userId: 'user-2', agencyId: 'agency-2' };
+    await cacheVisitSchedule(store, scope, [row]);
+    await cacheVisitSchedule(store, otherScope, [{ ...row, assignmentId: 'other-assignment' }]);
+
+    await clearCachedVisitSchedule(store, scope);
+
+    await expect(readCachedVisitSchedule(store, scope)).resolves.toEqual([]);
+    await expect(readCachedVisitSchedule(store, otherScope)).resolves.toHaveLength(1);
   });
 
   it('overlays a pending local clock-in and clock-out without mutating cached rows', () => {
