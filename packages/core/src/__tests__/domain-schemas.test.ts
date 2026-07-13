@@ -5,6 +5,7 @@ import {
   authorizationSchema,
   caregiverCredentialSchema,
   evvClockInInputSchema,
+  evvClockOutInputSchema,
   hasCapability,
   visitTaskCompletionBatchSchema,
 } from '../index.js';
@@ -86,6 +87,36 @@ describe('Pennsylvania domain schemas', () => {
         location: { lat: 140, lng: -79.9959, accuracy: -1 }
       })
     ).toThrow();
+  });
+
+  it('accepts client-generated ids and capture times for offline-safe EVV retries', () => {
+    const clockIn = evvClockInInputSchema.parse({
+      assignmentId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+      visitId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+      clientEventId: 'cccccccc-cccc-4ccc-cccc-cccccccccccc',
+      occurredAt: '2026-07-12T18:15:00.000Z',
+      captureMode: 'offline',
+      serviceCode: 'T1019',
+      location: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
+    });
+    const clockOut = evvClockOutInputSchema.parse({
+      clientEventId: 'dddddddd-dddd-4ddd-dddd-dddddddddddd',
+      occurredAt: '2026-07-12T20:15:00.000Z',
+      captureMode: 'offline',
+      location: { lat: 40.4407, lng: -79.996, accuracy: 12 },
+    });
+
+    expect(clockIn).toMatchObject({
+      visitId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+      clientEventId: 'cccccccc-cccc-4ccc-cccc-cccccccccccc',
+      occurredAt: '2026-07-12T18:15:00.000Z',
+      captureMode: 'offline',
+    });
+    expect(clockOut).toMatchObject({
+      clientEventId: 'dddddddd-dddd-4ddd-dddd-dddddddddddd',
+      occurredAt: '2026-07-12T20:15:00.000Z',
+      captureMode: 'offline',
+    });
   });
 
   it('validates idempotent visit task completion batches', () => {
