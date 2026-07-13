@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -23,6 +23,18 @@ import { colors, typography, radii, shadow, gradients } from '../common/tokens';
 import { ensureNotificationPermission } from '../../lib/notification-permissions';
 import { fireDevTestShiftAlert, scheduleShiftAlerts } from '../../lib/shift-alert-scheduler';
 import { deriveVisitState, resumableVisit, type VisitState } from '../../lib/visit-state';
+import {
+  listEvvQueue,
+  syncEvvQueue,
+  type EvvQueueScope,
+} from '../../lib/offline-evv-queue';
+import {
+  cacheVisitSchedule,
+  mergeQueuedVisitState,
+  readCachedVisitSchedule,
+  type CachedVisitScheduleRow,
+} from '../../lib/offline-visit-cache';
+import { secureEvvQueueStore, sendEvvEvent } from '../../lib/secure-evv-queue';
 
 interface Assignment {
   id: string;
@@ -39,22 +51,7 @@ interface Assignment {
 }
 
 /** Subset of the /api/mobile/caregiver/today schedule row we render here. */
-interface TodayScheduleRow {
-  assignmentId: string;
-  scheduledStartTime: string | null;
-  clientFirstName: string;
-  clientLastName: string;
-  clientAddressLine1?: string | null;
-  clientCity?: string | null;
-  clientState?: string | null;
-  clientLatitude: number | null;
-  clientLongitude: number | null;
-  geofenceRadiusM: number;
-  currentVisitId: string | null;
-  currentVisitStatus: string | null;
-  currentClockInTime: string | null;
-  currentClockOutTime: string | null;
-}
+type TodayScheduleRow = CachedVisitScheduleRow;
 
 // The fire window (8s) is wider than the tick (5s) so a tick always lands
 // inside it once as the countdown passes through — the previous 4s window could
@@ -133,50 +130,85 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [usingOfflineCache, setUsingOfflineCache] = useState(false);
+  const [queueAttentionCount, setQueueAttentionCount] = useState(0);
   const firedForegroundRef = useRef<Set<string>>(new Set());
+  const queueScope: EvvQueueScope | null = useMemo(() => user?.agencyId
+    ? { userId: user.userId ?? 'legacy-user', agencyId: user.agencyId }
+    : null, [user?.agencyId, user?.userId]);
 
-  const fetchAssignments = async (quiet = false) => {
+  const fetchAssignments = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
+    const renderRows = async (rows: TodayScheduleRow[]) => {
+      const queued = queueScope
+        ? await listEvvQueue(secureEvvQueueStore, queueScope).catch(() => [])
+        : [];
+      setQueueAttentionCount(queued.filter((item) => item.status === 'needs_attention').length);
+      const mergedRows = mergeQueuedVisitState(rows, queued);
+      const list: Assignment[] = mergedRows.map((r) => ({
+        id: r.assignmentId,
+        clientName: `${r.clientFirstName ?? ''} ${r.clientLastName ?? ''}`.trim() || 'Client',
+        clientAddress:
+          [r.clientAddressLine1, r.clientCity, r.clientState].filter(Boolean).join(', ') || undefined,
+        time: r.scheduledStartTime ?? undefined,
+        serviceCode: undefined,
+        clientLat: r.clientLatitude ?? null,
+        clientLng: r.clientLongitude ?? null,
+        clientGeofenceM: r.geofenceRadiusM ?? 150,
+        visitState: deriveVisitState(r),
+        openVisitId: resumableVisit(r)?.id ?? null,
+        clockInTime: resumableVisit(r)?.clockInTime ?? null,
+      }));
+      setAssignments(list);
+      return list;
+    };
     try {
+      if (queueScope) {
+        try {
+          await syncEvvQueue(secureEvvQueueStore, queueScope, async (event) => {
+            await sendEvvEvent(event, 'offline');
+          });
+        } catch {
+          // A temporarily locked keychain must not prevent a live schedule fetch.
+        }
+      }
       // Purpose-built mobile endpoint: TODAY's window (12h back / 24h forward)
       // with the scheduled start time the shift-alert scheduler needs. The old
       // /assignments/caregiver returned every assignment with no time, so the
       // "Today's Visits" screen was neither scoped to today nor able to alert.
       const { data } = await apiClient.get('/api/mobile/caregiver/today');
       const rows: TodayScheduleRow[] = data?.schedule ?? [];
-      const list: Assignment[] = rows.map((r) => ({
-        id: r.assignmentId,
-        clientName: `${r.clientFirstName ?? ''} ${r.clientLastName ?? ''}`.trim() || 'Client',
-        clientAddress:
-          [r.clientAddressLine1, r.clientCity, r.clientState].filter(Boolean).join(', ') || undefined,
-        time: r.scheduledStartTime ?? undefined,
-        // serviceCode is re-derived server-side at clock-in; not needed here.
-        serviceCode: undefined,
-        clientLat: r.clientLatitude ?? null,
-        clientLng: r.clientLongitude ?? null,
-        clientGeofenceM: r.geofenceRadiusM ?? 150,
-        visitState: deriveVisitState(r),
-        // Gated on resumableVisit() (not a raw copy of currentVisitId) so a
-        // completed visit — which still carries the day's currentVisitId —
-        // doesn't get treated as reopenable when the card is tapped again.
-        openVisitId: resumableVisit(r)?.id ?? null,
-        clockInTime: resumableVisit(r)?.clockInTime ?? null,
-      }));
-      setAssignments(list);
+      if (queueScope) {
+        try {
+          await cacheVisitSchedule(secureEvvQueueStore, queueScope, rows);
+        } catch {
+          // The live response remains usable even if local encrypted caching fails.
+        }
+      }
+      const list = await renderRows(rows);
       setError(null);
+      setUsingOfflineCache(false);
       const permStatus = await ensureNotificationPermission();
       if (permStatus === 'granted') {
         await scheduleShiftAlerts(list);
       }
-    } catch {
-      // 401 redirects to login via the central handler; surface other failures
-      // so a dropped connection isn't shown as "no visits today".
-      setError('Could not load your visits.');
+    } catch (requestError) {
+      const status = (requestError as { response?: { status?: number } })?.response?.status;
+      const cached = status !== 401 && queueScope
+        ? await readCachedVisitSchedule(secureEvvQueueStore, queueScope).catch(() => [])
+        : [];
+      if (cached.length > 0) {
+        await renderRows(cached);
+        setUsingOfflineCache(true);
+        setError(null);
+      } else {
+        setError('Could not load your visits.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [queueScope]);
 
   // Refetch on focus so visits/schedule changes made in the web app appear
   // when the caregiver opens or returns to the dashboard — not only on a
@@ -187,7 +219,7 @@ export default function DashboardScreen() {
       // caregiver schedule — don't fire the caregiver-only /today request.
       if (user?.role === 'admin' || user?.role === 'coordinator') return;
       void fetchAssignments();
-    }, [user?.role]),
+    }, [fetchAssignments, user?.role]),
   );
 
   useEffect(() => {
@@ -331,7 +363,25 @@ export default function DashboardScreen() {
           assignments.length === 0 && { flex: 1 },
         ]}
         ListHeaderComponent={
-          <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
+          <View>
+            {usingOfflineCache ? (
+              <View style={styles.offlineBanner} accessibilityRole="alert">
+                <Ionicons name="cloud-offline-outline" size={17} color={colors.amberDark} />
+                <Text style={styles.offlineBannerText}>
+                  Showing your encrypted offline schedule. Pull to retry sync.
+                </Text>
+              </View>
+            ) : null}
+            {queueAttentionCount > 0 ? (
+              <View style={styles.attentionBanner} accessibilityRole="alert">
+                <Ionicons name="warning-outline" size={17} color={colors.danger} />
+                <Text style={styles.attentionBannerText}>
+                  {queueAttentionCount} punch {queueAttentionCount === 1 ? 'needs' : 'need'} review. Contact your coordinator.
+                </Text>
+              </View>
+            ) : null}
+            <Text style={styles.sectionTitle}>{"Today's Visits"}</Text>
+          </View>
         }
         ListEmptyComponent={
           loading ? (
@@ -491,6 +541,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 20, marginBottom: 12,
   },
+  offlineBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.amberBg, borderColor: colors.amberBorder, borderWidth: 1,
+    borderRadius: radii.md, padding: 12, marginTop: 14,
+  },
+  offlineBannerText: { flex: 1, ...typography.caption, color: colors.amberDark, fontWeight: '700' },
+  attentionBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.dangerBg, borderColor: colors.dangerBorder, borderWidth: 1,
+    borderRadius: radii.md, padding: 12, marginTop: 10,
+  },
+  attentionBannerText: { flex: 1, ...typography.caption, color: colors.danger, fontWeight: '700' },
 
   // Cards
   card: {
