@@ -13,7 +13,7 @@ export interface AuthContext {
   mobileSessionId?: string;
 }
 
-/** Platform super-admin context — set only by requirePlatformAdmin. */
+/** Platform super-admin context, set only by requirePlatformAdmin. */
 export interface PlatformAdminContext {
   username: string;
 }

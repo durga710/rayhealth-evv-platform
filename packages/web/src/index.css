@@ -1,30 +1,30 @@
 /* ==========================================================================
-   RayHealth EVV — Design System
+   RayHealth EVV. Design System
    Dark sidebar + light content (inspired by Linear/Rippling/Gusto)
    ========================================================================== */
 
 :root {
-  /* Brand colors — Purple primary + Deep Red accent (2026-05-26 rebrand).
+  /* Brand colors. Purple primary + Deep Red accent (2026-05-26 rebrand).
      Replaces the prior indigo + indigo-alias system. Contrast against the
      #F8FAFC content bg: primary 5.61:1, primary-dark 6.66:1, accent 6.44:1
-     — all clear WCAG AA for body text and AAA for UI surfaces. */
-  --color-primary: #107480;        /* violet-600 — strong, regal, healthcare-trustworthy */
-  --color-primary-dark: #0c5d66;   /* violet-700 — headings, focus, hover */
-  --color-primary-light: #7fc7cf;  /* violet-300 — soft tints, sidebar-active */
+     All clear WCAG AA for body text and AAA for UI surfaces. */
+  --color-primary: #107480;        /* violet-600, strong, regal, healthcare-trustworthy */
+  --color-primary-dark: #0c5d66;   /* violet-700, headings, focus, hover */
+  --color-primary-light: #7fc7cf;  /* violet-300, soft tints, sidebar-active */
   --color-primary-bg: rgba(16, 116, 128, 0.08);
 
-  /* Deep Red accent. Distinct from the danger semantic — accent is the
+  /* Deep Red accent. Distinct from the danger semantic, accent is the
      secondary brand color (CTAs, badges, attention chips) while danger is
      reserved for error states. */
-  --color-accent: #ee6c2c;         /* RayHealth orange — brand accent */
-  --color-accent-dark: #d8551b;    /* deep orange — pressed/hover */
-  --color-accent-light: #fcd9c2;   /* soft orange — accent-bg tints */
+  --color-accent: #ee6c2c;         /* RayHealth orange, brand accent */
+  --color-accent-dark: #d8551b;    /* deep orange, pressed/hover */
+  --color-accent-light: #fcd9c2;   /* soft orange, accent-bg tints */
   --color-accent-bg: rgba(238, 108, 44, 0.08);
 
   /* Surfaces */
-  --color-bg: #F8FAFC;             /* slate-50 — main content bg */
+  --color-bg: #F8FAFC;             /* slate-50, main content bg */
   --color-surface: #FFFFFF;        /* card/form bg */
-  --color-sidebar: #0F172A;        /* slate-900 — dark sidebar (kept) */
+  --color-sidebar: #0F172A;        /* slate-900, dark sidebar (kept) */
   --color-sidebar-hover: rgba(255, 255, 255, 0.06);
   --color-sidebar-active: rgba(16, 116, 128, 0.22);  /* purple-tinted active */
   --color-sidebar-text: #94A3B8;
@@ -37,26 +37,48 @@
   /* Text */
   --color-text: #0F172A;           /* slate-900 */
   --color-text-secondary: #475569; /* slate-600 */
-  --color-text-muted: #64748B;     /* slate-500 — kept richer than design spec for legibility */
+  --color-text-muted: #64748B;     /* slate-500, kept richer than design spec for legibility */
 
-  /* Semantic — kept independent of brand colors. Danger uses red-600 (not the
+  /* Semantic, kept independent of brand colors. Danger uses red-600 (not the
      accent red-700) so a true error state reads distinct from brand chrome. */
   --color-success: #10B981;        /* emerald-500 */
   --color-success-bg: #ECFDF5;
   --color-success-border: #A7F3D0;
-  --color-danger: #dc2626;         /* red-600 — slightly brighter than accent */
+  --color-success-text: #047857;   /* readable emerald-700 for text on -bg */
+  --color-danger: #dc2626;         /* red-600, slightly brighter than accent */
   --color-danger-bg: #FEF2F2;
   --color-danger-border: #FECACA;
+  --color-danger-text: #BE123C;    /* readable rose-700 for text on -bg */
   --color-warning: #F59E0B;        /* amber-500 */
   --color-warning-bg: #FFFBEB;
   --color-warning-border: #FCD34D;
+  --color-warning-text: #B45309;   /* readable amber-700 for text on -bg */
   --color-info: #107480;           /* info tracks primary now */
   --color-info-bg: rgba(16, 116, 128, 0.08);
+  --color-info-text: var(--color-primary-dark);
+  --color-info-border: rgba(16, 116, 128, 0.25);
+
+  /* Neutrals used by primitives (skeletons, dark panels, dividers), named so
+     no component reaches for a bare hex literal. */
+  --color-slate-800: #1E293B;
+  --color-slate-100: #F1F5F9;
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
+
+  /* Spacing, 8px base grid, named so layout primitives (PageShell, SectionCard,
+     card padding, gaps) stop re-deriving the same rem values ad hoc. */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-7: 1.75rem;   /* 28px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
 
   /* Radii */
   --radius-sm: 6px;
@@ -69,6 +91,10 @@
   --shadow-md: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.05);
   --shadow-focus: 0 0 0 3px rgba(16, 116, 128, 0.28);
+
+  /* Dark "command panel" surface (AI briefing, callouts on light pages) , 
+     named gradient so no component hardcodes the sidebar-adjacent hex pair. */
+  --gradient-panel-dark: linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-slate-800) 100%);
 }
 
 /* ==========================================================================
@@ -349,32 +375,41 @@ button:disabled {
 
 .badge-success {
   background-color: var(--color-success-bg);
-  color: #047857;
+  color: var(--color-success-text);
   border-color: var(--color-success-border);
 }
 
 .badge-danger {
   background-color: var(--color-danger-bg);
-  color: #BE123C;
+  color: var(--color-danger-text);
   border-color: var(--color-danger-border);
 }
 
 .badge-warning {
   background-color: var(--color-warning-bg);
-  color: #B45309;
+  color: var(--color-warning-text);
   border-color: var(--color-warning-border);
 }
 
 .badge-info {
   background-color: var(--color-info-bg);
-  color: var(--color-primary-dark);
-  border-color: rgba(16, 116, 128, 0.25);
+  color: var(--color-info-text);
+  border-color: var(--color-info-border);
 }
 
 .badge-neutral {
-  background-color: #F1F5F9;
-  color: #475569;
-  border-color: #E2E8F0;
+  background-color: var(--color-slate-100);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -538,8 +573,17 @@ button:disabled {
   border-color: rgba(16, 116, 128, 0.25);
 }
 
+.info-banner__title {
+  font-weight: 700;
+}
+
+.info-banner__detail {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
 /* ==========================================================================
-   Admin shell — dark sidebar + light content
+   Admin shell, dark sidebar + light content
    ========================================================================== */
 
 .admin-shell {
@@ -747,7 +791,7 @@ button:disabled {
   padding: 2.5rem;
 }
 
-/* Legacy class compat — kept so any straggling references don't break. */
+/* Legacy class compat, kept so any straggling references don't break. */
 .admin-nav { display: none; }
 .card { background: transparent; }
 .brand { display: none; }
@@ -772,7 +816,675 @@ button:disabled {
 }
 
 /* ==========================================================================
-   Landing page (kept somewhat working — landing renders independently)
+   Design system primitives (Agent 03)
+   Shared building blocks for admin/portal screens. PageShell, PageHeader,
+   SectionCard, MetricCard, StatusPill, AttentionCard, CommandPanel, DataTable,
+   Timeline, TrustBadge, WorkflowStepper. All colors/spacing/radii/shadows are
+   pulled from the :root tokens above, no hardcoded hex in these rules.
+   ========================================================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- PageShell ---- */
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+/* ---- PageHeader (extends the existing .page-header) ---- */
+.page-header__eyebrow {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-bottom: var(--space-2);
+}
+
+.page-header__eyebrow:hover {
+  color: var(--color-primary-dark);
+}
+
+.page-header__subtitle {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ---- SectionCard ---- */
+.section-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.section-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.section-card--bordered {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+/* ---- MetricCard ---- */
+.metric-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.25rem 1.4rem;
+  border-top: 3px solid var(--color-primary);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.metric-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.metric-card[data-tone='accent'] { border-top-color: var(--color-accent); }
+.metric-card[data-tone='success'] { border-top-color: var(--color-success); }
+.metric-card[data-tone='warning'] { border-top-color: var(--color-warning); }
+.metric-card[data-tone='danger'] { border-top-color: var(--color-danger); }
+.metric-card[data-tone='info'] { border-top-color: var(--color-info); }
+.metric-card[data-tone='neutral'] { border-top-color: var(--color-border-strong); }
+.metric-card[data-alert='true'] { border-top-color: var(--color-danger); }
+
+.metric-card__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metric-card__value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+  margin-top: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card[data-alert='true'] .metric-card__value { color: var(--color-danger); }
+
+.metric-card__sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.3rem;
+}
+
+.metric-card-link {
+  text-decoration: none;
+  display: block;
+  border-radius: var(--radius-lg);
+}
+
+.metric-card-link:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Grids of MetricCard/action-card tiles. Two named breakpoints (rather than
+   one generic minmax) preserve the tighter wrap the "Today" strip needs vs.
+   the roomier "Compliance & readiness" and "Quick actions" grids. */
+.metric-grid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.metric-grid--today {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.metric-grid--compliance {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.quick-actions-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.action-card__link {
+  text-decoration: none;
+  display: block;
+  border-radius: var(--radius-lg);
+}
+
+.action-card__link:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.action-card__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.action-card__cta {
+  margin-top: 0.6rem;
+  display: inline-block;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.page-footnote {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.page-loading {
+  color: var(--color-text-muted);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+/* ---- Command Center hero + section actions ---- */
+.command-hero__subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.attention-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.billing-readiness-row {
+  margin-bottom: var(--space-4);
+}
+
+/* ---- Progress bar (Today's visit operations) ---- */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.progress-track {
+  flex: 1 1 200px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.progress-fill[data-tone='success'] {
+  background-color: var(--color-success);
+}
+
+.progress-row__label {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ---- AttentionCard ---- */
+.attention-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.attention-card {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.1rem;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.attention-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.attention-card:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.attention-card[data-tone='warning'] {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+}
+
+.attention-card[data-tone='info'] {
+  background-color: var(--color-info-bg);
+  border-color: var(--color-info-border);
+}
+
+/* Small solid status dot, used inside AttentionCard rows and standalone in
+   the "all clear" banner. `data-tone` is set directly on the dot so it works
+   whether or not it's nested inside another toned component. */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.status-dot[data-tone='success'] { background-color: var(--color-success); }
+.status-dot[data-tone='warning'] { background-color: var(--color-warning); }
+.status-dot[data-tone='danger'] { background-color: var(--color-danger); }
+.status-dot[data-tone='info'] { background-color: var(--color-info); }
+
+.attention-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.attention-card__title {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--color-danger-text);
+}
+
+.attention-card[data-tone='warning'] .attention-card__title { color: var(--color-warning-text); }
+.attention-card[data-tone='info'] .attention-card__title { color: var(--color-info-text); }
+
+.attention-card__detail {
+  font-size: 0.8125rem;
+  color: var(--color-danger-text);
+  opacity: 0.85;
+}
+
+.attention-card[data-tone='warning'] .attention-card__detail { color: var(--color-warning-text); }
+.attention-card[data-tone='info'] .attention-card__detail { color: var(--color-info-text); }
+
+.attention-card__arrow {
+  color: var(--color-danger-text);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.attention-card[data-tone='warning'] .attention-card__arrow { color: var(--color-warning-text); }
+.attention-card[data-tone='info'] .attention-card__arrow { color: var(--color-info-text); }
+
+/* ---- CommandPanel ---- */
+.command-panel {
+  background: var(--gradient-panel-dark);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  color: #E2E8F0;
+  /* Crisp dark edge + clip so the gradient doesn't leave a light antialiasing
+     sliver at the rounded corners. */
+  border: 1px solid var(--color-slate-800);
+  overflow: hidden;
+}
+
+.command-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.command-panel__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #94A3B8;
+}
+
+.command-panel__icon {
+  font-size: 1.1rem;
+}
+
+.command-panel__body {
+  margin-top: 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #F1F5F9;
+}
+
+.command-panel__body p {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.command-panel__body--muted {
+  font-size: 0.8125rem;
+  color: #94A3B8;
+}
+
+.command-panel__cta {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+}
+
+.command-panel__cta:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.command-panel__link-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary-light);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  padding: 0;
+  margin-left: 0.5rem;
+}
+
+.command-panel__link-btn:hover:not(:disabled) {
+  color: #fff;
+}
+
+.command-panel__link-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- DataTable ---- */
+.data-table__align-right { text-align: right; }
+.data-table__align-center { text-align: center; }
+
+/* ---- Timeline ---- */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline__row {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  column-gap: var(--space-4);
+}
+
+.timeline__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline__marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+}
+
+.timeline__row[data-tone='success'] .timeline__marker { background-color: var(--color-success); }
+.timeline__row[data-tone='warning'] .timeline__marker { background-color: var(--color-warning); }
+.timeline__row[data-tone='danger'] .timeline__marker { background-color: var(--color-danger); }
+.timeline__row[data-tone='info'] .timeline__marker { background-color: var(--color-info); }
+
+.timeline__line {
+  flex: 1;
+  width: 2px;
+  min-height: var(--space-4);
+  background-color: var(--color-border);
+  margin-top: 0.2rem;
+}
+
+.timeline__row:last-child .timeline__line { display: none; }
+
+.timeline__content {
+  padding-bottom: var(--space-6);
+}
+
+.timeline__timestamp {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.timeline__title {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.timeline__description {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.timeline__empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ---- TrustBadge ---- */
+.trust-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.trust-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-border-strong);
+}
+
+.trust-badge__icon {
+  transition: transform 0.2s ease;
+}
+
+.trust-badge:hover .trust-badge__icon {
+  transform: scale(1.06);
+}
+
+.trust-badge__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary-dark);
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.trust-badge[data-tone='accent'] .trust-badge__icon {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent-dark);
+}
+
+.trust-badge__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.trust-badge__label {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.trust-badge__detail {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* ---- WorkflowStepper ---- */
+.workflow-stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.workflow-stepper[data-orientation='vertical'] {
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.workflow-stepper__step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  position: relative;
+  min-width: 0;
+}
+
+.workflow-stepper[data-orientation='vertical'] .workflow-stepper__step {
+  flex: none;
+}
+
+.workflow-stepper__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.workflow-stepper__step[data-status='complete'] .workflow-stepper__marker {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.workflow-stepper__step[data-status='active'] .workflow-stepper__marker {
+  background-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.workflow-stepper__step[data-status='blocked'] .workflow-stepper__marker {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.workflow-stepper__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.workflow-stepper__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.workflow-stepper[data-orientation='vertical'] .workflow-stepper__label {
+  white-space: normal;
+}
+
+.workflow-stepper__description {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.workflow-stepper__connector {
+  flex: 1;
+  height: 2px;
+  background-color: var(--color-border);
+  margin: 0 var(--space-2);
+}
+
+.workflow-stepper__step[data-status='complete'] .workflow-stepper__connector {
+  background-color: var(--color-success);
+}
+
+.workflow-stepper[data-orientation='vertical'] .workflow-stepper__connector {
+  display: none;
+}
+
+/* ==========================================================================
+   Landing page (kept somewhat working, landing renders independently)
    ========================================================================== */
 
 .landing-shell { min-height: 100vh; background-color: var(--color-bg); }
@@ -916,7 +1628,7 @@ button:disabled {
    Responsive
    ========================================================================== */
 
-/* Mobile top bar with hamburger — hidden on desktop, shown when the sidebar
+/* Mobile top bar with hamburger, hidden on desktop, shown when the sidebar
    collapses into a slide-in drawer. */
 .admin-mobilebar {
   display: none;
@@ -981,7 +1693,7 @@ button:disabled {
 }
 
 /* ==========================================================================
-   Utility — scrollbar styling for the dark sidebar
+   Utility, scrollbar styling for the dark sidebar
    ========================================================================== */
 
 .admin-sidebar::-webkit-scrollbar {
@@ -999,4 +1711,88 @@ button:disabled {
 
 .admin-sidebar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================================
+   Motion, respect the OS-level reduced-motion preference for every
+   transition/animation in this file (skeleton shimmer, card hover-lift,
+   sidebar drawer slide, etc.), not just the primitives introduced above.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Print. Audit Packet (packages/web/src/features/compliance-engine/
+   AuditPacketPage.tsx). Browser print-to-PDF is the MVP export path (Agent
+   06 audit-packet architecture Â§5), no server-side PDF pipeline exists or
+   is introduced. Hides the admin chrome, forces a light printable surface,
+   keeps the packet's tables/timeline intact, and repeats a compact header
+   (agency, visit id, generated-at, integrity hash) via a fixed-position
+   element so it appears on every printed page in Chromium-based browsers.
+   ========================================================================== */
+.audit-packet__print-header {
+  display: none;
+}
+
+@media print {
+  .admin-sidebar,
+  .admin-mobilebar,
+  .admin-scrim,
+  .no-print,
+  [aria-label='Open assistant'],
+  [aria-label='Close assistant'],
+  [aria-label='RayHealthOps admin assistant'] {
+    display: none !important;
+  }
+
+  .admin-main,
+  .admin-main__inner {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  body,
+  .page-shell {
+    background: #fff !important;
+  }
+
+  .audit-packet {
+    color: #000;
+  }
+
+  .audit-packet .section-card,
+  .audit-packet .section-card--bordered {
+    break-inside: avoid;
+    border: 1px solid var(--color-border) !important;
+    background: #fff !important;
+  }
+
+  .audit-packet__print-header {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 8pt;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    background: #fff;
+  }
+
+  @page {
+    margin: 20mm 12mm 14mm;
+  }
 }

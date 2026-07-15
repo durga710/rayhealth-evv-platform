@@ -2,178 +2,180 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SupportChat } from '../support/SupportChat.js';
 import { BrandLogo } from '../../components/brand/BrandLogo.js';
+import { MetricCard, StatusPill, DataTable, Timeline, TrustBadge, WorkflowStepper, Icon, type IconName, type WorkflowStep } from '../../components/index.js';
 import { RayVerifySection } from './RayVerifySection.js';
 
 /* ─────────────────────────────────────────────────────────────
-   RayHealth landing — editorial, emerald-accented, enterprise.
-   Self-contained: design system lives in the scoped <style> block
-   below (main app has no Tailwind).
+   RayHealth landing, premium, honest, buyer-conversion page.
+   Self-contained: the scoped <style> block below is the landing's
+   own layout/typography layer, but every color it defines is an
+   alias of a shared token from ../../index.css (:root), no brand
+   hex lives here. Structural surfaces (MetricCard, StatusPill,
+   DataTable, Timeline, TrustBadge, WorkflowStepper) are imported
+   straight from the design system so the "product mockups" below
+   are literally built from the same primitives the admin app uses.
    ───────────────────────────────────────────────────────────── */
-
-const metrics = [
-  { value: '6/6', label: 'Federal EVV elements captured on every visit' },
-  { value: '<5m', label: 'GPS accuracy at clock-in and clock-out' },
-  { value: '40%', label: 'Fewer claim denials in the first quarter' },
-  { value: '100%', label: 'Aligned with PA DHS and the Cures Act' },
-];
 
 const ic = (d: React.ReactNode) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
 );
 
-const capabilities = [
-  {
-    span: 'wide', live: true, kicker: 'AI copilot',
-    title: 'An AI copilot that proposes — you approve',
-    body: 'Ask in plain language. The Claude-powered copilot answers with your agency context and proposes the action — enroll a caregiver in required training, surface what needs attention — then waits for a human to confirm. Every query and action is audit-logged.',
-    icon: ic(<><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" /></>),
-  },
-  {
-    span: 'one', live: true, kicker: 'Scheduling',
-    title: 'Conflict-aware scheduling',
-    body: 'Build the week visually. Credential and authorization clashes surface before you publish.',
-    icon: ic(<><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M3 10h18M8 2v4M16 2v4" /></>),
-  },
-  {
-    span: 'one', live: true, kicker: 'EVV',
-    title: 'Electronic visit verification',
-    body: 'Clock-in and clock-out GPS-checked against the client’s registered address, with all six federal data elements captured automatically.',
-    icon: ic(<><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>),
-  },
-  {
-    span: 'one', live: true, kicker: 'Compliance',
-    title: 'Audit-ready by design',
-    body: 'Every change appended to a tamper-evident log — actor, outcome, payload — keyed per agency.',
-    icon: ic(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></>),
-  },
-  {
-    span: 'half', live: false, kicker: 'Payroll',
-    title: 'Visit-to-payroll, reconciled',
-    body: 'Turn verified visits into clean payroll and billing runs — units, rates, and EVV status reconciled in one queue, with exceptions surfaced before they cost you.',
-    icon: ic(<><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20M6 15h4" /></>),
-  },
-  {
-    span: 'half', live: true, kicker: 'Agency management',
-    title: 'Run the whole agency',
-    body: 'Credentialing, training, client records, and authorizations in one operational core — so the office stops living in spreadsheets and email threads.',
-    icon: ic(<><path d="M3 21V8l9-5 9 5v13" /><path d="M9 21v-6h6v6M3 21h18" /></>),
-  },
+const check = ic(<path d="M20 6 9 17l-5-5" />);
+
+// ── Hero trust row, facts and alignments only, no endorsements, no counts ──
+const heroTrust = [
+  'PA-first, built for Pennsylvania homecare',
+  'Six federal EVV elements, every visit',
+  'Tamper-evident audit trail',
+  'Caregiver mobile app for GPS clock-in',
 ];
 
-const aiPoints = [
-  { title: 'Proposes, you approve', body: 'Ask in plain language. The copilot proposes the action — nothing executes until a human confirms it. Human-in-the-loop by design.' },
-  { title: 'Acts in your workflow', body: 'Grounded in your agency’s real caregivers and courses, it can enroll a caregiver in required training on your confirmation. More actions are rolling out.' },
-  { title: 'Audit-logged by design', body: 'Every query (prompt hashed, never stored in plaintext) and every confirmed or declined action is written to the tamper-evident trail.' },
+// ── Trust/fact strip, replaces the old fabricated "40% fewer denials" /
+// "100% aligned" metric band. Every value here is a verifiable capability,
+// never an invented outcome number. ──
+const trustFacts = [
+  { value: '6/6', label: 'Federal EVV elements captured on every visit' },
+  { value: 'Server-verified', label: 'GPS clock-in decision made on our servers, never the phone' },
+  { value: 'Append-only', label: 'Audit trail by database design, corrections are new events' },
+  { value: 'PA DHS-aligned', label: 'Aligned with PA DHS EVV requirements and the Cures Act' },
 ];
 
-const standards = [
-  { name: 'PA DHS', note: 'PROMISe-aligned' },
-  { name: '21st Century Cures Act', note: 'Six-element EVV' },
-  { name: 'HIPAA', note: 'PHI scoped per agency' },
-  { name: 'Sandata', note: 'Aggregator mapping' },
+// ── Pain → outcome (the "before/after" of running an agency on RayHealth) ──
+const painToOutcome = [
+  { label: 'Scheduling & records', before: 'Spreadsheets, sticky notes, tribal knowledge', after: 'One command center, one login' },
+  { label: 'Clock-outs', before: 'Missed clock-outs nobody notices until payroll', after: 'Every fallback becomes a same-day exception' },
+  { label: 'Claim denials', before: 'Cleanup after the claim already bounced', after: 'Denial-risk flags before you bill' },
+  { label: 'Audit letters', before: 'A week of panic and a filing cabinet', after: 'An exportable evidence packet, ready in an afternoon' },
+  { label: 'Systems', before: 'Five disconnected tools and a coordinator’s memory', after: 'Scheduling, EVV, compliance, and billing in one place' },
 ];
 
-// Outcome statements by role — honest product capabilities, not fabricated
-// customer quotes (this is a new product; we will feature named agencies as
-// our first customers go live).
-const outcomes = [
+// ── Role-based sections, condensed from the persona messaging in
+// docs/agent-reports/02-product-strategy.md §2. These are role-based
+// outcome statements, not fabricated customer quotes. ──
+const roles = [
   {
-    quote: 'Replace three systems and a wall of spreadsheets with one operational core — scheduling, EVV, compliance, and the audit trail in the same place.',
-    persona: 'For operations directors', featured: true,
+    role: 'Agency owners & administrators',
+    body: 'One screen that says “you’re fine” or “here’s the one thing that isn’t”, in ten seconds. Proof on demand when the audit letter arrives.',
+    quote: 'You’ll know in ten seconds if anything’s wrong, and when the audit letter comes, you’re ready that afternoon.',
+    points: ['A live command center, no scrolling required', 'A Go-Live Readiness checklist for onboarding', 'One audit trail across the whole agency'],
   },
   {
-    quote: 'GPS clock-in captures all six federal elements automatically, so every visit is defensible and your audit trail builds itself.',
-    persona: 'For compliance officers',
+    role: 'Schedulers & coordinators',
+    body: 'Build the week and let the platform catch the conflicts, expired credentials, drained authorizations, double-bookings, before you publish.',
+    quote: 'Publish with confidence, conflicts, credentials, and authorizations are checked before the schedule goes out, not after.',
+    points: ['Conflict-aware weekly scheduling', 'Draft and publish modes', 'A live Today Board, no phone calls needed'],
   },
   {
-    quote: 'Credential and authorization conflicts surface before you publish — so the week you send is the week that holds.',
-    persona: 'For schedulers & coordinators',
+    role: 'Compliance officers',
+    body: 'Every exception, resolution, and correction is a permanent record, actor, timestamp, reason, the moment it happens.',
+    quote: 'Every action is logged, the log can’t be edited, even by us, and corrections are new events, never overwrites.',
+    points: ['Exception queues that drain to zero', 'An append-only audit event browser', 'Aggregator submission status in one place'],
+  },
+  {
+    role: 'Caregivers in the field',
+    body: 'A phone app built around one job: clock in confidently, see exactly where to be, and never get stuck.',
+    quote: 'Clock in with confidence, the app shows you exactly where you stand, and you’re never locked out of clocking out.',
+    points: ['A live map with your geofence distance', 'Clock-out that always works as a fallback', 'Training built into the same app'],
   },
 ];
 
-const audiences = [
-  { role: 'Agency owners & administrators', body: 'Real-time visibility into visits, compliance posture, and cash flow — without waiting on a coordinator to assemble a report.', points: ['Live operational dashboard', 'Denial and exception trends', 'Per-agency audit trail'] },
-  { role: 'Schedulers & coordinators', body: 'Build the week in minutes and let the platform catch the conflicts. Spend the day on people, not paperwork.', points: ['Conflict-aware scheduling', 'One exception queue', 'Credential & authorization guardrails'] },
-  { role: 'Caregivers in the field', body: 'A phone app that takes seconds: clock in by GPS, read the care plan at the door, and finish training on the go.', points: ['GPS clock-in / clock-out', 'Care plan & PA task codes', 'In-app EVV Academy'] },
+// ── Implementation timeline (Day 1 → Week 2) ──
+const timelineSteps: WorkflowStep[] = [
+  { id: 'day1', label: 'Day 1. Agency setup', description: 'Configure your agency profile, users, and PA task codes.', status: 'active' },
+  { id: 'day2', label: 'Day 2. Import caregivers & clients', description: 'Bulk import from your existing system, no manual re-entry.', status: 'upcoming' },
+  { id: 'day3', label: 'Day 3. Authorizations & task codes', description: 'Load authorizations and confirm PA task-code mapping.', status: 'upcoming' },
+  { id: 'day4', label: 'Day 4. Caregiver training', description: 'Caregivers complete onboarding and EVV training in the mobile app.', status: 'upcoming' },
+  { id: 'day5', label: 'Day 5. Pilot visits', description: 'Run real visits with GPS clock-in before full rollout.', status: 'upcoming' },
+  { id: 'week2', label: 'Week 2. Live rollout', description: 'The full schedule runs on RayHealthEVV.', status: 'upcoming' },
 ];
 
-const moduleGroups = [
-  { group: 'Operations', items: ['Visual weekly scheduling', 'Client & caregiver records', 'Authorization tracking', 'Open-shift management'] },
-  { group: 'EVV & Compliance', items: ['Six-element GPS verification', 'Telephony & offline fallback', 'Tamper-evident audit log', 'Task codes 106–256'] },
-  { group: 'Billing & Payroll', items: ['Visit-to-claim reconciliation', 'Unit & rate validation', 'Payroll-ready exports', 'Denial-risk flags'] },
-  { group: 'Workforce & Training', items: ['Credential & screening tracking', 'Expiry & renewal alerts', 'EVV Academy lessons', 'Certificate management'] },
+// ── Trust Center teaser items, approved HIPAA phrasing only. ──
+const trustTeaserItems: { icon: IconName; label: string; detail: string; tone: 'primary' | 'accent' }[] = [
+  { icon: 'lock', label: 'HIPAA-ready architecture', detail: 'Encryption in transit, per-agency data isolation, immutable audit logging.', tone: 'primary' },
+  { icon: 'calendar', label: 'Operational HIPAA readiness in progress', detail: 'Vendor BAAs and readiness milestones are published on a dated status table, see exactly where we stand.', tone: 'accent' },
+  { icon: 'shield-check', label: 'Role-based access control', detail: 'Capability-scoped roles gate every admin action, never a client-supplied permission.', tone: 'primary' },
+  { icon: 'file-text', label: 'Tamper-evident audit logging', detail: 'Every state change is appended to a log that cannot be edited, not even by us.', tone: 'accent' },
+  { icon: 'smartphone', label: 'Mobile secure auth', detail: 'Mobile sessions are individually revocable, a lost phone is a two-click problem.', tone: 'primary' },
+  { icon: 'cpu', label: 'AI/PHI boundaries', detail: 'The copilot proposes, a human approves; inference runs only through BAA-covered vendors.', tone: 'accent' },
 ];
-
-const workflow = [
-  { n: '01', t: 'Import authorizations', b: 'Pull from Sandata or PROMISe into reusable, PA-coded visit templates.' },
-  { n: '02', t: 'Schedule credentialed staff', b: 'Assign caregivers with live eligibility, credential, and authorization checks.' },
-  { n: '03', t: 'Verify at the door', b: 'GPS clock-in captures all six federal EVV elements automatically.' },
-  { n: '04', t: 'Reconcile billing & payroll', b: 'Turn verified visits into clean claims and payroll runs in one queue.' },
-  { n: '05', t: 'File & defend the audit', b: 'Every action is logged and keyed per agency — audits become an afternoon.' },
-];
-
-const integrations = ['Sandata aggregator', 'PA PROMISe', 'Telephony / IVR', 'Payroll export', 'iOS & Android', 'Secure messaging'];
-
-const resources = [
-  { tag: 'Guide', t: 'Everything PA agencies need to know about EVV', b: 'The six federal elements, aggregator submission, and the mistakes that trigger denials.', to: '/resources/evv-guide' },
-  { tag: 'Reference', t: 'PA DHS task codes 106–256, explained', b: 'A plain-English map of personal-assistance duty codes and how to use them in care plans.', to: '/resources/task-codes' },
-  { tag: 'Checklist', t: 'Preparing for a DHS audit', b: 'What auditors actually ask for — and how an immutable trail answers it in minutes.', to: '/resources/audit-checklist' },
-  { tag: 'Playbook', t: 'Cutting claim denials in your first quarter', b: 'The exception-resolution workflow that turns rejected claims into paid ones.', to: '/solutions/billing-payroll' },
-  { tag: 'Guide', t: 'Onboarding caregivers onto GPS clock-in', b: 'A rollout plan that gets your field team verifying visits in days, not weeks.', to: '/solutions/electronic-visit-verification' },
-  { tag: 'Article', t: 'Telephony & offline EVV: covering every home', b: 'How RayHealth verifies visits where there is no signal — and stays compliant.', to: '/solutions/electronic-visit-verification' },
-];
-
-const spotlights = [
-  { key: 'scheduling', kicker: 'Scheduling', title: 'Build the week, catch every conflict.', body: 'Drag visits onto a calendar and let the platform enforce the rules — expired credentials, overlapping authorizations, and travel gaps surface before you publish.', points: ['Live eligibility & credential checks', 'Authorization burn-down per client', 'Open-shift and coverage alerts'] },
-  { key: 'evv', kicker: 'Electronic visit verification', title: 'Proof on every visit, automatically.', body: 'Clock-in and clock-out are GPS-checked against the client’s registered address and capture all six federal EVV elements the moment a visit begins — with telephony and offline fallback so no home is left uncovered.', points: ['Six federal elements per visit', 'Geofenced to the client’s registered address', 'Offline capture with automatic retry'] },
-  { key: 'audit', kicker: 'Compliance & audit', title: 'An audit trail that defends itself.', body: 'Every state change is appended to a tamper-evident log — actor, action, outcome, timestamp — scoped per agency. What used to take a week of binders takes an afternoon.', points: ['Append-only, tamper-evident log', 'Filter by actor, client, or action', 'Export-ready for DHS review'] },
-];
-
-const comparison = {
-  rows: [
-    { label: 'Visit verification', old: 'Paper timesheets, phone calls', neu: 'GPS-verified, six EVV elements' },
-    { label: 'Scheduling conflicts', old: 'Found after the fact', neu: 'Caught before you publish' },
-    { label: 'Claim denials', old: 'Chased one by one', neu: 'Flagged before billing' },
-    { label: 'Audit prep', old: 'A week of binders', neu: 'An afternoon of exports' },
-    { label: 'Caregiver training', old: 'Separate LMS & spreadsheets', neu: 'Built into the platform' },
-  ],
-};
 
 const pricingTiers = [
-  { name: 'Starter', price: 'Custom', unit: '', desc: 'For new and small agencies getting compliant fast.', feat: ['Scheduling & EVV', 'PA DHS task codes', 'Caregiver mobile app', 'Immutable audit trail'], featured: false, cta: 'Get a quote' },
-  { name: 'Growth', price: 'Custom', unit: '', desc: 'For scaling agencies that live in the platform.', feat: ['Everything in Starter', 'Billing reconciliation', 'Exception queues & alerts', 'Priority onboarding'], featured: true, cta: 'Book a demo' },
-  { name: 'Enterprise', price: "Let's talk", unit: '', desc: 'For multi-site providers with advanced needs.', feat: ['Everything in Growth', 'AI automation suite', 'Custom integrations', 'Dedicated success manager'], featured: false, cta: 'Talk to sales' },
-];
-
-const missionStats = [
-  { v: '100%', l: 'PA DHS & Cures Act aligned' },
-  { v: '6/6', l: 'EVV elements per visit' },
-  { v: '1 wk', l: 'Typical time to first visits' },
-  { v: '24/7', l: 'Tamper-evident audit trail' },
+  { name: 'Starter', price: 'Custom', desc: 'For new and small agencies getting compliant fast.', feat: ['Scheduling & EVV', 'PA DHS task codes', 'Caregiver mobile app', 'Tamper-evident audit trail'], featured: false, cta: 'Get a quote' },
+  { name: 'Growth', price: 'Custom', desc: 'For scaling agencies that live in the platform.', feat: ['Everything in Starter', 'Billing reconciliation', 'Exception queues & alerts', 'Priority onboarding'], featured: true, cta: 'Book a demo' },
+  { name: 'Enterprise', price: "Let's talk", desc: 'For multi-site providers with advanced needs.', feat: ['Everything in Growth', 'AI automation suite', 'Custom integrations', 'Dedicated success manager'], featured: false, cta: 'Talk to sales' },
 ];
 
 const faqs = [
-  { q: 'Does RayHealth submit to the Pennsylvania EVV aggregator?', a: 'Visits are captured against the federal six-element schema and mapped for downstream submission to the Sandata aggregator used by PA DHS.' },
-  { q: 'What if a caregiver has no signal in the home?', a: 'The app captures the visit offline and retries automatically; a telephony (IVR) fallback covers devices without data.' },
-  { q: 'How long does implementation take?', a: 'Most agencies import authorizations and onboard their first caregivers within a week. We handle the data migration with you.' },
-  { q: 'Is RayHealth only for Pennsylvania?', a: 'Today we are purpose-built for Pennsylvania personal-assistance and home-health programs. The compliance core is designed to extend to additional states.' },
-  { q: 'How is our data protected?', a: 'PHI is scoped per agency with HttpOnly sessions, bcrypt hashing, CSRF protection, and a tamper-evident audit log of every action.' },
-  { q: 'Can caregivers be trained inside the platform?', a: 'The EVV Academy delivers lessons, quizzes, and certificate renewals so training and compliance live in one place. (Rolling out.)' },
+  { q: 'Are you HIPAA compliant?', a: 'We build to HIPAA-ready architecture, per-agency data isolation, encryption in transit, and an append-only audit log enforced today. Our operational HIPAA readiness, including vendor business associate agreements, is in progress and published openly on our compliance page, we execute a BAA with every agency before any PHI is processed.' },
+  { q: 'Does RayHealthEVV submit to the Pennsylvania EVV aggregator?', a: 'Visits are captured against the federal six-element schema and mapped for downstream submission through Sandata Alt-EVV and HHAeXchange, the aggregators PA DHS uses.' },
+  { q: 'What happens if a caregiver has no signal in the home?', a: 'Caregiver clock-in relies on the mobile app’s GPS and connection today. We’re validating full offline capture and a telephony fallback before advertising them as guaranteed in every dead zone, if your caregivers regularly work without signal, that’s one of the first things we test with you during the pilot week.' },
+  { q: 'How do we get our data out?', a: 'Exports are a feature, not a hostage negotiation, payroll-ready and claim exports are built in, and your records leave with you if you ever do.' },
+  { q: 'How long does implementation take?', a: 'Most agencies import authorizations and onboard their first caregivers within a week, with full rollout by week two. See the timeline above, we handle the data migration with you.' },
+  { q: 'Is RayHealthEVV only for Pennsylvania?', a: 'Today we are purpose-built for Pennsylvania personal-assistance and home-health programs. The compliance core is designed to extend to additional states.' },
 ];
 
+type TheaterTab = 'command' | 'clockin' | 'exceptions' | 'audit';
 
-const CSS = `
+const THEATER_TABS: { id: TheaterTab; label: string }[] = [
+  { id: 'command', label: 'Command Center' },
+  { id: 'clockin', label: 'Caregiver Clock-In' },
+  { id: 'exceptions', label: 'Exception Queue' },
+  { id: 'audit', label: 'Audit Packet' },
+];
+
+interface ExceptionRow {
+  id: string;
+  caregiver: string;
+  client: string;
+  issue: string;
+  status: 'Open' | 'Resolved';
+}
+
+const exceptionRows: ExceptionRow[] = [
+  { id: 'e1', caregiver: 'M. Rivera', client: 'Client 4021', issue: 'Missed clock-out', status: 'Open' },
+  { id: 'e2', caregiver: 'D. Whitfield', client: 'Client 3312', issue: 'Out-of-fence clock-out', status: 'Open' },
+  { id: 'e3', caregiver: 'H. Vance', client: 'Client 2207', issue: 'Missing service code', status: 'Resolved' },
+];
+
+function chromeDots() {
+  return (
+    <span className="rh-vischrome" aria-hidden>
+      <i data-role="danger" /><i data-role="warning" /><i data-role="success" />
+    </span>
+  );
+}
+
+function CSS() {
+  return (
+    <style dangerouslySetInnerHTML={{
+      __html: `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 .rh{
-  --ink:#0a0f0d; --ink-soft:#39433e; --body:#525c57; --muted:#8a948e;
-  --paper:#ffffff; --warm:#fbfbf8; --surface:#f5f6f3; --line:#e8eae4; --line-2:#dde0d9;
-  --accent:#107480; --accent-deep:#0c5d66; --accent-tint:#e7f3f4;
-  --accent2:#ee6c2c; --accent2-deep:#d8551b; --accent2-tint:#fdeee4;
-  --dark:#0a0f0d; --dark-line:rgba(255,255,255,.10);
+  /* Every custom property below aliases a shared token from index.css , 
+     no brand hex is defined in this file. */
+  --ink: var(--color-text);
+  --ink-soft: var(--color-text-secondary);
+  --body-c: var(--color-text-secondary);
+  --muted: var(--color-text-muted);
+  --paper: var(--color-surface);
+  --warm: var(--color-bg);
+  --surface2: var(--color-bg);
+  --line: var(--color-border);
+  --line-2: var(--color-border-strong);
+  --accent: var(--color-primary);
+  --accent-deep: var(--color-primary-dark);
+  --accent-light: var(--color-primary-light);
+  --accent-tint: var(--color-primary-bg);
+  --accent2: var(--color-accent);
+  --accent2-deep: var(--color-accent-dark);
+  --accent2-tint: var(--color-accent-bg);
+  --dark: var(--color-sidebar);
+  --dark-line: rgba(255,255,255,.10);
+  --dark-text-muted: var(--color-sidebar-text);
   --maxw:1120px;
-  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  color:var(--body); background:var(--paper); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font-family: var(--font-sans);
+  color:var(--body-c); background:var(--paper); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 .rh *{box-sizing:border-box;}
 .rh h1,.rh h2,.rh h3,.rh h4{color:var(--ink); margin:0; font-weight:600; letter-spacing:-0.02em;}
@@ -185,27 +187,29 @@ html{scroll-behavior:smooth;}
 
 /* buttons */
 .rh-btn{display:inline-flex; align-items:center; gap:.5rem; height:44px; padding:0 1.25rem; border-radius:10px; font-size:.9375rem; font-weight:550; transition:transform .16s ease, background .16s ease, box-shadow .16s ease, border-color .16s ease;}
-.rh-btn-pri{background:var(--accent); color:#fff; box-shadow:0 1px 0 rgba(10,30,20,.04), 0 8px 24px -12px rgba(16,116,128,.6);}
+.rh-btn-pri{background:var(--accent); color:white; box-shadow:0 1px 0 rgba(10,30,20,.04), 0 8px 24px -12px color-mix(in srgb, var(--accent) 60%, transparent);}
 .rh-btn-pri:hover{background:var(--accent-deep); transform:translateY(-1px);}
 .rh-btn-ghost{color:var(--ink); border:1px solid var(--line-2); background:var(--paper);}
 .rh-btn-ghost:hover{border-color:var(--ink); }
-.rh-btn-dark{background:#fff; color:var(--ink);}
+.rh-btn-dark{background:white; color:var(--ink);}
 .rh-btn-dark:hover{transform:translateY(-1px); box-shadow:0 10px 30px -14px rgba(0,0,0,.5);}
 .rh-btn-line{color:var(--ink); font-weight:550; font-size:.9375rem; display:inline-flex; align-items:center; gap:.4rem;}
 .rh-btn-line .arr{transition:transform .18s ease;}
 .rh-btn-line:hover .arr{transform:translateX(3px);}
+.rh-btn:focus-visible,.rh-btn-line:focus-visible{outline:none; box-shadow:var(--shadow-focus);}
 
 /* nav */
 .rh-nav{position:sticky; top:0; z-index:60; background:rgba(255,255,255,.72); backdrop-filter:blur(16px) saturate(160%); border-bottom:1px solid var(--line);}
 .rh-navin{max-width:var(--maxw); margin:0 auto; padding:14px 24px; display:flex; align-items:center; justify-content:space-between;}
-.rh-logo{display:inline-flex; align-items:center; gap:.55rem; font-weight:650; font-size:1.0625rem; color:var(--ink); letter-spacing:-.02em;}
 .rh-navmid{display:flex; gap:4px;}
 .rh-navmid a{padding:.5rem .8rem; border-radius:8px; font-size:.9rem; font-weight:500; color:var(--ink-soft); transition:color .15s, background .15s;}
-.rh-navmid a:hover{color:var(--ink); background:var(--surface);}
+.rh-navmid a:hover{color:var(--ink); background:var(--surface2);}
+.rh-navmid a:focus-visible,.rh-navend a:focus-visible{outline:none; box-shadow:var(--shadow-focus);}
 .rh-navend{display:flex; align-items:center; gap:.6rem;}
 .rh-navend .signin{font-size:.9rem; font-weight:550; color:var(--ink); padding:.5rem .4rem;}
 .rh-burger{display:none; width:42px; height:42px; align-items:center; justify-content:center; border:1px solid var(--line-2); border-radius:10px; background:var(--paper); color:var(--ink); cursor:pointer; padding:0; transition:border-color .15s ease, background .15s ease;}
-.rh-burger:hover{border-color:var(--ink); background:var(--surface);}
+.rh-burger:hover{border-color:var(--ink); background:var(--surface2);}
+.rh-burger:focus-visible{outline:none; box-shadow:var(--shadow-focus);}
 .rh-mobile{display:none; border-top:1px solid var(--line); background:var(--paper);}
 .rh-mobile-in{max-width:var(--maxw); margin:0 auto; padding:6px 24px 18px; display:flex; flex-direction:column;}
 .rh-mobile a{padding:14px 4px; font-size:1rem; font-weight:500; color:var(--ink); border-bottom:1px solid var(--line);}
@@ -217,235 +221,94 @@ html{scroll-behavior:smooth;}
 /* hero */
 .rh-hero{position:relative; overflow:hidden; background:var(--warm); border-bottom:1px solid var(--line);}
 .rh-hero-bloom{position:absolute; inset:0; pointer-events:none;
-  background:radial-gradient(48% 52% at 80% 14%, rgba(16,116,128,.12), transparent 72%), radial-gradient(38% 38% at 6% 0%, rgba(16,116,128,.06), transparent 70%);}
+  background:radial-gradient(48% 52% at 80% 14%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 72%), radial-gradient(38% 38% at 6% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%);}
 .rh-hero-grid{position:absolute; inset:0; pointer-events:none;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:64px 64px; opacity:.45;
   -webkit-mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, #000 8%, transparent 64%);
   mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, #000 8%, transparent 64%);}
-.rh-heroin{position:relative; max-width:var(--maxw); margin:0 auto; padding:72px 24px 0; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;}
+.rh-heroin{position:relative; max-width:var(--maxw); margin:0 auto; padding:72px 24px 64px; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;}
 .rh-herotext{max-width:34rem;}
 .rh-eyebrow{display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .8rem .4rem .55rem; border-radius:999px; background:var(--paper); border:1px solid var(--line-2); font-size:.78rem; font-weight:550; color:var(--ink-soft); box-shadow:0 1px 2px rgba(10,20,15,.03);}
-.rh-eyebrow .pip{width:7px; height:7px; border-radius:50%; background:var(--accent2); box-shadow:0 0 0 0 rgba(238,108,44,.45); animation:rh-pip 2.4s ease-out infinite;}
-@keyframes rh-pip{0%{box-shadow:0 0 0 0 rgba(238,108,44,.45);}70%{box-shadow:0 0 0 7px rgba(238,108,44,0);}100%{box-shadow:0 0 0 0 rgba(238,108,44,0);}}
+.rh-eyebrow .pip{width:7px; height:7px; border-radius:50%; background:var(--accent2); box-shadow:0 0 0 0 color-mix(in srgb, var(--accent2) 45%, transparent); animation:rh-pip 2.4s ease-out infinite;}
+@keyframes rh-pip{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent2) 45%, transparent);}70%{box-shadow:0 0 0 7px color-mix(in srgb, var(--accent2) 0%, transparent);}100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent2) 0%, transparent);}}
 .rh-display{margin:22px 0 0; font-size:clamp(2.4rem,4.4vw,3.4rem); line-height:1.05; letter-spacing:-0.035em; font-weight:600; color:var(--ink); text-wrap:balance;}
 .rh-display .em{color:var(--accent-deep);}
-.rh-sublede{margin:20px 0 0; max-width:46ch; font-size:1.125rem; line-height:1.6; color:var(--body);}
+.rh-sublede{margin:20px 0 0; max-width:46ch; font-size:1.125rem; line-height:1.6; color:var(--body-c);}
 .rh-herocta{margin-top:28px; display:flex; gap:.75rem; flex-wrap:wrap;}
-.rh-herotrust{list-style:none; margin:26px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:10px 22px;}
-.rh-herotrust li{display:inline-flex; align-items:center; gap:.45rem; font-size:.875rem; font-weight:500; color:var(--ink-soft);}
+.rh-herotrust{list-style:none; margin:26px 0 0; padding:0; display:flex; flex-direction:column; gap:13px;}
+.rh-herotrust li{display:flex; align-items:center; gap:.55rem; font-size:.9rem; font-weight:500; color:var(--ink-soft);}
 .rh-herotrust svg{width:17px; height:17px; color:var(--accent); flex-shrink:0;}
 .rh-heromedia{position:relative;}
-.rh-photo{position:relative; border-radius:20px; overflow:hidden; aspect-ratio:4/5; border:1px solid var(--line-2);
-  background:#e9ece8 center 22% / cover no-repeat;
-  background-image:url('https://images.unsplash.com/photo-1581579439134-50af06bb2dd0?q=80&w=1100&auto=format&fit=crop');
-  box-shadow:0 44px 84px -44px rgba(10,30,20,.45);}
-.rh-photobadge{position:absolute; left:16px; bottom:16px; display:flex; align-items:center; gap:.6rem; background:rgba(255,255,255,.94); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:12px; padding:.55rem .7rem; box-shadow:0 12px 28px -14px rgba(10,30,20,.45);}
-.rh-photobadge .chk{width:30px; height:30px; border-radius:8px; background:var(--accent-tint); color:var(--accent-deep); display:grid; place-items:center;}
-.rh-photobadge .t1{font-size:.82rem; font-weight:600; color:var(--ink); line-height:1.1;}
-.rh-photobadge .t2{font-size:.72rem; color:var(--muted); margin-top:1px;}
-.rh-standbar{position:relative; margin-top:64px; border-top:1px solid var(--line); background:var(--paper);}
-.rh-standrow{max-width:var(--maxw); margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr);}
-.rh-standard{padding:20px 24px; border-right:1px solid var(--line);}
-.rh-standard:last-child{border-right:none;}
-.rh-standard .nm{font-size:.92rem; font-weight:600; color:var(--ink);}
-.rh-standard .nt{font-size:.78rem; color:var(--muted); margin-top:2px;}
-@media(max-width:880px){ .rh-heroin{grid-template-columns:1fr; gap:36px; padding-top:52px;} .rh-herotext{max-width:none;} .rh-photo{aspect-ratio:16/10;} }
-@media(max-width:680px){ .rh-standrow{grid-template-columns:1fr 1fr;} .rh-standard:nth-child(2){border-right:none;} .rh-standard:nth-child(1),.rh-standard:nth-child(2){border-bottom:1px solid var(--line);} }
+@media(max-width:880px){ .rh-heroin{grid-template-columns:1fr; gap:36px; padding-top:52px;} .rh-herotext{max-width:none;} }
 
 /* section scaffolding */
 .rh-sec{padding:104px 0;}
 .rh-sec.tight{padding:80px 0;}
+.rh-sec.warm{background:var(--warm); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
 .rh-eyelabel{font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep);}
 .rh-h2{font-size:clamp(1.9rem,3.4vw,2.6rem); line-height:1.1; letter-spacing:-.03em; margin-top:14px;}
-.rh-deck{margin-top:16px; font-size:1.0625rem; line-height:1.6; color:var(--body); max-width:54ch;}
+.rh-deck{margin-top:16px; font-size:1.0625rem; line-height:1.6; color:var(--body-c); max-width:54ch;}
 .rh-sechead{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
 .rh-sechead.center{text-align:center;} .rh-sechead.center .rh-deck{margin-left:auto; margin-right:auto;}
 
-/* metric band */
-.rh-metricband{border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--paper);}
-.rh-metricgrid{max-width:var(--maxw); margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr);}
-.rh-metric{padding:40px 28px; border-right:1px solid var(--line);}
-.rh-metric:last-child{border-right:none;}
-.rh-metric .v{font-size:2.5rem; font-weight:600; letter-spacing:-.04em; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1;}
-.rh-metric .l{margin-top:10px; font-size:.875rem; line-height:1.5; color:var(--muted);}
-@media(max-width:760px){ .rh-metricgrid{grid-template-columns:1fr 1fr;} .rh-metric:nth-child(2){border-right:none;} .rh-metric:nth-child(1),.rh-metric:nth-child(2){border-bottom:1px solid var(--line);} }
+/* fact strip */
+.rh-factband{border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--paper);}
+.rh-factgrid{max-width:var(--maxw); margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr);}
+.rh-fact{padding:34px 28px; border-right:1px solid var(--line);}
+.rh-fact:last-child{border-right:none;}
+.rh-fact .v{font-size:1.5rem; font-weight:600; letter-spacing:-.015em; color:var(--ink); line-height:1.2;}
+.rh-fact .l{margin-top:10px; font-size:.875rem; line-height:1.5; color:var(--muted);}
+@media(max-width:760px){ .rh-factgrid{grid-template-columns:1fr 1fr;} .rh-fact{padding:26px 22px;} .rh-fact:nth-child(2){border-right:none;} .rh-fact:nth-child(1),.rh-fact:nth-child(2){border-bottom:1px solid var(--line);} }
 
-/* bento */
-.rh-bento{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(6,1fr); gap:14px;}
-.rh-cell{grid-column:span 2; background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:28px; transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;}
-.rh-cell:hover{border-color:var(--line-2); box-shadow:0 18px 40px -28px rgba(10,30,20,.4); transform:translateY(-2px);}
-.rh-cell.wide{grid-column:span 6; display:flex; gap:28px; align-items:flex-start; background:linear-gradient(180deg,var(--accent-tint),var(--paper) 60%); border-color:#cdeadd;}
-.rh-cell.half{grid-column:span 3;}
-.rh-cellicon{width:42px; height:42px; border-radius:11px; display:grid; place-items:center; background:var(--accent-tint); color:var(--accent-deep); flex-shrink:0;}
-.rh-cell.wide .rh-celltext{flex:1;}
-.rh-kicker{display:flex; align-items:center; gap:.5rem; margin-top:18px; font-size:.74rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep);}
-.rh-cell.wide .rh-kicker{margin-top:0;}
-.rh-celltitle{margin-top:8px; font-size:1.1875rem; letter-spacing:-.02em;}
-.rh-cellbody{margin-top:8px; font-size:.9375rem; line-height:1.6; color:var(--body);}
-.rh-flag{margin-left:auto; font-size:.68rem; font-weight:650; letter-spacing:.04em; padding:.18rem .5rem; border-radius:6px;}
-.rh-flag.live{background:var(--accent-tint); color:var(--accent-deep);}
-.rh-flag.soon{background:var(--surface); color:var(--muted); border:1px solid var(--line);}
-.rh-cellhead{display:flex; align-items:center; gap:.6rem;}
-@media(max-width:880px){ .rh-bento{grid-template-columns:1fr;} .rh-cell,.rh-cell.wide,.rh-cell.half{grid-column:span 1;} .rh-cell.wide{flex-direction:column; gap:18px;} }
-
-/* dark AI band */
-.rh-dark{background:var(--dark); color:#cfd6d2; position:relative; overflow:hidden;}
-.rh-dark::before{content:""; position:absolute; inset:0; pointer-events:none;
-  background:radial-gradient(50% 60% at 80% 0%, rgba(16,116,128,.18), transparent 70%);}
-.rh-darkin{position:relative; max-width:var(--maxw); margin:0 auto; padding:104px 24px;}
-.rh-dark .rh-eyelabel{color:#5fd0d6;}
-.rh-dark h2{color:#fff;}
-.rh-dark .rh-deck{color:#9fa8a3;}
-.rh-aigrid{margin-top:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--dark-line); border-radius:16px; overflow:hidden;}
-.rh-ai{padding:32px; border-right:1px solid var(--dark-line);}
-.rh-ai:last-child{border-right:none;}
-.rh-ai .n{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:rgba(16,116,128,.16); color:#5fd0d6; font-size:.8rem; font-weight:650; font-variant-numeric:tabular-nums;}
-.rh-ai h3{color:#fff; font-size:1.0625rem; margin-top:18px; letter-spacing:-.02em;}
-.rh-ai p{margin-top:8px; font-size:.9375rem; line-height:1.6; color:#9fa8a3;}
-@media(max-width:760px){ .rh-aigrid{grid-template-columns:1fr;} .rh-ai{border-right:none; border-bottom:1px solid var(--dark-line);} .rh-ai:last-child{border-bottom:none;} }
-
-/* compliance */
-.rh-complist{max-width:var(--maxw); margin:40px auto 0; padding:0 24px; display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--paper);}
-.rh-comprow{display:flex; gap:16px; padding:26px 28px; border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
-.rh-comprow:nth-child(even){border-right:none;}
-.rh-comprow:nth-last-child(-n+2){border-bottom:none;}
-.rh-compicon{width:38px; height:38px; border-radius:10px; background:var(--accent-tint); color:var(--accent-deep); display:grid; place-items:center; flex-shrink:0;}
-.rh-comprow h3{font-size:1rem; letter-spacing:-.01em;}
-.rh-comprow p{margin-top:6px; font-size:.9rem; line-height:1.55; color:var(--body);}
-@media(max-width:680px){ .rh-complist{grid-template-columns:1fr;} .rh-comprow{border-right:none;} .rh-comprow:nth-last-child(2){border-bottom:1px solid var(--line);} }
-
-/* testimonials */
-.rh-quotes{max-width:var(--maxw); margin:48px auto 0; padding:0 24px; display:grid; grid-template-columns:1.4fr 1fr; gap:14px;}
-.rh-q{border:1px solid var(--line); border-radius:16px; padding:32px; background:var(--paper); display:flex; flex-direction:column;}
-.rh-q.feat{background:var(--ink); border-color:var(--ink); grid-row:span 2;}
-.rh-q .qt{font-size:1.0625rem; line-height:1.6; color:var(--ink); letter-spacing:-.01em; flex:1;}
-.rh-q.feat .qt{color:#fff; font-size:1.375rem; line-height:1.5; letter-spacing:-.02em;}
-.rh-q .who{margin-top:24px; padding-top:18px; border-top:1px solid var(--line); display:flex; align-items:center; gap:.8rem;}
-.rh-q.feat .who{border-top-color:var(--dark-line);}
-.rh-qmark{width:30px; height:30px; border-radius:8px; display:grid; place-items:center; flex-shrink:0; background:var(--accent-tint); color:var(--accent-deep);}
-.rh-qmark svg{width:18px; height:18px;}
-.rh-q.feat .rh-qmark{background:rgba(16,116,128,.22); color:#5fd0d6;}
-.rh-q .nm{font-size:.9rem; font-weight:600; color:var(--ink);}
-.rh-q.feat .nm{color:#fff;}
-@media(max-width:820px){ .rh-quotes{grid-template-columns:1fr;} .rh-q.feat{grid-row:auto;} }
-
-/* final cta */
-.rh-final{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
-.rh-finalcard{background:var(--ink); border-radius:24px; padding:72px 40px; text-align:center; position:relative; overflow:hidden;}
-.rh-finalcard::before{content:""; position:absolute; inset:0; background:radial-gradient(60% 100% at 50% 0%, rgba(16,116,128,.22), transparent 70%);}
-.rh-finalcard h2{position:relative; color:#fff; font-size:clamp(1.8rem,3.4vw,2.6rem); letter-spacing:-.03em;}
-.rh-finalcard p{position:relative; color:#9fa8a3; font-size:1.0625rem; line-height:1.6; max-width:46ch; margin:16px auto 0;}
-.rh-finalcard .rh-herocta{position:relative; justify-content:center; margin-top:32px;}
-
-/* footer */
-.rh-foot{border-top:1px solid var(--line); background:var(--warm); padding:64px 0 40px;}
-.rh-footgrid{max-width:var(--maxw); margin:0 auto; padding:0 24px; display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr 1fr; gap:32px;}
-.rh-foot .blurb{margin-top:16px; font-size:.9rem; line-height:1.6; color:var(--muted); max-width:30ch;}
-.rh-footcol h4{font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;}
-.rh-footcol a{display:block; padding:.3rem 0; font-size:.9rem; color:var(--ink-soft);}
-.rh-footcol a:hover{color:var(--ink);}
-.rh-footbar{max-width:var(--maxw); margin:48px auto 0; padding:24px 24px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:.82rem; color:var(--muted);}
-@media(max-width:760px){ .rh-footgrid{grid-template-columns:1fr 1fr;} }
-
-/* audiences */
-.rh-aud{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
-.rh-audcard{border:1px solid var(--line); border-radius:16px; padding:28px; background:var(--paper); transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;}
-.rh-audcard:hover{border-color:var(--line-2); box-shadow:0 18px 40px -28px rgba(10,30,20,.4); transform:translateY(-2px);}
-.rh-audcard h3{font-size:1.0625rem; letter-spacing:-.02em;}
-.rh-audcard p{margin-top:8px; font-size:.92rem; line-height:1.6; color:var(--body);}
-.rh-audlist{margin:16px 0 0; padding:16px 0 0; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:11px;}
-.rh-audlist li{list-style:none; display:flex; gap:.55rem; align-items:center; font-size:.9rem; color:var(--ink-soft);}
-.rh-audlist .ck{width:18px; height:18px; border-radius:5px; background:var(--accent-tint); color:var(--accent-deep); display:grid; place-items:center; flex-shrink:0;}
-.rh-audlist .ck svg{width:12px; height:12px;}
-@media(max-width:880px){.rh-aud{grid-template-columns:1fr;}}
-
-/* module deep-dive */
-.rh-mods{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--paper);}
-.rh-mod{padding:26px 24px; border-right:1px solid var(--line);}
-.rh-mod:last-child{border-right:none;}
-.rh-mod h3{font-size:.74rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep);}
-.rh-mod ul{margin:14px 0 0; padding:0;}
-.rh-mod li{list-style:none; font-size:.9rem; color:var(--ink-soft); padding:9px 0; border-top:1px solid var(--line);}
-@media(max-width:880px){.rh-mods{grid-template-columns:1fr 1fr;} .rh-mod:nth-child(2){border-right:none;} .rh-mod:nth-child(1),.rh-mod:nth-child(2){border-bottom:1px solid var(--line);}}
-@media(max-width:520px){.rh-mods{grid-template-columns:1fr;} .rh-mod{border-right:none; border-bottom:1px solid var(--line);} .rh-mod:last-child{border-bottom:none;}}
-
-/* workflow */
-.rh-flow{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(5,1fr); gap:16px;}
-.rh-step{border-top:2px solid var(--accent); padding-top:16px;}
-.rh-step .sn{font-size:.8rem; font-weight:650; color:var(--accent-deep); font-variant-numeric:tabular-nums;}
-.rh-step h3{margin-top:8px; font-size:1rem; letter-spacing:-.01em;}
-.rh-step p{margin-top:6px; font-size:.875rem; line-height:1.55; color:var(--body);}
-@media(max-width:880px){.rh-flow{grid-template-columns:1fr 1fr;}}
-@media(max-width:520px){.rh-flow{grid-template-columns:1fr;}}
-
-/* integrations */
-.rh-intg{max-width:var(--maxw); margin:28px auto 0; padding:0 24px; display:flex; flex-wrap:wrap; gap:10px;}
-.rh-intg span{border:1px solid var(--line-2); border-radius:999px; padding:.55rem 1.05rem; font-size:.9rem; font-weight:500; color:var(--ink-soft); background:var(--paper);}
-
-/* resources */
-.rh-res{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
-.rh-rescard{border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--paper); display:flex; flex-direction:column; transition:box-shadow .2s ease, transform .2s ease;}
-.rh-rescard:hover{box-shadow:0 18px 40px -28px rgba(10,30,20,.4); transform:translateY(-3px);}
-.rh-restop{height:8px; background:linear-gradient(90deg,var(--accent),var(--accent-deep));}
-.rh-resbody{padding:24px; display:flex; flex-direction:column; flex:1;}
-.rh-restag{font-size:.7rem; font-weight:650; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep);}
-.rh-rescard h3{margin-top:10px; font-size:1.05rem; line-height:1.3; letter-spacing:-.01em; color:var(--ink);}
-.rh-rescard p{margin-top:8px; font-size:.9rem; line-height:1.55; color:var(--body); flex:1;}
-.rh-reslink{margin-top:16px; font-size:.875rem; font-weight:600; color:var(--accent-deep);}
-@media(max-width:880px){.rh-res{grid-template-columns:1fr;}}
-
-/* mission */
-.rh-mission{background:var(--ink); color:#cfd6d2;}
-.rh-missionin{max-width:var(--maxw); margin:0 auto; padding:80px 24px; display:grid; grid-template-columns:1.15fr 1fr; gap:56px; align-items:center;}
-.rh-mission h2{color:#fff; font-size:clamp(1.6rem,3vw,2.2rem); letter-spacing:-.025em; line-height:1.15;}
-.rh-mission .md{margin-top:14px; color:#9fa8a3; font-size:1.05rem; line-height:1.65;}
-.rh-mstats{display:grid; grid-template-columns:1fr 1fr; gap:28px 24px;}
-.rh-mstats .v{font-size:2rem; font-weight:600; color:#fff; letter-spacing:-.03em; font-variant-numeric:tabular-nums;}
-.rh-mstats .l{font-size:.85rem; color:#9fa8a3; margin-top:4px; line-height:1.4;}
-@media(max-width:760px){.rh-missionin{grid-template-columns:1fr; gap:36px;}}
-
-/* feature spotlights */
-.rh-spot{max-width:var(--maxw); margin:24px auto 0; padding:0 24px;}
-.rh-spotrow{display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center; padding:52px 0;}
-.rh-spotrow + .rh-spotrow{border-top:1px solid var(--line);}
-.rh-spotrow.rev .rh-spottext{order:2;}
-.rh-spottext h3{font-size:clamp(1.4rem,2.4vw,1.95rem); letter-spacing:-.025em; margin-top:12px; color:var(--ink); line-height:1.15;}
-.rh-spottext p{margin-top:12px; font-size:1.0625rem; line-height:1.6; color:var(--body);}
-.rh-spotpts{margin:18px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
-.rh-spotpts li{list-style:none; display:flex; gap:.55rem; align-items:center; font-size:.95rem; color:var(--ink-soft);}
-.rh-ck{width:18px; height:18px; border-radius:5px; background:var(--accent-tint); color:var(--accent-deep); display:grid; place-items:center; flex-shrink:0;}
-.rh-ck svg{width:12px; height:12px;}
-.rh-spotvis{border:1px solid var(--line); border-radius:18px; background:var(--surface); padding:18px; box-shadow:0 34px 70px -44px rgba(10,30,20,.4); min-height:280px;}
+/* mockups (shared "browser chrome" card used by hero + product theater) */
+.rh-spotvis{border:1px solid var(--line); border-radius:18px; background:var(--surface2); padding:18px; box-shadow:0 34px 70px -44px rgba(10,30,20,.4); min-height:220px;}
+.rh-spotvis--flush{min-height:0;}
 .rh-vischrome{display:flex; align-items:center; gap:.4rem; padding:0 4px 14px;}
 .rh-vischrome i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+.rh-vischrome i[data-role='danger']{background:var(--color-danger);}
+.rh-vischrome i[data-role='warning']{background:var(--color-warning);}
+.rh-vischrome i[data-role='success']{background:var(--color-success);}
 .rh-vischrome .t{margin-left:.5rem; font-size:.72rem; color:var(--muted); font-weight:500;}
-@media(max-width:880px){.rh-spotrow{grid-template-columns:1fr; gap:26px; padding:36px 0;} .rh-spotrow.rev .rh-spottext{order:-1;}}
-/* visual: week board */
-.rh-wk{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; background:var(--paper); border-radius:12px; padding:12px; border:1px solid var(--line);}
-.rh-wkhd{font-size:.62rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; padding-bottom:8px; text-align:center;}
-.rh-vt{border-radius:7px; padding:7px 8px; margin-bottom:6px;}
-.rh-vt .nm{font-weight:600; color:var(--ink); font-size:.7rem; line-height:1.2;}
-.rh-vt .tm{color:var(--muted); font-size:.62rem; margin-top:1px;}
-.rh-vt.g{background:var(--accent-tint); border:1px solid #cdeadd;}
-.rh-vt.b{background:#eef2ff; border:1px solid #dbe3fb;}
-.rh-vt.n{background:var(--surface); border:1px solid var(--line);}
-/* visual: EVV verify */
-.rh-evvcard{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px;}
-.rh-map{height:120px; border-radius:10px; background:linear-gradient(135deg,#e9f6ef,#e8eefb); position:relative; overflow:hidden; border:1px solid var(--line);}
-.rh-map::before{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(10,40,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(10,40,30,.05) 1px,transparent 1px); background-size:22px 22px;}
-.rh-map .pin{position:absolute; left:46%; top:42%; width:14px; height:14px; border-radius:50%; background:var(--accent); border:3px solid #fff; box-shadow:0 0 0 6px rgba(16,116,128,.18);}
-.rh-evvgrid{margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:7px;}
-.rh-evvi{display:flex; gap:.4rem; align-items:center; font-size:.72rem; color:var(--ink-soft); border:1px solid var(--line); border-radius:8px; padding:.45rem .55rem;}
-/* visual: audit log */
-.rh-logcard{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:6px 14px;}
-.rh-logrow{display:grid; grid-template-columns:auto 1fr auto; gap:10px; padding:10px 2px; border-bottom:1px solid var(--line); align-items:center;}
-.rh-logrow:last-child{border-bottom:none;}
-.rh-logrow .dot{width:7px; height:7px; border-radius:50%; background:var(--accent);}
-.rh-logrow .ac{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem; color:var(--ink-soft);}
-.rh-logrow .ts{font-size:.68rem; color:var(--muted); font-variant-numeric:tabular-nums;}
+.rh-mockcaption{margin-top:.75rem; font-size:.78rem; color:var(--muted); text-align:center;}
+.rh-heromock-body{display:flex; flex-direction:column; gap:.85rem;}
 
-/* comparison */
+/* Manual attention rows for decorative mockups (same tokens/classes as the
+   AttentionCard primitive, rendered as <div> here because a marketing
+   mockup shouldn't force a real navigation Link). */
+.rh-mock-attn-list{display:flex; flex-direction:column; gap:var(--space-2, .5rem);}
+
+/* product theater */
+.rh-theater-tabs{max-width:var(--maxw); margin:36px auto 0; padding:0 24px; display:flex; flex-wrap:wrap; gap:.5rem;}
+.rh-theater-tab{border:1px solid var(--line-2); background:var(--paper); color:var(--ink-soft); border-radius:999px; padding:.55rem 1.1rem; font-size:.875rem; font-weight:600; cursor:pointer; transition:background .15s ease, color .15s ease, border-color .15s ease;}
+.rh-theater-tab:hover{border-color:var(--ink);}
+.rh-theater-tab[aria-selected='true']{background:var(--ink); color:white; border-color:var(--ink);}
+.rh-theater-tab:focus-visible{outline:none; box-shadow:var(--shadow-focus);}
+.rh-theater-panels{max-width:var(--maxw); margin:20px auto 0; padding:0 24px;}
+.rh-theater-panel{min-height:340px;}
+/* each panel swaps a different component in, so it mounts fresh, crossfade it
+   up so switching tabs feels responsive instead of a hard cut */
+.rh-theater-inner{padding:.35rem; animation:rh-panelin .42s cubic-bezier(.2,.7,.2,1);}
+@keyframes rh-panelin{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:none;}}
+/* gentle "live" breathe on the status dots inside the product mockups so the
+   command center reads as actively monitoring, not a screenshot */
+.rh-spotvis .status-dot,.rh-theater-inner .status-dot{animation:rh-livedot 2.6s ease-in-out infinite;}
+@keyframes rh-livedot{0%,100%{opacity:1;}50%{opacity:.5;}}
+.rh-theater-clockin{display:grid; grid-template-columns:220px 1fr; gap:1.5rem; align-items:center;}
+.rh-theater-map{height:200px; border-radius:12px; background:linear-gradient(135deg, var(--accent-tint), var(--accent2-tint)); position:relative; overflow:hidden; border:1px solid var(--line);}
+.rh-theater-map::before{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(10,40,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(10,40,30,.05) 1px,transparent 1px); background-size:22px 22px;}
+.rh-theater-map .zone{position:absolute; left:50%; top:50%; width:96px; height:96px; border-radius:50%; transform:translate(-50%,-50%); border:2px dashed var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent);}
+.rh-theater-map .pin{position:absolute; left:50%; top:50%; width:14px; height:14px; border-radius:50%; background:var(--accent); border:3px solid white; transform:translate(-50%,-50%); box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent); z-index:2;}
+/* live GPS radar ping, a ring that continuously sweeps out from the pin, so
+   the geofence reads as an active location check rather than a static mockup */
+.rh-theater-map .pin::after{content:""; position:absolute; left:50%; top:50%; width:14px; height:14px; border-radius:50%; border:2px solid var(--accent); transform:translate(-50%,-50%); animation:rh-radar 2.8s cubic-bezier(.2,.6,.3,1) infinite;}
+@keyframes rh-radar{0%{width:14px; height:14px; opacity:.65;}70%{opacity:0;}100%{width:150px; height:150px; opacity:0;}}
+.rh-theater-clockin-copy p{color:var(--body-c); font-size:.9375rem; line-height:1.6;}
+.rh-theater-clockin-copy h4{margin-top:.6rem; font-size:1.0625rem;}
+.rh-theater-clockin-actions{margin-top:1rem; display:flex; gap:.6rem; flex-wrap:wrap;}
+@media(max-width:760px){.rh-theater-clockin{grid-template-columns:1fr;}}
+
+/* pain to outcome */
 .rh-cmp{max-width:920px; margin:40px auto 0; padding:0 24px;}
 .rh-cmptbl{border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--paper);}
 .rh-cmphd, .rh-cmprow{display:grid; grid-template-columns:1.4fr 1fr 1fr;}
@@ -456,17 +319,63 @@ html{scroll-behavior:smooth;}
 .rh-cmprow>div{padding:15px 20px; font-size:.9rem; display:flex; align-items:center; gap:.5rem;}
 .rh-cmprow .lbl{color:var(--ink); font-weight:500;}
 .rh-cmprow .old{color:var(--muted);}
-.rh-cmprow .new{color:var(--ink); background:rgba(16,116,128,.045);}
+.rh-cmprow .new{color:var(--ink); background:color-mix(in srgb, var(--accent) 4.5%, transparent);}
 @media(max-width:620px){.rh-cmphd .lbl,.rh-cmprow .lbl{display:none;} .rh-cmphd,.rh-cmprow{grid-template-columns:1fr 1fr;}}
+.rh-ck{width:18px; height:18px; border-radius:5px; background:var(--accent-tint); color:var(--accent-deep); display:grid; place-items:center; flex-shrink:0;}
+.rh-ck svg{width:12px; height:12px;}
+
+/* role cards */
+.rh-roles{max-width:var(--maxw); margin:44px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:14px;}
+.rh-rolecard{border:1px solid var(--line); border-radius:16px; padding:26px; background:var(--paper); display:flex; flex-direction:column; gap:.9rem; transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;}
+.rh-rolecard:hover{border-color:var(--line-2); box-shadow:0 18px 40px -28px rgba(10,30,20,.4); transform:translateY(-2px);}
+.rh-rolecard h3{font-size:1.0625rem; letter-spacing:-.02em;}
+.rh-rolecard p{font-size:.92rem; line-height:1.6; color:var(--body-c);}
+.rh-rolequote{font-size:.9375rem; font-weight:600; color:var(--ink); line-height:1.5; border-left:2px solid var(--accent); padding-left:.75rem;}
+.rh-rolelist{margin:0; padding:0; display:flex; flex-direction:column; gap:.55rem;}
+.rh-rolelist li{list-style:none; display:flex; gap:.55rem; align-items:center; font-size:.875rem; color:var(--ink-soft);}
+.rh-rolefoot{max-width:var(--maxw); margin:20px auto 0; padding:0 24px; font-size:.8125rem; color:var(--muted);}
+
+/* spotlight (EVV audit defense) */
+.rh-spot{max-width:var(--maxw); margin:24px auto 0; padding:0 24px;}
+.rh-spotrow{display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center; padding:0;}
+.rh-spottext h3{font-size:clamp(1.4rem,2.4vw,1.95rem); letter-spacing:-.025em; margin-top:12px; color:var(--ink); line-height:1.15;}
+.rh-spottext p{margin-top:12px; font-size:1.0625rem; line-height:1.6; color:var(--body-c);}
+.rh-spotpts{margin:18px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.rh-spotpts li{list-style:none; display:flex; gap:.55rem; align-items:flex-start; font-size:.95rem; color:var(--ink-soft);}
+.rh-spotvisuals{display:flex; flex-direction:column; gap:14px;}
+@media(max-width:880px){.rh-spotrow{grid-template-columns:1fr; gap:26px;}}
+.rh-evvgrid{margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+.rh-evvi{display:flex; gap:.4rem; align-items:center; font-size:.72rem; color:var(--ink-soft); border:1px solid var(--line); border-radius:8px; padding:.45rem .55rem;}
+.rh-logcard{padding:6px 6px;}
+.rh-logrow{display:grid; grid-template-columns:auto 1fr auto; gap:10px; padding:10px 6px; border-bottom:1px solid var(--line); align-items:center;}
+.rh-logrow:last-child{border-bottom:none;}
+.rh-logrow .dot{width:7px; height:7px; border-radius:50%; background:var(--accent);}
+.rh-logrow .ac{font-family:var(--font-mono); font-size:.72rem; color:var(--ink-soft);}
+.rh-logrow .ts{font-size:.68rem; color:var(--muted); font-variant-numeric:tabular-nums;}
+
+/* ROI calculator */
+.rh-roi{max-width:var(--maxw); margin:40px auto 0; padding:0 24px;}
+.rh-roi-card{border:1px solid var(--line); border-radius:18px; background:var(--paper); padding:32px; display:grid; grid-template-columns:1fr 1.3fr; gap:32px;}
+.rh-roi-inputs{display:flex; flex-direction:column; gap:1rem;}
+.rh-roi-field label{font-size:.8125rem; font-weight:600; color:var(--ink-soft); margin-bottom:.35rem; display:block;}
+.rh-roi-field input{width:100%;}
+.rh-roi-outputs{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:.75rem; align-content:start;}
+.rh-roi-cta{margin-top:1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;}
+.rh-roi-note{font-size:.8125rem; color:var(--muted); max-width:60ch;}
+@media(max-width:820px){.rh-roi-card{grid-template-columns:1fr;}}
+
+/* trust center teaser */
+.rh-trustgrid{max-width:var(--maxw); margin:36px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px;}
+.rh-trustcta{max-width:var(--maxw); margin:28px auto 0; padding:0 24px;}
 
 /* pricing */
 .rh-pricing{max-width:var(--maxw); margin:48px auto 0; padding:0 24px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:start;}
 .rh-price{border:1px solid var(--line); border-radius:18px; padding:30px; background:var(--paper); display:flex; flex-direction:column; position:relative;}
-.rh-price.feat{border-color:var(--accent); box-shadow:0 36px 80px -44px rgba(16,116,128,.55);}
-.rh-pbadge{position:absolute; top:-11px; left:30px; background:var(--accent); color:#fff; font-size:.68rem; font-weight:650; letter-spacing:.04em; padding:.28rem .7rem; border-radius:999px;}
+.rh-price.feat{border-color:var(--accent); box-shadow:0 36px 80px -44px color-mix(in srgb, var(--accent) 55%, transparent);}
+.rh-pbadge{position:absolute; top:-11px; left:30px; background:var(--accent); color:white; font-size:.68rem; font-weight:650; letter-spacing:.04em; padding:.28rem .7rem; border-radius:999px;}
 .rh-price h3{font-size:1.15rem; letter-spacing:-.02em;}
 .rh-price .pr{margin-top:10px; font-size:2rem; font-weight:600; color:var(--ink); letter-spacing:-.03em;}
-.rh-price .pd{margin-top:8px; font-size:.9rem; color:var(--body); line-height:1.5;}
+.rh-price .pd{margin-top:8px; font-size:.9rem; color:var(--body-c); line-height:1.5;}
 .rh-plist{margin:20px 0 22px; padding-top:20px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:11px; flex:1;}
 .rh-plist li{list-style:none; display:flex; gap:.55rem; align-items:flex-start; font-size:.9rem; color:var(--ink-soft);}
 @media(max-width:880px){.rh-pricing{grid-template-columns:1fr; max-width:460px;}}
@@ -477,66 +386,210 @@ html{scroll-behavior:smooth;}
 .rh-faqq{width:100%; text-align:left; background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:20px 0; font:inherit; color:inherit;}
 .rh-faqq h3{font-size:1.0625rem; letter-spacing:-.01em; font-weight:600; color:var(--ink);}
 .rh-faqtog{flex-shrink:0; width:26px; height:26px; border-radius:7px; border:1px solid var(--line-2); display:grid; place-items:center; color:var(--ink-soft); transition:transform .25s ease, background .2s ease, color .2s ease, border-color .2s ease;}
-.rh-faq.open .rh-faqtog{background:var(--accent); color:#fff; border-color:var(--accent); transform:rotate(45deg);}
+.rh-faq.open .rh-faqtog{background:var(--accent); color:white; border-color:var(--accent); transform:rotate(45deg);}
 .rh-faqa{overflow:hidden; max-height:0; transition:max-height .3s ease;}
 .rh-faq.open .rh-faqa{max-height:260px;}
-.rh-faqa p{padding:0 0 20px; font-size:.95rem; line-height:1.6; color:var(--body); max-width:72ch;}
+.rh-faqa p{padding:0 0 20px; font-size:.95rem; line-height:1.6; color:var(--body-c); max-width:72ch;}
+.rh-faqq:focus-visible{outline:none; box-shadow:var(--shadow-focus); border-radius:8px;}
+
+/* final cta */
+.rh-final{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+.rh-finalcard{background:var(--dark); border-radius:24px; padding:72px 40px; text-align:center; position:relative; overflow:hidden;}
+.rh-finalcard::before{content:""; position:absolute; inset:0; background:radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);}
+.rh-finalcard h2{position:relative; color:white; font-size:clamp(1.8rem,3.4vw,2.6rem); letter-spacing:-.03em;}
+.rh-finalcard p{position:relative; color:var(--dark-text-muted); font-size:1.0625rem; line-height:1.6; max-width:50ch; margin:16px auto 0;}
+.rh-finalcard .rh-herocta{position:relative; justify-content:center; margin-top:32px;}
+.rh-btn-outline-dark{background:transparent; color:white; border:1px solid rgba(255,255,255,.28);}
+.rh-btn-outline-dark:hover{border-color:white;}
+
+/* footer */
+.rh-foot{border-top:1px solid var(--line); background:var(--warm); padding:64px 0 40px;}
+.rh-footgrid{max-width:var(--maxw); margin:0 auto; padding:0 24px; display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr 1fr; gap:32px;}
+.rh-foot .blurb{margin-top:16px; font-size:.9rem; line-height:1.6; color:var(--muted); max-width:30ch;}
+.rh-footcol h4{font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;}
+.rh-footcol a{display:block; padding:.3rem 0; font-size:.9rem; color:var(--ink-soft);}
+.rh-footcol a:hover{color:var(--ink);}
+.rh-footcol a:focus-visible{outline:none; box-shadow:var(--shadow-focus); border-radius:6px;}
+.rh-footbar{max-width:var(--maxw); margin:48px auto 0; padding:24px 24px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:.82rem; color:var(--muted);}
+@media(max-width:760px){ .rh-footgrid{grid-template-columns:1fr 1fr;} }
+
+/* hero entrance, a calm, staggered rise on first paint (not a bounce) */
+@keyframes rh-rise{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;}}
+.rh-herotext > *{animation:rh-rise .7s cubic-bezier(.2,.7,.2,1) both;}
+.rh-herotext > .rh-eyebrow{animation-delay:.04s;}
+.rh-herotext > .rh-display{animation-delay:.12s;}
+.rh-herotext > .rh-sublede{animation-delay:.22s;}
+.rh-herotext > .rh-herocta{animation-delay:.32s;}
+.rh-herotext > .rh-herotrust{animation-delay:.42s;}
+.rh-heromedia{animation:rh-rise .8s cubic-bezier(.2,.7,.2,1) both; animation-delay:.28s;}
+
+/* hero bloom, an almost-imperceptible slow breathe, so the page feels alive
+   without ever calling attention to itself */
+@keyframes rh-breathe{from{opacity:.72; transform:scale(1);} to{opacity:1; transform:scale(1.05);}}
+.rh-hero-bloom{animation:rh-breathe 16s ease-in-out infinite alternate;}
+
+/* staggered scroll-reveal, cards in a row cascade in rather than snapping
+   as a block */
+.rh-roles .rh-rv:nth-child(2){transition-delay:.07s;}
+.rh-roles .rh-rv:nth-child(3){transition-delay:.14s;}
+.rh-roles .rh-rv:nth-child(4){transition-delay:.21s;}
+.rh-pricing .rh-rv:nth-child(2){transition-delay:.07s;}
+.rh-pricing .rh-rv:nth-child(3){transition-delay:.14s;}
+
+/* hover-lift for the pricing + EVV mockup cards, matching the role cards */
+.rh-price{transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;}
+.rh-price:hover{transform:translateY(-3px); box-shadow:0 26px 54px -32px rgba(10,30,20,.42);}
+.rh-price.feat:hover{box-shadow:0 44px 88px -44px color-mix(in srgb, var(--accent) 60%, transparent);}
+.rh-evvi{transition:border-color .18s ease, background .18s ease, transform .18s ease;}
+.rh-evvi:hover{border-color:var(--accent); background:var(--accent-tint); transform:translateY(-1px);}
 
 /* reveal */
 .rh-rv{opacity:0; transform:translateY(16px); transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);}
 .rh-rv.in{opacity:1; transform:none;}
-@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} .rh-rv{opacity:1; transform:none; transition:none;} .rh-btn,.rh-cell,.rh-audcard,.rh-rescard{transition:none;} .rh-eyebrow .pip{animation:none;} }
+@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} .rh-rv{opacity:1; transform:none; transition:none;} .rh-btn,.rh-rolecard,.rh-price,.rh-evvi{transition:none;} .rh-eyebrow .pip,.rh-hero-bloom,.rh-herotext > *,.rh-heromedia,.rh-theater-map .pin::after,.rh-theater-inner,.rh-spotvis .status-dot,.rh-theater-inner .status-dot{animation:none;} }
+`,
+    }}
+    />
+  );
+}
 
-/* RayVerify — trust engine band */
-.rvfy{position:relative; background:var(--dark); color:#cfd6d2; overflow:hidden;}
-.rvfy-bloom{position:absolute; inset:0; pointer-events:none;
-  background:
-    radial-gradient(620px 320px at 18% 0%, rgba(16,116,128,.28), transparent 70%),
-    radial-gradient(520px 300px at 92% 100%, rgba(238,108,44,.16), transparent 72%);}
-.rvfy-in{position:relative; max-width:var(--maxw); margin:0 auto; padding:104px 24px;}
-.rvfy-head{max-width:62ch;}
-.rvfy-eyebrow{display:inline-flex; align-items:center; gap:.5rem; font-size:.78rem; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:#5fd0d6;}
-.rvfy-pip{width:7px; height:7px; border-radius:50%; background:#5fd0d6; box-shadow:0 0 0 4px rgba(95,208,214,.16);}
-.rvfy-title{margin-top:18px; color:#fff; font-size:clamp(2rem,4vw,2.9rem); line-height:1.08;}
-.rvfy-em{background:linear-gradient(90deg,#5fd0d6,#3fb0bb); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-.rvfy-deck{margin-top:18px; font-size:1.0625rem; line-height:1.65; color:#9fa8a3;}
-.rvfy-body{margin-top:52px; display:grid; grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr); gap:56px; align-items:start;}
+function HeroMock() {
+  return (
+    <>
+      <div className="rh-spotvis" aria-hidden>
+        {chromeDots()}
+        <span className="rh-vischrome"><span className="t">app.rayhealthevv.com/admin</span></span>
+        <div className="rh-heromock-body">
+          <div className="rh-mock-attn-list">
+            <div className="attention-card" data-tone="warning">
+              <span className="status-dot" data-tone="warning" />
+              <span className="attention-card__body">
+                <span className="attention-card__title">Missed clock-out</span>
+                <span className="attention-card__detail">M. Rivera · 8:42 AM visit</span>
+              </span>
+              <StatusPill tone="warning" label="Warning" />
+            </div>
+            <div className="attention-card" data-tone="info">
+              <span className="status-dot" data-tone="info" />
+              <span className="attention-card__body">
+                <span className="attention-card__title">Authorization expiring in 5 days</span>
+                <span className="attention-card__detail">Client 2207 · Personal assistance</span>
+              </span>
+              <StatusPill tone="info" label="Info" />
+            </div>
+          </div>
+          <div className="metric-grid metric-grid--compliance">
+            <MetricCard label="Verified today" value="41 / 44" tone="success" sub="3 in progress" />
+            <MetricCard label="Open exceptions" value="2" tone="warning" sub="Both same-day" />
+            <MetricCard label="Billing-ready" value="Clean" tone="primary" sub="No blockers" />
+          </div>
+        </div>
+      </div>
+      <p className="rh-mockcaption">Illustrative preview on a seeded demo agency, not a customer’s live data.</p>
+    </>
+  );
+}
 
-/* pipeline */
-.rvfy-pipe{position:relative; padding-left:8px;}
-.rvfy-pipe-rail{position:absolute; left:27px; top:24px; bottom:24px; width:2px; border-radius:2px; background:linear-gradient(180deg, rgba(95,208,214,.5), rgba(255,255,255,.08)); overflow:hidden;}
-.rvfy-pulse{position:absolute; left:-3px; width:8px; height:8px; border-radius:50%; background:#5fd0d6; box-shadow:0 0 14px 3px rgba(95,208,214,.7); margin-top:-4px;}
-.rvfy-stages{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px;}
-.rvfy-stage{display:flex; align-items:center; gap:16px;}
-.rvfy-node{flex:none; width:40px; height:40px; border-radius:11px; display:inline-flex; align-items:center; justify-content:center; color:#bfeef1; background:rgba(16,116,128,.18); border:1px solid rgba(95,208,214,.34); position:relative; z-index:1;}
-.rvfy-node-ok{color:#0a0f0d; background:#5fd0d6; border-color:#5fd0d6; box-shadow:0 0 0 4px rgba(95,208,214,.16);}
-.rvfy-stagetext{display:flex; flex-direction:column; gap:2px;}
-.rvfy-stagelabel{display:flex; align-items:center; gap:10px; color:#fff; font-weight:600; font-size:.98rem;}
-.rvfy-stagedetail{color:#8a948e; font-size:.85rem; line-height:1.4;}
-.rvfy-flag{font-size:.66rem; font-weight:600; letter-spacing:.03em; text-transform:uppercase; padding:2px 7px; border-radius:999px;}
-.rvfy-flag.live{color:#7ee0b0; background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.4);}
-.rvfy-flag.soon{color:#e7b894; background:rgba(238,108,44,.12); border:1px solid rgba(238,108,44,.36);}
-.rvfy-verified .rvfy-stagelabel{font-size:1.02rem;}
+function TheaterCommand() {
+  return (
+    <div className="rh-theater-inner">
+      <div className="rh-mock-attn-list" style={{ marginBottom: '1rem' }}>
+        <div className="attention-card" data-tone="warning">
+          <span className="status-dot" data-tone="warning" />
+          <span className="attention-card__body">
+            <span className="attention-card__title">Missed clock-out</span>
+            <span className="attention-card__detail">M. Rivera · flagged as an exception, not hidden</span>
+          </span>
+          <StatusPill tone="warning" label="Warning" />
+        </div>
+        <div className="attention-card" data-tone="danger">
+          <span className="status-dot" data-tone="danger" />
+          <span className="attention-card__body">
+            <span className="attention-card__title">Out-of-fence clock-out</span>
+            <span className="attention-card__detail">D. Whitfield · needs a reason code</span>
+          </span>
+          <StatusPill tone="danger" label="Critical" />
+        </div>
+      </div>
+      <div className="metric-grid metric-grid--compliance">
+        <MetricCard label="Visits verified" value="41 / 44" tone="success" />
+        <MetricCard label="Schedule integrity" value="Holds" tone="primary" sub="0 conflicts this week" />
+        <MetricCard label="Credentials expiring" value="1" tone="warning" sub="Within 14 days" />
+      </div>
+    </div>
+  );
+}
 
-/* value layers */
-.rvfy-layers{display:flex; flex-direction:column; gap:4px;}
-.rvfy-layer{padding:22px 0; border-bottom:1px solid var(--dark-line);}
-.rvfy-layer:first-child{padding-top:0;}
-.rvfy-layerk{font-size:.74rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#5fd0d6;}
-.rvfy-layert{margin-top:8px; color:#fff; font-size:1.18rem;}
-.rvfy-layerb{margin-top:8px; color:#9fa8a3; font-size:.95rem; line-height:1.6;}
-.rvfy-cta{margin-top:26px;}
-.rvfy-btn{display:inline-flex; align-items:center; gap:.5rem; height:46px; padding:0 1.3rem; border-radius:11px; background:#fff; color:#0a0f0d; font-weight:600; font-size:.94rem; transition:transform .16s ease, box-shadow .16s ease;}
-.rvfy-btn:hover{transform:translateY(-1px); box-shadow:0 14px 34px -16px rgba(95,208,214,.7);}
-.rvfy-foot{margin-top:16px; font-size:.82rem; line-height:1.55; color:#7a847f; max-width:52ch;}
-@media(max-width:880px){ .rvfy-body{grid-template-columns:1fr; gap:40px;} .rvfy-in{padding:80px 24px;} }
-@media(prefers-reduced-motion:reduce){ .rvfy-pulse{display:none;} }
-`;
+function TheaterClockIn() {
+  return (
+    <div className="rh-theater-inner rh-theater-clockin">
+      <div className="rh-theater-map">
+        <span className="zone" />
+        <span className="pin" />
+      </div>
+      <div className="rh-theater-clockin-copy">
+        <StatusPill tone="success" label="Inside the geofence" />
+        <h4>You’re 12m from the client’s registered address.</h4>
+        <p>The map is feedback, the actual clock-in decision is made on our servers, so a modified phone can’t fake a visit. All six federal EVV elements are captured the moment the caregiver taps Clock In.</p>
+        <div className="rh-theater-clockin-actions">
+          <span className="rh-btn rh-btn-pri" aria-hidden style={{ pointerEvents: 'none' }}>Clock In</span>
+          <StatusPill tone="neutral" label="Clock-out always available" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TheaterExceptions() {
+  return (
+    <div className="rh-theater-inner">
+      <DataTable<ExceptionRow>
+        caption="Example exception queue"
+        columns={[
+          { key: 'caregiver', header: 'Caregiver', render: (r) => r.caregiver },
+          { key: 'client', header: 'Client', render: (r) => r.client },
+          { key: 'issue', header: 'Issue', render: (r) => r.issue },
+          {
+            key: 'status',
+            header: 'Status',
+            align: 'right',
+            render: (r) => <StatusPill tone={r.status === 'Open' ? 'warning' : 'success'} label={r.status} />,
+          },
+        ]}
+        rows={exceptionRows}
+        getRowKey={(r) => r.id}
+      />
+    </div>
+  );
+}
+
+function TheaterAudit() {
+  return (
+    <div className="rh-theater-inner">
+      <Timeline
+        items={[
+          { id: 't1', timestamp: '09:02:14', title: 'visit.verified', description: 'Six of six EVV elements present', tone: 'success' },
+          { id: 't2', timestamp: '08:41:09', title: 'exception.resolved', description: 'Actor: office admin · reason code recorded', tone: 'info' },
+          { id: 't3', timestamp: '08:12:55', title: 'credential.renewed', tone: 'neutral' },
+          { id: 't4', timestamp: '07:58:30', title: 'claim.flagged', description: 'Denial-risk check, held before submission', tone: 'warning' },
+        ]}
+      />
+    </div>
+  );
+}
 
 export function LandingPage() {
   const root = useRef<HTMLDivElement>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theaterTab, setTheaterTab] = useState<TheaterTab>('command');
+
+  // ROI calculator inputs, a real, controlled component ready for future
+  // interactivity. Outputs intentionally stay as honest placeholders: per
+  // the brief, we never show a fabricated result number as if it were real.
+  const [caregivers, setCaregivers] = useState(10);
+  const [visitsPerWeek, setVisitsPerWeek] = useState(150);
+  const [cleanupHours, setCleanupHours] = useState(6);
 
   useEffect(() => {
     const els = root.current?.querySelectorAll('.rh-rv');
@@ -551,7 +604,7 @@ export function LandingPage() {
 
   return (
     <div className="rh" ref={root}>
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <CSS />
 
       <nav className="rh-nav">
         <div className="rh-navin">
@@ -560,7 +613,6 @@ export function LandingPage() {
             <Link to="/solutions/scheduling">Scheduling</Link>
             <Link to="/solutions/electronic-visit-verification">EVV</Link>
             <Link to="/rayverify">RayVerify</Link>
-            <Link to="/platform/ai-automation">AI automation</Link>
             <Link to="/platform/compliance">Compliance</Link>
             <Link to="/pricing">Pricing</Link>
           </div>
@@ -587,7 +639,6 @@ export function LandingPage() {
             <Link to="/solutions/electronic-visit-verification" onClick={() => setMenuOpen(false)}>Electronic visit verification</Link>
             <Link to="/rayverify" onClick={() => setMenuOpen(false)}>RayVerify</Link>
             <Link to="/solutions/workforce-training" onClick={() => setMenuOpen(false)}>Workforce & training</Link>
-            <Link to="/platform/ai-automation" onClick={() => setMenuOpen(false)}>AI automation</Link>
             <Link to="/platform/compliance" onClick={() => setMenuOpen(false)}>Compliance</Link>
             <Link to="/pricing" onClick={() => setMenuOpen(false)}>Pricing</Link>
             <Link to="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
@@ -596,59 +647,37 @@ export function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* 1. Premium hero */}
       <header className="rh-hero">
         <div className="rh-hero-bloom" aria-hidden />
         <div className="rh-hero-grid" aria-hidden />
         <div className="rh-heroin">
           <div className="rh-herotext">
-            <span className="rh-eyebrow"><span className="pip" />Pennsylvania-built · HIPAA-aware · Cures Act EVV</span>
-            <h1 className="rh-display">The operating system for <span className="em">home-care</span> agencies.</h1>
+            <span className="rh-eyebrow"><span className="pip" />Pennsylvania-built · Cures Act EVV aligned</span>
+            <h1 className="rh-display">The calm command center for <span className="em">Pennsylvania homecare</span>.</h1>
             <p className="rh-sublede">
-              Scheduling, electronic visit verification, compliance, and payroll — unified in one
-              operational core, with AI that clears the busywork and proof on every visit.
+              Scheduling, GPS-verified EVV, compliance, billing readiness, caregiver training, and audit
+              defense, one platform, one login, one answer to “is anything wrong today?”
             </p>
             <div className="rh-herocta">
               <Link to="/demo" className="rh-btn rh-btn-pri">Book a demo</Link>
-              <a href="#platform" className="rh-btn rh-btn-ghost">Explore the platform</a>
+              <a href="#product-theater" className="rh-btn rh-btn-ghost">View product tour</a>
             </div>
             <ul className="rh-herotrust">
-              <li>{ic(<path d="M20 6 9 17l-5-5" />)}No per-visit fees</li>
-              <li>{ic(<path d="M20 6 9 17l-5-5" />)}Live in days, not months</li>
-              <li>{ic(<path d="M20 6 9 17l-5-5" />)}PA DHS &amp; Cures Act aligned</li>
+              {heroTrust.map((t) => <li key={t}>{check}{t}</li>)}
             </ul>
           </div>
-
           <div className="rh-heromedia">
-            <div className="rh-photo" role="img" aria-label="A caregiver supporting a client at home">
-              <div className="rh-photobadge">
-                <span className="chk">{ic(<path d="M20 6 9 17l-5-5" />)}</span>
-                <div>
-                  <div className="t1">Visit verified</div>
-                  <div className="t2">GPS · 9:02 AM · 6/6 EVV elements</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rh-standbar">
-          <div className="rh-standrow">
-            {standards.map((s) => (
-              <div className="rh-standard" key={s.name}>
-                <div className="nm">{s.name}</div>
-                <div className="nt">{s.note}</div>
-              </div>
-            ))}
+            <HeroMock />
           </div>
         </div>
       </header>
 
-      {/* Metrics */}
-      <div className="rh-metricband">
-        <div className="rh-metricgrid">
-          {metrics.map((m) => (
-            <div className="rh-metric" key={m.label}>
+      {/* Trust / fact strip, honest replacement for the old fabricated metrics */}
+      <div className="rh-factband">
+        <div className="rh-factgrid">
+          {trustFacts.map((m) => (
+            <div className="rh-fact" key={m.label}>
               <div className="v">{m.value}</div>
               <div className="l">{m.label}</div>
             </div>
@@ -656,308 +685,236 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* Audiences */}
-      <section className="rh-sec">
+      {/* 2. Interactive product theater */}
+      <section id="product-theater" className="rh-sec">
         <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Who it&rsquo;s for</p>
-          <h2 className="rh-h2 rh-rv">Built for everyone in the agency.</h2>
-          <p className="rh-deck rh-rv">One platform that works the way owners, coordinators, and caregivers actually work.</p>
+          <p className="rh-eyelabel rh-rv">See it in action</p>
+          <h2 className="rh-h2 rh-rv">One product, four moments in the day.</h2>
+          <p className="rh-deck rh-rv">Switch tabs to preview the same product a coordinator, a caregiver, and a compliance officer each open every day. Every screen below is built from the platform’s real UI components, on a seeded demo agency.</p>
         </div>
-        <div className="rh-aud">
-          {audiences.map((a) => (
-            <div className="rh-audcard rh-rv" key={a.role}>
-              <h3>{a.role}</h3>
-              <p>{a.body}</p>
-              <ul className="rh-audlist">
-                {a.points.map((p) => (
-                  <li key={p}><span className="ck">{ic(<path d="M20 6 9 17l-5-5" />)}</span><span>{p}</span></li>
-                ))}
-              </ul>
-            </div>
+        <div className="rh-theater-tabs rh-rv" role="tablist" aria-label="Product preview">
+          {THEATER_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`theater-tab-${t.id}`}
+              aria-selected={theaterTab === t.id}
+              aria-controls={`theater-panel-${t.id}`}
+              className="rh-theater-tab"
+              onClick={() => setTheaterTab(t.id)}
+            >
+              {t.label}
+            </button>
           ))}
         </div>
-      </section>
-
-      {/* Platform / bento */}
-      <section id="platform" className="rh-sec">
-        <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">The platform</p>
-          <h2 className="rh-h2 rh-rv">Everything the agency runs on, in one place.</h2>
-          <p className="rh-deck rh-rv">From the first authorization to a paid, audit-ready claim — without stitching together four vendors and a spreadsheet. Roadmap items are labeled honestly.</p>
-        </div>
-        <div className="rh-bento">
-          {capabilities.map((c) => (
-            <div className={`rh-cell ${c.span} rh-rv`} key={c.title}>
-              {c.span === 'wide' ? (
-                <>
-                  <div className="rh-cellicon">{c.icon}</div>
-                  <div className="rh-celltext">
-                    <div className="rh-kicker">{c.kicker}<span className={`rh-flag ${c.live ? 'live' : 'soon'}`}>{c.live ? 'Live' : 'Roadmap'}</span></div>
-                    <h3 className="rh-celltitle">{c.title}</h3>
-                    <p className="rh-cellbody">{c.body}</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="rh-cellhead">
-                    <div className="rh-cellicon">{c.icon}</div>
-                    <span className={`rh-flag ${c.live ? 'live' : 'soon'}`}>{c.live ? 'Live' : 'Roadmap'}</span>
-                  </div>
-                  <div className="rh-kicker">{c.kicker}</div>
-                  <h3 className="rh-celltitle">{c.title}</h3>
-                  <p className="rh-cellbody">{c.body}</p>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* RayVerify — trust engine band */}
-      <RayVerifySection />
-
-      {/* Feature spotlights with crafted visuals */}
-      <section className="rh-sec tight">
-        <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Inside the product</p>
-          <h2 className="rh-h2 rh-rv">Designed for the work, down to the pixel.</h2>
-        </div>
-        <div className="rh-spot">
-          {spotlights.map((s, idx) => (
-            <div className={`rh-spotrow${idx % 2 === 1 ? ' rev' : ''}`} key={s.key}>
-              <div className="rh-spottext rh-rv">
-                <p className="rh-eyelabel">{s.kicker}</p>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
-                <ul className="rh-spotpts">
-                  {s.points.map((p) => (
-                    <li key={p}><span className="rh-ck">{ic(<path d="M20 6 9 17l-5-5" />)}</span><span>{p}</span></li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rh-spotvis rh-rv" aria-hidden>
-                <div className="rh-vischrome">
-                  <i style={{ background: '#ff5f57' }} /><i style={{ background: '#febc2e' }} /><i style={{ background: '#28c840' }} />
-                  <span className="t">app.rayhealthevv.com</span>
-                </div>
-                {s.key === 'scheduling' && (
-                  <div className="rh-wk">
-                    {[
-                      { d: 'Mon', v: [{ c: 'g', n: 'M. Cole', t: '9:00 · PA 106' }, { c: 'b', n: 'H. Vance', t: '11:30' }] },
-                      { d: 'Tue', v: [{ c: 'n', n: 'D. Whitfield', t: '8:30' }, { c: 'g', n: 'R. Ortiz', t: '1:00' }] },
-                      { d: 'Wed', v: [{ c: 'b', n: 'A. Brooks', t: '10:00' }] },
-                      { d: 'Thu', v: [{ c: 'g', n: 'M. Cole', t: '9:00' }, { c: 'n', n: 'J. Pierce', t: '2:30' }] },
-                      { d: 'Fri', v: [{ c: 'g', n: 'H. Vance', t: '11:30' }] },
-                    ].map((col) => (
-                      <div key={col.d}>
-                        <div className="rh-wkhd">{col.d}</div>
-                        {col.v.map((v, i) => (
-                          <div className={`rh-vt ${v.c}`} key={i}><div className="nm">{v.n}</div><div className="tm">{v.t}</div></div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {s.key === 'evv' && (
-                  <div className="rh-evvcard">
-                    <div className="rh-map"><span className="pin" /></div>
-                    <div className="rh-evvgrid">
-                      {['Caregiver ID', 'Client ID', 'Service type', 'Date & time', 'Location', 'Visit status'].map((e) => (
-                        <div className="rh-evvi" key={e}><span className="rh-ck">{ic(<path d="M20 6 9 17l-5-5" />)}</span>{e}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {s.key === 'audit' && (
-                  <div className="rh-logcard">
-                    {[
-                      { a: 'visit.verified', t: '09:02:14' },
-                      { a: 'auth.checked', t: '09:02:14' },
-                      { a: 'schedule.published', t: '08:41:09' },
-                      { a: 'credential.renewed', t: '08:12:55' },
-                      { a: 'claim.flagged', t: '07:58:30' },
-                      { a: 'session.login', t: '07:50:02' },
-                    ].map((r, i) => (
-                      <div className="rh-logrow" key={i}><span className="dot" /><span className="ac">{r.a}</span><span className="ts">{r.t}</span></div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Module deep-dive */}
-      <section className="rh-sec tight" style={{ background: 'var(--warm)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
-        <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">A closer look</p>
-          <h2 className="rh-h2 rh-rv">Four toolsets, one operational core.</h2>
-          <p className="rh-deck rh-rv">The capabilities an agency touches every day — grouped the way you actually work.</p>
-        </div>
-        <div className="rh-mods">
-          {moduleGroups.map((m) => (
-            <div className="rh-mod rh-rv" key={m.group}>
-              <h3>{m.group}</h3>
-              <ul>{m.items.map((it) => <li key={it}>{it}</li>)}</ul>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Workflow */}
-      <section className="rh-sec">
-        <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">End to end</p>
-          <h2 className="rh-h2 rh-rv">From authorization to paid, audit-ready claim.</h2>
-        </div>
-        <div className="rh-flow">
-          {workflow.map((s) => (
-            <div className="rh-step rh-rv" key={s.n}>
-              <div className="sn">{s.n}</div>
-              <h3>{s.t}</h3>
-              <p>{s.b}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* AI automation — dark band */}
-      <section id="automation" className="rh-dark">
-        <div className="rh-darkin">
-          <div className="rh-sechead" style={{ padding: 0, maxWidth: '54ch' }}>
-            <p className="rh-eyelabel rh-rv">AI automation</p>
-            <h2 className="rh-h2 rh-rv">The work that used to take a coordinator all morning.</h2>
-            <p className="rh-deck rh-rv">RayHealth proposes; your team approves. Automation handles the repetitive operational load so coordinators spend their time on people, not paperwork.</p>
+        <div className="rh-theater-panels rh-rv">
+          <div
+            id={`theater-panel-${theaterTab}`}
+            role="tabpanel"
+            aria-labelledby={`theater-tab-${theaterTab}`}
+            className="rh-spotvis rh-theater-panel"
+          >
+            {chromeDots()}
+            <span className="rh-vischrome"><span className="t">{THEATER_TABS.find((t) => t.id === theaterTab)?.label}</span></span>
+            {theaterTab === 'command' && <TheaterCommand />}
+            {theaterTab === 'clockin' && <TheaterClockIn />}
+            {theaterTab === 'exceptions' && <TheaterExceptions />}
+            {theaterTab === 'audit' && <TheaterAudit />}
           </div>
-          <div className="rh-aigrid">
-            {aiPoints.map((a, i) => (
-              <div className="rh-ai rh-rv" key={a.title}>
-                <span className="n">{i + 1}</span>
-                <h3>{a.title}</h3>
-                <p>{a.body}</p>
-              </div>
-            ))}
-          </div>
+          <p className="rh-mockcaption">Illustrative preview on a seeded demo agency, not a customer’s live data.</p>
         </div>
       </section>
 
-      {/* Integrations */}
-      <section className="rh-sec tight">
-        <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Connected</p>
-          <h2 className="rh-h2 rh-rv">Fits the systems your agency already runs.</h2>
-          <p className="rh-deck rh-rv">RayHealth maps to Pennsylvania&rsquo;s EVV ecosystem and exports cleanly to the tools you use downstream.</p>
-        </div>
-        <div className="rh-intg">
-          {integrations.map((i) => <span className="rh-rv" key={i}>{i}</span>)}
-        </div>
-      </section>
-
-      {/* Comparison */}
-      <section className="rh-sec tight" style={{ background: 'var(--warm)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+      {/* 3. Pain to outcome */}
+      <section className="rh-sec tight warm">
         <div className="rh-sechead center">
-          <p className="rh-eyelabel rh-rv">Why agencies switch</p>
-          <h2 className="rh-h2 rh-rv">The old way vs. RayHealth.</h2>
+          <p className="rh-eyelabel rh-rv">Before / after</p>
+          <h2 className="rh-h2 rh-rv">What changes when you switch.</h2>
         </div>
         <div className="rh-cmp rh-rv">
           <div className="rh-cmptbl">
             <div className="rh-cmphd">
               <div className="lbl">&nbsp;</div>
-              <div className="old">The old way</div>
-              <div className="new">With RayHealth</div>
+              <div className="old">Before</div>
+              <div className="new">With RayHealthEVV</div>
             </div>
-            {comparison.rows.map((r) => (
+            {painToOutcome.map((r) => (
               <div className="rh-cmprow" key={r.label}>
                 <div className="lbl">{r.label}</div>
-                <div className="old">{r.old}</div>
-                <div className="new"><span className="rh-ck">{ic(<path d="M20 6 9 17l-5-5" />)}</span>{r.neu}</div>
+                <div className="old">{r.before}</div>
+                <div className="new"><span className="rh-ck">{check}</span>{r.after}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Compliance */}
-      <section id="compliance" className="rh-sec">
+      {/* 4. Role-based sections */}
+      <section className="rh-sec">
         <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Compliance &amp; trust</p>
-          <h2 className="rh-h2 rh-rv">Built for the way Pennsylvania audits.</h2>
-          <p className="rh-deck rh-rv">The frameworks your agency answers to are first-class, not afterthoughts.</p>
+          <p className="rh-eyelabel rh-rv">Who it’s for</p>
+          <h2 className="rh-h2 rh-rv">Built for everyone in the agency.</h2>
+          <p className="rh-deck rh-rv">One platform that works the way owners, coordinators, compliance officers, and caregivers actually work.</p>
         </div>
-        <div className="rh-complist">
-          {[
-            { icon: ic(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></>), name: '21st Century Cures Act', body: 'All six federal EVV data elements captured and validated on every clock-out.' },
-            { icon: ic(<><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M8 14h5" /></>), name: 'PA DHS · PROMISe', body: 'Personal-assistance and home-health tracks; task codes 106–256 are native.' },
-            { icon: ic(<><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>), name: 'HIPAA', body: 'PHI scoped per agency, HttpOnly sessions, and a tamper-evident audit trail.' },
-            { icon: ic(<><path d="M4 7h16M4 12h16M4 17h10" /></>), name: 'Sandata aggregator', body: 'Records map cleanly to the federal element schema for downstream submission.' },
-          ].map((c) => (
-            <div className="rh-comprow rh-rv" key={c.name}>
-              <div className="rh-compicon">{c.icon}</div>
-              <div><h3>{c.name}</h3><p>{c.body}</p></div>
+        <div className="rh-roles">
+          {roles.map((r) => (
+            <div className="rh-rolecard rh-rv" key={r.role}>
+              <h3>{r.role}</h3>
+              <p>{r.body}</p>
+              <p className="rh-rolequote">“{r.quote}”</p>
+              <ul className="rh-rolelist">
+                {r.points.map((p) => <li key={p}><span className="rh-ck">{check}</span><span>{p}</span></li>)}
+              </ul>
             </div>
           ))}
         </div>
+        <p className="rh-rolefoot rh-rv">These are role-based outcome statements describing product capabilities, not fabricated customer quotes. We’ll feature named agencies once our first customers go live.</p>
       </section>
 
-      {/* Testimonials */}
-      <section className="rh-sec tight" style={{ background: 'var(--warm)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+      {/* 5. EVV audit defense */}
+      <section id="audit-defense" className="rh-sec tight warm">
         <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Outcomes by role</p>
-          <h2 className="rh-h2 rh-rv">Built for the people who run the agency.</h2>
+          <p className="rh-eyelabel rh-rv">EVV & audit defense</p>
+          <h2 className="rh-h2 rh-rv">Every visit, provably verified.</h2>
         </div>
-        <div className="rh-quotes">
-          {outcomes.map((t) => (
-            <figure className={`rh-q ${t.featured ? 'feat' : ''} rh-rv`} key={t.persona}>
-              <blockquote className="qt">{t.quote}</blockquote>
-              <figcaption className="who">
-                <span className="rh-qmark" aria-hidden>{ic(<path d="M20 6 9 17l-5-5" />)}</span>
-                <div className="nm">{t.persona}</div>
-              </figcaption>
-            </figure>
-          ))}
+        <div className="rh-spot">
+          <div className="rh-spotrow">
+            <div className="rh-spottext rh-rv">
+              <p className="rh-eyelabel">How it holds up under audit</p>
+              <h3>An audit trail that defends itself.</h3>
+              <p>Six federal elements are captured automatically at clock-in and clock-out. The geofence decision is made on our servers, never trusted from the phone. Every correction is a new event, not an overwrite, and every exception carries a reason code on its way into a queue that drains to zero.</p>
+              <ul className="rh-spotpts">
+                <li><span className="rh-ck">{check}</span>All six federal EVV elements captured on every visit</li>
+                <li><span className="rh-ck">{check}</span>GPS proof, the clock-in decision is server-verified</li>
+                <li><span className="rh-ck">{check}</span>Append-only edit trail, corrections are new events</li>
+                <li><span className="rh-ck">{check}</span>Every exception carries a reason code and an owner</li>
+                <li><span className="rh-ck">{check}</span>Pick a date range and get a structured, exportable evidence packet</li>
+              </ul>
+            </div>
+            <div className="rh-spotvisuals rh-rv" aria-hidden>
+              <div className="rh-spotvis rh-spotvis--flush">
+                {chromeDots()}
+                <span className="rh-vischrome"><span className="t">Visit · six-element capture</span></span>
+                <div className="rh-evvgrid">
+                  {['Caregiver ID', 'Client ID', 'Service type', 'Date & time', 'Location', 'Visit status'].map((e) => (
+                    <div className="rh-evvi" key={e}><span className="rh-ck">{check}</span>{e}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="rh-spotvis rh-spotvis--flush">
+                {chromeDots()}
+                <span className="rh-vischrome"><span className="t">Audit event log</span></span>
+                <div className="rh-logcard">
+                  {[
+                    { a: 'visit.verified', t: '09:02:14' },
+                    { a: 'exception.resolved', t: '08:41:09' },
+                    { a: 'claim.flagged', t: '07:58:30' },
+                  ].map((r) => (
+                    <div className="rh-logrow" key={r.a}><span className="dot" /><span className="ac">{r.a}</span><span className="ts">{r.t}</span></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Resources */}
+      {/* RayVerify, deeper dive on verification, already honest/labeled live-vs-rolling-out */}
+      <RayVerifySection />
+
+      {/* 6. Implementation timeline */}
       <section className="rh-sec">
         <div className="rh-sechead">
-          <p className="rh-eyelabel rh-rv">Resources</p>
-          <h2 className="rh-h2 rh-rv">Guides for running a compliant agency.</h2>
-          <p className="rh-deck rh-rv">Practical, Pennsylvania-specific reading on EVV, task codes, and audits.</p>
+          <p className="rh-eyelabel rh-rv">Switching systems</p>
+          <h2 className="rh-h2 rh-rv">Live in days, not months.</h2>
+          <p className="rh-deck rh-rv">A structured onboarding plan, not a sales calendar, you go live when the checklist says you’re ready.</p>
         </div>
-        <div className="rh-res">
-          {resources.map((r) => (
-            <Link to={r.to} className="rh-rescard rh-rv" key={r.t}>
-              <div className="rh-restop" />
-              <div className="rh-resbody">
-                <span className="rh-restag">{r.tag}</span>
-                <h3>{r.t}</h3>
-                <p>{r.b}</p>
-                <span className="rh-reslink">Read more →</span>
+        <div className="rh-wrap rh-rv" style={{ marginTop: '32px' }}>
+          <WorkflowStepper orientation="vertical" steps={timelineSteps} />
+        </div>
+      </section>
+
+      {/* 7. ROI calculator teaser */}
+      <section className="rh-sec tight warm">
+        <div className="rh-sechead">
+          <p className="rh-eyelabel rh-rv">Estimate your impact</p>
+          <h2 className="rh-h2 rh-rv">See what a calmer operation could look like.</h2>
+          <p className="rh-deck rh-rv">A quick starting point, plug in your numbers. We’ll build your real estimate together, from your own data, during a walkthrough.</p>
+        </div>
+        <div className="rh-roi rh-rv">
+          <div className="rh-roi-card">
+            <div className="rh-roi-inputs">
+              <div className="rh-roi-field">
+                <label htmlFor="roi-caregivers">Caregivers on staff</label>
+                <input
+                  id="roi-caregivers"
+                  type="number"
+                  min={1}
+                  value={caregivers}
+                  onChange={(e) => setCaregivers(Number(e.target.value))}
+                />
               </div>
-            </Link>
+              <div className="rh-roi-field">
+                <label htmlFor="roi-visits">Visits scheduled per week</label>
+                <input
+                  id="roi-visits"
+                  type="number"
+                  min={1}
+                  value={visitsPerWeek}
+                  onChange={(e) => setVisitsPerWeek(Number(e.target.value))}
+                />
+              </div>
+              <div className="rh-roi-field">
+                <label htmlFor="roi-hours">Hours/month spent on denial cleanup today</label>
+                <input
+                  id="roi-hours"
+                  type="number"
+                  min={0}
+                  value={cleanupHours}
+                  onChange={(e) => setCleanupHours(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="rh-roi-outputs">
+                <MetricCard label="EVV cleanup hours saved / month" value=", " tone="neutral" sub="Estimated live during your walkthrough" />
+                <MetricCard label="Denial-risk issues caught pre-billing" value=", " tone="neutral" sub="Illustrative, not a guaranteed outcome" />
+                <MetricCard label="Coordinator time recovered / week" value=", " tone="neutral" sub="Calculated from your real schedule" />
+              </div>
+              <div className="rh-roi-cta">
+                <Link to="/demo" className="rh-btn rh-btn-pri">Get your custom estimate</Link>
+                <p className="rh-roi-note">This calculator previews the inputs we’ll use, {caregivers} caregivers, {visitsPerWeek} visits/week, {cleanupHours} cleanup hours/month today, to build a real, agency-specific estimate. We don’t publish a formula-based number here because we haven’t measured it on your data yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Trust center teaser */}
+      <section id="compliance" className="rh-sec">
+        <div className="rh-sechead">
+          <p className="rh-eyelabel rh-rv">Compliance & trust</p>
+          <h2 className="rh-h2 rh-rv">Security you can verify. Compliance we won’t overstate.</h2>
+          <p className="rh-deck rh-rv">
+            RayHealthEVV is engineered to HIPAA Security Rule controls: per-agency data isolation enforced
+            on every request, an audit trail that is append-only by database design, revocable mobile
+            sessions, and server-side verification of every clock-in. Our operational HIPAA readiness , 
+            including vendor business associate agreements, is in progress, and we publish its status
+            openly. We’ll execute a BAA with every agency before any PHI is processed.
+          </p>
+        </div>
+        <div className="rh-trustgrid rh-rv">
+          {trustTeaserItems.map((t) => (
+            <TrustBadge key={t.label} icon={<Icon name={t.icon} size={20} />} label={t.label} detail={t.detail} tone={t.tone} />
           ))}
         </div>
-      </section>
-
-      {/* Mission */}
-      <section className="rh-mission">
-        <div className="rh-missionin">
-          <div className="rh-rv">
-            <p className="rh-eyelabel" style={{ color: '#5fd0d6' }}>Our mission</p>
-            <h2>Make verified, compliant care the easiest way to run an agency.</h2>
-            <p className="md">RayHealth is built in Pennsylvania for Pennsylvania providers — so every visit is proven, every claim is defensible, and coordinators get their time back for the people who need it.</p>
-          </div>
-          <div className="rh-mstats rh-rv">
-            {missionStats.map((s) => (
-              <div key={s.l}><div className="v">{s.v}</div><div className="l">{s.l}</div></div>
-            ))}
-          </div>
+        <div className="rh-trustcta rh-rv">
+          <Link to="/trust" className="rh-btn rh-btn-ghost">See our compliance status →</Link>
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing teaser */}
       <section className="rh-sec">
         <div className="rh-sechead center">
           <p className="rh-eyelabel rh-rv">Pricing</p>
@@ -972,9 +929,7 @@ export function LandingPage() {
               <div className="pr">{t.price}</div>
               <p className="pd">{t.desc}</p>
               <ul className="rh-plist">
-                {t.feat.map((f) => (
-                  <li key={f}><span className="rh-ck">{ic(<path d="M20 6 9 17l-5-5" />)}</span><span>{f}</span></li>
-                ))}
+                {t.feat.map((f) => <li key={f}><span className="rh-ck">{check}</span><span>{f}</span></li>)}
               </ul>
               <Link to="/demo" className={`rh-btn ${t.featured ? 'rh-btn-pri' : 'rh-btn-ghost'}`} style={{ justifyContent: 'center' }}>{t.cta}</Link>
             </div>
@@ -986,7 +941,7 @@ export function LandingPage() {
       <section className="rh-sec">
         <div className="rh-sechead center">
           <p className="rh-eyelabel rh-rv">FAQ</p>
-          <h2 className="rh-h2 rh-rv">Questions, answered.</h2>
+          <h2 className="rh-h2 rh-rv">Questions, answered honestly.</h2>
         </div>
         <div className="rh-faqs">
           {faqs.map((f, i) => (
@@ -1001,15 +956,15 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* 9. CTA footer */}
       <section className="rh-sec">
         <div className="rh-final">
           <div className="rh-finalcard rh-rv">
-            <h2>See RayHealth on your hardest workflow.</h2>
-            <p>A focused walkthrough of the admin platform and the caregiver app. Bring a real case — we’ll run it live.</p>
+            <h2>See your agency calm.</h2>
+            <p>A focused walkthrough of the admin platform and the caregiver app. Bring a real case, we’ll run it live.</p>
             <div className="rh-herocta">
-              <Link to="/demo" className="rh-btn rh-btn-dark">Book a demo</Link>
-              <Link to="/contact" className="rh-btn rh-btn-ghost" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.25)' }}>Talk to sales</Link>
+              <Link to="/demo" className="rh-btn rh-btn-dark">Book a RayHealth walkthrough</Link>
+              <Link to="/resources/audit-checklist" className="rh-btn rh-btn-ghost rh-btn-outline-dark">See PA EVV readiness checklist</Link>
             </div>
           </div>
         </div>
@@ -1020,13 +975,12 @@ export function LandingPage() {
         <div className="rh-footgrid">
           <div>
             <BrandLogo height={40} />
-            <p className="blurb">The operating system for Pennsylvania home-care agencies. Verified visits, defensible claims, one operational core.</p>
+            <p className="blurb">The calm command center for Pennsylvania homecare agencies. Verified visits, defensible claims, one operational core.</p>
           </div>
           <div className="rh-footcol">
             <h4>Platform</h4>
-            <a href="#platform">Overview</a>
+            <a href="#product-theater">Product tour</a>
             <Link to="/rayverify">RayVerify</Link>
-            <Link to="/platform/ai-automation">AI automation</Link>
             <Link to="/platform/compliance">Compliance</Link>
             <Link to="/pricing">Pricing</Link>
           </div>
@@ -1055,7 +1009,7 @@ export function LandingPage() {
         </div>
         <div className="rh-footbar">
           <span>© {new Date().getFullYear()} RayHealthEVV™ · Built in Pennsylvania</span>
-          <span>HIPAA-aware infrastructure · 21st Century Cures Act aligned</span>
+          <span>HIPAA-ready architecture · 21st Century Cures Act aligned</span>
         </div>
       </footer>
 

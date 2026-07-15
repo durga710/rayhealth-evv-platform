@@ -154,7 +154,7 @@ export function HhaexchangeSubmissionPage() {
         'Complete HHAeXchange third-party vendor onboarding and obtain the payer-specific PA EDI code table.',
         'Use the CSV only to review RayHealth identity mappings; it is not the official PA Homecare V5 upload file.',
       ]}
-      related={[{ label: 'EVV Submission — Sandata', to: '/admin/compliance-engine/evv-submission' }, { label: 'Go-Live Checklist', to: '/admin/readiness' }]}
+      related={[{ label: 'EVV Submission. Sandata', to: '/admin/compliance-engine/evv-submission' }, { label: 'Go-Live Checklist', to: '/admin/readiness' }]}
     >
       {loadError && banner('error', loadError)}
 
@@ -217,7 +217,7 @@ export function HhaexchangeSubmissionPage() {
           <button type="submit" style={{ ...primaryBtn, opacity: submitting ? 0.7 : 1 }} disabled={submitting}>{submitting ? 'Submitting…' : 'Submit to HHAeXchange'}</button>
         </div>
         {submitError && banner('info', submitError)}
-        {submitResult && banner('success', `Batch ${submitResult.batchId} sent — ${submitResult.accepted} accepted, ${submitResult.submitted} submitted, ${submitResult.rejected} rejected.`)}
+        {submitResult && banner('success', `Batch ${submitResult.batchId} sent, ${submitResult.accepted} accepted, ${submitResult.submitted} submitted, ${submitResult.rejected} rejected.`)}
       </form>
     </ComplianceModuleLayout>
   );

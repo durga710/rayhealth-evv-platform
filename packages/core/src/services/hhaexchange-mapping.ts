@@ -1,5 +1,5 @@
 /**
- * HHAeXchange aggregator mapping — config schema + lookup.
+ * HHAeXchange aggregator mapping, config schema + lookup.
  *
  * Parallel to sandata-mapping.ts. HHAeXchange is the second of two EVV
  * aggregators contracted by PA DHS (and the sole aggregator for NJ).
@@ -33,7 +33,7 @@ export type HhaexchangeServiceMapping = z.infer<typeof hhaexchangeServiceMapping
 
 export const hhaexchangeCaregiverMappingSchema = z.object({
   caregiverId: z.string().uuid(),
-  /** HHAeXchange "Employee ID" — opaque per-agency identifier. */
+  /** HHAeXchange "Employee ID", opaque per-agency identifier. */
   employeeId: z.string().min(1).max(32),
 })
 export type HhaexchangeCaregiverMapping = z.infer<typeof hhaexchangeCaregiverMappingSchema>
@@ -56,7 +56,7 @@ export type HhaexchangeConfig = z.infer<typeof hhaexchangeConfigSchema>
 export interface HhaexchangeVisitInput {
   visitId: string
   caregiverId: string
-  /** Client's HHAeXchange "Member ID" — distinct from Medicaid number. */
+  /** Client's HHAeXchange "Member ID", distinct from Medicaid number. */
   memberId: string
   clientFirstName: string
   clientLastName: string
@@ -220,8 +220,13 @@ export function toHhaexchangeCsv(rows: readonly HhaexchangeCsvRow[]): string {
 
 function quoteField(value: string): string {
   if (value === '') return ''
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
+  let s = value
+  // Neutralize spreadsheet formula injection: a leading =, +, -, @, tab or CR
+  // is evaluated as a formula by Excel/Sheets. Prefix with a single quote so
+  // the cell is treated as text. RFC-4180 quoting alone does not prevent this.
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`
   }
-  return value
+  return s
 }

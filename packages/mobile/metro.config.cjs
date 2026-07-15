@@ -4,9 +4,18 @@ const path = require('path');
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
-// react@19.1.0 lives here — matches the renderer bundled in react-native@0.81.5
+// react@19.1.0 lives here. matches the renderer bundled in react-native@0.81.5
 const LOCAL_REACT = path.resolve(projectRoot, 'node_modules/react');
 const LOCAL_REACT_DOM = path.resolve(projectRoot, 'node_modules/react-dom');
+
+// react-native-maps is native-only; on web it imports react-native internals
+// that don't exist there and break `expo export`. Redirect it to a web shim
+// for the web platform only (iOS/Android keep the real package).
+const MAPS_WEB_SHIM = path.resolve(projectRoot, 'src/shims/react-native-maps.web.tsx');
+
+// react-native-webview is native-only for the same reason; the course player's
+// inline video needs it on iOS/Android, web gets a placeholder shim.
+const WEBVIEW_WEB_SHIM = path.resolve(projectRoot, 'src/shims/react-native-webview.web.tsx');
 
 const config = getDefaultConfig(projectRoot);
 
@@ -42,6 +51,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       filePath: path.resolve(LOCAL_REACT_DOM, platform === 'web' ? 'server.browser.js' : 'server.node.js'),
       type: 'sourceFile',
     };
+  }
+  if (moduleName === 'react-native-maps' && platform === 'web') {
+    return { filePath: MAPS_WEB_SHIM, type: 'sourceFile' };
+  }
+  if (moduleName === 'react-native-webview' && platform === 'web') {
+    return { filePath: WEBVIEW_WEB_SHIM, type: 'sourceFile' };
   }
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, moduleName, platform);

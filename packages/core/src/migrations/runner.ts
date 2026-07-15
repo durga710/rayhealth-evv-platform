@@ -1,5 +1,5 @@
 /**
- * Baseline migration runner — applies the inlined `schema.ts` migrations
+ * Baseline migration runner, applies the inlined `schema.ts` migrations
  * idempotently via knex.schema.hasTable/hasColumn guards. Invoked by
  * `npm run db:migrate`.
  *
@@ -11,13 +11,13 @@
  * engineering work in PROJECT_STATUS.md.
  *
  * `extend-visit-maintenance` and its 2026-06-30 backfill ARE wired in
- * below — VisitMaintenanceRepository's tenant-scoping fix depends on the
+ * below. VisitMaintenanceRepository's tenant-scoping fix depends on the
  * `agency_id` column they add/populate, so they can't be left orphaned
  * like the rest. Both are idempotent (hasColumn guards / `WHERE agency_id
  * IS NULL`), safe to re-run.
  *
  * Writes status to stderr (not stdout) so the parent shell can pipe stdout
- * for JSON without contamination. No `console.*` calls — keeps `npm run
+ * for JSON without contamination. No `console.*` calls, keeps `npm run
  * lint` clean and matches the codebase's no-console-in-prod posture.
  */
 
@@ -26,6 +26,9 @@ import * as schema from './schema.js';
 import * as extendVisitMaintenance from './2026-05-11-extend-visit-maintenance.js';
 import * as backfillVisitMaintenanceAgencyId from './2026-06-30-backfill-visit-maintenance-agency-id.js';
 import * as addUserAgencies from './2026-07-01-add-user-agencies.js';
+import * as addOpenVisitUniqueIndex from './2026-07-06-add-open-visit-unique-index.js';
+import * as addVisitDocumentation from './2026-07-08-add-visit-documentation.js';
+import * as addVisitSignature from './2026-07-09-add-visit-signature.js';
 import * as addVisitTaskCompletions from './2026-07-12-add-visit-task-completions.js';
 import * as addOfflineEvvMetadata from './2026-07-12-add-offline-evv-metadata.js';
 
@@ -37,6 +40,9 @@ async function run(): Promise<void> {
     await extendVisitMaintenance.up(db);
     await backfillVisitMaintenanceAgencyId.up(db);
     await addUserAgencies.up(db);
+    await addOpenVisitUniqueIndex.up(db);
+    await addVisitDocumentation.up(db);
+    await addVisitSignature.up(db);
     await addVisitTaskCompletions.up(db);
     await addOfflineEvvMetadata.up(db);
     process.stderr.write('Migrations complete.\n');
@@ -48,7 +54,7 @@ async function run(): Promise<void> {
     try {
       await db.destroy();
     } catch {
-      /* swallow — process is exiting */
+      /* swallow, process is exiting */
     }
   }
 }

@@ -7,6 +7,8 @@ import type {
 export interface CachedVisitScheduleRow {
   assignmentId: string;
   scheduledStartTime: string | null;
+  // Optional so rows cached before this field existed still parse.
+  scheduledEndTime?: string | null;
   clientFirstName: string;
   clientLastName: string;
   clientAddressLine1?: string | null;

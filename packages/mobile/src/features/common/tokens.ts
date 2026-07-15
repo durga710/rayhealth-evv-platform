@@ -1,4 +1,4 @@
-// The app's design system. Every screen styles from these tokens — colors,
+// The app's design system. Every screen styles from these tokens, colors,
 // type scale, spacing, radii, shadows, gradients. Do not hand-type hex values
 // or ad-hoc font sizes in screens; if a value is missing here, add it here
 // first so the whole app moves together.
@@ -10,19 +10,19 @@ export const colors = {
   brandBlueDark: '#0f3d72', // gradient end for primary CTAs
   brandBlueLight: '#2d7dd2',
 
-  // Semantic — success
+  // Semantic, success
   success: '#16a34a',
   successDark: '#15803d',
   successBg: '#f0fdf4',
   successBorder: '#bbf7d0',
 
-  // Semantic — danger (errors, destructive, overdue)
+  // Semantic, danger (errors, destructive, overdue)
   danger: '#b91c1c',
   dangerDark: '#991b1b',
   dangerBg: '#fff5f5',
   dangerBorder: '#fecaca',
 
-  // Semantic — warning (flags, pending review, expiring)
+  // Semantic, warning (flags, pending review, expiring)
   amber: '#d97706',
   amberDark: '#92400e',
   amberBg: '#fffbeb',
@@ -34,12 +34,12 @@ export const colors = {
   teal: '#0f766e',
   slate: '#64748b',
 
-  // Text on light surfaces — exactly three tiers.
+  // Text on light surfaces, exactly three tiers.
   textPrimary: '#0f2d52',
   textSecondary: '#5a7088',
   textMuted: '#94a3b8',
 
-  // Text on the brand gradient — exactly three tiers.
+  // Text on the brand gradient, exactly three tiers.
   onGradient: '#ffffff',
   onGradientSoft: '#a8c8e8',
   onGradientFaint: '#6898c0',
@@ -64,13 +64,17 @@ export const colors = {
 
 /**
  * Type scale. Use these instead of raw fontSize/fontWeight pairs:
- *   hero      — screen-level hero titles (login wordmark, greeting)
- *   title     — screen headers on gradients
- *   heading   — card/section headings (client names, dialog titles)
- *   body      — primary content text
- *   sub       — secondary line under a heading
- *   label     — uppercase section labels / form labels
- *   caption   — smallest metadata (pills, hints, timestamps)
+ *   hero     , screen-level hero titles (login wordmark, greeting)
+ *   title    , screen headers on gradients
+ *   heading  , card/section headings (client names, dialog titles)
+ *   body     , primary content text
+ *   sub      , secondary line under a heading
+ *   label    , uppercase section labels / form labels
+ *   caption  , smallest metadata (pills, hints, timestamps)
+ *   readingHeading / readingBody, long-form lesson text in the course player,
+ *               sized up for older readers; the player scales these bases with
+ *               its text-size presets (src/lib/text-size.ts), which also derive
+ *               the 1.5× line height.
  */
 export const typography = {
   hero: { fontSize: 27, fontWeight: '900', letterSpacing: -0.4 },
@@ -80,6 +84,8 @@ export const typography = {
   sub: { fontSize: 13, fontWeight: '500' },
   label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase' },
   caption: { fontSize: 11, fontWeight: '600' },
+  readingHeading: { fontSize: 20, fontWeight: '800' },
+  readingBody: { fontSize: 18, fontWeight: '500' },
 } as const;
 
 /** 4-pt spacing scale. Compose layouts from these steps only. */

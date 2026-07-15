@@ -33,7 +33,7 @@ interface AuthContextType {
   agencies: AgencyMembership[];
   /**
    * True right after a fresh sign-in when the account is linked to more than
-   * one agency — the app must show the agency picker before any agency-scoped
+   * one agency, the app must show the agency picker before any agency-scoped
    * screen. Cleared by selectAgency; never set on token-restore (the restored
    * token is already scoped to the last agency the user chose).
    */
@@ -67,13 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearLocalState = useCallback(async () => {
-    // Cancel any scheduled shift-alert notifications first — their body carries
+    // Cancel any scheduled shift-alert notifications first, their body carries
     // the client's name (PHI), so a logged-out or shared device must not keep
     // surfacing them. Best-effort; never block logout on it.
     try {
       await cancelAllShiftAlerts();
     } catch {
-      /* ignore — proceed with clearing the session regardless */
+      /* ignore, proceed with clearing the session regardless */
     }
     // The visit schedule contains client names, addresses, and coordinates.
     // It is safe to re-fetch, so remove it on logout/401. Pending EVV punches
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           setUser(JSON.parse(userJson) as MobileUser);
         } catch {
-          // Corrupt user blob — ignore, leave user null. Token is still trusted server-side.
+          // Corrupt user blob, ignore, leave user null. Token is still trusted server-side.
         }
       }
     }
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const cached = JSON.parse(agenciesJson) as AgencyMembership[];
           if (Array.isArray(cached)) setAgencies(cached);
         } catch {
-          // Corrupt blob — the agency screen re-fetches the live list anyway.
+          // Corrupt blob, the agency screen re-fetches the live list anyway.
         }
       }
     }
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMobileAccessToken(token);
       await loadCachedAgencies();
 
-      // Don't trust a stored token blindly — a stale/expired one must drop the
+      // Don't trust a stored token blindly, a stale/expired one must drop the
       // user to login, not silently show an empty dashboard. Validate it once
       // against the server before treating the session as authenticated.
       try {
@@ -175,13 +175,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 401) {
-          // Token explicitly rejected — clear it and force a fresh login.
+          // Token explicitly rejected, clear it and force a fresh login.
           await SecureStore.deleteItemAsync(TOKEN_KEY);
           await SecureStore.deleteItemAsync(USER_KEY);
           setMobileAccessToken(null);
           setIsAuthenticated(false);
         } else {
-          // No response (offline / server down) — don't lock a caregiver out in
+          // No response (offline / server down), don't lock a caregiver out in
           // the field. Trust the cached token; a later real 401 still clears it.
           await loadCachedUser();
           setIsAuthenticated(true);
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await SecureStore.setItemAsync(TOKEN_KEY, data.token);
     setMobileAccessToken(data.token);
 
-    // agencies is absent when the API predates multi-agency support — treat
+    // agencies is absent when the API predates multi-agency support, treat
     // that as a single-agency account so sign-in behaves exactly as before.
     const memberships: AgencyMembership[] = Array.isArray(data.agencies)
       ? (data.agencies as AgencyMembership[])
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const homeAgency = memberships.find((a) => a.agencyId === data.agencyId);
     let nextUser: MobileUser = { userId: data.userId, role: data.role, agencyId: data.agencyId, agencyName: homeAgency?.agencyName };
     // The login response doesn't carry the caregiver's name; fetch it for the
-    // dashboard greeting. Best-effort — never block sign-in on it.
+    // dashboard greeting. Best-effort, never block sign-in on it.
     try {
       const me = await apiClient.get('/api/auth/me');
       const profile = me.data as { userId?: string; firstName?: string | null };
@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const selectAgency = useCallback(
     async (agencyId: string) => {
-      // Picking the agency the token is already scoped to needs no round-trip —
+      // Picking the agency the token is already scoped to needs no round-trip , 
       // just confirm the selection so the guards let the user through.
       const current = await SecureStore.getItemAsync(USER_KEY);
       const currentUser = current ? (JSON.parse(current) as MobileUser) : null;

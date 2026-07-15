@@ -7,7 +7,7 @@ import { paServiceCodes } from '../config/pennsylvania.js';
  * A {@link Claim} aggregates one client's GPS-verified visits over a service
  * period into a payer claim. Each {@link ClaimLine} corresponds to exactly one
  * verified EVV visit (one date of service), so every billed line is traceable
- * back to an immutable `evv_visits` row — the core integrity property of the
+ * back to an immutable `evv_visits` row, the core integrity property of the
  * product: a claim line should only exist behind a verified visit.
  *
  * Money is stored in integer cents to avoid float drift. Charge amounts are
@@ -80,6 +80,8 @@ export const claimSchema = z.object({
   payerClaimId: z.string().nullable().optional(),
   /** Rejection / denial reason text, populated on rejected/denied. */
   statusReason: z.string().nullable().optional(),
+  /** Clearinghouse transport reference from an automated submission. */
+  transportReference: z.string().nullable().optional(),
   submittedAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),

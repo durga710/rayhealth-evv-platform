@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getJson } from '../../lib/api-client.js';
 import { EmptyState, ErrorRetry, LoadingSkeleton } from '../../components/state/index.js';
+import { Icon } from '../../components/index.js';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface Profile {
@@ -23,6 +24,16 @@ interface Visit {
   clockOutTime?: string;
   status: VisitStatus;
   flagReason: string | null;
+  tasks?: { id: string; duty: string }[] | null;
+  visitNote?: string | null;
+  signature?: {
+    strokes: [number, number][][];
+    width: number;
+    height: number;
+    signerRole: 'client' | 'representative';
+    signerName?: string | null;
+    signedAt: string;
+  } | null;
 }
 interface Credential {
   id: string;
@@ -55,12 +66,12 @@ function fmtHours(ms: number): string {
 }
 function fmtDate(iso: string): string {
   const d = new Date(iso);
-  return Number.isFinite(d.getTime()) ? d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  return Number.isFinite(d.getTime()) ? d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
 }
 function fmtTime(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
-  return Number.isFinite(d.getTime()) ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
+  return Number.isFinite(d.getTime()) ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '-';
 }
 function statusColor(s: VisitStatus, inProgress: boolean): string {
   if (inProgress) return TEAL;
@@ -180,15 +191,16 @@ export function CaregiverActivityPage() {
                 <span style={{ display: 'inline-block', padding: '0.12em 0.6em', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700, textTransform: 'capitalize', background: profile.status === 'active' ? '#05966918' : '#64748B18', color: profile.status === 'active' ? '#059669' : '#64748B' }}>{profile.status}</span>
               </div>
               <div style={{ color: '#64748B', fontSize: '0.88rem', marginTop: 4, display: 'flex', gap: '1.1rem', flexWrap: 'wrap' }}>
-                <span>✉ {profile.email}</span>
-                {profile.phone ? <span>☎ {profile.phone}</span> : null}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Icon name="mail" size={15} />{profile.email}</span>
+                {profile.phone ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Icon name="phone" size={15} />{profile.phone}</span> : null}
                 {profile.hireDate ? <span>Hired {fmtDate(profile.hireDate)}</span> : null}
                 <span>NPI {profile.hasNpi ? 'on file' : 'missing'}</span>
               </div>
             </div>
             {compliance ? (
-              <div style={{ padding: '0.5rem 0.9rem', borderRadius: 10, fontWeight: 700, fontSize: '0.85rem', background: compliance.compliant ? '#05966914' : '#BE123C14', color: compliance.compliant ? '#059669' : '#BE123C' }}>
-                {compliance.compliant ? '✓ Compliant' : '⚠ Action needed'}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', borderRadius: 10, fontWeight: 700, fontSize: '0.85rem', background: compliance.compliant ? '#05966914' : '#BE123C14', color: compliance.compliant ? '#059669' : '#BE123C' }}>
+                <Icon name={compliance.compliant ? 'shield-check' : 'alert-triangle'} size={16} />
+                {compliance.compliant ? 'Compliant' : 'Action needed'}
               </div>
             ) : null}
           </div>
@@ -260,21 +272,77 @@ export function CaregiverActivityPage() {
                       const ms = durationMs(v);
                       const inProgress = !v.clockOutTime;
                       const isOpen = expanded === v.id;
+                      const hasDocs = Boolean((v.tasks && v.tasks.length > 0) || v.visitNote || v.signature);
+                      const expandable = v.status === 'flagged' || hasDocs;
                       return [
-                        <tr key={v.id} onClick={() => v.status === 'flagged' && setExpanded(isOpen ? null : v.id)} style={{ cursor: v.status === 'flagged' ? 'pointer' : 'default' }}>
+                        <tr key={v.id} onClick={() => expandable && setExpanded(isOpen ? null : v.id)} style={{ cursor: expandable ? 'pointer' : 'default' }}>
                           <td>{fmtDate(v.clockInTime)}</td>
-                          <td>{v.clientName ?? '—'}</td>
+                          <td>{v.clientName ?? '-'}</td>
                           <td>{fmtTime(v.clockInTime)}</td>
-                          <td>{inProgress ? '—' : fmtTime(v.clockOutTime)}</td>
-                          <td>{ms != null ? fmtHours(ms) : '—'}</td>
-                          <td>{v.serviceCode ? SERVICE_LABELS[v.serviceCode] ?? v.serviceCode : '—'}</td>
-                          <td><StatusBadge status={v.status} inProgress={inProgress} />{v.status === 'flagged' ? <span style={{ marginLeft: 6, color: '#BE123C', fontSize: '0.75rem' }}>{isOpen ? '▲' : '▼'}</span> : null}</td>
+                          <td>{inProgress ? '-' : fmtTime(v.clockOutTime)}</td>
+                          <td>{ms != null ? fmtHours(ms) : '-'}</td>
+                          <td>{v.serviceCode ? SERVICE_LABELS[v.serviceCode] ?? v.serviceCode : '-'}</td>
+                          <td>
+                            <StatusBadge status={v.status} inProgress={inProgress} />
+                            {hasDocs ? (
+                              <span style={{ marginLeft: 6, fontSize: '0.68rem', fontWeight: 700, color: '#1a5fa8', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.5rem', whiteSpace: 'nowrap' }}>
+                                {v.tasks && v.tasks.length > 0 ? `${v.tasks.length} task${v.tasks.length === 1 ? '' : 's'}` : 'Note'}
+                              </span>
+                            ) : null}
+                            {expandable ? <span style={{ marginLeft: 6, color: v.status === 'flagged' ? '#BE123C' : '#94A3B8', fontSize: '0.75rem' }}>{isOpen ? '▲' : '▼'}</span> : null}
+                          </td>
                         </tr>,
                         isOpen ? (
                           <tr key={`${v.id}-r`}>
-                            <td colSpan={7} style={{ background: '#FFF7ED', borderLeft: '3px solid #d97706' }}>
-                              <strong style={{ color: '#92400e' }}>Flag reason: </strong>
-                              <span style={{ color: '#92400e' }}>{v.flagReason ?? 'No detailed reason recorded.'}</span>
+                            <td colSpan={7} style={{ background: v.status === 'flagged' ? '#FFF7ED' : '#F8FAFC', borderLeft: `3px solid ${v.status === 'flagged' ? '#d97706' : '#1a5fa8'}`, padding: '0.7rem 1rem' }}>
+                              {v.status === 'flagged' ? (
+                                <div style={{ marginBottom: hasDocs ? '0.6rem' : 0 }}>
+                                  <strong style={{ color: '#92400e' }}>Flag reason: </strong>
+                                  <span style={{ color: '#92400e' }}>{v.flagReason ?? 'No detailed reason recorded.'}</span>
+                                </div>
+                              ) : null}
+                              {v.tasks && v.tasks.length > 0 ? (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
+                                  <strong style={{ color: '#0F172A', fontSize: '0.8rem', marginRight: '0.2rem' }}>Tasks documented:</strong>
+                                  {v.tasks.map((t) => (
+                                    <span key={t.id} style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1a5fa8', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.55rem' }}>
+                                      {t.duty}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {v.visitNote ? (
+                                <div style={{ marginTop: v.tasks && v.tasks.length > 0 ? '0.5rem' : 0, fontSize: '0.8rem', color: '#475569' }}>
+                                  <strong style={{ color: '#0F172A' }}>Visit note: </strong>
+                                  {v.visitNote}
+                                </div>
+                              ) : null}
+                              {v.signature ? (
+                                <div style={{ marginTop: '0.6rem' }}>
+                                  <strong style={{ color: '#0F172A', fontSize: '0.8rem' }}>
+                                    Signed by {v.signature.signerRole === 'client' ? 'the client' : 'a representative'}
+                                    {v.signature.signerName ? ` (${v.signature.signerName})` : ''}:
+                                  </strong>
+                                  <svg
+                                    viewBox={`0 0 ${v.signature.width} ${v.signature.height}`}
+                                    style={{ display: 'block', width: 220, height: 'auto', marginTop: '0.35rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 6 }}
+                                    role="img"
+                                    aria-label="Captured signature"
+                                  >
+                                    {v.signature.strokes.map((stroke, i) => (
+                                      <polyline
+                                        key={i}
+                                        points={stroke.map(([x, y]) => `${x},${y}`).join(' ')}
+                                        fill="none"
+                                        stroke="#0F172A"
+                                        strokeWidth={2.5}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    ))}
+                                  </svg>
+                                </div>
+                              ) : null}
                             </td>
                           </tr>
                         ) : null,

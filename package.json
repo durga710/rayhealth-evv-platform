@@ -13,7 +13,8 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "security:scan": "node --import tsx scripts/security-surface-scan.ts",
-    "check": "./scripts/check.sh",
+    "sql:scan": "bash scripts/check-no-string-sql.sh",
+    "check": "bash scripts/check.sh",
     "db:migrate": "npm run db:migrate --workspace=@rayhealth/core",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"

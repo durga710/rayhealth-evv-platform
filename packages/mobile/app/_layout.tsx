@@ -4,13 +4,14 @@ import { LogBox, View } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../src/lib/AuthContext';
+import { useOfflineEvvSync } from '../src/lib/use-offline-sync';
 import AppAlertProvider from '../src/features/common/alerts/AppAlertProvider';
 import { showAppToast } from '../src/features/common/alerts/appAlert';
 
 // Expo Go (SDK 53+) removed remote push support, so expo-notifications' push-
 // token auto-registration logs a warning the moment the module is imported.
 // We only use LOCAL scheduled notifications (shift alerts), which still work in
-// Expo Go — so this message is expected noise *only* while running inside Expo
+// Expo Go, so this message is expected noise *only* while running inside Expo
 // Go. It does NOT fire in a dev/production build, where remote push is
 // available, so scope the suppression to Expo Go to keep real push problems
 // visible everywhere else.
@@ -63,6 +64,11 @@ function RootContent() {
   const router = useRouter();
   const { isAuthenticated, sessionRevokedMessage } = useAuth();
 
+  // Replay offline-captured EVV punches on launch, on connectivity regained,
+  // and on foreground, only while authenticated (replaying into 401s would
+  // waste attempts before the session is restored).
+  useOfflineEvvSync(isAuthenticated);
+
   // Session-revoked notices now route through the branded toast system
   // instead of the old bespoke slate-gray banner.
   useEffect(() => {
@@ -73,8 +79,9 @@ function RootContent() {
 
   // When the session is lost (logout, or a mid-use 401 revoke), reset the whole
   // stack to login. The (tabs) layout already redirects, but screens pushed
-  // OVER the tabs — /clockin, /training, /visit-detail, /profile-details,
-  // /change-password — would otherwise strand the user on a now-unauthorized
+  // OVER the tabs, /clockin, /training, /course-player, /visit-detail,
+  // /profile-details, /change-password, would otherwise strand the user on a
+  // now-unauthorized
   // screen. Fire only on the authenticated→unauthenticated transition.
   const prevAuth = useRef(isAuthenticated);
   useEffect(() => {
@@ -113,6 +120,7 @@ function RootContent() {
         <Stack.Screen name="select-agency" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="clockin" options={{ headerShown: false }} />
         <Stack.Screen name="training" options={{ headerShown: false }} />
+        <Stack.Screen name="course-player" options={{ headerShown: false }} />
         <Stack.Screen name="visit-detail" options={{ headerShown: false }} />
         <Stack.Screen name="visit-tasks" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="profile-details" options={{ headerShown: false }} />

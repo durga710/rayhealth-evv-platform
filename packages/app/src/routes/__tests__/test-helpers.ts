@@ -16,6 +16,11 @@ export function makeToken(
   caregiverId?: string,
   tokenJti: string | null = TEST_MOBILE_JTI,
 ): string {
+  // A `jti` is now mandatory on every bearer token (authContext rejects tokens
+  // without one and looks the jti up against mobile_sessions). The shared test
+  // setup stubs MobileSessionRepository.findActiveByJti to treat any jti as an
+  // active session, so route tests keep passing without a live database.
+  // Pass tokenJti: null to mint a jti-less token for rejection tests.
   const claims = {
     sub: userId,
     agencyId,

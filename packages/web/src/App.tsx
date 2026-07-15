@@ -11,7 +11,7 @@ import { CaregiverLayout } from './features/caregiver/CaregiverLayout.js';
 import { AdminAssistant } from './features/support/AdminAssistant.js';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary.js';
 
-// Lazy-loaded route leaves — each becomes its own chunk. The page components are
+// Lazy-loaded route leaves, each becomes its own chunk. The page components are
 // NAMED exports, so map the named export onto `default` for React.lazy.
 const AgencySetupPage = lazy(() => import('./features/agency/AgencySetupPage.js').then((m) => ({ default: m.AgencySetupPage })));
 const GoLiveReadinessPage = lazy(() => import('./features/agency/GoLiveReadinessPage.js').then((m) => ({ default: m.GoLiveReadinessPage })));
@@ -43,6 +43,7 @@ const LaunchPage = lazy(() => import('./features/marketing/site/LaunchPage.js').
 const AdsPage = lazy(() => import('./features/marketing/site/AdsPage.js').then((m) => ({ default: m.AdsPage })));
 const StatusPage = lazy(() => import('./features/marketing/site/StatusPage.js').then((m) => ({ default: m.StatusPage })));
 const PrivacyPage = lazy(() => import('./features/marketing/site/PrivacyPage.js').then((m) => ({ default: m.PrivacyPage })));
+const TrustCenterPage = lazy(() => import('./features/marketing/site/TrustCenterPage.js').then((m) => ({ default: m.TrustCenterPage })));
 const TermsPage = lazy(() => import('./features/marketing/site/TermsPage.js').then((m) => ({ default: m.TermsPage })));
 const SchedulingPage = lazy(() => import('./features/marketing/site/SchedulingPage.js').then((m) => ({ default: m.SchedulingPage })));
 const EvvSolutionPage = lazy(() => import('./features/marketing/site/EvvSolutionPage.js').then((m) => ({ default: m.EvvSolutionPage })));
@@ -60,6 +61,7 @@ const DashboardPage = lazy(() => import('./features/admin/DashboardPage.js').the
 const CommandCenterPage = lazy(() => import('./features/admin/CommandCenterPage.js').then((m) => ({ default: m.CommandCenterPage })));
 const TodayBoardPage = lazy(() => import('./features/admin/TodayBoardPage.js').then((m) => ({ default: m.TodayBoardPage })));
 const AuditEventsPage = lazy(() => import('./features/audit/AuditEventsPage.js').then((m) => ({ default: m.AuditEventsPage })));
+const AuditPacketPage = lazy(() => import('./features/compliance-engine/AuditPacketPage.js').then((m) => ({ default: m.AuditPacketPage })));
 const LearningHubPage = lazy(() => import('./features/learning/LearningHubPage.js').then((m) => ({ default: m.LearningHubPage })));
 const LearningPortalPage = lazy(() => import('./features/learning/LearningPortalPage.js').then((m) => ({ default: m.LearningPortalPage })));
 const CourseEditorPage = lazy(() => import('./features/learning/CourseEditorPage.js').then((m) => ({ default: m.CourseEditorPage })));
@@ -136,7 +138,7 @@ function ProtectedRoute() {
 
 /**
  * Allows only admin and coordinator roles into the admin portal.
- * Caregivers and family users are redirected to /portal — they must
+ * Caregivers and family users are redirected to /portal, they must
  * use the mobile app and have no business in the admin shell.
  */
 function AdminRoute() {
@@ -166,7 +168,7 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// Inline 16x16 stroke icons — kept tiny so the sidebar reads as text-first.
+// Inline 16x16 stroke icons, kept tiny so the sidebar reads as text-first.
 const icons = {
   dashboard: (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -344,7 +346,7 @@ const navGroupDefs: NavGroupDef[] = [
       { to: '/admin/compliance-engine/claims', label: 'Claims', icon: icons.templates },
       { to: '/admin/compliance-engine/remittances', label: 'Remittance (ERA)', icon: icons.archive },
       { to: '/admin/compliance-engine/evv-submission', label: 'EVV Submission', icon: icons.visit },
-      { to: '/admin/compliance-engine/hhaexchange-submission', label: 'EVV — HHAeXchange', icon: icons.visit },
+      { to: '/admin/compliance-engine/hhaexchange-submission', label: 'EVV. HHAeXchange', icon: icons.visit },
       { to: '/admin/compliance-engine/clearinghouse', label: 'Clearinghouse', icon: icons.templates },
       { to: '/admin/compliance-engine/credentials', label: 'Credentials', icon: icons.staff },
     ],
@@ -354,6 +356,7 @@ const navGroupDefs: NavGroupDef[] = [
     allowedRoles: ['admin'],
     items: [
       { to: '/admin/audit-events', label: 'Audit Events', icon: icons.audit },
+      { to: '/admin/audit-packet', label: 'Audit Packet', icon: icons.audit },
       { to: '/admin/audit-retention', label: 'Audit Retention', icon: icons.archive },
     ],
   },
@@ -498,7 +501,7 @@ function AdminLayout() {
         </div>
       </main>
 
-      {/* Floating admin assistant — only inside /admin/*, authenticated. */}
+      {/* Floating admin assistant, only inside /admin/*, authenticated. */}
       <AdminAssistant />
     </div>
   );
@@ -516,8 +519,9 @@ export function App() {
       <Route path="/ads" element={<AdsPage />} />
       <Route path="/status" element={<StatusPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/trust" element={<TrustCenterPage />} />
       <Route path="/terms" element={<TermsPage />} />
-      {/* Marketing site — Platform / Solutions / Resources content pages */}
+      {/* Marketing site. Platform / Solutions / Resources content pages */}
       <Route path="/rayverify" element={<RayVerifyPage />} />
       <Route path="/platform/ai-automation" element={<AiAutomationPage />} />
       <Route path="/platform/compliance" element={<CompliancePlatformPage />} />
@@ -531,7 +535,7 @@ export function App() {
       <Route path="/compliance/hipaa" element={<HipaaCompliancePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      {/* Hidden platform super-admin console — intentionally not in any nav. */}
+      {/* Hidden platform super-admin console, intentionally not in any nav. */}
       <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -539,7 +543,7 @@ export function App() {
       <Route path="/apply/:agencyId" element={<ApplyPage />} />
       <Route path="/interview/:token" element={<InterviewPage />} />
 
-      {/* Caregiver/family portal — full self-service shell. Admins redirected to /admin by CaregiverLayout. */}
+      {/* Caregiver/family portal, full self-service shell. Admins redirected to /admin by CaregiverLayout. */}
       <Route path="/portal" element={<ProtectedRoute />}>
         <Route element={<CaregiverLayout />}>
           <Route index element={<CaregiverDashboard />} />
@@ -554,7 +558,7 @@ export function App() {
         </Route>
       </Route>
 
-      {/* Admin portal — admin and coordinator roles only. */}
+      {/* Admin portal, admin and coordinator roles only. */}
       <Route path="/admin" element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="agency" element={<AgencySetupPage />} />
@@ -569,6 +573,8 @@ export function App() {
           <Route path="recurring-schedules" element={<RecurringSchedulesPage />} />
           <Route path="review" element={<VisitReviewPage />} />
           <Route path="audit-events" element={<AuditEventsPage />} />
+          <Route path="audit-packet" element={<AuditPacketPage />} />
+          <Route path="audit-packet/:visitId" element={<AuditPacketPage />} />
           <Route path="audit-retention" element={<AuditRetentionPage />} />
           <Route path="learning" element={<LearningHubPage />} />
           <Route path="learning/courses/new" element={<CourseEditorPage />} />

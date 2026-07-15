@@ -6,7 +6,7 @@
  * URL, Provider ID, and credentials are per-agency config (set during onboarding)
  * so a single deploy serves many agencies on distinct Sandata instances.
  *
- * IMPORTANT — payload contract: the exact field names below follow Sandata's
+ * IMPORTANT, payload contract: the exact field names below follow Sandata's
  * "Alternate Data Collection" / Open-Model interface, but each state's Sandata
  * instance (PA DHS included) issues its own integration spec + sandbox. Treat
  * `buildSandataApiPayload` as the single place to align field names/value
@@ -16,6 +16,7 @@
  */
 
 import { basicAuth, postJson } from './http.js';
+import { assertSafeOutboundUrl } from './url-guard.js';
 import type {
   AggregatorSubmitResult,
   IntegrationCredentials,
@@ -27,7 +28,7 @@ import type { SandataCaregiverMapping, SandataServiceMapping } from '../services
 export interface SandataClientConfig {
   /** Operator flips this true once Provider ID, mappings, and BAA are in place. */
   enabled: boolean;
-  /** e.g. https://uat-api.sandata.com/interface/v3 — per state, per environment. */
+  /** e.g. https://uat-api.sandata.com/interface/v3, per state, per environment. */
   apiBaseUrl: string | null;
   /** 9-digit Sandata Provider ID assigned to the agency. */
   providerId: string | null;
@@ -148,6 +149,16 @@ export async function submitVisits(
     return { kind: 'ok', batchId: 'noop-empty', acks: skipped };
   }
 
+  // Defense-in-depth against SSRF: refuse to call a non-https or
+  // private/internal URL even if one was somehow stored. The config route
+  // validates this on write; this guards stored/legacy values too.
+  try {
+    assertSafeOutboundUrl(`${baseUrl}/visits`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'unsafe URL';
+    return { kind: 'error', message: `Sandata request blocked: ${message}`, retryable: false };
+  }
+
   let res;
   try {
     res = await postJson(`${baseUrl}/visits`, payload, { headers: authHeaders(creds) });
@@ -158,11 +169,13 @@ export async function submitVisits(
 
   if (!res.ok) {
     const retryable = res.status >= 500;
-    const detail = typeof res.text === 'string' && res.text ? res.text.slice(0, 300) : `HTTP ${res.status}`;
+    // Do NOT reflect the raw upstream response body back to the caller, with a
+    // caller-influenced base URL that would be a reflected-SSRF read primitive.
+    // Report only the status code; the full body is available server-side.
     if (res.status === 401 || res.status === 403) {
       return { kind: 'error', message: `Sandata authentication failed (HTTP ${res.status})`, retryable: false };
     }
-    return { kind: 'error', message: `Sandata rejected the batch: ${detail}`, retryable };
+    return { kind: 'error', message: `Sandata rejected the batch (HTTP ${res.status})`, retryable };
   }
 
   const data = (res.body ?? {}) as SandataApiResult;

@@ -4,16 +4,29 @@ import { SessionRepository, type AppRole } from '@rayhealth/core';
 import { readCookie, SESSION_COOKIE_NAME } from '../security/cookies.js';
 import { hashOpaqueToken } from '../security/token-hashing.js';
 import { getMobileSessionStore } from '../services/mobile-session-store.js';
+import { assertCronAuthorized } from './cron-auth.js';
 
 interface JwtPayload {
   sub: string;
   agencyId: string;
   role: AppRole;
   caregiverId?: string;
+  /** Standard JWT id, matches a mobile_sessions row so the token is revocable. */
   jti?: string;
 }
 
 export async function authContext(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Vercel Cron invokes scheduled endpoints with GET and the deployment
+  // shared secret (Bearer CRON_SECRET) instead of a session. Pass through
+  // with NO req.auth: every cron-capable route re-verifies the secret
+  // itself, capability-gated routes fail closed without req.auth, and the
+  // pass-through is restricted to safe methods so no mutating request ever
+  // proceeds without an auth context.
+  if ((req.method === 'GET' || req.method === 'HEAD') && assertCronAuthorized(req)) {
+    next();
+    return;
+  }
+
   const sessionToken = readCookie(req, SESSION_COOKIE_NAME);
   if (sessionToken) {
     try {
@@ -49,7 +62,7 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
   }
 
   const token = authHeader.slice(7);
-  // JWT_SECRET is validated at startup in createApp() — safe to assert here.
+  // JWT_SECRET is validated at startup in createApp(), safe to assert here.
   const secret = process.env.JWT_SECRET!;
 
   try {
@@ -57,6 +70,11 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
     // algorithm the token declares, which enables the classic "alg=none"
     // bypass and the RS256-to-HS256 key-confusion attack.
     const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtPayload;
+
+    // Mobile bearer tokens are revocable: every issued token carries a `jti`
+    // backed by a mobile_sessions row. Reject any token without a jti, or whose
+    // row is missing/revoked/expired, so logout and password-reset actually
+    // terminate the session (a valid signature alone is not sufficient).
     if (!payload.jti) {
       res.status(401).json({ message: 'Invalid or expired token' });
       return;
@@ -69,6 +87,7 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
       res.status(401).json({ message: 'Invalid or expired token' });
       return;
     }
+
     req.auth = {
       agencyId: payload.agencyId,
       role: payload.role,

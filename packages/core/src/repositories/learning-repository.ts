@@ -17,6 +17,10 @@ import type {
   NewCourseEnrollment,
   NewLearningCourse,
 } from '../domain/learning.js';
+import type {
+  CaregiverTrainingRecord,
+  TrainingCompletionRecord,
+} from '../services/training-evidence.js';
 
 type InsightContext = 'due' | 'expired' | 'orientation' | 'stalled' | 'cert_expiring';
 
@@ -134,22 +138,45 @@ export class LearningRepository {
     return rows.map((r: Record<string, unknown>) => this.mapEnrollment(r));
   }
 
-  async findEnrollment(caregiverId: string, courseId: string): Promise<CourseEnrollment | undefined> {
+  /**
+   * Look up an enrollment by (caregiver, course). Always scoped by `agencyId`
+   * so it can never return, or dedup against, another tenant's enrollment row.
+   */
+  async findEnrollment(
+    caregiverId: string,
+    courseId: string,
+    agencyId: string,
+  ): Promise<CourseEnrollment | undefined> {
     const row = await this.db('course_enrollments')
-      .where({ caregiver_id: caregiverId, course_id: courseId })
+      .where({ caregiver_id: caregiverId, course_id: courseId, agency_id: agencyId })
       .first();
     return row ? this.mapEnrollment(row as Record<string, unknown>) : undefined;
   }
 
-  async markInProgress(enrollmentId: string): Promise<void> {
-    await this.db('course_enrollments')
-      .where({ id: enrollmentId })
+  /**
+   * Mark an enrollment in-progress. Scoped by `agencyId` so a caller can only
+   * transition enrollments owned by their own agency. Returns true when a row
+   * was updated, false when the enrollment doesn't exist in this agency (or
+   * wasn't in a startable state) so the route can 404 rather than silently no-op.
+   */
+  async markInProgress(enrollmentId: string, agencyId: string): Promise<boolean> {
+    const updated = await this.db('course_enrollments')
+      .where({ id: enrollmentId, agency_id: agencyId })
       .whereIn('status', ['not_started', 'overdue'])
       .update({ status: 'in_progress', updated_at: this.db.fn.now() });
+    return updated > 0;
   }
 
   async enroll(data: NewCourseEnrollment): Promise<CourseEnrollment> {
-    const existing = await this.findEnrollment(data.caregiverId, data.courseId);
+    // The caregiver must belong to the enrolling agency, prevents creating an
+    // enrollment row that points at another tenant's caregiver.
+    const caregiver = await this.db('caregivers')
+      .where({ id: data.caregiverId, agency_id: data.agencyId })
+      .first('id');
+    if (!caregiver) {
+      throw new Error('Caregiver not found in this agency');
+    }
+    const existing = await this.findEnrollment(data.caregiverId, data.courseId, data.agencyId);
     if (existing) return existing;
     const [row] = await this.db('course_enrollments')
       .insert({
@@ -165,9 +192,14 @@ export class LearningRepository {
 
   // ---------- Completions ----------
 
-  async recordCompletion(data: NewCourseCompletion): Promise<CourseCompletion> {
+  async recordCompletion(data: NewCourseCompletion, agencyId: string): Promise<CourseCompletion> {
     return this.db.transaction(async (trx) => {
-      const enrollment = await trx('course_enrollments').where({ id: data.enrollmentId }).first();
+      // Scope the enrollment lookup by agency so a caller can only complete an
+      // enrollment owned by their own agency, the enrollment id alone is not a
+      // sufficient authorization token.
+      const enrollment = await trx('course_enrollments')
+        .where({ id: data.enrollmentId, agency_id: agencyId })
+        .first();
       if (!enrollment) throw new Error(`Enrollment ${data.enrollmentId} not found`);
 
       const course = await trx('learning_courses').where({ id: data.courseId }).first();
@@ -268,6 +300,61 @@ export class LearningRepository {
     });
 
     return { caregiverId, enrollments: items, isCompliant: allCompliant };
+  }
+
+  /**
+   * Full training history for one caregiver in one agency, for audit
+   * evidence: every enrolled course plus its complete (append-only)
+   * completion log, newest first. Point-in-time evaluation happens in
+   * services/training-evidence.ts.
+   */
+  async getTrainingRecordsForCaregiver(
+    caregiverId: string,
+    agencyId: string,
+  ): Promise<CaregiverTrainingRecord[]> {
+    const rows = await this.db('course_enrollments as e')
+      .join('learning_courses as c', 'c.id', 'e.course_id')
+      .where('e.caregiver_id', caregiverId)
+      .andWhere('e.agency_id', agencyId)
+      .orderBy('c.code')
+      .select(
+        'c.id as course_id',
+        'c.code',
+        'c.title',
+        'c.required',
+        'c.cadence',
+        'c.expires_after_days',
+        'e.due_at',
+      );
+    if (rows.length === 0) return [];
+
+    const completionRows = await this.db('course_completions')
+      .where('caregiver_id', caregiverId)
+      .whereIn('course_id', rows.map((r: Record<string, unknown>) => String(r.course_id)))
+      .orderBy('completed_at', 'desc')
+      .select('course_id', 'completed_at', 'score');
+
+    const byCourse = new Map<string, TrainingCompletionRecord[]>();
+    for (const c of completionRows as Record<string, unknown>[]) {
+      const key = String(c.course_id);
+      const list = byCourse.get(key) ?? [];
+      list.push({
+        completedAt: new Date(c.completed_at as string).toISOString(),
+        score: c.score == null ? null : Number(c.score),
+      });
+      byCourse.set(key, list);
+    }
+
+    return (rows as Record<string, unknown>[]).map((r) => ({
+      courseId: String(r.course_id),
+      code: String(r.code),
+      title: String(r.title),
+      required: Boolean(r.required),
+      cadence: String(r.cadence),
+      expiresAfterDays: r.expires_after_days == null ? null : Number(r.expires_after_days),
+      dueAt: r.due_at == null ? null : new Date(r.due_at as string).toISOString(),
+      completions: byCourse.get(String(r.course_id)) ?? [],
+    }));
   }
 
   async getCourseAnalytics(agencyId: string, now = new Date()): Promise<CourseAnalyticsEnvelope> {
@@ -500,7 +587,7 @@ export class LearningRepository {
         status: effectiveStatus,
         reason:
           effectiveStatus === 'expired'
-            ? `${r.course_title} expired — recertify before scheduling`
+            ? `${r.course_title} expired, recertify before scheduling`
             : effectiveStatus === 'overdue'
             ? `${r.course_title} is overdue`
             : `${r.course_title} not yet completed`,

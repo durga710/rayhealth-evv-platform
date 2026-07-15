@@ -12,13 +12,28 @@ import type { EvvVisit } from '../domain/evv.js';
 export class EvvRepository {
   constructor(private readonly db: Knex) {}
 
+  /**
+   * The open (not-yet-clocked-out) visit for an assignment, if any. Used to
+   * stop a second concurrent clock-in on the same assignment, duplicate open
+   * visits produce overlapping/duplicate billed EVV time. Returns undefined
+   * when there is no open visit.
+   */
+  async findOpenVisitForAssignment(assignmentId: string): Promise<EvvVisit | undefined> {
+    const row = await this.db('evv_visits')
+      .where({ assignment_id: assignmentId })
+      .whereNull('clock_out_time')
+      .orderBy('clock_in_time', 'desc')
+      .first();
+    return row ? this.mapRowToVisit(row) : undefined;
+  }
+
   async createVisit(visit: EvvVisit): Promise<EvvVisit> {
     const [inserted] = await this.db('evv_visits')
       .insert({
         id: visit.id ?? crypto.randomUUID(),
         assignment_id: visit.assignmentId,
         caregiver_id: visit.caregiverId,
-        // Cures-Act #1 / #2 — service code and beneficiary snapshotted at
+        // Cures-Act #1 / #2, service code and beneficiary snapshotted at
         // clock-in. Both are nullable in the column but the Cures-Act
         // submission to PA aggregators requires both, so the route layer
         // supplies them on creation.
@@ -37,7 +52,7 @@ export class EvvRepository {
 
   /**
    * Update a visit only if it belongs to the agency. Returns null when the
-   * visit does not exist OR is on another tenant — callers cannot distinguish
+   * visit does not exist OR is on another tenant, callers cannot distinguish
    * the two cases (intentional: leaks neither existence nor tenancy).
    */
   async updateVisit(
@@ -54,6 +69,11 @@ export class EvvRepository {
     if (visit.clockOutLocation)
       updateData.clock_out_location = JSON.stringify(visit.clockOutLocation);
     if (visit.status) updateData.status = visit.status;
+    if (visit.tasks !== undefined)
+      updateData.tasks = visit.tasks === null ? null : JSON.stringify(visit.tasks);
+    if (visit.visitNote !== undefined) updateData.visit_note = visit.visitNote;
+    if (visit.signature !== undefined)
+      updateData.signature = visit.signature === null ? null : JSON.stringify(visit.signature);
 
     const allowedIds = this.db('evv_visits as v')
       .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
@@ -71,7 +91,7 @@ export class EvvRepository {
 
   /**
    * Visits within an agency, most-recent first. This table grows without bound
-   * over time, and this method backs a display list (GET /evv/visits) — not the
+   * over time, and this method backs a display list (GET /evv/visits), not the
    * aggregator export (see getVisitsForExport, which is date-ranged). A generous
    * safety ceiling caps the response so a single request can't stream the entire
    * multi-year visit corpus (PHI + GPS) or exhaust memory as the table grows;
@@ -141,7 +161,7 @@ export class EvvRepository {
   }
 
   /**
-   * COUNT of visits in an agency — for dashboard tiles. Avoids pulling every
+   * COUNT of visits in an agency, for dashboard tiles. Avoids pulling every
    * (PHI-bearing) visit row across the wire just to read `.length`.
    */
   async countVisitsForAgency(agencyId: string): Promise<number> {
@@ -319,8 +339,23 @@ export class EvvRepository {
           ? JSON.parse(outLoc)
           : (outLoc as EvvVisit['clockOutLocation']),
       status: row.status as EvvVisit['status'],
+      tasks:
+        typeof row.tasks === 'string'
+          ? JSON.parse(row.tasks)
+          : ((row.tasks as EvvVisit['tasks']) ?? null),
+      visitNote: (row.visit_note as string | null | undefined) ?? null,
+      signature:
+        typeof row.signature === 'string'
+          ? JSON.parse(row.signature)
+          : ((row.signature as EvvVisit['signature']) ?? null),
       sandataStatus: (row.sandata_status as EvvVisit['sandataStatus']) ?? null,
-      sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null
+      sandataConfirmationId: (row.sandata_confirmation_id as string | null) ?? null,
+      hhaexchangeStatus: (row.hhaexchange_status as EvvVisit['hhaexchangeStatus']) ?? null,
+      hhaexchangeConfirmationId: (row.hhaexchange_confirmation_id as string | null) ?? null,
+      createdAt:
+        row.created_at instanceof Date
+          ? row.created_at.toISOString()
+          : ((row.created_at as string | undefined) ?? undefined)
     };
   }
 
@@ -331,7 +366,7 @@ export class EvvRepository {
    * cannot update a visit from a different agency.
    */
   /**
-   * Bulk-mark every verified visit in a date range as `submitted` — the
+   * Bulk-mark every verified visit in a date range as `submitted`, the
    * write-back for "this batch was sent to the Sandata aggregator". Only
    * advances visits that are not yet in the aggregator pipeline
    * (sandata_status IS NULL or 'pending'); never downgrades an already

@@ -70,6 +70,8 @@ jobs:
           cache: 'npm'
       - run: npm ci --no-audit --no-fund
       - run: npm run security:scan
+      - name: No string-built SQL (parameterized-query guard)
+        run: npm run sql:scan
 
   test-core:
     name: test-core
@@ -105,6 +107,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci --no-audit --no-fund
+      # app tests import @rayhealth/core via its compiled dist; build the
+      # workspace deps first now that dist is no longer committed.
+      - run: npx turbo build --filter=@rayhealth/app^...
       - run: npx vitest run
         working-directory: packages/app
 

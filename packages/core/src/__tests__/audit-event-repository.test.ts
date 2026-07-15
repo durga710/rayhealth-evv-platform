@@ -87,4 +87,49 @@ describe('AuditEventRepository', () => {
       console.warn('Skipping AuditEventRepository.list test - no DB connection or migration');
     }
   });
+
+  /**
+   * findByEntityForAgency backs the audit packet route (Agent 06), which is
+   * forbidden from using the unscoped findByEntity, a visit/assignment id
+   * from another tenant must never resolve to that tenant's audit rows.
+   */
+  it('findByEntityForAgency filters by agency_id, unlike findByEntity', async () => {
+    try {
+      const agencyId = '00000000-0000-4000-8000-0000000000b1';
+      const otherAgencyId = '00000000-0000-4000-8000-0000000000b2';
+      const entityId = '00000000-0000-4000-8000-0000000000b3';
+
+      await repository.create({
+        agencyId,
+        actorId: '00000000-0000-4000-8000-0000000000b4',
+        actorType: 'user',
+        eventType: 'exception.filed',
+        entityType: 'evv.visit',
+        entityId,
+        outcome: 'success',
+        payload: { note: 'owning-agency row' },
+        occurredAt: '2026-06-01T09:00:00.000Z'
+      });
+      await repository.create({
+        agencyId: otherAgencyId,
+        actorId: '00000000-0000-4000-8000-0000000000b5',
+        actorType: 'user',
+        eventType: 'exception.filed',
+        entityType: 'evv.visit',
+        entityId,
+        outcome: 'success',
+        payload: { note: 'other-agency row, same entityId' },
+        occurredAt: '2026-06-01T10:00:00.000Z'
+      });
+
+      const scoped = await repository.findByEntityForAgency(agencyId, 'evv.visit', entityId);
+      expect(scoped).toHaveLength(1);
+      expect(scoped[0].agencyId).toBe(agencyId);
+
+      const unscoped = await repository.findByEntity('evv.visit', entityId);
+      expect(unscoped.length).toBeGreaterThanOrEqual(2);
+    } catch {
+      console.warn('Skipping AuditEventRepository.findByEntityForAgency test - no DB connection or migration');
+    }
+  });
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { getJson, postText } from '../../lib/api-client.js';
+import { getJson, postJson, postText } from '../../lib/api-client.js';
 import { ComplianceModuleLayout, type KpiTile } from './ComplianceModuleLayout.js';
 
 interface PreviewClaim {
@@ -26,6 +26,26 @@ interface PostResponse {
   unmatched: string[];
   totalPaidCents: number;
   traceNumber: string | null;
+}
+
+interface SweepSummary {
+  agenciesProcessed: number;
+  filesIngested: number;
+  filesSkipped: number;
+  claimsMatched: number;
+  errors: string[];
+  timedOut: boolean;
+}
+
+interface IngestedFile {
+  id: string;
+  fileName: string;
+  transport: string;
+  claimCount: number;
+  matchedCount: number;
+  totalPaidCents: number;
+  traceNumber: string | null;
+  ingestedAt: string;
 }
 
 interface RemittanceRow {
@@ -72,14 +92,40 @@ export function RemittancePage() {
   const [result, setResult] = useState<PostResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<RemittanceRow[]>([]);
+  const [ingestedFiles, setIngestedFiles] = useState<IngestedFile[]>([]);
+  const [sweeping, setSweeping] = useState(false);
+  const [sweepMsg, setSweepMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const loadHistory = () => {
     getJson<RemittanceRow[]>('/api/billing/remittances')
       .then((d) => setHistory(d || []))
       .catch(() => setHistory([]));
+    getJson<IngestedFile[]>('/api/billing/remittances/files')
+      .then((d) => setIngestedFiles(d || []))
+      .catch(() => setIngestedFiles([]));
   };
   useEffect(loadHistory, []);
+
+  const runSweep = async () => {
+    setSweeping(true);
+    setSweepMsg(null);
+    try {
+      const summary = await postJson<SweepSummary>('/api/billing/remittances/sweep', {});
+      const text =
+        summary.filesIngested > 0
+          ? `Fetched ${summary.filesIngested} file${summary.filesIngested === 1 ? '' : 's'}, matched ${summary.claimsMatched} claim${summary.claimsMatched === 1 ? '' : 's'}.`
+          : summary.errors.length > 0
+            ? summary.errors[0]
+            : 'No new remittance files at the clearinghouse.';
+      setSweepMsg({ tone: summary.errors.length > 0 && summary.filesIngested === 0 ? 'error' : 'success', text });
+      loadHistory();
+    } catch (err) {
+      setSweepMsg({ tone: 'error', text: err instanceof Error ? err.message : 'Fetch failed' });
+    } finally {
+      setSweeping(false);
+    }
+  };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPreview(null);
@@ -147,14 +193,69 @@ export function RemittancePage() {
       tagline="Post payer 835 electronic remittance advice back onto claims. Matched claims advance to paid / denied with the payer's adjustment reasons; the denial-risk loop closes."
       status="live"
       kpis={kpis}
-      dataSources={['claims (matched on control_number)', 'claim_remittances']}
+      dataSources={['claims (matched on control_number)', 'claim_remittances', 'clearinghouse_remittance_files']}
       nextSteps={[
-        'Auto-ingest 835 files from the clearinghouse SFTP drop',
+        'Remittances arrive automatically every 6 hours from the configured clearinghouse; use Fetch now for an immediate pull.',
         'Service-line (SVC) level posting in addition to claim level',
         'CARC/RARC code dictionary for human-readable denial reasons',
       ]}
-      related={[{ label: 'Claims', to: '/admin/compliance-engine/claims' }]}
+      related={[{ label: 'Claims', to: '/admin/compliance-engine/claims' }, { label: 'Clearinghouse', to: '/admin/compliance-engine/clearinghouse' }]}
     >
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.6rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>Automatic retrieval</h3>
+          <button
+            type="button"
+            style={{ ...primaryBtn, opacity: sweeping ? 0.55 : 1 }}
+            disabled={sweeping}
+            onClick={runSweep}
+          >
+            {sweeping ? 'Fetching…' : 'Fetch from clearinghouse now'}
+          </button>
+        </div>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0.4rem 0 0' }}>
+          Pulls pending 835 files from the configured clearinghouse transport and posts them. Files
+          already ingested are skipped automatically.
+        </p>
+        {sweepMsg && (
+          <div
+            role={sweepMsg.tone === 'error' ? 'alert' : 'status'}
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.65rem 0.9rem',
+              borderRadius: 8,
+              background: sweepMsg.tone === 'error' ? 'var(--color-danger-bg, #fef2f2)' : 'var(--color-success-bg, #ecfdf5)',
+              color: sweepMsg.tone === 'error' ? 'var(--color-danger, #BE123C)' : 'var(--color-success, #047857)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+            }}
+          >
+            {sweepMsg.text}
+          </div>
+        )}
+        {ingestedFiles.length > 0 && (
+          <table className="data-table" style={{ marginTop: '0.9rem' }}>
+            <thead>
+              <tr>
+                <th>File</th><th>Transport</th><th>Claims</th><th>Matched</th><th>Total paid</th><th>Ingested</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ingestedFiles.map((f) => (
+                <tr key={f.id}>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{f.fileName}</td>
+                  <td style={{ textTransform: 'uppercase', fontSize: '0.8rem' }}>{f.transport}</td>
+                  <td>{f.claimCount}</td>
+                  <td>{f.matchedCount}</td>
+                  <td>{usd(f.totalPaidCents)}</td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{new Date(f.ingestedAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
       <div style={card}>
         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>Upload an 835</h3>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0.4rem 0 1rem' }}>
@@ -229,7 +330,7 @@ export function RemittancePage() {
               fontWeight: 600,
             }}
           >
-            Posted {result.posted} remittances — {result.matched} matched to claims,
+            Posted {result.posted} remittances, {result.matched} matched to claims,
             {' '}{result.unmatched.length} unmatched. Total paid {usd(result.totalPaidCents)}.
           </div>
         )}
@@ -269,7 +370,7 @@ export function RemittancePage() {
                   <td>{usd(r.chargeCents)}</td>
                   <td>{usd(r.paidCents)}</td>
                   <td>{usd(r.adjustmentCents)}</td>
-                  <td style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{r.traceNumber ?? '—'}</td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{r.traceNumber ?? '-'}</td>
                 </tr>
               ))}
             </tbody>

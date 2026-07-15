@@ -1,5 +1,7 @@
 # RayHealth EVV — Disaster Recovery Runbook
 
+**Authored by Durga Ghimeray**
+
 **Version:** 1.0
 **Effective:** 2026-05-09
 **Owner:** RayHealth EVV Security Officer
@@ -27,8 +29,9 @@ data-loss, corruption, or compute-layer outage event. It fulfills HIPAA
 | Transactional email | Resend | sending domain `send.rayhealthevv.com` |
 
 Code lives in GitHub: `github.com/durga710/rayhealth-evv-platform`. Vercel
-deploys on push to `main`. Pre-built `dist/` artifacts are committed so
-Vercel skips the build step (`vercel.json` `buildCommand` is a no-op).
+deploys on push to `main`. Vercel installs with `npm ci` and builds the
+web/app dependency graph through `vercel.json`:
+`npx turbo build --filter=@rayhealth/web... --filter=@rayhealth/app...`.
 
 ---
 
@@ -155,7 +158,7 @@ becomes a Neon support escalation.
 | Schema migrations | `packages/core/src/migrations/schema.ts` (single idempotent file in repo) | Same as code |
 | Database WAL | Neon PITR | 7 days (default), 30 days (Scale tier) |
 | Database internal | Neon nightly backups | per Neon retention policy |
-| Pre-built `dist/` artifacts | Committed to repo | Same as code |
+| Build artifacts | Rebuilt by Vercel from source during deploy | Same as code + dependency lockfile |
 | Vercel env vars | Manually exported quarterly to encrypted password manager | up to one quarter old in worst case |
 | Mobile app source | `packages/mobile` in this monorepo; Expo/EAS release metadata is versioned beside it | Same as code |
 

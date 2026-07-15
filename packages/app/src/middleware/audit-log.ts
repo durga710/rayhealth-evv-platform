@@ -36,7 +36,21 @@ const PHI_GET_PATHS = [
   /\/templates(?:\/|$)/,
   /\/staff(?:\/|$)/,
   /\/maintenance(?:\/|$)/,
-  /\/exports(?:\/|$)/ // CSV downloads — Cures-Act submission rows + PHI
+  /\/exports(?:\/|$)/, // CSV downloads. Cures-Act submission rows + PHI
+  // Caregiver mobile schedule reads, client names, home address, and home
+  // GPS coordinates. Read by every caregiver every shift; the highest-volume
+  // PHI read in the product. The `[/?]|$` boundary also matches a trailing
+  // query string (e.g. /mobile/caregiver/schedule?days=7).
+  /\/mobile\/caregiver(?:[/?]|$)/,
+  // Admin Command Center visit board, client names. Its /command-center
+  // /summary sibling is count-only and is deliberately NOT listed here.
+  /\/command-center\/today(?:[/?]|$)/,
+  // Compliance Engine open-exceptions list, client + caregiver names. Its
+  // /exceptions/resolution sibling is count-only and is excluded.
+  /\/exceptions\/list(?:[/?]|$)/,
+  // Billing claims. Medicaid member ids and client identifiers exposed on the
+  // claim detail and 837 generation reads.
+  /\/claims(?:[/?]|$)/
 ];
 
 // Paths that should record `phi.export` (bulk PHI extraction) rather than
@@ -56,7 +70,7 @@ function extractResource(path: string): { entityType: string; entityId?: string 
   return { entityType, entityId: idSegment };
 }
 
-// Server-generated correlation id. Caller-provided x-request-id is IGNORED —
+// Server-generated correlation id. Caller-provided x-request-id is IGNORED , 
 // trusting the client lets a malicious caller forge or collide audit ids.
 function correlationFor(req: Request, res: Response): string {
   const cached = (req as unknown as { _serverCorrelationId?: string })._serverCorrelationId;
@@ -90,9 +104,18 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
 
     try {
       const { entityType, entityId } = extractResource(path);
-      const failed = res.statusCode >= 400;
+      const status = res.statusCode;
+      // Only a genuine authorization failure (401 unauthenticated / 403
+      // forbidden) is `permission.denied`. Every other failure, 404 not
+      // found, 422 validation, 5xx, is the SAME lifecycle action that
+      // happened to fail, recorded with its lifecycle event type and
+      // outcome=failure. Tagging a 404/500 as `permission.denied` would
+      // pollute the immutable trail's forensic taxonomy (an access denial
+      // that never occurred).
+      const isAuthzDenial = status === 401 || status === 403;
+      const failed = status >= 400;
       // PHI lifecycle taxonomy:
-      //   GET  → phi.read     (only fires for PHI_GET_PATHS — see filter above)
+      //   GET  → phi.read     (only fires for PHI_GET_PATHS, see filter above)
       //   POST → phi.create
       //   PUT/PATCH → phi.update
       //   DELETE → phi.delete
@@ -105,11 +128,10 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
         DELETE: 'phi.delete'
       };
       const isExport = PHI_EXPORT_PATHS.some((re) => re.test(path));
-      const eventType: AuditEventTypeLite = failed
-        ? 'permission.denied'
-        : isExport
-          ? 'phi.export'
-          : (lifecycleByMethod[req.method] ?? 'request.write');
+      const lifecycleType: AuditEventTypeLite = isExport
+        ? 'phi.export'
+        : (lifecycleByMethod[req.method] ?? 'request.write');
+      const eventType: AuditEventTypeLite = isAuthzDenial ? 'permission.denied' : lifecycleType;
       await new AuditEventRepository(req.app.get('db')).create({
         agencyId: auth.agencyId,
         actorId: auth.userId,
@@ -120,7 +142,7 @@ export function auditLog(req: Request, res: Response, next: NextFunction): void 
         // resource UUID (e.g. POST /clients creating a record). HIPAA 164.312(b)
         // requires identifying WHAT was touched.
         entityId: entityId ?? auth.userId,
-        outcome: failed ? 'denied' : 'success',
+        outcome: isAuthzDenial ? 'denied' : failed ? 'failure' : 'success',
         correlationId: correlationFor(req, res),
         payload: {
           method: req.method,

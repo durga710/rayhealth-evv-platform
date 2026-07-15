@@ -9,6 +9,8 @@ interface EvvVisit {
   clockInTime: string;
   clockOutTime?: string;
   status: 'pending' | 'verified' | 'flagged';
+  tasks?: { id: string; duty: string }[] | null;
+  visitNote?: string | null;
 }
 
 function hoursFromVisit(v: EvvVisit): number {
@@ -140,17 +142,38 @@ export function CaregiverVisitsPage() {
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0F172A' }}>{dateStr}</div>
                   <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.15rem' }}>
                     {inTime}
-                    {outTime ? ` – ${outTime}` : ' (in progress)'}
+                    {outTime ? `, ${outTime}` : ' (in progress)'}
                     {v.serviceCode && ` · ${v.serviceCode}`}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0F172A' }}>
-                    {hours > 0 ? formatHours(hours) : '—'}
+                    {hours > 0 ? formatHours(hours) : '-'}
                   </div>
                   <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>duration</div>
                 </div>
                 <StatusBadge status={v.status} />
+                {(v.tasks && v.tasks.length > 0) || v.visitNote ? (
+                  <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #F1F5F9', paddingTop: '0.7rem' }}>
+                    {v.tasks && v.tasks.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                        {v.tasks.map((t) => (
+                          <span
+                            key={t.id}
+                            style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1a5fa8', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '100px', padding: '0.15rem 0.55rem' }}
+                          >
+                            {t.duty}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {v.visitNote && (
+                      <div style={{ marginTop: v.tasks && v.tasks.length > 0 ? '0.5rem' : 0, fontSize: '0.8rem', color: '#64748B', fontStyle: 'italic' }}>
+                        “{v.visitNote}”
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
             );
           })}

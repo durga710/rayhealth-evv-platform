@@ -7,7 +7,7 @@ import {
   evvClockInInputSchema,
   evvClockOutInputSchema,
   hasCapability,
-  visitTaskCompletionBatchSchema,
+  visitTaskCompletionBatchSchema
 } from '../index.js';
 
 describe('Pennsylvania domain schemas', () => {
@@ -94,14 +94,14 @@ describe('Pennsylvania domain schemas', () => {
       assignmentId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
       visitId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
       clientEventId: 'cccccccc-cccc-4ccc-accc-cccccccccccc',
-      occurredAt: '2026-07-12T18:15:00.000Z',
+      capturedAt: '2026-07-12T18:15:00.000Z',
       captureMode: 'offline',
       serviceCode: 'T1019',
       location: { lat: 40.4406, lng: -79.9959, accuracy: 10 },
     });
     const clockOut = evvClockOutInputSchema.parse({
       clientEventId: 'dddddddd-dddd-4ddd-addd-dddddddddddd',
-      occurredAt: '2026-07-12T20:15:00.000Z',
+      capturedAt: '2026-07-12T20:15:00.000Z',
       captureMode: 'offline',
       location: { lat: 40.4407, lng: -79.996, accuracy: 12 },
     });
@@ -109,12 +109,12 @@ describe('Pennsylvania domain schemas', () => {
     expect(clockIn).toMatchObject({
       visitId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
       clientEventId: 'cccccccc-cccc-4ccc-accc-cccccccccccc',
-      occurredAt: '2026-07-12T18:15:00.000Z',
+      capturedAt: '2026-07-12T18:15:00.000Z',
       captureMode: 'offline',
     });
     expect(clockOut).toMatchObject({
       clientEventId: 'dddddddd-dddd-4ddd-addd-dddddddddddd',
-      occurredAt: '2026-07-12T20:15:00.000Z',
+      capturedAt: '2026-07-12T20:15:00.000Z',
       captureMode: 'offline',
     });
   });
@@ -151,5 +151,50 @@ describe('Pennsylvania domain schemas', () => {
         ],
       }),
     ).toThrow();
+  });
+  it('accepts optional visit documentation at clock-out and bounds the note', () => {
+    const location = { lat: 40.4406, lng: -79.9959, accuracy: 10 };
+
+    // Documentation is optional, a bare clock-out still validates.
+    expect(() => evvClockOutInputSchema.parse({ location })).not.toThrow();
+
+    const documented = evvClockOutInputSchema.parse({
+      location,
+      taskIds: ['134', '115'],
+      note: '  Client ate well.  '
+    });
+    expect(documented.taskIds).toEqual(['134', '115']);
+    // Note is trimmed at the schema boundary.
+    expect(documented.note).toBe('Client ate well.');
+
+    expect(() =>
+      evvClockOutInputSchema.parse({ location, note: 'x'.repeat(2001) })
+    ).toThrow();
+  });
+
+  it('bounds the e-signature stroke payload', () => {
+    const location = { lat: 40.4406, lng: -79.9959, accuracy: 10 };
+    const base = { width: 320, height: 160, signerRole: 'client' as const };
+
+    expect(() =>
+      evvClockOutInputSchema.parse({
+        location,
+        signature: { ...base, strokes: [[[1, 2], [3, 4]]], signerName: 'Jane Q. Client' }
+      })
+    ).not.toThrow();
+
+    // Empty drawing, non-integer points, and >4000 total points all refuse.
+    expect(() =>
+      evvClockOutInputSchema.parse({ location, signature: { ...base, strokes: [] } })
+    ).toThrow();
+    expect(() =>
+      evvClockOutInputSchema.parse({ location, signature: { ...base, strokes: [[[1.5, 2]]] } })
+    ).toThrow();
+    const tooMany = Array.from({ length: 5 }, () =>
+      Array.from({ length: 900 }, (_, i) => [i % 400, (i * 2) % 400] as [number, number])
+    );
+    expect(() =>
+      evvClockOutInputSchema.parse({ location, signature: { ...base, strokes: tooMany } })
+    ).toThrow('4000-point');
   });
 });

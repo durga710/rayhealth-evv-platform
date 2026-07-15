@@ -20,6 +20,7 @@ const VARIANT_STYLE: Record<DialogVariant, { accent: string; accentDark: string;
   success: { accent: colors.success, accentDark: '#15803d', badgeBg: colors.successBg, defaultIcon: 'checkmark' },
   confirm: { accent: colors.brandBlue, accentDark: colors.navy, badgeBg: '#eaf2fb', defaultIcon: 'help-circle-outline' },
   info: { accent: colors.brandBlue, accentDark: colors.navy, badgeBg: '#eaf2fb', defaultIcon: 'information-circle-outline' },
+  warning: { accent: colors.amber, accentDark: colors.amberDark, badgeBg: colors.amberBg, defaultIcon: 'warning-outline' },
 };
 
 const SPARKLE_DOTS = [
@@ -56,7 +57,7 @@ export default function AppDialog({
       fireHaptic(dialog.variant);
     } else {
       // The queue emptied (close()'s exit animation already finished by the
-      // time onRequestClose pops it, so progress is already 0) — unmount
+      // time onRequestClose pops it, so progress is already 0), unmount
       // immediately. Without this, `rendered` stays stuck on the last dialog
       // and its full-screen backdrop Pressable keeps intercepting touches
       // on every screen behind it, invisibly, forever.

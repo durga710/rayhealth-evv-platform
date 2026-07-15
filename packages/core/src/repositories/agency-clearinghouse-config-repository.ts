@@ -7,7 +7,7 @@
  * in shape to the Sandata / HHAeXchange config repos.
  *
  * `findByAgency` returns a partial view with a `hasCredentials` flag for the
- * admin UI — the plaintext secret is never returned there. `findSubmissionConfig`
+ * admin UI, the plaintext secret is never returned there. `findSubmissionConfig`
  * decrypts and is for the clearinghouse client only.
  */
 
@@ -46,7 +46,7 @@ export interface PartialClearinghouseConfig {
   endpoint: string | null
   settings: Record<string, unknown>
   enabled: boolean
-  /** Read-only indicator — plaintext credentials are never returned to callers. */
+  /** Read-only indicator, plaintext credentials are never returned to callers. */
   hasCredentials: boolean
 }
 
@@ -87,7 +87,7 @@ export class AgencyClearinghouseConfigRepository {
   }
 
   /**
-   * Returns the full submission config WITH decrypted credentials — for the
+   * Returns the full submission config WITH decrypted credentials, for the
    * clearinghouse client only. Never expose this to an API response.
    */
   async findSubmissionConfig(agencyId: string): Promise<ClearinghouseClientConfig | undefined> {
@@ -115,6 +115,14 @@ export class AgencyClearinghouseConfigRepository {
       credentials,
       settings: parseSettings(row.settings),
     }
+  }
+
+  /** Agencies with the integration switched on, for the remittance sweep. */
+  async listEnabledAgencyIds(): Promise<string[]> {
+    const rows = (await this.db('agency_clearinghouse_config')
+      .where({ enabled: true })
+      .select('agency_id')) as Array<{ agency_id: string }>
+    return rows.map((r) => r.agency_id)
   }
 
   async upsert(input: ClearinghouseConfigUpsert): Promise<PartialClearinghouseConfig> {

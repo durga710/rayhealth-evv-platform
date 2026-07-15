@@ -39,7 +39,7 @@ export interface ClaimListFilter {
   offset?: number;
 }
 
-/** A claim header plus its line count (no lines) — for list views. */
+/** A claim header plus its line count (no lines), for list views. */
 export interface ClaimSummary extends Omit<Claim, 'lines'> {
   lineCount: number;
 }
@@ -49,6 +49,8 @@ export interface ClaimStatusPatch {
   statusReason?: string | null;
   payerClaimId?: string | null;
   submittedAt?: string | null;
+  /** Clearinghouse transport reference (remote filename or reference id). */
+  transportReference?: string | null;
 }
 
 /** A prior-billed line, used to reconstruct remaining authorized units. */
@@ -101,6 +103,7 @@ interface ClaimRow {
   payer_claim_id: string | null;
   status_reason: string | null;
   submitted_at: Date | string | null;
+  transport_reference: string | null;
   created_at: Date | string | null;
   updated_at: Date | string | null;
 }
@@ -263,6 +266,7 @@ export class ClaimRepository {
     if (patch.statusReason !== undefined) update.status_reason = patch.statusReason;
     if (patch.payerClaimId !== undefined) update.payer_claim_id = patch.payerClaimId;
     if (patch.submittedAt !== undefined) update.submitted_at = patch.submittedAt;
+    if (patch.transportReference !== undefined) update.transport_reference = patch.transportReference;
 
     const affected = await this.db('claims')
       .where({ id, agency_id: agencyId })
@@ -273,7 +277,7 @@ export class ClaimRepository {
 
   /**
    * Which of these patient-control-numbers match an existing claim for the
-   * agency. Read-only — used to preview an 835 before posting it.
+   * agency. Read-only, used to preview an 835 before posting it.
    */
   async matchControlNumbers(agencyId: string, controlNumbers: string[]): Promise<Set<string>> {
     const unique = [...new Set(controlNumbers.filter(Boolean))];
@@ -326,8 +330,8 @@ export class ClaimRepository {
 
   /**
    * Post an 835 remittance: for every CLP claim in the file, record a
-   * `claim_remittances` row and — when its control_number matches one of our
-   * claims — advance that claim's status (paid / denied / rejected), paid_cents,
+   * `claim_remittances` row and, when its control_number matches one of our
+   * claims, advance that claim's status (paid / denied / rejected), paid_cents,
    * payer_claim_id, and a CAS-derived status_reason. Unmatched postings are
    * kept with claim_id NULL so nothing in the file is silently dropped. Runs in
    * one transaction (all-or-nothing).
@@ -397,7 +401,7 @@ export class ClaimRepository {
   }
 
   /**
-   * Units already billed (non-void claims) per client/service-code/date — used
+   * Units already billed (non-void claims) per client/service-code/date, used
    * to reconstruct remaining authorized units across prior generation runs.
    */
   async getBilledLineUnits(agencyId: string): Promise<BilledLineUnits[]> {
@@ -627,6 +631,7 @@ export class ClaimRepository {
       controlNumber: row.control_number ?? undefined,
       payerClaimId: row.payer_claim_id,
       statusReason: row.status_reason,
+      transportReference: row.transport_reference ?? null,
       submittedAt: toIso(row.submitted_at) ?? null,
       createdAt: toIso(row.created_at),
       updatedAt: toIso(row.updated_at),

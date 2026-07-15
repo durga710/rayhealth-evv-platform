@@ -119,9 +119,11 @@ Selected architectural risks (the dated register is authoritative):
   the `audit_events` table via the audit-logging middleware
   (`packages/app/src/middleware/audit-log.ts`).
 - The middleware classifies routes:
-  - `phi.read` for GETs against `/clients`, `/evv`, `/assignments`,
-    `/authorizations`, `/templates`, `/staff`, `/maintenance`
-  - `phi.export` for `/exports/*`
+  - `phi.read` for PHI-bearing GETs such as clients, EVV, assignments,
+    authorizations, templates, staff, maintenance, caregiver mobile schedule
+    reads, command-center visit-board reads, compliance exception lists, and
+    billing claims reads
+  - `phi.export` for bulk PHI extraction routes such as `/exports/*`
   - `auth.login.success` / `auth.login.failure` for authentication outcomes
 - The `audit_events` and `audit_events_archive` tables are **append-only at the database layer** — UPDATE,
   DELETE, and TRUNCATE are blocked by Postgres trigger
@@ -223,9 +225,9 @@ See [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md).
 ### 5.5 Contingency Plan (§164.308(a)(7))
 
 - **Backups:** Neon point-in-time recovery (7-day window default; expandable
-  on Neon Scale tier). Application code in Git, deployed by Vercel CI/CD.
-  Pre-built `dist/` artifacts are committed to the repo so deploys do not
-  depend on Vercel's build environment.
+  on Neon Scale tier). Application code and migrations live in GitHub; Vercel
+  installs from the lockfile and rebuilds the web/app dependency graph from
+  source during deploy via `vercel.json`.
 - **Disaster recovery:** Vercel multi-region edge handles failover at the
   hosting layer. Neon backups can restore the database to any point in the
   retention window.

@@ -1,1 +1,0 @@
-{"version":3,"file":"mobile-session-store.js","sourceRoot":"","sources":["../../src/services/mobile-session-store.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,uBAAuB,EAAE,MAAM,iBAAiB,CAAA;AAOzD,MAAM,UAAU,qBAAqB,CAAC,GAAY;IAChD,OAAO,CACJ,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,oBAAoB,CAAoC;QACrE,IAAI,uBAAuB,CAAC,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,IAAI,CAAC,CAAC,CAC/C,CAAA;AACH,CAAC"}

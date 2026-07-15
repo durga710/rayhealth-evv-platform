@@ -139,6 +139,10 @@ describe('command center routes', () => {
 
   it('generates an AI briefing when a provider is configured', async () => {
     mockEngine();
+    const auditCreate = vi.fn().mockResolvedValue({});
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(
+      () => ({ create: auditCreate }) as any,
+    );
     vi.spyOn(ai, 'isAIConfigured').mockReturnValue(true);
     const askAI = vi.spyOn(ai, 'askAI').mockResolvedValue({
       text: 'Prioritize coverage for the 2 visits late to start.',
@@ -156,5 +160,16 @@ describe('command center routes', () => {
     expect(res.body.briefing).toContain('late to start');
     expect(res.body.provider).toBe('bedrock');
     expect(askAI).toHaveBeenCalled();
+    expect(auditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'copilot.query',
+        entityType: 'command_center_briefing',
+        payload: expect.objectContaining({
+          surface: 'command-center-briefing',
+          promptHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          responseHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      }),
+    );
   });
 });

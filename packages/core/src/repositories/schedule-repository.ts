@@ -84,6 +84,40 @@ export class ScheduleRepository {
     };
   }
 
+  /**
+   * Scheduled start/end for one assignment, tenant-scoped via
+   * assignments -> visit_templates -> clients.agency_id (same join used by
+   * {@link assignmentInAgency}). Used by the audit packet route to show
+   * scheduled-vs-actual alongside a visit's clock-in/out. Null when the
+   * assignment is unknown / cross-tenant, the caller treats that as "no
+   * schedule data", not an error.
+   */
+  async getAssignmentScheduleForAgency(
+    assignmentId: string,
+    agencyId: string
+  ): Promise<{ scheduledStartTime: string | null; scheduledEndTime: string | null } | null> {
+    const row = await this.db('assignments as a')
+      .join('visit_templates as vt', 'vt.id', 'a.visit_template_id')
+      .join('clients as c', 'c.id', 'vt.client_id')
+      .where('c.agency_id', agencyId)
+      .andWhere('a.id', assignmentId)
+      .select('a.scheduled_start_time', 'a.scheduled_end_time')
+      .first();
+    if (!row) return null;
+    return {
+      scheduledStartTime: toIsoOrNull(row.scheduled_start_time),
+      scheduledEndTime: toIsoOrNull(row.scheduled_end_time)
+    };
+  }
+
+  /** True when the client exists and belongs to the given agency. */
+  async clientBelongsToAgency(clientId: string, agencyId: string): Promise<boolean> {
+    const row = await this.db('clients')
+      .where({ id: clientId, agency_id: agencyId })
+      .first('id');
+    return Boolean(row);
+  }
+
   /** Resolve the client a visit template belongs to, scoped to the agency. */
   async getTemplateClient(
     visitTemplateId: string,
@@ -99,7 +133,7 @@ export class ScheduleRepository {
   }
 
   /**
-   * Existing (template, date) pairs for a caregiver — for duplicate detection.
+   * Existing (template, date) pairs for a caregiver, for duplicate detection.
    * `excludeAssignmentId` omits one assignment from the result so a reschedule of
    * an existing assignment doesn't flag itself as a duplicate.
    */
@@ -179,11 +213,19 @@ export class ScheduleRepository {
   }
 
   async getAssignmentsByCaregiver(caregiverId: string, agencyId?: string): Promise<any[]> {
+    // A client can have several authorization rows (different service codes,
+    // renewed/overlapping date ranges). The LEFT JOIN to authorizations would
+    // otherwise emit one assignment row per authorization, duplicating each
+    // visit on the caregiver's schedule. DISTINCT ON collapses to a single row
+    // per assignment, picking the authorization with the latest end_date
+    // (matching getAssignmentForCaregiver, which uses .first() over the same
+    // ordering).
     const query = this.db('assignments')
       .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
       .join('clients', 'visit_templates.client_id', 'clients.id')
       .leftJoin('authorizations', 'authorizations.client_id', 'clients.id')
       .where('assignments.caregiver_id', caregiverId)
+      .distinctOn('assignments.id')
       .select(
         'assignments.id',
         'assignments.caregiver_id',
@@ -196,6 +238,9 @@ export class ScheduleRepository {
         'clients.geofence_radius_m',
         'authorizations.service_code'
       )
+      // DISTINCT ON requires the leading ORDER BY column to match the distinct
+      // key; end_date DESC then selects the most recent authorization per row.
+      .orderBy('assignments.id')
       .orderBy('authorizations.end_date', 'desc');
     if (agencyId) query.andWhere('clients.agency_id', agencyId);
     const rows = await query;
@@ -228,6 +273,8 @@ export class ScheduleRepository {
         'assignments.id',
         'assignments.caregiver_id',
         'assignments.visit_template_id',
+        'assignments.scheduled_start_time',
+        'assignments.scheduled_end_time',
         'clients.id as client_id',
         'authorizations.service_code'
       )
@@ -242,19 +289,27 @@ export class ScheduleRepository {
       caregiverId: row.caregiver_id,
       visitTemplateId: row.visit_template_id,
       clientId: row.client_id,
-      serviceCode: row.service_code ?? undefined
+      serviceCode: row.service_code ?? undefined,
+      // Scheduled window, consumed by the clock-in time gate. Nullable:
+      // legacy/imported assignments may carry no times at all.
+      scheduledStartTime: row.scheduled_start_time
+        ? new Date(row.scheduled_start_time).toISOString()
+        : null,
+      scheduledEndTime: row.scheduled_end_time
+        ? new Date(row.scheduled_end_time).toISOString()
+        : null
     };
   }
 
   /**
-   * Today's schedule for one caregiver — every assignment whose
+   * Today's schedule for one caregiver, every assignment whose
    * `scheduled_start_time` falls in a 36-hour window around now (12 h back,
    * 24 h forward), joined with the client + visit template, plus an optional
    * LEFT-JOINed `evv_visits` row from earlier in the UTC day so the mobile
    * dashboard can surface "you're already clocked in" state.
    *
    * Tenant scope: enforced by joining `caregivers` and asserting
-   * `caregivers.agency_id = ?`. We do NOT scope only by caregiver_id —
+   * `caregivers.agency_id = ?`. We do NOT scope only by caregiver_id , 
    * doing so would let a caregiver row that's been moved between agencies
    * leak its old assignments. Agency must match on the caregiver row that
    * owns the assignment.
@@ -361,7 +416,7 @@ export class ScheduleRepository {
   }
 
   /**
-   * Forward-looking schedule for one caregiver — every assignment whose
+   * Forward-looking schedule for one caregiver, every assignment whose
    * `scheduled_start_time` falls between the start of today and `daysAhead`
    * days from now. Same row shape, joins, and tenant scope as
    * getTodaysScheduleForCaregiver, but a wider window so the mobile app can
@@ -562,7 +617,7 @@ export class ScheduleRepository {
 
   /**
    * Delete (cancel) an assignment, tenant-scoped. Refuses ('has_dependencies')
-   * when an EVV visit already exists for it — those carry verified clock-in/out
+   * when an EVV visit already exists for it, those carry verified clock-in/out
    * history. 'not_found' for unknown / cross-tenant id.
    */
   async deleteAssignment(

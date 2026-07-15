@@ -6,25 +6,27 @@ import { SiteLayout, mkic, MK_CHECK } from './SiteLayout.js';
  * Public-facing HIPAA compliance page at `/compliance/hipaa`.
  *
  * Migrated from the old MarketingShell to the shared SiteLayout
- * (teal/orange brand). Content is preserved verbatim — only the
+ * (teal/orange brand). Content is preserved verbatim, only the
  * wrappers and styling were restructured onto the `mk-*` design system.
  *
  * Audience: prospective customers, agency compliance officers, BAA
  * counterparties, third-party auditors performing diligence.
  *
  * Language guardrails:
- *  - We never use "HIPAA certified" — HHS does not issue HIPAA
+ *  - We never use "HIPAA certified". HHS does not issue HIPAA
  *    certifications, and the term carries legal exposure.
- *  - We use "HIPAA-compliant", "HIPAA-aligned", "Engineered to HIPAA
- *    Security and Privacy Rule controls", and "Documented HIPAA Security
- *    Rule controls" instead.
+ *  - We never claim "HIPAA compliant"/"fully compliant" as a finished
+ *    state. We use "HIPAA-ready architecture", "Designed with HIPAA-grade
+ *    controls", "Engineered to HIPAA Security and Privacy Rule controls",
+ *    and "Documented HIPAA Security Rule controls" instead, and describe
+ *    operational readiness as in progress.
  *  - Where a third-party assurance would normally be cited, we publish
  *    "Third-party attestation: <pending>" until an actual auditor
  *    completes work; we do not invent cert names.
  *
  * The authoritative engineering record lives in
  * docs/compliance/hipaa/ in the source repository. This page is the
- * customer-facing summary — when policies in that folder change, this
+ * customer-facing summary, when policies in that folder change, this
  * page must be updated within 30 days per SECURITY_POLICY.md §1.
  */
 
@@ -39,13 +41,6 @@ interface SafeguardGroup {
   safeguard: string;
   cfr: string;
   rows: readonly ControlRow[];
-}
-
-interface Subprocessor {
-  name: string;
-  role: string;
-  region: string;
-  dataClass: string;
 }
 
 const safeguards: readonly SafeguardGroup[] = [
@@ -124,7 +119,7 @@ const safeguards: readonly SafeguardGroup[] = [
   },
   {
     safeguard: 'Privacy Rule controls',
-    cfr: '45 CFR § 164.502 – § 164.528',
+    cfr: '45 CFR § 164.502, § 164.528',
     rows: [
       {
         control: 'Minimum necessary',
@@ -144,31 +139,9 @@ const safeguards: readonly SafeguardGroup[] = [
       {
         control: 'Accounting of disclosures',
         implementation:
-          'Every read of PHI fields (`phi.read`, `phi.export`) is logged with actor, entity, timestamp, and purpose-of-use when supplied. Customers can produce an accounting per § 164.528 directly from the audit trail.'
+          'PHI-bearing operational reads and exports covered by the audit middleware are logged as `phi.read` or `phi.export` with actor, entity, timestamp, and purpose-of-use when supplied. Customers can produce accounting evidence per § 164.528 from the audit trail.'
       }
     ]
-  }
-] as const;
-
-const subprocessors: readonly Subprocessor[] = [
-  {
-    name: 'Vercel',
-    role: 'Web hosting and edge network',
-    region: 'US (multi-region edge)',
-    dataClass: 'Encrypted ePHI in transit; no plaintext at rest in edge caches'
-  },
-  {
-    name: 'Postgres provider (Neon or equivalent)',
-    role: 'Primary database — application state, audit log, ePHI',
-    region: 'US (customer-selectable)',
-    dataClass:
-      'ePHI at rest, encrypted by the provider; application-layer AES-256-GCM for sensitive identifiers'
-  },
-  {
-    name: 'Expo',
-    role: 'Mobile build infrastructure for the caregiver app',
-    region: 'US',
-    dataClass: 'Build artifacts only; no production ePHI is processed by Expo'
   }
 ] as const;
 
@@ -252,10 +225,10 @@ export function HipaaCompliancePage() {
         <div className="mk-hero-grid" aria-hidden />
         <div className="mk-heroin">
           <span className="mk-eyebrow">Compliance</span>
-          <h1 className="mk-h1">HIPAA-compliant by design.</h1>
+          <h1 className="mk-h1">Designed with HIPAA-grade controls.</h1>
           <p className="mk-lead">
             RayHealthEVV™ is engineered to meet the HIPAA Security Rule
-            (45 CFR § 164.308 – § 164.318) and the Privacy Rule controls
+            (45 CFR § 164.308, § 164.318) and the Privacy Rule controls
             that apply to a Business Associate handling ePHI for
             Pennsylvania home-care agencies.
           </p>
@@ -323,7 +296,7 @@ export function HipaaCompliancePage() {
               </div>
             </section>
 
-            {/* Controls table — the meat of the page */}
+            {/* Controls table, the meat of the page */}
             <section aria-labelledby="controls-heading">
               <h2 id="controls-heading" style={cardHeading}>
                 HIPAA Security and Privacy Rule controls
@@ -362,8 +335,8 @@ export function HipaaCompliancePage() {
             <section aria-labelledby="baa-heading" className="mk-card">
               <h2 id="baa-heading" style={cardHeading}>Business Associate Agreement</h2>
               <p style={{ ...bodyText, margin: '0.75rem 0 1rem' }}>
-                RayHealthEVV™ signs a BAA with every customer agency before
-                any production ePHI is processed. The current template covers
+                RayHealthEVV™ executes a BAA with every agency before any PHI
+                is processed. The current template covers
                 the required HIPAA § 164.504(e) provisions: permitted uses,
                 safeguards, subcontractor flow-down, breach notification
                 within 60 days, and return or destruction of PHI on
@@ -402,29 +375,15 @@ export function HipaaCompliancePage() {
               <h2 id="subproc-heading" style={cardHeading}>Subprocessors</h2>
               <p style={{ ...mutedLead, marginTop: '0.5rem', marginBottom: '1rem' }}>
                 We disclose every subprocessor that handles ePHI or hosts
-                customer data. Customers may request the current
-                authoritative list at any time.
+                customer data, together with its per-vendor BAA status. To
+                avoid two lists drifting out of sync, the canonical, dated
+                subprocessor register lives on our{' '}
+                <Link to="/privacy" style={linkStyle}>Privacy page</Link>{' '}
+                (mirrored on the{' '}
+                <Link to="/trust" style={linkStyle}>Trust Center</Link>).
+                Customers may request the current authoritative list at any
+                time.
               </p>
-              <table className="mk-tbl">
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Region</th>
-                    <th scope="col">Data class</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subprocessors.map((s) => (
-                    <tr key={s.name}>
-                      <td>{s.name}</td>
-                      <td>{s.role}</td>
-                      <td>{s.region}</td>
-                      <td>{s.dataClass}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </section>
 
             {/* Third-party attestation */}
@@ -460,8 +419,8 @@ export function HipaaCompliancePage() {
                   >
                     Security &amp; Compliance Pack (PDF)
                   </a>{' '}
-                  — control narratives, encryption verification matrix, and
-                  incident-response plan.
+                  (control narratives, encryption verification matrix, and
+                  incident-response plan).
                 </li>
                 <li>
                   <a
@@ -470,7 +429,7 @@ export function HipaaCompliancePage() {
                   >
                     Audit log sample export (CSV)
                   </a>{' '}
-                  — synthetic, PHI-free sample of the `audit_events` schema.
+                  (a synthetic, PHI-free sample of the `audit_events` schema).
                 </li>
               </ul>
             </section>
@@ -483,19 +442,19 @@ export function HipaaCompliancePage() {
                   <Link to="/privacy" style={linkStyle}>
                     Privacy summary
                   </Link>{' '}
-                  — what we collect, how we use it, and your rights.
+                  (what we collect, how we use it, and your rights).
                 </li>
                 <li>
                   <Link to="/status" style={linkStyle}>
                     Service status
                   </Link>{' '}
-                  — live operational health.
+                  (live operational health).
                 </li>
                 <li>
                   <Link to="/contact" style={linkStyle}>
                     Contact compliance
                   </Link>{' '}
-                  — for BAA, diligence, or incident questions.
+                  (for BAA, diligence, or incident questions).
                 </li>
               </ul>
             </section>

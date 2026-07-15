@@ -106,16 +106,68 @@ describe('VisitMaintenanceRepository tenant isolation', () => {
       agencyAId
     );
 
-    const crossTenantAttempt = await repo.approveUnlock(created.id!, agencyBId, {
-      start: new Date().toISOString(),
-      end: new Date().toISOString()
-    });
+    const approverId = crypto.randomUUID();
+    const start = new Date('2026-06-10T09:00:00.000Z').toISOString();
+    const end = new Date('2026-06-10T13:00:00.000Z').toISOString();
+
+    const crossTenantAttempt = await repo.approveUnlock(created.id!, agencyBId, approverId, { start, end });
     expect(crossTenantAttempt).toBeNull();
 
-    const sameTenantApproval = await repo.approveUnlock(created.id!, agencyAId, {
-      start: new Date().toISOString(),
-      end: new Date().toISOString()
-    });
+    const sameTenantApproval = await repo.approveUnlock(created.id!, agencyAId, approverId, { start, end });
     expect(sameTenantApproval?.status).toBe('approved');
+    // Non-repudiation: the approving actor and approval timestamp are recorded.
+    expect(sameTenantApproval?.approverId).toBe(approverId);
+    expect(sameTenantApproval?.approvedAt).toBeTruthy();
+  });
+
+  /**
+   * findByVisitIdForAgency backs the audit packet's VMUR trail (Agent 06).
+   * Same tenant boundary as the rest of this repository: scoped via
+   * evv_visits -> caregivers.agency_id, and it must return [] rather than
+   * leak another agency's corrections for a visit id it doesn't own.
+   */
+  it('findByVisitIdForAgency returns agency-scoped rows with requester/approver names, [] for another agency', async () => {
+    if (!isConnected) return;
+
+    const requesterId = crypto.randomUUID();
+    const approverId = crypto.randomUUID();
+    await db('users').insert([
+      {
+        id: requesterId,
+        agency_id: agencyAId,
+        email: `requester-${requesterId}@example.test`,
+        password_hash: 'test-hash',
+        role: 'caregiver',
+        first_name: 'Pat',
+        last_name: 'Requester'
+      },
+      {
+        id: approverId,
+        agency_id: agencyAId,
+        email: `approver-${approverId}@example.test`,
+        password_hash: 'test-hash',
+        role: 'admin',
+        first_name: 'Alex',
+        last_name: 'Approver'
+      }
+    ]);
+
+    const created = await repo.requestUnlock(
+      { visitId: visitAId, requesterId, reason: 'findByVisitIdForAgency fixture', status: 'pending' },
+      agencyAId
+    );
+    const start = new Date('2026-06-11T09:00:00.000Z').toISOString();
+    const end = new Date('2026-06-11T13:00:00.000Z').toISOString();
+    await repo.approveUnlock(created.id!, agencyAId, approverId, { start, end });
+
+    const sameTenant = await repo.findByVisitIdForAgency(visitAId, agencyAId);
+    const match = sameTenant.find((row) => row.id === created.id);
+    expect(match).toBeTruthy();
+    expect(match?.requesterName).toBe('Pat Requester');
+    expect(match?.approverName).toBe('Alex Approver');
+    expect(match?.status).toBe('approved');
+
+    const crossTenant = await repo.findByVisitIdForAgency(visitAId, agencyBId);
+    expect(crossTenant).toEqual([]);
   });
 });

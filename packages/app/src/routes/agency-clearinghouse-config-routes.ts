@@ -1,8 +1,8 @@
 /**
  * Agency clearinghouse config routes.
  *
- *   GET  /agencies/me/clearinghouse-config  — read transport/endpoint/settings + hasCredentials
- *   PUT  /agencies/me/clearinghouse-config  — admin-only update (write-only credentials)
+ *   GET  /agencies/me/clearinghouse-config , read transport/endpoint/settings + hasCredentials
+ *   PUT  /agencies/me/clearinghouse-config , admin-only update (write-only credentials)
  *
  * Sibling to the Sandata / HHAeXchange config routes. Credentials are stored
  * AES-256-GCM encrypted by the repository and never returned to the client.
@@ -14,14 +14,17 @@ import { z } from 'zod'
 import {
   AgencyClearinghouseConfigRepository,
   AuditEventRepository,
+  isBlockedOutboundHost,
+  isSafeOutboundUrl,
   type PartialClearinghouseConfig,
 } from '@rayhealth/core'
 import { requireCapability } from '../middleware/require-capability.js'
+import { buildTransportForAgency } from '../services/clearinghouse-service.js'
 
 const router = Router()
 
 const clearinghouseConfigUpdateSchema = z.object({
-  transport: z.enum(['sftp', 'http']).optional(),
+  transport: z.enum(['sftp', 'http', 'sandbox']).optional(),
   endpoint: z.string().max(255).nullable().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
@@ -64,7 +67,15 @@ function mergeConfig(current: PartialClearinghouseConfig, update: ClearinghouseC
 
 function validateForEnable(next: PartialClearinghouseConfig): string | null {
   if (!next.enabled) return null
+  // Sandbox is a built-in simulator: no endpoint or credentials needed.
+  if (next.transport === 'sandbox') return null
   if (!next.endpoint) return 'cannot enable: endpoint is required'
+  if (next.transport === 'sftp') {
+    if (next.endpoint.includes('://')) return 'cannot enable: SFTP endpoint must be a bare hostname, not a URL'
+    if (isBlockedOutboundHost(next.endpoint)) return 'cannot enable: SFTP host must be a public hostname'
+    return null
+  }
+  if (!isSafeOutboundUrl(next.endpoint)) return 'cannot enable: endpoint must be a public https URL'
   return null
 }
 
@@ -140,5 +151,40 @@ router.put('/me/clearinghouse-config', requireCapability('agency.write'), async 
     res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'unexpected error' })
   }
 })
+
+/**
+ * POST /agencies/me/clearinghouse-config/test, transport connectivity check.
+ * SFTP connects and lists the remittance directory, HTTP probes the endpoint,
+ * sandbox always succeeds. Responses are sanitized by the transport layer;
+ * no remote error text or credentials ever reach the client.
+ */
+router.post(
+  '/me/clearinghouse-config/test',
+  requireCapability('agency.write'),
+  async (req: Request, res: Response) => {
+    try {
+      const db = req.app.get('db') as Knex | undefined
+      if (!db) {
+        res.status(500).json({ success: false, error: 'database missing' })
+        return
+      }
+      const built = await buildTransportForAgency(db, req.auth.agencyId)
+      if (built.kind === 'not_configured') {
+        res.json({ success: true, data: { ok: false, detail: built.reason } })
+        return
+      }
+      const result = await built.transport.testConnection()
+      res.json({
+        success: true,
+        data:
+          result.kind === 'ok'
+            ? { ok: true, detail: result.detail }
+            : { ok: false, detail: result.message },
+      })
+    } catch (error: unknown) {
+      res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'unexpected error' })
+    }
+  },
+)
 
 export default router

@@ -4,7 +4,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { AgencyRepository, AuditEventRepository, CaregiverRepository, PasswordResetRepository, SessionRepository, UserAgencyRepository, UserRepository, type NewAuditEvent, type AppRole } from '@rayhealth/core';
+import { AgencyRepository, AuditEventRepository, CaregiverRepository, MobileSessionRepository, PasswordResetRepository, SessionRepository, UserAgencyRepository, UserRepository, type NewAuditEvent, type AppRole } from '@rayhealth/core';
 import { authContext } from '../middleware/auth-context.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { clearSessionCookieOptions, SESSION_COOKIE_NAME, sessionCookieOptions } from '../security/cookies.js';
@@ -101,7 +101,7 @@ router.post('/login', async (req, res) => {
       return;
     }
 
-    // If the user has TOTP 2FA enabled, do not establish a session yet — issue a
+    // If the user has TOTP 2FA enabled, do not establish a session yet, issue a
     // short-lived challenge token and require a second factor via /login/2fa.
     // `totpEnabled` rides along on findByEmail, so no second query is needed.
     if (user.totpEnabled) {
@@ -267,36 +267,47 @@ async function listMobileAgencies(
       return memberships.map((m) => ({ agencyId: m.agencyId, agencyName: m.agencyName, role: m.role }));
     }
   } catch {
-    /* pre-migration database — fall through to the home agency */
+    /* pre-migration database, fall through to the home agency */
   }
   let agencyName = '';
   try {
     agencyName = (await new AgencyRepository(db).findById(user.agencyId))?.name ?? '';
   } catch {
-    /* name is cosmetic — never block login on it */
+    /* name is cosmetic, never block login on it */
   }
   return [{ agencyId: user.agencyId, agencyName, role: user.role }];
 }
 
+const MOBILE_TOKEN_TTL_SECONDS = 8 * 60 * 60;
+
+/**
+ * Issue a revocable mobile bearer token. Each token carries a `jti` backed by a
+ * `mobile_sessions` row, so logout and password-reset can terminate it
+ * server-side, a valid signature alone is no longer sufficient to authenticate
+ * (see authContext). Takes the injectable session store so tests can observe
+ * or fail session creation without a live database. Returns the signed JWT.
+ */
 async function issueMobileToken(
   mobileSessions: MobileSessionStore,
   claims: { sub: string; agencyId: string; role: string; caregiverId?: string },
-): Promise<{ token: string; sessionId: string; tokenJti: string }> {
-  const tokenJti = randomUUID();
-  const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+  deviceLabel?: string,
+): Promise<string> {
+  const jti = randomUUID();
+  const expiresAt = new Date(Date.now() + MOBILE_TOKEN_TTL_SECONDS * 1000).toISOString();
   const session = await mobileSessions.create({
     userId: claims.sub,
-    tokenJti,
+    tokenJti: jti,
+    deviceLabel,
     expiresAt,
   });
   if (!session.id) {
     throw new Error('Mobile session creation did not return an id');
   }
-  const token = jwt.sign({ ...claims, jti: tokenJti }, jwtSecret(), {
-    expiresIn: '8h',
+  return jwt.sign(claims, jwtSecret(), {
+    expiresIn: MOBILE_TOKEN_TTL_SECONDS,
     algorithm: 'HS256',
+    jwtid: jti,
   });
-  return { token, sessionId: session.id, tokenJti };
 }
 
 router.post('/mobile/login', async (req, res) => {
@@ -323,7 +334,16 @@ router.post('/mobile/login', async (req, res) => {
       return;
     }
 
-    const { token } = await issueMobileToken(getMobileSessionStore(req), {
+    // If the user enrolled TOTP 2FA, do not mint a bearer token yet, issue a
+    // short-lived challenge and require the second factor via /mobile/login/2fa.
+    // This mirrors the web /login flow so 2FA is enforced on mobile too.
+    if (user.totpEnabled) {
+      const challengeToken = jwt.sign({ sub: user.id, purpose: '2fa' }, jwtSecret(), { expiresIn: '5m' });
+      res.json({ twoFactorRequired: true, challengeToken });
+      return;
+    }
+
+    const token = await issueMobileToken(getMobileSessionStore(req), {
       sub: user.id,
       agencyId: user.agencyId,
       role: user.role,
@@ -347,6 +367,84 @@ router.post('/mobile/login', async (req, res) => {
     // scoped to the home agency; /mobile/switch-agency swaps it.
     const agencies = await listMobileAgencies(db, user);
     res.json({ token, userId: user.id, role: user.role, agencyId: user.agencyId, agencies });
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// Second factor for mobile: exchange a challenge token + TOTP/backup code for a
+// revocable bearer token. Mirrors POST /login/2fa but returns a mobile token +
+// agency list instead of a cookie session.
+router.post('/mobile/login/2fa', async (req, res) => {
+  const { challengeToken, code } = req.body ?? {};
+  if (!challengeToken || !code) {
+    res.status(400).json({ message: 'challengeToken and code are required' });
+    return;
+  }
+  try {
+    let userId: string;
+    try {
+      const payload = jwt.verify(challengeToken, jwtSecret(), { algorithms: ['HS256'] }) as { sub?: string; purpose?: string };
+      if (payload.purpose !== '2fa' || !payload.sub) throw new Error('bad challenge');
+      userId = payload.sub;
+    } catch {
+      res.status(401).json({ message: 'Your verification session expired. Please sign in again.' });
+      return;
+    }
+
+    const db = req.app.get('db');
+    type Row = {
+      id: string; agency_id: string; role: AppRole; caregiver_id: string | null;
+      totp_secret: string | null; totp_enabled: boolean; totp_backup_codes: string[] | null;
+    };
+    const row = (await db('users').where({ id: userId }).first()) as Row | undefined;
+    if (!row || !row.totp_enabled || !row.totp_secret) {
+      res.status(401).json({ message: 'Two-factor authentication is not available for this account.' });
+      return;
+    }
+
+    const cleaned = String(code).replace(/\s/g, '');
+    let verified = verifySync({ token: cleaned, secret: row.totp_secret }).valid;
+
+    // Fall back to single-use backup codes.
+    if (!verified && Array.isArray(row.totp_backup_codes)) {
+      const upper = cleaned.toUpperCase();
+      for (let i = 0; i < row.totp_backup_codes.length; i += 1) {
+        if (await bcrypt.compare(upper, row.totp_backup_codes[i])) {
+          verified = true;
+          const remaining = row.totp_backup_codes.filter((_, j) => j !== i);
+          await db('users').where({ id: row.id }).update({ totp_backup_codes: JSON.stringify(remaining) });
+          break;
+        }
+      }
+    }
+
+    if (!verified) {
+      res.status(401).json({ message: 'That code is incorrect or expired.' });
+      return;
+    }
+
+    const token = await issueMobileToken(getMobileSessionStore(req), {
+      sub: row.id,
+      agencyId: row.agency_id,
+      role: row.role,
+      caregiverId: row.caregiver_id ?? undefined,
+    });
+
+    await recordAuditEvent(db, {
+      agencyId: row.agency_id,
+      actorId: row.id,
+      actorType: 'user',
+      eventType: 'auth.login.success',
+      entityType: 'user',
+      entityId: row.id,
+      outcome: 'success',
+      payload: { authMethod: 'bearer', secondFactor: 'totp' },
+      occurredAt: new Date().toISOString(),
+    });
+
+    const agencies = await listMobileAgencies(db, { id: row.id, agencyId: row.agency_id, role: row.role });
+    res.json({ token, role: row.role, agencyId: row.agency_id, agencies });
   } catch {
     res.status(500).json({ message: 'Internal Server Error' });
   }
@@ -399,7 +497,7 @@ router.post('/signup', async (req, res) => {
     });
 
     // A self-serve signup creates the agency in `review_status='pending'`. We do
-    // NOT establish a session here — the agency must be approved by a platform
+    // NOT establish a session here, the agency must be approved by a platform
     // super-admin before anyone on it can sign in. Issuing a cookie at this point
     // would let an unapproved tenant operate the system, bypassing the review gate.
     await recordAuditEvent(db, {
@@ -429,7 +527,7 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// One-time admin bootstrap — serialized via advisory lock so concurrent requests cannot both succeed.
+// One-time admin bootstrap, serialized via advisory lock so concurrent requests cannot both succeed.
 router.post('/bootstrap', async (req, res) => {
   // Secret gate (documented in .env.example): the endpoint is DISABLED unless
   // BOOTSTRAP_SECRET is set, and requires a matching bootstrapSecret in the
@@ -479,11 +577,13 @@ router.post('/bootstrap', async (req, res) => {
       return new UserRepository(trx).create({ agencyId, email, passwordHash, role: 'admin' });
     });
 
-    const token = jwt.sign(
-      { sub: user.id, agencyId: user.agencyId, role: user.role },
-      jwtSecret(),
-      { expiresIn: '8h', algorithm: 'HS256' }
-    );
+    // Issue a revocable bearer token (jti + mobile_sessions row) so it satisfies
+    // authContext, which now requires every bearer token to be server-revocable.
+    const token = await issueMobileToken(getMobileSessionStore(req), {
+      sub: user.id,
+      agencyId: user.agencyId,
+      role: user.role,
+    }, 'bootstrap');
 
     res.status(201).json({ token, role: user.role, agencyId: user.agencyId });
   } catch (err: unknown) {
@@ -498,9 +598,11 @@ router.post('/bootstrap', async (req, res) => {
 
 router.post('/logout', authContext, requireCsrf, async (req, res) => {
   try {
+    const db = req.app.get('db');
+    const nowIso = new Date().toISOString();
     if (req.auth.authMethod === 'session' && req.auth.sessionId) {
-      await new SessionRepository(req.app.get('db')).revokeById(req.auth.sessionId, new Date().toISOString());
-      await recordAuditEvent(req.app.get('db'), {
+      await new SessionRepository(db).revokeById(req.auth.sessionId, nowIso);
+      await recordAuditEvent(db, {
         agencyId: req.auth.agencyId,
         actorId: req.auth.userId,
         actorType: 'user',
@@ -509,7 +611,21 @@ router.post('/logout', authContext, requireCsrf, async (req, res) => {
         entityId: req.auth.sessionId,
         outcome: 'success',
         payload: { authMethod: req.auth.authMethod },
-        occurredAt: new Date().toISOString()
+        occurredAt: nowIso
+      });
+    } else if (req.auth.authMethod === 'bearer' && req.auth.tokenJti) {
+      // Revoke the mobile bearer token server-side so it can't be replayed.
+      await new MobileSessionRepository(db).revokeByJti(req.auth.tokenJti, nowIso);
+      await recordAuditEvent(db, {
+        agencyId: req.auth.agencyId,
+        actorId: req.auth.userId,
+        actorType: 'user',
+        eventType: 'session.revoked',
+        entityType: 'mobile_session',
+        entityId: req.auth.tokenJti,
+        outcome: 'success',
+        payload: { authMethod: req.auth.authMethod },
+        occurredAt: nowIso
       });
     }
     res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions());
@@ -602,7 +718,7 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
-    // Always 200 — never disclose whether the email is registered
+    // Always 200, never disclose whether the email is registered
     res.json({ message: 'If that email is registered, a reset link has been sent.' });
   } catch (err) {
     safeError('POST /auth/forgot-password failed', err);
@@ -633,12 +749,15 @@ router.post('/reset-password', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     await db.transaction(async (trx: typeof db) => {
+      const nowIso = new Date().toISOString();
       await trx('users').where('id', resetToken.userId).update({ password_hash: passwordHash });
       await resetRepo.markUsed(resetToken.id);
-      // Revoke all active sessions for security
+      // Revoke all active sessions for security, both web cookie sessions and
+      // mobile bearer tokens, so a reset terminates every active session.
       await trx('sessions').where('user_id', resetToken.userId).whereNull('revoked_at').update({
-        revoked_at: new Date().toISOString(),
+        revoked_at: nowIso,
       });
+      await new MobileSessionRepository(trx).revokeAllForUser(resetToken.userId, nowIso);
     });
 
     const user = await new UserRepository(db).findById(resetToken.userId);
@@ -663,7 +782,7 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Protected — authContext applied directly so this route isn't bypassed by mount order.
+// Protected, authContext applied directly so this route isn't bypassed by mount order.
 async function sendAuthProfile(req: Request, res: Response): Promise<void> {
   const { userId, role, agencyId, caregiverId } = req.auth;
   const db = req.app.get('db');
@@ -694,7 +813,7 @@ async function sendAuthProfile(req: Request, res: Response): Promise<void> {
 router.get('/me', authContext, async (req, res) => sendAuthProfile(req, res));
 router.get('/mobile/me', authContext, async (req, res) => sendAuthProfile(req, res));
 
-// GET /auth/mobile/agencies — every agency the signed-in user may act in,
+// GET /auth/mobile/agencies, every agency the signed-in user may act in,
 // plus which one the current token is scoped to. Powers the "Linked agencies"
 // screen and the post-login picker on token-restore.
 router.get('/mobile/agencies', authContext, async (req, res) => {
@@ -710,7 +829,7 @@ router.get('/mobile/agencies', authContext, async (req, res) => {
 
 const switchAgencySchema = z.object({ agencyId: z.string().uuid() });
 
-// POST /auth/mobile/switch-agency — re-scope the caller's bearer token to
+// POST /auth/mobile/switch-agency, re-scope the caller's bearer token to
 // another agency they hold an active membership in. Issues a fresh JWT whose
 // agencyId/role/caregiverId claims come from that membership, so every
 // downstream tenant check keeps reading req.auth exactly as before.
@@ -738,7 +857,7 @@ router.post('/mobile/switch-agency', authContext, requireCsrf, async (req, res) 
     }
 
     const mobileSessions = getMobileSessionStore(req);
-    const { token } = await issueMobileToken(mobileSessions, {
+    const token = await issueMobileToken(mobileSessions, {
       sub: userId,
       agencyId: membership.agencyId,
       role: membership.role,

@@ -60,6 +60,34 @@ describe('CommandCenterPage', () => {
 
     // The Cycle-5 coverage KPI surfaces the forecast gap count.
     expect(screen.getByText('Coverage gaps (14d)')).toBeInTheDocument();
+
+    // Ten-second-calm-test summary in the hero: since a critical item is
+    // present, the derived status reads "Action needed" and names it.
+    expect(screen.getByText('Action needed')).toBeInTheDocument();
+    expect(screen.getByText('Top priority: 2 visits late to start.')).toBeInTheDocument();
+
+    // Severity count badge + "Resolve next" deep-link on the attention queue.
+    expect(screen.getByText('1 critical')).toBeInTheDocument();
+    const resolveNext = screen.getByRole('link', { name: /resolve next/i });
+    expect(resolveNext).toHaveAttribute('href', '/admin/today');
+
+    // Today's visit operations progress readout (4 of 10 completed = 40%).
+    expect(screen.getByText('4 of 10 visits completed (40%)')).toBeInTheDocument();
+
+    // Billing readiness: no flagged visits this week reads as "clean".
+    expect(screen.getByText('Clean, ready to bill')).toBeInTheDocument();
+
+    // Quick Action Dock covers all six named actions.
+    for (const label of [
+      'Schedule a visit',
+      'Add a client',
+      'Invite a caregiver',
+      'Review EVV exceptions',
+      'Generate audit packet',
+      'Open billing queue',
+    ]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
   it('fetches and shows an AI briefing on demand', async () => {
