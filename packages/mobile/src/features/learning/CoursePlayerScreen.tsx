@@ -18,6 +18,8 @@ import {
   progressFraction,
   stepMeta,
   type CourseModules,
+  type CourseSection,
+  type QuizQuestion,
   type PlayerStep,
 } from '../../lib/course-player';
 import { emptyAnswers, gradeQuiz, type QuizGrade } from '../../lib/quiz';
@@ -65,7 +67,14 @@ interface Course {
   description: string;
   required: boolean;
   durationMinutes: number;
-  modules: CourseModules | null;
+  // Flat server shape: `modules` is the lesson array; objectives/note/video/
+  // quiz are siblings. The player still works over the cohesive CourseModules
+  // shape, so the screen assembles one from these fields (see `modules` memo).
+  modules: CourseSection[];
+  objectives: string[];
+  note: string | null;
+  videoUrl: string | null;
+  quiz: QuizQuestion[] | null;
 }
 
 interface Enrollment {
@@ -124,7 +133,19 @@ export default function CoursePlayerScreen() {
   const submittedRef = useRef(false);
   const celebrationHapticRef = useRef(false);
 
-  const modules = row?.course.modules ?? null;
+  // Assemble the cohesive content object the player operates over from the
+  // course's flat server fields.
+  const modules = useMemo<CourseModules | null>(() => {
+    const c = row?.course;
+    if (!c) return null;
+    return {
+      objectives: c.objectives ?? [],
+      sections: c.modules ?? [],
+      note: c.note ?? undefined,
+      videoUrl: c.videoUrl ?? null,
+      quiz: c.quiz ?? null,
+    };
+  }, [row]);
   const quiz = useMemo(() => modules?.quiz ?? [], [modules]);
   const steps = useMemo<PlayerStep[]>(() => (modules ? buildSteps(modules) : []), [modules]);
   const step = steps[stepIndex];
@@ -144,11 +165,14 @@ export default function CoursePlayerScreen() {
         rows.find((r) => r.enrollment.id === enrollmentId) ??
         rows.find((r) => r.course.id === courseId) ??
         null;
-      if (!found || !found.course.modules) {
+      const hasContent =
+        !!found &&
+        ((found.course.modules?.length ?? 0) > 0 || (found.course.quiz?.length ?? 0) > 0);
+      if (!found || !hasContent) {
         setError('Could not load this course.');
       } else {
         setRow(found);
-        setAnswers(emptyAnswers(found.course.modules.quiz?.length ?? 0));
+        setAnswers(emptyAnswers(found.course.quiz?.length ?? 0));
         setError(null);
       }
     } catch {

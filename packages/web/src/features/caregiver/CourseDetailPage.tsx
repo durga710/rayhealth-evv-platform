@@ -15,11 +15,12 @@ interface QuizQuestion {
   correct: number;
 }
 
-interface CourseModules {
+// Cohesive content shape this page renders over; assembled from the course's
+// flat server fields (see `mods` in the component).
+interface CourseContent {
   objectives: string[];
   sections: CourseSection[];
   note?: string | null;
-  videoSearchQuery?: string | null;
   videoUrl?: string | null;
   quiz?: QuizQuestion[] | null;
 }
@@ -34,7 +35,13 @@ interface Course {
   durationMinutes: number;
   expiresAfterDays: number | null;
   externalUrl: string | null;
-  modules: CourseModules | null;
+  // Flat server shape: `modules` is the lesson array; objectives/note/video/
+  // quiz are siblings.
+  modules: CourseSection[];
+  objectives: string[];
+  note: string | null;
+  videoUrl: string | null;
+  quiz: QuizQuestion[] | null;
 }
 
 interface Enrollment {
@@ -403,7 +410,15 @@ export function CourseDetailPage() {
   }
 
   const { course, enrollment } = item;
-  const mods = course.modules;
+  // Assemble the cohesive content object the rest of this view renders over
+  // from the course's flat server fields.
+  const mods: CourseContent = {
+    objectives: course.objectives ?? [],
+    sections: course.modules ?? [],
+    note: course.note,
+    videoUrl: course.videoUrl,
+    quiz: course.quiz,
+  };
   const isCompleted = completedNow || enrollment.status === 'completed';
   const isInProgress = !isCompleted && enrollment.status === 'in_progress';
   const hasQuiz = !!(mods?.quiz && mods.quiz.length > 0);

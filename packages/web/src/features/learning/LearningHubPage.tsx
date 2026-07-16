@@ -2,12 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getJson, postJson, deleteJson } from '../../lib/api-client.js';
 
-interface CourseModules {
-  objectives?: string[];
-  sections?: Array<{ title: string; content: string }>;
-  quiz?: Array<unknown> | null;
-}
-
 interface Course {
   id: string;
   agencyId: string | null;
@@ -18,7 +12,9 @@ interface Course {
   required: boolean;
   durationMinutes: number;
   expiresAfterDays: number | null;
-  modules: CourseModules | null;
+  // Flat server shape: `modules` is the lesson array; `quiz` is a sibling.
+  modules: Array<{ title: string; content: string }>;
+  quiz?: Array<unknown> | null;
 }
 
 interface Rollup {
@@ -323,9 +319,9 @@ export function LearningHubPage() {
                     <div style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <span>{c.durationMinutes} min</span>
                       {c.expiresAfterDays ? <span>· expires after {c.expiresAfterDays} days</span> : null}
-                      {c.modules?.sections?.length ? <span style={{ color: '#0c5d66' }}>· {c.modules.sections.length} section{c.modules.sections.length === 1 ? '' : 's'}</span> : null}
-                      {c.modules?.quiz?.length ? <span style={{ color: '#0c5d66' }}>· {c.modules.quiz.length}-question quiz</span> : null}
-                      {!c.modules?.sections?.length && !c.modules?.quiz?.length ? <span style={{ color: '#B45309' }}>· no content yet</span> : null}
+                      {c.modules?.length ? <span style={{ color: '#0c5d66' }}>· {c.modules.length} module{c.modules.length === 1 ? '' : 's'}</span> : null}
+                      {c.quiz?.length ? <span style={{ color: '#0c5d66' }}>· {c.quiz.length}-question quiz</span> : null}
+                      {!c.modules?.length && !c.quiz?.length ? <span style={{ color: '#B45309' }}>· no content yet</span> : null}
                     </div>
                     {c.agencyId === null ? (
                       <span className="badge badge-info" title="Shared across all agencies, read only">Global</span>

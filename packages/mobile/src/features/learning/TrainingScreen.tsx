@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import apiClient from '../../lib/api-client';
-import type { CourseModules } from '../../lib/course-player';
+import type { CourseSection, QuizQuestion } from '../../lib/course-player';
 import { showCertificateAlert } from './certificate';
 import ScreenHeader from '../common/ScreenHeader';
 import ErrorRetry from '../common/ErrorRetry';
@@ -31,7 +31,10 @@ interface Course {
   required: boolean;
   durationMinutes: number;
   externalUrl: string | null;
-  modules: CourseModules | null;
+  // Flat server shape: `modules` is the lesson array (empty when no in-app
+  // content); `quiz` is a sibling.
+  modules: CourseSection[];
+  quiz: QuizQuestion[] | null;
 }
 
 interface Enrollment {
@@ -101,8 +104,9 @@ export default function TrainingScreen() {
 
   const handleStart = async (row: EnrollmentRow) => {
     // In-app course content opens the guided player, which marks the
-    // enrollment in-progress itself.
-    if (row.course.modules) {
+    // enrollment in-progress itself. An empty modules array (no lessons and
+    // no quiz) means external/link-only content, so fall through to the link.
+    if (row.course.modules.length > 0 || (row.course.quiz?.length ?? 0) > 0) {
       router.push({
         pathname: '/course-player',
         params: { courseId: row.course.id, enrollmentId: row.enrollment.id },
