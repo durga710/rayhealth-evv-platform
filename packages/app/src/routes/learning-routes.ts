@@ -18,23 +18,11 @@ const quizQuestionSchema = z
     path: ['correct'],
   });
 
-const modulesSchema = z.object({
-  objectives: z.array(z.string().max(500)).max(20).default([]),
-  sections: z
-    .array(
-      z.object({
-        title: z.string().min(1).max(200),
-        content: z.string().min(1).max(20000),
-        imageUrl: z.string().url().max(500).nullable().optional(),
-        imageAlt: z.string().max(300).nullable().optional(),
-      }),
-    )
-    .max(40)
-    .default([]),
-  note: z.string().max(2000).optional(),
-  videoSearchQuery: z.string().max(300).optional(),
-  videoUrl: z.string().url().max(500).nullable().optional(),
-  quiz: z.array(quizQuestionSchema).max(50).nullable().optional(),
+const courseModuleSchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().min(1).max(20000),
+  imageUrl: z.string().url().max(500).nullable().optional(),
+  imageAlt: z.string().max(300).nullable().optional(),
 });
 
 const courseBodySchema = z.object({
@@ -46,7 +34,14 @@ const courseBodySchema = z.object({
   required: z.boolean().default(true),
   durationMinutes: z.number().int().min(0).max(100000).default(0),
   externalUrl: z.string().url().max(500).nullable().optional(),
-  modules: modulesSchema.nullable().optional(),
+  // In-app content, flat: `modules` is the ordered lesson array; objectives,
+  // note, video, and quiz are siblings (they persist together server-side).
+  modules: z.array(courseModuleSchema).max(40).default([]),
+  objectives: z.array(z.string().max(500)).max(20).default([]),
+  note: z.string().max(2000).nullable().optional(),
+  videoSearchQuery: z.string().max(300).nullable().optional(),
+  videoUrl: z.string().url().max(500).nullable().optional(),
+  quiz: z.array(quizQuestionSchema).max(50).nullable().optional(),
 });
 
 // GET /learning/courses, catalog visible to all authenticated roles (admin, coordinator, caregiver)

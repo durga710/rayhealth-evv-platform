@@ -6,6 +6,7 @@ import type {
   CourseAnalyticsRow,
   CourseCaregiverEnvelope,
   CourseCompletion,
+  CourseContent,
   CourseEnrollment,
   EnrollmentStatus,
   InsightCaregiver,
@@ -21,6 +22,17 @@ import type {
   CaregiverTrainingRecord,
   TrainingCompletionRecord,
 } from '../services/training-evidence.js';
+
+// Flat course fields that together make up the stored jsonb content object.
+// A PATCH touching any of them rewrites the whole content block.
+const CONTENT_KEYS = [
+  'modules',
+  'objectives',
+  'note',
+  'videoUrl',
+  'videoSearchQuery',
+  'quiz',
+] as const satisfies ReadonlyArray<keyof NewLearningCourse>;
 
 type InsightContext = 'due' | 'expired' | 'orientation' | 'stalled' | 'cert_expiring';
 
@@ -77,7 +89,7 @@ export class LearningRepository {
         required: data.required,
         duration_minutes: data.durationMinutes,
         external_url: data.externalUrl ?? null,
-        modules: data.modules ? JSON.stringify(data.modules) : null,
+        modules: this.serializeContent(this.contentFromInput(data)),
       })
       .returning('*');
     return this.mapCourse(row as Record<string, unknown>);
@@ -103,7 +115,12 @@ export class LearningRepository {
     if (data.required !== undefined) patch.required = data.required;
     if (data.durationMinutes !== undefined) patch.duration_minutes = data.durationMinutes;
     if (data.externalUrl !== undefined) patch.external_url = data.externalUrl ?? null;
-    if (data.modules !== undefined) patch.modules = data.modules ? JSON.stringify(data.modules) : null;
+    // The content-bearing fields are stored as one jsonb object, so a PATCH
+    // that touches any of them replaces the whole content block (the course
+    // editor always sends them together). Untouched content is left as-is.
+    if (CONTENT_KEYS.some((key) => data[key] !== undefined)) {
+      patch.modules = this.serializeContent(this.contentFromInput(data));
+    }
 
     const [row] = await this.db('learning_courses')
       .where({ id, agency_id: agencyId })
@@ -765,10 +782,61 @@ export class LearningRepository {
       required: Boolean(row.required),
       durationMinutes: Number(row.duration_minutes ?? 0),
       externalUrl: row.external_url ? String(row.external_url) : null,
-      modules: row.modules
-        ? (typeof row.modules === 'string' ? JSON.parse(row.modules) : row.modules) as LearningCourse['modules']
-        : null,
+      ...this.flattenContent(row.modules),
       createdAt: this.toIsoString(row.created_at),
+    };
+  }
+
+  /**
+   * Reassemble the stored jsonb content object from the course's flat input
+   * fields. Returns null when the course carries no in-app content at all, so
+   * the column stays NULL for external-link-only courses.
+   */
+  private contentFromInput(data: Partial<NewLearningCourse>): CourseContent | null {
+    const sections = data.modules ?? [];
+    const objectives = data.objectives ?? [];
+    const quiz = data.quiz ?? null;
+    const note = data.note ?? undefined;
+    const videoUrl = data.videoUrl ?? null;
+    const videoSearchQuery = data.videoSearchQuery ?? undefined;
+    const hasContent =
+      sections.length > 0 ||
+      objectives.length > 0 ||
+      (quiz?.length ?? 0) > 0 ||
+      Boolean(note) ||
+      Boolean(videoUrl) ||
+      Boolean(videoSearchQuery);
+    if (!hasContent) return null;
+    const content: CourseContent = { objectives, sections };
+    if (note !== undefined) content.note = note;
+    if (videoSearchQuery !== undefined) content.videoSearchQuery = videoSearchQuery;
+    if (videoUrl !== null) content.videoUrl = videoUrl;
+    if (quiz !== null) content.quiz = quiz;
+    return content;
+  }
+
+  private serializeContent(content: CourseContent | null): string | null {
+    return content ? JSON.stringify(content) : null;
+  }
+
+  /**
+   * Flatten the stored jsonb content object into the course's top-level
+   * `modules` array + sibling fields. A NULL column (no content) yields an
+   * empty modules array and null siblings.
+   */
+  private flattenContent(
+    raw: unknown,
+  ): Pick<LearningCourse, 'modules' | 'objectives' | 'note' | 'videoUrl' | 'videoSearchQuery' | 'quiz'> {
+    const stored: CourseContent | null = raw
+      ? ((typeof raw === 'string' ? JSON.parse(raw) : raw) as CourseContent)
+      : null;
+    return {
+      modules: stored?.sections ?? [],
+      objectives: stored?.objectives ?? [],
+      note: stored?.note ?? null,
+      videoUrl: stored?.videoUrl ?? null,
+      videoSearchQuery: stored?.videoSearchQuery ?? null,
+      quiz: stored?.quiz ?? null,
     };
   }
 

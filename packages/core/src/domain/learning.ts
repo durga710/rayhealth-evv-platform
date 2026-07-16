@@ -30,7 +30,15 @@ export interface QuizQuestion {
   correct: number;
 }
 
-export interface CourseModules {
+/**
+ * On-disk / authoring shape of a course's in-app content, persisted as one
+ * jsonb object in `learning_courses.modules`. NOT what `LearningCourse`
+ * exposes — the repository flattens this into the course's top-level
+ * `modules` array + sibling fields on read, and reassembles it on write.
+ * Kept as a cohesive object because it is convenient to author a course's
+ * content as a unit (seed catalog, course editor).
+ */
+export interface CourseContent {
   objectives: string[];
   sections: CourseModule[];
   note?: string;
@@ -54,8 +62,22 @@ export interface LearningCourse {
   durationMinutes: number;
   /** Link to an external training platform (e.g. PHCA, FEMA EMI). null = no link. */
   externalUrl: string | null;
-  /** Structured in-app course content: objectives, sections, optional video search query. */
-  modules: CourseModules | null;
+  /**
+   * Ordered lesson modules the caregiver steps through. Empty array when the
+   * course has no in-app content (e.g. an external-link-only course). This IS
+   * the module list — do not reach for a `.sections` sub-field.
+   */
+  modules: CourseModule[];
+  /** Learning objectives shown before the first module. */
+  objectives: string[];
+  /** Optional highlighted note shown on the course overview. */
+  note: string | null;
+  /** Optional training-video URL played between modules and the quiz. */
+  videoUrl: string | null;
+  /** Optional video search hint retained for authoring tools. */
+  videoSearchQuery: string | null;
+  /** Knowledge-check quiz that gates completion; null when the course has none. */
+  quiz: QuizQuestion[] | null;
   createdAt: string;
 }
 
@@ -69,7 +91,13 @@ export interface NewLearningCourse {
   required: boolean;
   durationMinutes: number;
   externalUrl?: string | null;
-  modules?: CourseModules | null;
+  /** Ordered lesson modules. Omit or pass [] for a course with no in-app content. */
+  modules?: CourseModule[];
+  objectives?: string[];
+  note?: string | null;
+  videoUrl?: string | null;
+  videoSearchQuery?: string | null;
+  quiz?: QuizQuestion[] | null;
 }
 
 export interface CourseEnrollment {

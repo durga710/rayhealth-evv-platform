@@ -16,9 +16,32 @@
  */
 import { createDb } from '../src/db/knex.js';
 import { LearningRepository } from '../src/repositories/learning-repository.js';
-import type { NewLearningCourse } from '../src/domain/learning.js';
+import type { CourseContent, NewLearningCourse } from '../src/domain/learning.js';
 
-const CATALOG: NewLearningCourse[] = [
+/**
+ * Authoring shape for a seed course: content is authored as one cohesive
+ * object (objectives + sections + quiz + video), then mapped to the flat
+ * NewLearningCourse (modules array + sibling fields) at insert time. Keeps
+ * the catalog literals readable without duplicating field-by-field.
+ */
+type SeedCourse = Omit<NewLearningCourse, 'modules' | 'objectives' | 'note' | 'videoUrl' | 'videoSearchQuery' | 'quiz'> & {
+  modules: CourseContent;
+};
+
+function toNewCourse(seed: SeedCourse): NewLearningCourse {
+  const { modules, ...rest } = seed;
+  return {
+    ...rest,
+    modules: modules.sections,
+    objectives: modules.objectives,
+    note: modules.note ?? null,
+    videoUrl: modules.videoUrl ?? null,
+    videoSearchQuery: modules.videoSearchQuery ?? null,
+    quiz: modules.quiz ?? null,
+  };
+}
+
+const CATALOG: SeedCourse[] = [
   {
     agencyId: null,
     code: 'ORIENT-PA',
@@ -535,7 +558,7 @@ async function run(): Promise<void> {
   try {
     for (const course of CATALOG) {
       const before = await repo.findCourseByCode(null, course.code);
-      await repo.upsertCourseByCode(course);
+      await repo.upsertCourseByCode(toNewCourse(course));
       if (before) existing += 1;
       else created += 1;
     }

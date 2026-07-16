@@ -28,14 +28,6 @@ interface Section {
   content: string;
 }
 
-interface CourseModules {
-  objectives: string[];
-  sections: Section[];
-  note?: string;
-  videoUrl?: string | null;
-  quiz?: QuizQuestion[] | null;
-}
-
 interface Course {
   id: string;
   agencyId: string | null;
@@ -47,7 +39,13 @@ interface Course {
   durationMinutes: number;
   expiresAfterDays: number | null;
   externalUrl: string | null;
-  modules: CourseModules | null;
+  // Flat server shape: `modules` is the lesson (section) array; objectives/
+  // note/video/quiz are siblings, posted back the same way.
+  modules: Section[];
+  objectives: string[];
+  note: string | null;
+  videoUrl: string | null;
+  quiz: QuizQuestion[] | null;
 }
 
 const CADENCES: Array<{ value: Cadence; label: string }> = [
@@ -104,20 +102,19 @@ export function CourseEditorPage() {
         setDurationMinutes(course.durationMinutes);
         setExpiresAfterDays(course.expiresAfterDays != null ? String(course.expiresAfterDays) : '');
         setExternalUrl(course.externalUrl ?? '');
-        const m = course.modules;
-        if (m) {
-          setObjectives(m.objectives ?? []);
-          setSections(m.sections ?? []);
-          setNote(m.note ?? '');
-          setVideoUrl(m.videoUrl ?? '');
-          setQuiz(m.quiz ?? []);
-        }
+        setObjectives(course.objectives ?? []);
+        setSections(course.modules ?? []);
+        setNote(course.note ?? '');
+        setVideoUrl(course.videoUrl ?? '');
+        setQuiz(course.quiz ?? []);
       })
       .catch(() => setError('Failed to load course.'))
       .finally(() => setLoading(false));
   }, [id, isEdit]);
 
-  const buildModules = (): CourseModules | null => {
+  // Flat content fields for the request body. The server persists them
+  // together, so they are always sent as a group.
+  const buildContentFields = () => {
     const cleanObjectives = objectives.map((o) => o.trim()).filter(Boolean);
     const cleanSections = sections
       .map((s) => ({ title: s.title.trim(), content: s.content.trim() }))
@@ -129,15 +126,12 @@ export function CourseEditorPage() {
         correct: q.correct,
       }))
       .filter((q) => q.question && q.options.length >= 2);
-    const hasContent =
-      cleanObjectives.length > 0 || cleanSections.length > 0 || note.trim() || videoUrl.trim() || cleanQuiz.length > 0;
-    if (!hasContent) return null;
     return {
+      modules: cleanSections,
       objectives: cleanObjectives,
-      sections: cleanSections,
-      ...(note.trim() ? { note: note.trim() } : {}),
-      ...(videoUrl.trim() ? { videoUrl: videoUrl.trim() } : {}),
-      ...(cleanQuiz.length > 0 ? { quiz: cleanQuiz } : {}),
+      note: note.trim() || null,
+      videoUrl: videoUrl.trim() || null,
+      quiz: cleanQuiz.length > 0 ? cleanQuiz : null,
     };
   };
 
@@ -168,7 +162,7 @@ export function CourseEditorPage() {
       durationMinutes: Number(durationMinutes) || 0,
       expiresAfterDays: expiresAfterDays.trim() ? Number(expiresAfterDays) : null,
       externalUrl: externalUrl.trim() || null,
-      modules: buildModules(),
+      ...buildContentFields(),
     };
     try {
       if (isEdit) {
