@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@types/ssh2-sftp-client": "^9.0.6",
-    "vitest": "^1.4.0"
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "knex": "^3.3.0",
