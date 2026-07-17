@@ -322,8 +322,16 @@ export class RecurringScheduleRepository {
     windowStart: string,
     windowEnd: string,
   ): Promise<MaterializeResult[]> {
+    // First-scheduled wins: schedules are materialized sequentially and later
+    // ones lose overlap conflicts to earlier ones' inserts, so the processing
+    // order decides which client gets a contested slot. Order by creation time
+    // (id as tiebreak) rather than leaving it to undefined row order.
     const ids = (await this.db('recurring_schedules')
       .where({ agency_id: agencyId, status: 'active' })
+      .orderBy([
+        { column: 'created_at', order: 'asc' },
+        { column: 'id', order: 'asc' },
+      ])
       .select('id')) as Array<{ id: string }>;
     const results: MaterializeResult[] = [];
     for (const { id } of ids) {
