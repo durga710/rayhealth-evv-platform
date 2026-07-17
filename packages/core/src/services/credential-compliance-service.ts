@@ -20,14 +20,20 @@ const EXPIRY_WARNING_DAYS = 30;
 
 export class CredentialComplianceService {
   evaluate(credentials: CaregiverCredential[]): CredentialComplianceResult {
-    const now = new Date();
-    const warnThreshold = new Date(now.getTime() + EXPIRY_WARNING_DAYS * 86_400_000);
+    // `expiresAt` is date-only (YYYY-MM-DD), so compare calendar dates
+    // lexicographically, never instants: new Date('YYYY-MM-DD') is UTC
+    // midnight, which would flip a credential to "expired" the prior evening
+    // in US timezones. A credential is valid through the whole of its listed
+    // expiry day.
+    const today = new Date().toISOString().slice(0, 10);
+    const warnThreshold = new Date(Date.now() + EXPIRY_WARNING_DAYS * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
 
-    const expired = credentials.filter(c => c.status === 'expired' || new Date(c.expiresAt) < now);
-    const expiringSoon = credentials.filter(c => {
-      const exp = new Date(c.expiresAt);
-      return c.status === 'active' && exp >= now && exp <= warnThreshold;
-    });
+    const expired = credentials.filter(c => c.status === 'expired' || c.expiresAt < today);
+    const expiringSoon = credentials.filter(
+      c => c.status === 'active' && c.expiresAt >= today && c.expiresAt <= warnThreshold,
+    );
 
     const presentTypes = new Set(credentials.map(c => c.credentialType));
     const missing = paCredentialTypes.filter(t => !presentTypes.has(t)) as PaCredentialType[];

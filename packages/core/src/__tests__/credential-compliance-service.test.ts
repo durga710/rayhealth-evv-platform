@@ -35,6 +35,19 @@ describe('CredentialComplianceService.evaluate', () => {
     expect(result.missing).toHaveLength(0);
   });
 
+  it('keeps a credential valid through the whole of its listed expiry day', () => {
+    // Regression guard: instant-based comparison (new Date('YYYY-MM-DD') =
+    // UTC midnight) marked a credential expired on its own expiry day , and
+    // the prior evening in US timezones. Today must warn, never block.
+    const expiresToday = cred({ expiresAt: dateFromNow(0) });
+    const result = service.evaluate([expiresToday]);
+    expect(result.expired).toHaveLength(0);
+    expect(result.expiringSoon).toEqual([expiresToday]);
+
+    const gate = service.gateForBooking([expiresToday]);
+    expect(gate.blocks).toHaveLength(0);
+  });
+
   it('treats a past expiry date as expired even when status is still active', () => {
     const stale = cred({ expiresAt: dateFromNow(-1) });
     const result = service.evaluate([stale]);
