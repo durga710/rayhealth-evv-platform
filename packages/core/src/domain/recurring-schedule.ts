@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const recurringScheduleStatuses = ['active', 'paused', 'ended'] as const;
 export type RecurringScheduleStatus = (typeof recurringScheduleStatuses)[number];
 
-/** 24-hour HH:MM. */
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** 24-hour HH:MM. Shared with one-off assignment times (domain/scheduling). */
+export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const recurringScheduleSchema = z
   .object({

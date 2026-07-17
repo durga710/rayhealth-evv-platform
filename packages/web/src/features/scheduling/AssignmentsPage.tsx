@@ -16,6 +16,9 @@ interface Assignment {
   clientId: string;
   caregiverId: string;
   visitDate?: string;
+  /** HH:MM window; present only when the booking carries a real time-of-day. */
+  startTime?: string;
+  endTime?: string;
   visitTemplateId: string;
 }
 
@@ -42,6 +45,8 @@ export function AssignmentsPage() {
   const [caregiverId, setCaregiverId] = useState('');
   const [visitTemplateId, setVisitTemplateId] = useState('');
   const [visitDate, setVisitDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState<Banner>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -94,6 +99,8 @@ export function AssignmentsPage() {
     setCaregiverId('');
     setVisitTemplateId('');
     setVisitDate('');
+    setStartTime('');
+    setEndTime('');
   };
 
   const startEdit = (a: Assignment) => {
@@ -104,6 +111,8 @@ export function AssignmentsPage() {
     setCaregiverId(a.caregiverId);
     setVisitTemplateId(a.visitTemplateId);
     setVisitDate(a.visitDate ?? '');
+    setStartTime(a.startTime ?? '');
+    setEndTime(a.endTime ?? '');
     document.getElementById('assignClientId')?.focus();
   };
 
@@ -130,6 +139,18 @@ export function AssignmentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBanner(null);
+    if ((startTime && !endTime) || (!startTime && endTime)) {
+      setBanner({ kind: 'error', text: 'Set both start and end time, or leave both empty.' });
+      return;
+    }
+    if (startTime && endTime && endTime <= startTime) {
+      setBanner({ kind: 'error', text: 'End time must be after start time.' });
+      return;
+    }
+    if (startTime && !visitDate) {
+      setBanner({ kind: 'error', text: 'A visit date is required when times are set.' });
+      return;
+    }
     setSubmitting(true);
     try {
       if (editingId) {
@@ -139,6 +160,8 @@ export function AssignmentsPage() {
           caregiverId,
           visitTemplateId,
           visitDate: visitDate || null,
+          startTime: startTime && endTime ? startTime : null,
+          endTime: startTime && endTime ? endTime : null,
         });
         setAssignments(prev => prev.map(a => (a.id === editingId ? { ...a, ...updated } : a)));
         setEditingId(null);
@@ -155,6 +178,8 @@ export function AssignmentsPage() {
           caregiverId,
           visitTemplateId,
           visitDate: visitDate || undefined,
+          startTime: startTime && endTime ? startTime : undefined,
+          endTime: startTime && endTime ? endTime : undefined,
         });
         const { warnings, ...assignment } = newAssign;
         setAssignments(prev => [...prev, assignment]);
@@ -228,6 +253,16 @@ export function AssignmentsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor="visitDate" className="label">Visit Date <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
                 <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="input-field" />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="assignStartTime" className="label">Start Time <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <input id="assignStartTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="input-field" />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="assignEndTime" className="label">End Time <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <input id="assignEndTime" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="input-field" />
               </div>
             </div>
 
@@ -308,7 +343,9 @@ export function AssignmentsPage() {
                         <td style={{ color: '#475569', fontSize: '0.8125rem' }}>{templateLabel(a.visitTemplateId)}</td>
                         <td>
                           {a.visitDate ? (
-                            <span className="badge badge-success" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{a.visitDate}</span>
+                            <span className="badge badge-success" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>
+                              {a.visitDate}{a.startTime && a.endTime ? ` ${a.startTime}–${a.endTime}` : ''}
+                            </span>
                           ) : (
                             <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>, </span>
                           )}
@@ -329,6 +366,8 @@ export function AssignmentsPage() {
                               <div>{templateLabel(a.visitTemplateId)}</div>
                               <div style={{ fontWeight: 600 }}>Visit date</div>
                               <div>{a.visitDate || <em style={{ color: '#94A3B8' }}>not set</em>}</div>
+                              <div style={{ fontWeight: 600 }}>Time window</div>
+                              <div>{a.startTime && a.endTime ? `${a.startTime}–${a.endTime}` : <em style={{ color: '#94A3B8' }}>day-granular</em>}</div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>

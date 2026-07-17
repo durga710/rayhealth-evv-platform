@@ -32,6 +32,19 @@ function toIsoOrNull(value: unknown): string | null {
   return new Date(String(value)).toISOString();
 }
 
+/**
+ * HH:MM pair for an assignment's scheduled window, or empty when the row is
+ * day-granular. Only rows with BOTH bounds carry a real time-of-day , a
+ * midnight start with a NULL end encodes "a date, no time" and must not
+ * surface as a 00:00 booking.
+ */
+function windowTimes(start: unknown, end: unknown): { startTime?: string; endTime?: string } {
+  const startIso = toIsoOrNull(start);
+  const endIso = toIsoOrNull(end);
+  if (!startIso || !endIso) return {};
+  return { startTime: startIso.slice(11, 16), endTime: endIso.slice(11, 16) };
+}
+
 export class ScheduleRepository {
   constructor(private readonly db: Knex) {}
 
@@ -64,14 +77,24 @@ export class ScheduleRepository {
   }
 
   async createAssignment(assignment: AssignmentInput): Promise<any> {
+    // With times: a real scheduled window (participates in overlap detection).
+    // Date only: the midnight-start / NULL-end convention that encodes "a date,
+    // no time-of-day" (see schedule-conflict-service on why NULL end matters).
     const scheduledStart = assignment.visitDate
-      ? new Date(`${assignment.visitDate}T00:00:00.000Z`).toISOString()
+      ? assignment.startTime
+        ? `${assignment.visitDate}T${assignment.startTime}:00.000Z`
+        : new Date(`${assignment.visitDate}T00:00:00.000Z`).toISOString()
       : null;
+    const scheduledEnd =
+      assignment.visitDate && assignment.endTime
+        ? `${assignment.visitDate}T${assignment.endTime}:00.000Z`
+        : null;
     const [inserted] = await this.db('assignments').insert({
       id: crypto.randomUUID(),
       caregiver_id: assignment.caregiverId,
       visit_template_id: assignment.visitTemplateId,
-      ...(scheduledStart ? { scheduled_start_time: scheduledStart } : {})
+      ...(scheduledStart ? { scheduled_start_time: scheduledStart } : {}),
+      ...(scheduledEnd ? { scheduled_end_time: scheduledEnd } : {})
     }).returning('*');
 
     return {
@@ -80,7 +103,8 @@ export class ScheduleRepository {
       visitTemplateId: inserted.visit_template_id,
       visitDate: inserted.scheduled_start_time
         ? new Date(inserted.scheduled_start_time).toISOString().slice(0, 10)
-        : undefined
+        : undefined,
+      ...windowTimes(inserted.scheduled_start_time, inserted.scheduled_end_time)
     };
   }
 
@@ -138,9 +162,11 @@ export class ScheduleRepository {
    * time-overlap detection. `excludeAssignmentId` omits one assignment so a
    * reschedule of an existing assignment doesn't flag itself.
    *
-   * `scheduledEnd` is undefined for manual bookings , createAssignment writes a
-   * midnight start and no end , and the conflict gate reads that as "no
-   * time-of-day", falling back to the duplicate rule for those rows.
+   * `scheduledEnd` is undefined for day-granular bookings , createAssignment
+   * without times writes a midnight start and no end , and the conflict gate
+   * reads that as "no time-of-day", falling back to the duplicate rule for
+   * those rows. Manual bookings created WITH times carry a real window and
+   * participate in overlap detection like recurring ones.
    */
   async getCaregiverScheduleForConflict(
     caregiverId: string,
@@ -183,7 +209,15 @@ export class ScheduleRepository {
   async getAssignmentById(
     assignmentId: string,
     agencyId: string,
-  ): Promise<{ id: string; caregiverId: string; visitTemplateId: string; clientId: string; visitDate?: string } | null> {
+  ): Promise<{
+    id: string;
+    caregiverId: string;
+    visitTemplateId: string;
+    clientId: string;
+    visitDate?: string;
+    startTime?: string;
+    endTime?: string;
+  } | null> {
     const row = await this.db('assignments')
       .join('visit_templates', 'assignments.visit_template_id', 'visit_templates.id')
       .join('clients', 'visit_templates.client_id', 'clients.id')
@@ -195,6 +229,7 @@ export class ScheduleRepository {
         'assignments.visit_template_id',
         'clients.id as client_id',
         'assignments.scheduled_start_time',
+        'assignments.scheduled_end_time',
       )
       .first();
     if (!row) return null;
@@ -206,6 +241,7 @@ export class ScheduleRepository {
       visitDate: row.scheduled_start_time
         ? new Date(row.scheduled_start_time as string | Date).toISOString().slice(0, 10)
         : undefined,
+      ...windowTimes(row.scheduled_start_time, row.scheduled_end_time),
     };
   }
 
@@ -223,7 +259,8 @@ export class ScheduleRepository {
       visitTemplateId: row.visit_template_id,
       visitDate: row.scheduled_start_time
         ? new Date(row.scheduled_start_time).toISOString().slice(0, 10)
-        : undefined
+        : undefined,
+      ...windowTimes(row.scheduled_start_time, row.scheduled_end_time)
     }));
   }
 
@@ -601,17 +638,45 @@ export class ScheduleRepository {
   async updateAssignment(
     assignmentId: string,
     agencyId: string,
-    patch: { caregiverId?: string; visitTemplateId?: string; visitDate?: string | null }
+    patch: {
+      caregiverId?: string;
+      visitTemplateId?: string;
+      visitDate?: string | null;
+      /** HH:MM pair; null clears back to day-granular. Set/cleared together. */
+      startTime?: string | null;
+      endTime?: string | null;
+    }
   ): Promise<any | null> {
     if (!(await this.assignmentInAgency(assignmentId, agencyId))) return null;
 
     const cols: Record<string, unknown> = {};
     if (patch.caregiverId !== undefined) cols.caregiver_id = patch.caregiverId;
     if (patch.visitTemplateId !== undefined) cols.visit_template_id = patch.visitTemplateId;
-    if (patch.visitDate !== undefined) {
-      cols.scheduled_start_time = patch.visitDate
-        ? new Date(`${patch.visitDate}T00:00:00.000Z`).toISOString()
-        : null;
+    if (patch.visitDate !== undefined || patch.startTime !== undefined) {
+      // Recompute the window from the EFFECTIVE date + times, so a date-only
+      // reschedule keeps the existing time-of-day (it used to reset to
+      // midnight) and a time-only patch keeps the date.
+      const current = await this.db('assignments').where({ id: assignmentId }).first();
+      const currentTimes = windowTimes(current?.scheduled_start_time, current?.scheduled_end_time);
+      const date =
+        patch.visitDate !== undefined
+          ? patch.visitDate
+          : current?.scheduled_start_time
+            ? toIsoOrNull(current.scheduled_start_time)!.slice(0, 10)
+            : null;
+      const startTime = patch.startTime !== undefined ? patch.startTime : currentTimes.startTime ?? null;
+      const endTime = patch.endTime !== undefined ? patch.endTime : currentTimes.endTime ?? null;
+
+      if (!date) {
+        cols.scheduled_start_time = null;
+        cols.scheduled_end_time = null;
+      } else if (startTime && endTime) {
+        cols.scheduled_start_time = `${date}T${startTime}:00.000Z`;
+        cols.scheduled_end_time = `${date}T${endTime}:00.000Z`;
+      } else {
+        cols.scheduled_start_time = new Date(`${date}T00:00:00.000Z`).toISOString();
+        cols.scheduled_end_time = null;
+      }
     }
     if (Object.keys(cols).length > 0) {
       cols.updated_at = this.db.fn.now();
@@ -625,7 +690,8 @@ export class ScheduleRepository {
           visitTemplateId: row.visit_template_id,
           visitDate: row.scheduled_start_time
             ? new Date(row.scheduled_start_time).toISOString().slice(0, 10)
-            : undefined
+            : undefined,
+          ...windowTimes(row.scheduled_start_time, row.scheduled_end_time)
         }
       : null;
   }
