@@ -23,6 +23,32 @@ describe('Pennsylvania domain schemas', () => {
     ).toThrow('eligible');
   });
 
+  it('accepts an assignment time window alongside its visit date', () => {
+    const parsed = assignmentInputSchema.parse({
+      caregiverId: 'cg-1',
+      visitTemplateId: 'vt-1',
+      credentialStatus: 'active',
+      visitDate: '2026-08-01',
+      startTime: '09:00',
+      endTime: '11:00'
+    });
+    expect(parsed.startTime).toBe('09:00');
+    expect(parsed.endTime).toBe('11:00');
+  });
+
+  it('rejects a lone assignment time, an inverted window, and times without a date', () => {
+    const base = { caregiverId: 'cg-1', visitTemplateId: 'vt-1', credentialStatus: 'active' as const };
+    expect(() =>
+      assignmentInputSchema.parse({ ...base, visitDate: '2026-08-01', startTime: '09:00' })
+    ).toThrow('together');
+    expect(() =>
+      assignmentInputSchema.parse({ ...base, visitDate: '2026-08-01', startTime: '11:00', endTime: '09:00' })
+    ).toThrow('after startTime');
+    expect(() =>
+      assignmentInputSchema.parse({ ...base, startTime: '09:00', endTime: '11:00' })
+    ).toThrow('visit date');
+  });
+
   it('requires authorization units and service code', () => {
     expect(() =>
       authorizationSchema.parse({ clientId: 'cl-1', payerId: 'payer-1', unitsAuthorized: 0 })

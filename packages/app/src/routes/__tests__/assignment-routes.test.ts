@@ -53,6 +53,139 @@ describe('assignment routes', () => {
     expect(mockCreateAssignment).toHaveBeenCalled();
   });
 
+  it('creates a timed assignment and passes the window through to the repository', async () => {
+    const createAssignment = vi.fn().mockResolvedValue({
+      id: '125',
+      caregiverId: 'caregiver-1',
+      visitTemplateId: 'template-1',
+      visitDate: '2026-08-01',
+      startTime: '09:00',
+      endTime: '11:00'
+    });
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      createAssignment,
+      getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+      getCaregiverScheduleForConflict: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' }),
+      getCredentials: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getAuthorizations: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+      getBilledLineUnits: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'AuditEventRepository').mockImplementation(() => ({
+      create: vi.fn().mockResolvedValue({})
+    } as any));
+
+    const response = await request(createApp())
+      .post('/assignments')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({
+        caregiverId: 'caregiver-1',
+        visitTemplateId: 'template-1',
+        visitDate: '2026-08-01',
+        startTime: '09:00',
+        endTime: '11:00'
+      });
+
+    expect(response.status).toBe(201);
+    expect(createAssignment).toHaveBeenCalledWith(
+      expect.objectContaining({ startTime: '09:00', endTime: '11:00', visitDate: '2026-08-01' })
+    );
+    expect(response.body.startTime).toBe('09:00');
+  });
+
+  it('409s a timed assignment that overlaps another client visit for the caregiver', async () => {
+    const createAssignment = vi.fn();
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      createAssignment,
+      getTemplateClient: vi.fn().mockResolvedValue({ clientId: 'client-1' }),
+      // Different template (= different client), 09:00–11:00 window on the same day.
+      getCaregiverScheduleForConflict: vi.fn().mockResolvedValue([
+        {
+          visitTemplateId: 'template-other',
+          visitDate: '2026-08-01',
+          scheduledStart: '2026-08-01T09:00:00.000Z',
+          scheduledEnd: '2026-08-01T11:00:00.000Z'
+        }
+      ])
+    } as any));
+    vi.spyOn(core, 'CaregiverRepository').mockImplementation(() => ({
+      findById: vi.fn().mockResolvedValue({ id: 'caregiver-1', agencyId: 'agency-id', status: 'active' }),
+      getCredentials: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClientRepository').mockImplementation(() => ({
+      getAuthorizations: vi.fn().mockResolvedValue([])
+    } as any));
+    vi.spyOn(core, 'ClaimRepository').mockImplementation(() => ({
+      getBilledLineUnits: vi.fn().mockResolvedValue([])
+    } as any));
+
+    const response = await request(createApp())
+      .post('/assignments')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({
+        caregiverId: 'caregiver-1',
+        visitTemplateId: 'template-1',
+        visitDate: '2026-08-01',
+        startTime: '10:00',
+        endTime: '12:00'
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('SCHEDULE_CONFLICT');
+    expect(response.body.message).toContain('overlaps');
+    expect(createAssignment).not.toHaveBeenCalled();
+  });
+
+  it('400s a PUT that sets times on an assignment with no effective visit date', async () => {
+    const updateAssignment = vi.fn();
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      // Unscheduled ("on-call") assignment: no visitDate on file.
+      getAssignmentById: vi.fn().mockResolvedValue({
+        id: 'a-1',
+        caregiverId: 'caregiver-1',
+        visitTemplateId: 'template-1',
+        clientId: 'client-1'
+      }),
+      updateAssignment
+    } as any));
+
+    const response = await request(createApp())
+      .put('/assignments/a-1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ startTime: '09:00', endTime: '11:00' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('visit date');
+    expect(updateAssignment).not.toHaveBeenCalled();
+  });
+
+  it('400s a PUT that sets only one time bound', async () => {
+    vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({
+      getAssignmentById: vi.fn().mockResolvedValue({
+        id: 'a-1',
+        caregiverId: 'caregiver-1',
+        visitTemplateId: 'template-1',
+        clientId: 'client-1',
+        visitDate: '2026-08-01'
+      }),
+      updateAssignment: vi.fn()
+    } as any));
+
+    const response = await request(createApp())
+      .put('/assignments/a-1')
+      .set('Authorization', `Bearer ${makeToken('coordinator')}`)
+      .send({ startTime: '09:00' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('together');
+  });
+
   it('blocks with 409 CREDENTIAL_EXPIRED when the caregiver has an expired credential', async () => {
     const createAssignment = vi.fn();
     vi.spyOn(core, 'ScheduleRepository').mockImplementation(() => ({

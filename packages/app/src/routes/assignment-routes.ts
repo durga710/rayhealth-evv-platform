@@ -4,6 +4,7 @@ import {
   AuditEventRepository,
   CaregiverRepository,
   ScheduleRepository,
+  TIME_RE,
   assignmentInputSchema,
 } from '@rayhealth/core';
 import { evaluateAssignmentChecks } from './assignment-checks.js';
@@ -39,10 +40,14 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
       caregiverId: req.body.caregiverId,
       visitTemplateId: req.body.visitTemplateId,
       credentialStatus: 'active' as const,
-      visitDate: req.body.visitDate ?? undefined
+      visitDate: req.body.visitDate ?? undefined,
+      startTime: req.body.startTime ?? undefined,
+      endTime: req.body.endTime ?? undefined
     });
     if (!parsed.success) {
-      return res.status(400).json({ message: 'Valid caregiverId and visitTemplateId are required' });
+      return res.status(400).json({
+        message: parsed.error.issues[0]?.message ?? 'Valid caregiverId and visitTemplateId are required'
+      });
     }
 
     // Run the shared safety checks (cross-tenant caregiver guard, credential
@@ -52,6 +57,8 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
       caregiverId: parsed.data.caregiverId,
       visitTemplateId: parsed.data.visitTemplateId,
       visitDate: parsed.data.visitDate,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
     });
 
     if (!checks.caregiver) {
@@ -95,6 +102,8 @@ router.post('/', requireCapability('schedule.write'), async (req, res) => {
           visitTemplateId: parsed.data.visitTemplateId,
           clientId: templateClient.clientId,
           visitDate: parsed.data.visitDate ?? null,
+          startTime: parsed.data.startTime ?? null,
+          endTime: parsed.data.endTime ?? null,
           warnings,
         },
         occurredAt: new Date().toISOString(),
@@ -135,8 +144,14 @@ router.put('/:id', requireCapability('schedule.write'), async (req, res) => {
     const db = req.app.get('db');
     const repo = new ScheduleRepository(db);
 
-    const { caregiverId, visitTemplateId, visitDate } = req.body ?? {};
-    const patch: { caregiverId?: string; visitTemplateId?: string; visitDate?: string | null } = {};
+    const { caregiverId, visitTemplateId, visitDate, startTime, endTime } = req.body ?? {};
+    const patch: {
+      caregiverId?: string;
+      visitTemplateId?: string;
+      visitDate?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+    } = {};
 
     // A reassigned caregiver / template must belong to this agency, same
     // cross-tenant guard the create path enforces.
@@ -166,6 +181,24 @@ router.put('/:id', requireCapability('schedule.write'), async (req, res) => {
       }
       patch.visitDate = visitDate;
     }
+    if (startTime !== undefined || endTime !== undefined) {
+      // Times travel as a pair: set both (HH:MM) or clear both back to
+      // day-granular with nulls , a lone bound can't form a window.
+      const bothNull = startTime === null && endTime === null;
+      const bothTimes =
+        typeof startTime === 'string' && TIME_RE.test(startTime) &&
+        typeof endTime === 'string' && TIME_RE.test(endTime);
+      if (!bothNull && !bothTimes) {
+        return res.status(400).json({
+          message: 'startTime and endTime must be HH:MM and set (or cleared) together',
+        });
+      }
+      if (bothTimes && endTime <= startTime) {
+        return res.status(400).json({ message: 'endTime must be after startTime' });
+      }
+      patch.startTime = startTime;
+      patch.endTime = endTime;
+    }
 
     // Re-run the conflict gate on the EFFECTIVE assignment (current values with
     // the patch applied) so a reschedule/reassign can't silently create a
@@ -177,10 +210,22 @@ router.put('/:id', requireCapability('schedule.write'), async (req, res) => {
       return res.status(404).json({ message: 'Assignment not found' });
     }
 
+    // Mirror the create-schema invariant on the EFFECTIVE assignment: setting a
+    // time window requires a visit date to anchor it. Without this, times
+    // patched onto a date-less assignment would be silently discarded by the
+    // repository (date null → whole window cleared) while the route said 200.
+    const effectiveDate =
+      patch.visitDate !== undefined ? patch.visitDate : (current.visitDate ?? null);
+    if (typeof patch.startTime === 'string' && !effectiveDate) {
+      return res.status(400).json({ message: 'a visit date is required when times are set' });
+    }
+
     const checks = await evaluateAssignmentChecks(db, req.auth.agencyId, {
       caregiverId: patch.caregiverId ?? current.caregiverId,
       visitTemplateId: patch.visitTemplateId ?? current.visitTemplateId,
       visitDate: patch.visitDate !== undefined ? (patch.visitDate ?? undefined) : current.visitDate,
+      startTime: patch.startTime !== undefined ? (patch.startTime ?? undefined) : current.startTime,
+      endTime: patch.endTime !== undefined ? (patch.endTime ?? undefined) : current.endTime,
       excludeAssignmentId: assignmentId,
     });
     if (checks.hardConflicts.length > 0) {

@@ -23,6 +23,10 @@ export interface AssignmentCheckInput {
   visitTemplateId: string;
   /** YYYY-MM-DD, when scheduled. */
   visitDate?: string;
+  /** HH:MM pair. With a visitDate, the proposed booking gets a real window and
+   *  participates in time-overlap detection; without, duplicate-rule only. */
+  startTime?: string;
+  endTime?: string;
   /** Omit this assignment from duplicate detection (used when rescheduling it). */
   excludeAssignmentId?: string;
 }
@@ -95,8 +99,15 @@ export async function evaluateAssignmentChecks(
       };
     });
 
+  const hasWindow = Boolean(input.visitDate && input.startTime && input.endTime);
   const conflicts = checkScheduleConflicts({
-    proposed: { visitTemplateId: input.visitTemplateId, visitDate: input.visitDate },
+    proposed: {
+      visitTemplateId: input.visitTemplateId,
+      visitDate: input.visitDate,
+      // Same UTC convention the repository writes (`${date}T${HH:MM}:00.000Z`).
+      scheduledStart: hasWindow ? `${input.visitDate}T${input.startTime}:00.000Z` : undefined,
+      scheduledEnd: hasWindow ? `${input.visitDate}T${input.endTime}:00.000Z` : undefined,
+    },
     existingAssignments,
     authorizations,
   });
