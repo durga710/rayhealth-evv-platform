@@ -35,6 +35,11 @@ describe('Pennsylvania domain schemas', () => {
     expect(publicSlugSchema.safeParse('ab').success).toBe(false);
     expect(publicSlugSchema.safeParse('Bad_Slug!').success).toBe(false);
     expect(publicSlugSchema.safeParse('-leading').success).toBe(false);
+    // Every live top-level SPA route must be reserved , a slug matching one
+    // would save fine but never render (static routes outrank /:slug).
+    for (const route of ['demo', 'launch', 'ads', 'status', 'trust', 'rayverify', 'apply', 'applicant', 'interview', 'portal', 'superadmin', 'accept-invite', 'forgot-password', 'reset-password', 'login', 'signup']) {
+      expect(publicSlugSchema.safeParse(route).success, `'${route}' must be reserved`).toBe(false);
+    }
   });
 
   it('accepts an assignment time window alongside its visit date', () => {

@@ -35,6 +35,14 @@ export const RESERVED_PUBLIC_SLUGS = new Set([
   'app', 'assets', 'static', 'settings', 'superadmin', 'support', 'terms',
   'privacy', 'about', 'pricing', 'product', 'platform', 'caregiver', 'evv',
   'scheduling', 'billing', 'compliance', 'learning', 'contact', 'blog', 'docs',
+  // Live top-level marketing/product routes in App.tsx. Review finding: a
+  // slug matching one of these saves fine but never renders (React Router
+  // ranks static routes above /:slug), silently breaking the agency's page.
+  // Keep this in sync when adding top-level routes.
+  'demo', 'launch', 'ads', 'status', 'trust', 'rayverify',
+  // First segments of multi-segment marketing routes: /solutions/* etc. have
+  // no bare-segment static route, so /:slug would otherwise claim them.
+  'solutions', 'resources',
 ]);
 
 /** Lowercase letters, digits, hyphens; 3-60 chars; no leading/trailing hyphen. */

@@ -98,6 +98,30 @@ const marketingLimiter = rateLimit({
 });
 
 /**
+ * Public hiring surface (agency pages, applications, interviews, the
+ * applicant portal + its 5MB document uploads). Unauthenticated by design ,
+ * the interview token is the only credential , so throttle by IP like the
+ * other anonymous routes. Applications mint DB rows and interview turns call
+ * a paid model, so /apply gets a much tighter cap than browsing/uploading.
+ */
+const onboardingApplyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many applications from this connection. Please try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+const onboardingLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Please try again in a few minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+/**
  * Default rate limit for the authenticated API surface. 300 requests per
  * 15-minute window per IP is well above legitimate admin/coordinator use
  * (each page load is typically <10 requests) and well below what an
@@ -271,7 +295,8 @@ export function createApp(options: { mobileSessionStore?: MobileSessionStore } =
     // authContext, behind their own tighter rate limit (60 / 15-min per IP).
     app.use(`${prefix}/health`, healthLimiter, healthRoutes);
     app.use(`${prefix}/marketing`, marketingLimiter, marketingRoutes);
-    app.use(`${prefix}/onboarding`, onboardingRoutes);
+    app.use(`${prefix}/onboarding/apply`, onboardingApplyLimiter);
+    app.use(`${prefix}/onboarding`, onboardingLimiter, onboardingRoutes);
     // Public marketing-site support chat ("RayHealthAssist"). Mounted before
     // authContext so the anonymous widget reaches it without a session; behind
     // its own tighter rate limit since each turn calls a paid model.
