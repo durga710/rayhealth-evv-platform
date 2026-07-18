@@ -9,9 +9,10 @@
  * The CSV is sent as a raw text/csv body (not JSON) so it bypasses the global
  * 100kb JSON limit; a route-scoped express.text parser with a higher cap reads
  * it. Commit is ALL-OR-NOTHING: if any row fails validation (or, for
- * authorizations, its client link can't be resolved) the whole import is
+ * authorizations/visits, an entity link can't be resolved) the whole import is
  * refused with 422 and nothing is written, no partial loads. Rows are keyed
- * on external_id so re-running the same file updates instead of duplicating.
+ * on external_id so re-running the same file updates instead of duplicating ,
+ * except visits, which are immutable and therefore skip instead of update.
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -21,6 +22,7 @@ import {
   AuditEventRepository,
   CaregiverRepository,
   ClientRepository,
+  EvvRepository,
   hasCapability,
   parseCsv,
   validateImportRecords,
@@ -30,6 +32,7 @@ import {
   type ImportClientRow,
   type ImportCaregiverRow,
   type ImportAuthorizationRow,
+  type ImportVisitRow,
   type RowResult,
 } from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
@@ -39,10 +42,12 @@ const router = Router();
 // CSV bodies are sent as text/csv and can be a few MB for a full agency load.
 router.use(express.text({ type: ['text/csv', 'text/plain'], limit: '15mb' }));
 
-const ENTITY_CAP: Record<ImportEntity, 'client.write' | 'staff.write'> = {
+const ENTITY_CAP: Record<ImportEntity, 'client.write' | 'staff.write' | 'billing.write'> = {
   clients: 'client.write',
   caregivers: 'staff.write',
   authorizations: 'client.write',
+  // Visit history is immutable EVV/claims evidence , admin-only.
+  visits: 'billing.write',
 };
 
 function resolveEntity(raw: unknown): ImportEntity | null {
@@ -110,6 +115,46 @@ async function annotateAuthLinks(
   }
 }
 
+/** Resolve caregiver external_ids → caregiver uuids, agency-scoped (for visit linking). */
+async function resolveCaregiverIds(
+  db: Knex,
+  agencyId: string,
+  externalIds: string[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(externalIds)];
+  if (unique.length === 0) return new Map();
+  const rows = (await db('caregivers')
+    .where('agency_id', agencyId)
+    .whereIn('external_id', unique)
+    .select('id', 'external_id')) as Array<{ id: string; external_id: string }>;
+  return new Map(rows.map((r) => [r.external_id, r.id]));
+}
+
+/** Flag visit rows whose client/caregiver links don't resolve. Mutates results. */
+async function annotateVisitLinks(
+  db: Knex,
+  agencyId: string,
+  results: RowResult[],
+): Promise<{ clients: Map<string, string>; caregivers: Map<string, string> }> {
+  const okRows = results.filter((r) => r.status === 'ok');
+  const [clients, caregivers] = await Promise.all([
+    resolveClientIds(db, agencyId, okRows.map((r) => (r.value as ImportVisitRow).clientExternalId)),
+    resolveCaregiverIds(db, agencyId, okRows.map((r) => (r.value as ImportVisitRow).caregiverExternalId)),
+  ]);
+  for (const r of okRows) {
+    const row = r.value as ImportVisitRow;
+    if (!clients.get(row.clientExternalId)) {
+      r.status = 'error';
+      r.errors.push(`client_external_id '${row.clientExternalId}' not found among this agency's clients`);
+    }
+    if (!caregivers.get(row.caregiverExternalId)) {
+      r.status = 'error';
+      r.errors.push(`caregiver_external_id '${row.caregiverExternalId}' not found among this agency's caregivers`);
+    }
+  }
+  return { clients, caregivers };
+}
+
 function summarize(entity: ImportEntity, results: RowResult[]) {
   const errorCount = results.filter((r) => r.status === 'error').length;
   return {
@@ -156,6 +201,12 @@ router.post('/:entity/preview', async (req: Request, res: Response) => {
     } catch (err) {
       safeError('import preview link-resolve failed', err);
     }
+  } else if (entity === 'visits') {
+    try {
+      await annotateVisitLinks(req.app.get('db'), req.auth.agencyId, results);
+    } catch (err) {
+      safeError('import preview link-resolve failed', err);
+    }
   }
 
   res.json(summarize(entity, results));
@@ -186,9 +237,10 @@ router.post('/:entity/commit', async (req: Request, res: Response) => {
     return;
   }
 
-  // Resolve client links for authorizations up front so unresolved links are
-  // reported as errors (and block the commit) rather than failing mid-transaction.
+  // Resolve entity links up front so unresolved links are reported as errors
+  // (and block the commit) rather than failing mid-transaction.
   let linkMap = new Map<string, string>();
+  let visitLinks: { clients: Map<string, string>; caregivers: Map<string, string> } | null = null;
   if (entity === 'authorizations') {
     try {
       await annotateAuthLinks(db, agencyId, results);
@@ -202,6 +254,14 @@ router.post('/:entity/commit', async (req: Request, res: Response) => {
     } catch (err) {
       safeError('import commit link-resolve failed', err);
       res.status(500).json({ message: 'Failed to resolve client links' });
+      return;
+    }
+  } else if (entity === 'visits') {
+    try {
+      visitLinks = await annotateVisitLinks(db, agencyId, results);
+    } catch (err) {
+      safeError('import commit link-resolve failed', err);
+      res.status(500).json({ message: 'Failed to resolve visit links' });
       return;
     }
   }
@@ -218,6 +278,7 @@ router.post('/:entity/commit', async (req: Request, res: Response) => {
 
   let created = 0;
   let updated = 0;
+  let skipped = 0;
   try {
     await db.transaction(async (trx) => {
       if (entity === 'clients') {
@@ -231,6 +292,39 @@ router.post('/:entity/commit', async (req: Request, res: Response) => {
         for (const r of results) {
           const { action } = await repo.upsertCaregiverForImport(agencyId, r.value as ImportCaregiverRow);
           action === 'created' ? (created += 1) : (updated += 1);
+        }
+      } else if (entity === 'visits') {
+        // Insert-or-skip, never update: evv_visits is immutable. A re-run of
+        // the same file reports its rows as skipped.
+        const repo = new EvvRepository(trx);
+        for (const r of results) {
+          const row = r.value as ImportVisitRow;
+          const clientId = visitLinks?.clients.get(row.clientExternalId);
+          const caregiverId = visitLinks?.caregivers.get(row.caregiverExternalId);
+          if (!clientId || !caregiverId) throw new Error(`link lost for visit ${row.externalId}`);
+          const { action } = await repo.insertVisitForImport({
+            externalId: row.externalId,
+            clientId,
+            caregiverId,
+            serviceCode: row.serviceCode,
+            clockInTime: row.clockInTime,
+            clockOutTime: row.clockOutTime,
+            // Canonical evvLocationSchema shape ({lat, lng, accuracy}) so every
+            // downstream reader (Sandata mapper, exports, audit packets) sees
+            // the coordinates. accuracy 0 = "as reported by the source system";
+            // `source` marks provenance. Without coordinates the row is
+            // GPS-less, which downstream already handles.
+            clockInLocation:
+              row.clockInLatitude !== undefined
+                ? { lat: row.clockInLatitude, lng: row.clockInLongitude, accuracy: 0, source: 'import' }
+                : { source: 'import' },
+            clockOutLocation:
+              row.clockOutLatitude !== undefined
+                ? { lat: row.clockOutLatitude, lng: row.clockOutLongitude, accuracy: 0, source: 'import' }
+                : undefined,
+            status: row.status,
+          });
+          action === 'created' ? (created += 1) : (skipped += 1);
         }
       } else {
         const repo = new ClientRepository(trx);
@@ -258,14 +352,14 @@ router.post('/:entity/commit', async (req: Request, res: Response) => {
       entityType: 'import',
       entityId: agencyId,
       outcome: 'success',
-      payload: { entity, created, updated, total: results.length },
+      payload: { entity, created, updated, skipped, total: results.length },
       occurredAt: new Date().toISOString(),
     });
   } catch (err) {
     safeError('Failed to audit data.imported', err);
   }
 
-  res.json({ entity, created, updated, total: results.length });
+  res.json({ entity, created, updated, skipped, total: results.length });
 });
 
 export default router;

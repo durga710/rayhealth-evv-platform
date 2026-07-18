@@ -5,9 +5,12 @@ import type { EvvVisit } from '../domain/evv.js';
  * EvvRepository
  *
  * Multi-tenancy: `evv_visits` has no `agency_id` column. Tenant isolation is
- * enforced by joining `users.caregiver_id` → `users.agency_id`. Every read
- * and update path takes an `agencyId` argument; the unfiltered `getAllVisits`
- * was retired because it leaked PHI across agencies (HIPAA reportable).
+ * enforced by joining `caregivers.id` → `caregivers.agency_id` (a NOT NULL
+ * 1:1 scope; the previous `users.caregiver_id` join silently dropped visits
+ * of caregivers without a login account , imported history, ex-staff). Every
+ * read and update path takes an `agencyId` argument; the unfiltered
+ * `getAllVisits` was retired because it leaked PHI across agencies (HIPAA
+ * reportable).
  */
 export class EvvRepository {
   constructor(private readonly db: Knex) {}
@@ -51,6 +54,46 @@ export class EvvRepository {
   }
 
   /**
+   * Insert one HISTORICAL visit migrated from a prior platform. Insert-or-skip,
+   * never update: evv_visits is immutable, and the (client_id, external_id)
+   * unique key makes re-running the same file idempotent. Imported rows carry
+   * no assignment (they predate our scheduling) and stand alone on the
+   * Cures-Act snapshot columns. The caller resolves client/caregiver ids
+   * agency-scoped before calling.
+   */
+  async insertVisitForImport(input: {
+    externalId: string;
+    clientId: string;
+    caregiverId: string;
+    serviceCode: string;
+    clockInTime: string;
+    clockOutTime?: string;
+    clockInLocation: unknown;
+    clockOutLocation?: unknown;
+    status: 'pending' | 'verified' | 'flagged';
+  }): Promise<{ action: 'created' | 'skipped' }> {
+    const existing = await this.db('evv_visits')
+      .where({ client_id: input.clientId, external_id: input.externalId })
+      .first('id');
+    if (existing) return { action: 'skipped' };
+
+    await this.db('evv_visits').insert({
+      id: crypto.randomUUID(),
+      external_id: input.externalId,
+      assignment_id: null,
+      caregiver_id: input.caregiverId,
+      client_id: input.clientId,
+      service_code: input.serviceCode,
+      clock_in_time: input.clockInTime,
+      clock_out_time: input.clockOutTime ?? null,
+      clock_in_location: JSON.stringify(input.clockInLocation),
+      clock_out_location: input.clockOutLocation ? JSON.stringify(input.clockOutLocation) : null,
+      status: input.status,
+    });
+    return { action: 'created' };
+  }
+
+  /**
    * Update a visit only if it belongs to the agency. Returns null when the
    * visit does not exist OR is on another tenant, callers cannot distinguish
    * the two cases (intentional: leaks neither existence nor tenancy).
@@ -76,8 +119,8 @@ export class EvvRepository {
       updateData.signature = visit.signature === null ? null : JSON.stringify(visit.signature);
 
     const allowedIds = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.id', id)
       .select('v.id');
 
@@ -106,8 +149,8 @@ export class EvvRepository {
     const limit = Math.min(opts.limit ?? MAX, MAX);
     const offset = Math.max(opts.offset ?? 0, 0);
     const rows = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .orderBy('v.clock_in_time', 'desc')
       .limit(limit)
       .offset(offset)
@@ -127,8 +170,8 @@ export class EvvRepository {
     agencyId: string
   ): Promise<Array<EvvVisit & { flagReason: string | null; clientName: string | null }>> {
     const rows = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.caregiver_id', caregiverId)
       .leftJoin('clients as c', 'c.id', 'v.client_id')
       .leftJoin(
@@ -166,8 +209,8 @@ export class EvvRepository {
    */
   async countVisitsForAgency(agencyId: string): Promise<number> {
     const row = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .count<{ count: string }>('v.id as count')
       .first();
     return Number(row?.count ?? 0);
@@ -176,8 +219,8 @@ export class EvvRepository {
   /** Single visit within an agency; returns null without leaking cross-tenant existence. */
   async getVisitByIdForAgency(id: string, agencyId: string): Promise<EvvVisit | null> {
     const row = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.id', id)
       .select('v.*')
       .first();
@@ -192,8 +235,8 @@ export class EvvRepository {
     caregiverId: string,
   ): Promise<EvvVisit | null> {
     const row = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.caregiver_id', caregiverId)
       .andWhere('v.clock_in_client_event_id', clientEventId)
       .select('v.*')
@@ -231,10 +274,10 @@ export class EvvRepository {
     status: string;
   }>> {
     let q = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
       .leftJoin('assignments as a', 'a.id', 'v.assignment_id')
       .leftJoin('visit_templates as t', 't.id', 'a.visit_template_id')
-      .where('u.agency_id', agencyId)
+      .where('cgt.agency_id', agencyId)
       .select(
         'v.id as visit_id',
         'v.service_code',
@@ -379,8 +422,8 @@ export class EvvRepository {
     toIso?: string
   ): Promise<number> {
     const allowedIds = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.status', 'verified')
       .andWhere((b) =>
         b.whereNull('v.sandata_status').orWhere('v.sandata_status', 'pending')
@@ -402,8 +445,8 @@ export class EvvRepository {
     confirmationId?: string | null
   ): Promise<boolean> {
     const allowedIds = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.id', visitId)
       .select('v.id');
 
@@ -430,8 +473,8 @@ export class EvvRepository {
     toIso?: string
   ): Promise<number> {
     const allowedIds = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.status', 'verified')
       .andWhere((b) =>
         b.whereNull('v.hhaexchange_status').orWhere('v.hhaexchange_status', 'pending')
@@ -454,8 +497,8 @@ export class EvvRepository {
     confirmationId?: string | null
   ): Promise<boolean> {
     const allowedIds = this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.id', visitId)
       .select('v.id');
 

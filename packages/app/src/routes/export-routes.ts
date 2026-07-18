@@ -160,12 +160,13 @@ router.get('/sandata.csv', requireCapability('billing.read'), async (req, res) =
 
     const db = req.app.get('db');
     let q = db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+      // Tenancy via caregivers.agency_id (1:1, NOT NULL) , the old users join
+      // dropped visits of caregivers with no login account (imported history).
       .join('caregivers as cg', 'cg.id', 'v.caregiver_id')
       .leftJoin('assignments as a', 'a.id', 'v.assignment_id')
       .leftJoin('visit_templates as t', 't.id', 'a.visit_template_id')
       .leftJoin('clients as c', 'c.id', db.raw('coalesce(v.client_id, t.client_id)'))
-      .where('u.agency_id', req.auth.agencyId)
+      .where('cg.agency_id', req.auth.agencyId)
       .select(
         'v.id as visit_id',
         'cg.id as worker_id',
@@ -466,11 +467,11 @@ router.get('/hhaexchange.csv', requireCapability('billing.read'), async (req, re
     }
 
     let q = db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
       .leftJoin('assignments as a', 'a.id', 'v.assignment_id')
       .leftJoin('visit_templates as t', 't.id', 'a.visit_template_id')
       .leftJoin('clients as c', 'c.id', db.raw('coalesce(v.client_id, t.client_id)'))
-      .where('u.agency_id', req.auth.agencyId)
+      .where('cgt.agency_id', req.auth.agencyId)
       .select(
         'v.id as visit_id',
         'v.caregiver_id',

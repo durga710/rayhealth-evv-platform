@@ -16,12 +16,13 @@
 
 import { paServiceCodes, type PaServiceCode } from '../config/pennsylvania.js';
 
-export type ImportEntity = 'clients' | 'caregivers' | 'authorizations';
+export type ImportEntity = 'clients' | 'caregivers' | 'authorizations' | 'visits';
 
 export const IMPORT_ENTITIES: readonly ImportEntity[] = [
   'clients',
   'caregivers',
   'authorizations',
+  'visits',
 ] as const;
 
 // ── Normalized row shapes ───────────────────────────────────────────────────
@@ -63,7 +64,23 @@ export interface ImportAuthorizationRow {
   endDate: string; // YYYY-MM-DD
 }
 
-export type ImportRow = ImportClientRow | ImportCaregiverRow | ImportAuthorizationRow;
+export interface ImportVisitRow {
+  /** REQUIRED for visits: the source system's visit id is the idempotent skip
+   *  key (evv_visits is immutable, so re-runs skip rather than update). */
+  externalId: string;
+  clientExternalId: string;
+  caregiverExternalId: string;
+  serviceCode: PaServiceCode;
+  clockInTime: string; // ISO-8601
+  clockOutTime?: string; // ISO-8601, after clockInTime
+  clockInLatitude?: number;
+  clockInLongitude?: number;
+  clockOutLatitude?: number;
+  clockOutLongitude?: number;
+  status: 'pending' | 'verified' | 'flagged';
+}
+
+export type ImportRow = ImportClientRow | ImportCaregiverRow | ImportAuthorizationRow | ImportVisitRow;
 
 export interface RowResult<T extends ImportRow = ImportRow> {
   /** 1-based data-row number (the header is row 0 and excluded). */
@@ -108,6 +125,19 @@ export const IMPORT_TEMPLATES: Record<ImportEntity, string[]> = {
     'units_authorized',
     'start_date',
     'end_date',
+  ],
+  visits: [
+    'external_id',
+    'client_external_id',
+    'caregiver_external_id',
+    'service_code',
+    'clock_in_time',
+    'clock_out_time',
+    'clock_in_latitude',
+    'clock_in_longitude',
+    'clock_out_latitude',
+    'clock_out_longitude',
+    'status',
   ],
 };
 
@@ -378,6 +408,102 @@ function validateAuthorizationRow(rec: Record<string, string>): {
   };
 }
 
+function isValidIsoInstant(v: string): boolean {
+  // Require a full ISO-8601 instant WITH an explicit timezone (Z or ±HH:MM).
+  // A bare date has no time of day, and a naive datetime would be parsed as
+  // the server's local time , the same CSV row would store a different
+  // clock_in_time depending on the process TZ, which is unacceptable for
+  // compliance timestamps. Prior-system exports must state their offset.
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i.test(v)) return false;
+  return !Number.isNaN(Date.parse(v));
+}
+
+function validateVisitRow(rec: Record<string, string>): {
+  value?: ImportVisitRow;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const externalId = (rec.external_id ?? '').trim();
+  const clientExternalId = (rec.client_external_id ?? '').trim();
+  const caregiverExternalId = (rec.caregiver_external_id ?? '').trim();
+  const serviceCode = (rec.service_code ?? '').trim().toUpperCase();
+  const clockIn = (rec.clock_in_time ?? '').trim();
+  const clockOut = blankToUndef(rec.clock_out_time);
+
+  // Unlike the other entities, external_id is REQUIRED here: visits are
+  // immutable, so the dedupe key is the only thing that makes re-uploading a
+  // corrected file safe (existing rows skip instead of duplicating).
+  if (!externalId) errors.push('external_id is required (the source system visit id)');
+  if (!clientExternalId) errors.push('client_external_id is required (links to a client external_id)');
+  if (!caregiverExternalId) errors.push('caregiver_external_id is required (links to a caregiver external_id)');
+  if (!serviceCode) errors.push('service_code is required');
+  else if (!(paServiceCodes as readonly string[]).includes(serviceCode)) {
+    errors.push(`service_code must be one of: ${paServiceCodes.join(', ')}`);
+  }
+  if (!clockIn) errors.push('clock_in_time is required');
+  else if (!isValidIsoInstant(clockIn)) {
+    errors.push('clock_in_time must be an ISO-8601 datetime with timezone (e.g. 2024-03-01T09:00:00Z or 2024-03-01T09:00:00-05:00)');
+  }
+  if (clockOut !== undefined && !isValidIsoInstant(clockOut)) {
+    errors.push('clock_out_time must be an ISO-8601 datetime with timezone');
+  }
+  if (
+    clockOut !== undefined &&
+    isValidIsoInstant(clockIn) &&
+    isValidIsoInstant(clockOut) &&
+    Date.parse(clockOut) <= Date.parse(clockIn)
+  ) {
+    errors.push('clock_out_time must be after clock_in_time');
+  }
+
+  const inLat = optNum(rec.clock_in_latitude);
+  const inLng = optNum(rec.clock_in_longitude);
+  const outLat = optNum(rec.clock_out_latitude);
+  const outLng = optNum(rec.clock_out_longitude);
+  for (const [name, v, lo, hi] of [
+    ['clock_in_latitude', inLat, -90, 90],
+    ['clock_in_longitude', inLng, -180, 180],
+    ['clock_out_latitude', outLat, -90, 90],
+    ['clock_out_longitude', outLng, -180, 180],
+  ] as const) {
+    if (Number.isNaN(v)) errors.push(`${name} must be a number`);
+    else if (v !== undefined && (v < lo || v > hi)) errors.push(`${name} out of range`);
+  }
+  if ((inLat === undefined) !== (inLng === undefined)) {
+    errors.push('clock_in_latitude and clock_in_longitude must be provided together');
+  }
+  if ((outLat === undefined) !== (outLng === undefined)) {
+    errors.push('clock_out_latitude and clock_out_longitude must be provided together');
+  }
+
+  // Default 'verified': imported history was already adjudicated by the prior
+  // system; our exception/fraud pipelines only run on visits we captured.
+  const rawStatus = blankToUndef(rec.status)?.toLowerCase();
+  let status: ImportVisitRow['status'] = 'verified';
+  if (rawStatus !== undefined) {
+    if (rawStatus === 'pending' || rawStatus === 'verified' || rawStatus === 'flagged') status = rawStatus;
+    else errors.push("status must be 'pending', 'verified', or 'flagged'");
+  }
+
+  if (errors.length > 0) return { errors };
+  return {
+    errors: [],
+    value: {
+      externalId,
+      clientExternalId,
+      caregiverExternalId,
+      serviceCode: serviceCode as PaServiceCode,
+      clockInTime: new Date(clockIn).toISOString(),
+      clockOutTime: clockOut ? new Date(clockOut).toISOString() : undefined,
+      clockInLatitude: inLat,
+      clockInLongitude: inLng,
+      clockOutLatitude: outLat,
+      clockOutLongitude: outLng,
+      status,
+    },
+  };
+}
+
 const VALIDATORS: Record<
   ImportEntity,
   (rec: Record<string, string>) => { value?: ImportRow; errors: string[] }
@@ -385,6 +511,7 @@ const VALIDATORS: Record<
   clients: validateClientRow,
   caregivers: validateCaregiverRow,
   authorizations: validateAuthorizationRow,
+  visits: validateVisitRow,
 };
 
 /**

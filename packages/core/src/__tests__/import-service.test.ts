@@ -6,6 +6,7 @@ import {
   type ImportClientRow,
   type ImportCaregiverRow,
   type ImportAuthorizationRow,
+  type ImportVisitRow,
 } from '../services/import-service.js';
 
 describe('parseCsv', () => {
@@ -115,5 +116,72 @@ describe('validateImportRecords, authorizations', () => {
     );
     expect(results[0].status).toBe('error');
     expect(results[0].errors.some((e) => e.includes('client_external_id'))).toBe(true);
+  });
+});
+
+describe('validateImportRecords, visits', () => {
+  const HEADER =
+    'external_id,client_external_id,caregiver_external_id,service_code,clock_in_time,clock_out_time,' +
+    'clock_in_latitude,clock_in_longitude,clock_out_latitude,clock_out_longitude,status\n';
+
+  it('accepts a complete historical visit and normalizes instants to ISO', () => {
+    const { results } = parseAndValidate(
+      'visits',
+      HEADER + 'V-1,C-1,G-1,t1019,2024-03-01T09:00:00-05:00,2024-03-01T11:00:00-05:00,40.44,-79.99,40.44,-79.99,verified\n',
+    );
+    expect(results[0].status).toBe('ok');
+    const v = results[0].value as ImportVisitRow;
+    expect(v.serviceCode).toBe('T1019');
+    expect(v.clockInTime).toBe('2024-03-01T14:00:00.000Z');
+    expect(v.clockOutTime).toBe('2024-03-01T16:00:00.000Z');
+    expect(v.clockInLatitude).toBe(40.44);
+    expect(v.status).toBe('verified');
+  });
+
+  it('defaults status to verified and allows a missing clock-out and locations', () => {
+    const { results } = parseAndValidate(
+      'visits',
+      HEADER + 'V-2,C-1,G-1,S5125,2024-03-02T09:00:00Z,,,,,,\n',
+    );
+    expect(results[0].status).toBe('ok');
+    const v = results[0].value as ImportVisitRow;
+    expect(v.status).toBe('verified');
+    expect(v.clockOutTime).toBeUndefined();
+    expect(v.clockInLatitude).toBeUndefined();
+  });
+
+  it('rejects a timezone-naive datetime (would be parsed as server-local time)', () => {
+    const { results } = parseAndValidate(
+      'visits',
+      HEADER + 'V-9,C-1,G-1,T1019,2024-03-01T09:00:00,,,,,,\n',
+    );
+    expect(results[0].status).toBe('error');
+    expect(results[0].errors.some((e) => e.includes('with timezone'))).toBe(true);
+  });
+
+  it('requires external_id, links, and a real ISO instant', () => {
+    const { results } = parseAndValidate(
+      'visits',
+      HEADER + ',,,T1019,2024-03-01,,,,,,\n',
+    );
+    const r = results[0];
+    expect(r.status).toBe('error');
+    expect(r.errors.some((e) => e.includes('external_id is required'))).toBe(true);
+    expect(r.errors.some((e) => e.includes('client_external_id'))).toBe(true);
+    expect(r.errors.some((e) => e.includes('caregiver_external_id'))).toBe(true);
+    // bare date is not a visit instant
+    expect(r.errors.some((e) => e.includes('clock_in_time must be an ISO-8601'))).toBe(true);
+  });
+
+  it('rejects clock-out before clock-in, a lone latitude, and a bad status', () => {
+    const { results } = parseAndValidate(
+      'visits',
+      HEADER + 'V-3,C-1,G-1,T1019,2024-03-01T11:00:00Z,2024-03-01T09:00:00Z,40.44,,,,billed\n',
+    );
+    const r = results[0];
+    expect(r.status).toBe('error');
+    expect(r.errors.some((e) => e.includes('clock_out_time must be after'))).toBe(true);
+    expect(r.errors.some((e) => e.includes('provided together'))).toBe(true);
+    expect(r.errors.some((e) => e.includes('status must be'))).toBe(true);
   });
 });

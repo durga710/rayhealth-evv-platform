@@ -112,8 +112,8 @@ export class FraudContextBuilder {
     const fromIso = new Date(clockInAtMs - HISTORY_WINDOW_MS).toISOString();
     const toIso = new Date(clockInAtMs + HISTORY_WINDOW_MS).toISOString();
     const rows = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.client_id', clientId)
       .andWhereNot('v.id', excludeVisitId)
       .andWhereBetween('v.clock_in_time', [fromIso, toIso])
@@ -132,8 +132,8 @@ export class FraudContextBuilder {
   ): Promise<VisitFeatureContext['durationBaseline']> {
     if (!serviceCode) return null;
     const rows = await this.db('evv_visits as v')
-      .join('users as u', 'u.caregiver_id', 'v.caregiver_id')
-      .where('u.agency_id', agencyId)
+      .join('caregivers as cgt', 'cgt.id', 'v.caregiver_id')
+      .where('cgt.agency_id', agencyId)
       .andWhere('v.service_code', serviceCode)
       .whereNotNull('v.clock_out_time')
       .orderBy('v.clock_in_time', 'desc')
