@@ -205,7 +205,7 @@ const FIRST_QUESTION_FALLBACK = SCRIPTED_QUESTIONS[0];
 // GET /onboarding/interview/:token
 router.get('/interview/:token', async (req, res) => {
   try {
-    const token = req.params.token;
+    const token = String(req.params.token ?? '');
     if (!token || token.length > 128) {
       res.status(400).json({ message: 'Invalid token' });
       return;
@@ -257,7 +257,7 @@ router.get('/interview/:token', async (req, res) => {
 // POST /onboarding/interview/:token/message
 router.post('/interview/:token/message', async (req, res) => {
   try {
-    const token = req.params.token;
+    const token = String(req.params.token ?? '');
     if (!token || token.length > 128) {
       res.status(400).json({ message: 'Invalid token' });
       return;
@@ -400,7 +400,7 @@ router.get('/agency-page/:slug', async (req, res) => {
 // progress + document checklist. Serves metadata only, never file bytes.
 router.get('/portal/:token', async (req, res) => {
   try {
-    const token = req.params.token;
+    const token = String(req.params.token ?? '');
     if (!token || token.length > 128) {
       res.status(400).json({ message: 'Invalid token' });
       return;
@@ -449,7 +449,7 @@ const uploadBody = express.raw({ type: () => true, limit: UPLOAD_LIMIT });
 // content-type header, original filename via ?filename=.
 router.post('/portal/:token/documents/:docId', uploadBody, async (req, res) => {
   try {
-    const token = req.params.token;
+    const token = String(req.params.token ?? '');
     if (!token || token.length > 128) {
       res.status(400).json({ message: 'Invalid token' });
       return;

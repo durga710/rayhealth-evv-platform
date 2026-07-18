@@ -501,7 +501,9 @@ export function AgencySetupPage() {
               {pageSaving ? 'Saving…' : 'Save Public Page'}
             </button>
             {pageSlug.trim() && (
-              <a href={`/${pageSlug.trim().toLowerCase()}`} target="_blank" rel="noreferrer" style={{ color: '#107480', fontWeight: 700, fontSize: '0.85rem' }}>
+              // Href built only from the slug's legal charset , raw input never
+              // reaches the attribute (CodeQL js/xss-through-dom).
+              <a href={`/${pageSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')}`} target="_blank" rel="noreferrer" style={{ color: '#107480', fontWeight: 700, fontSize: '0.85rem' }}>
                 View live page →
               </a>
             )}
