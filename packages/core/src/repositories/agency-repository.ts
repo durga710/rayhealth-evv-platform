@@ -288,27 +288,31 @@ export class AgencyRepository {
   }
 
   /**
-   * Set the public slug + about text + profile. Returns 'conflict' when
-   * another agency already owns the slug (unique index is the source of
-   * truth , the check is done by attempting the write, not read-then-write).
+   * Set the public slug + about text + profile. `profile` semantics: absent
+   * (undefined) leaves the stored profile untouched , a caller updating only
+   * the slug must never wipe it , while an explicit null clears it. Returns
+   * 'conflict' when another agency already owns the slug (unique index is the
+   * source of truth , the check is done by attempting the write, not
+   * read-then-write), and the freshly-read stored state on success.
    */
   async updatePublicPage(
     id: string,
-    page: { slug: string | null; about: string | null; profile: PublicProfile | null },
+    page: { slug: string | null; about: string | null; profile?: PublicProfile | null },
   ): Promise<
     { slug: string | null; about: string | null; profile: PublicProfile | null } | 'conflict' | null
   > {
+    const cols: Record<string, unknown> = {
+      public_slug: page.slug,
+      public_about: page.about,
+      updated_at: this.db.fn.now() as unknown as string,
+    };
+    if (page.profile !== undefined) {
+      cols.public_profile = page.profile ? JSON.stringify(page.profile) : null;
+    }
     try {
-      const updated = await this.db('agencies')
-        .where({ id })
-        .update({
-          public_slug: page.slug,
-          public_about: page.about,
-          public_profile: page.profile ? JSON.stringify(page.profile) : null,
-          updated_at: this.db.fn.now() as unknown as string,
-        });
+      const updated = await this.db('agencies').where({ id }).update(cols);
       if (updated === 0) return null;
-      return page;
+      return this.getPublicPage(id);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('unique') || msg.includes('duplicate') || msg.includes('23505')) {

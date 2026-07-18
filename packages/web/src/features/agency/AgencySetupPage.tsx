@@ -112,6 +112,10 @@ export function AgencySetupPage() {
   const [pageHours, setPageHours] = useState('');
   // One service per line, 'Name: short description'.
   const [pageServices, setPageServices] = useState('');
+  // Only send the profile once we've loaded the stored one , if the initial
+  // GET failed, submitting empty fields must not wipe the server's copy (the
+  // API preserves the profile when the field is omitted).
+  const [pageProfileLoaded, setPageProfileLoaded] = useState(false);
   const [pageBanner, setPageBanner] = useState<Banner>(null);
   const [pageSaving, setPageSaving] = useState(false);
 
@@ -149,6 +153,7 @@ export function AgencySetupPage() {
         setPageServices(
           (prof.services ?? []).map(s => (s.blurb ? `${s.name}: ${s.blurb}` : s.name)).join('\n'),
         );
+        setPageProfileLoaded(true);
       })
       .catch(() => { /* public page optional on first load */ });
   }, []);
@@ -185,7 +190,9 @@ export function AgencySetupPage() {
         {
           slug: pageSlug.trim() || null,
           about: pageAbout.trim() || null,
-          profile: hasProfile ? profile : null,
+          // Omit the field entirely when the stored profile never loaded ,
+          // the API preserves it; sending null here would wipe it.
+          ...(pageProfileLoaded ? { profile: hasProfile ? profile : null } : {}),
         },
       );
       setPageSlug(saved.slug ?? '');

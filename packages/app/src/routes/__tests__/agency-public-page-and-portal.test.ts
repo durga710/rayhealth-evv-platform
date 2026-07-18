@@ -65,6 +65,25 @@ describe('public agency hiring pages', () => {
     });
   });
 
+  it('preserves the stored profile when the field is omitted (slug-only update)', async () => {
+    const updatePublicPage = vi.fn().mockResolvedValue({ slug: 'new-slug', about: null, profile: { displayName: 'Kept' } });
+    vi.spyOn(core, 'AgencyRepository').mockImplementation(() => ({ updatePublicPage } as any));
+
+    const res = await request(createApp())
+      .put('/agencies/current/public-page')
+      .set('Authorization', `Bearer ${makeToken('admin')}`)
+      .send({ slug: 'new-slug' });
+
+    expect(res.status).toBe(200);
+    // profile must be undefined (leave unchanged), never null (which clears).
+    expect(updatePublicPage).toHaveBeenCalledWith('agency-1', {
+      slug: 'new-slug',
+      about: null,
+      profile: undefined,
+    });
+    expect(res.body.profile).toMatchObject({ displayName: 'Kept' });
+  });
+
   it('rejects an invalid profile (bad email) with 400', async () => {
     const res = await request(createApp())
       .put('/agencies/current/public-page')

@@ -204,9 +204,10 @@ router.put('/current/public-page', requireCapability('agency.write'), async (req
     slug = normalized;
   }
   try {
+    // profile absent = leave stored profile untouched; explicit null = clear.
     const result = await new AgencyRepository(req.app.get('db')).updatePublicPage(
       req.auth.agencyId,
-      { slug, about: parsed.data.about ?? null, profile: parsed.data.profile ?? null },
+      { slug, about: parsed.data.about ?? null, profile: parsed.data.profile },
     );
     if (result === 'conflict') {
       res.status(409).json({ message: 'That page address is already taken by another agency.' });
