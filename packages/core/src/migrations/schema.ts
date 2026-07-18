@@ -631,7 +631,9 @@ export async function up(knex: Knex): Promise<void> {
         CREATE OR REPLACE FUNCTION evv_visits_enforce_immutability() RETURNS trigger AS $f$
         BEGIN
           IF NEW.id <> OLD.id
-             OR NEW.assignment_id <> OLD.assignment_id
+             -- IS DISTINCT FROM: assignment_id is nullable since R28 (imported
+             -- historical visits carry none) and NULL <> value never fires.
+             OR NEW.assignment_id IS DISTINCT FROM OLD.assignment_id
              OR NEW.caregiver_id <> OLD.caregiver_id
              OR NEW.client_id IS DISTINCT FROM OLD.client_id
              OR NEW.service_code IS DISTINCT FROM OLD.service_code
@@ -1650,6 +1652,33 @@ export async function up(knex: Knex): Promise<void> {
       t.timestamp('ingested_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
       t.unique(['agency_id', 'sha256']);
     });
+  }
+
+  // ── R28. Historical EVV-visit import ─────────────────────────────────────
+  // Visit history migrated from a prior platform (HHAeXchange/Sandata/etc).
+  // `external_id` is the source system's visit id: the idempotent skip key,
+  // unique per client (client_id is agency-scoped, so two agencies importing
+  // the same source ids never collide). Imported visits have no assignment ,
+  // they predate our scheduling , so assignment_id becomes nullable; every
+  // read path already leftJoins assignments and prefers the snapshot columns
+  // (service_code, client_id) the Cures-Act work put on the visit row. The
+  // immutability trigger above compares assignment_id with IS DISTINCT FROM
+  // so nullable rows stay locked too.
+  if (
+    (await knex.schema.hasTable('evv_visits')) &&
+    !(await knex.schema.hasColumn('evv_visits', 'external_id'))
+  ) {
+    await knex.schema.alterTable('evv_visits', (t) => {
+      t.string('external_id', 120).nullable();
+    });
+    await knex.raw(`
+      CREATE UNIQUE INDEX IF NOT EXISTS evv_visits_client_external_id_uq
+        ON evv_visits (client_id, external_id)
+        WHERE external_id IS NOT NULL
+    `);
+  }
+  if (await knex.schema.hasTable('evv_visits')) {
+    await knex.raw('ALTER TABLE evv_visits ALTER COLUMN assignment_id DROP NOT NULL');
   }
 }
 

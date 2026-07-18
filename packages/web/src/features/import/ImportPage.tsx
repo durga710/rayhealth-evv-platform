@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { postText } from '../../lib/api-client.js';
 
-type ImportEntity = 'clients' | 'caregivers' | 'authorizations';
+type ImportEntity = 'clients' | 'caregivers' | 'authorizations' | 'visits';
 
 interface PreviewRow {
   rowNumber: number;
@@ -21,6 +21,8 @@ interface CommitResponse {
   entity: ImportEntity;
   created: number;
   updated: number;
+  /** Visits only: rows already imported (visits are immutable, re-runs skip). */
+  skipped?: number;
   total: number;
 }
 
@@ -39,6 +41,12 @@ const ENTITIES: { value: ImportEntity; label: string; blurb: string }[] = [
     value: 'authorizations',
     label: 'Authorizations',
     blurb: 'Service-code units per client. Links to a client via client_external_id, import clients first.',
+  },
+  {
+    value: 'visits',
+    label: 'Visit history (EVV)',
+    blurb:
+      'Historical visits from your prior system. Links via client_external_id + caregiver_external_id, import those first. Immutable once loaded: re-runs skip existing rows.',
   },
 ];
 
@@ -266,6 +274,7 @@ export function ImportPage() {
             }}
           >
             Imported {active.label}: {result.created} created, {result.updated} updated
+            {result.skipped ? `, ${result.skipped} already present (skipped)` : ''}
             {' '}(of {result.total} rows).
           </div>
         )}
