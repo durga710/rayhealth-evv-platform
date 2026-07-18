@@ -193,6 +193,28 @@ router.post('/applicants/:id/documents', async (req, res) => {
   }
 });
 
+// GET /admin/onboarding/documents/:docId/file , download the applicant's
+// uploaded document for review. Tenant-scoped through the applicant join.
+router.get('/documents/:docId/file', async (req, res) => {
+  try {
+    const db = req.app.get('db');
+    const file = await new OnboardingRepository(db).getDocumentFile(
+      String(req.params.docId),
+      req.auth.agencyId,
+    );
+    if (!file) {
+      res.status(404).json({ message: 'No file uploaded for this document' });
+      return;
+    }
+    res.setHeader('content-type', file.contentType);
+    res.setHeader('content-disposition', `inline; filename="${file.fileName}"`);
+    res.send(file.data);
+  } catch (error) {
+    safeError('GET /admin/onboarding/documents/:docId/file failed', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // PATCH /admin/onboarding/documents/:docId/status
 router.patch('/documents/:docId/status', async (req, res) => {
   try {

@@ -173,8 +173,95 @@ export class OnboardingRepository {
   async listDocuments(applicantId: string): Promise<OnboardingDocument[]> {
     const rows = await this.db('onboarding_documents')
       .where({ applicant_id: applicantId })
+      // Never select file_data here , listings carry metadata only.
+      .select(
+        'id', 'applicant_id', 'document_type', 'status', 'notes', 'requested_at',
+        'submitted_at', 'verified_at', 'verified_by_user_id', 'created_at',
+        'file_name', 'content_type', 'file_size',
+      )
       .orderBy('requested_at', 'asc');
     return rows.map((r: Record<string, unknown>) => this.mapDocument(r));
+  }
+
+  // ── Applicant portal (token-scoped, public) ───────────────────────────
+
+  /**
+   * Everything the applicant portal needs, resolved from the interview
+   * session token (the applicant's only credential): who they are, which
+   * agency they applied to, interview progress, and their document checklist.
+   */
+  async getPortalByToken(token: string): Promise<{
+    applicant: Applicant;
+    agencyName: string;
+    interview: OnboardingInterview;
+    documents: OnboardingDocument[];
+  } | null> {
+    const interview = await this.getInterviewByToken(token);
+    if (!interview) return null;
+    const row = (await this.db('applicants as ap')
+      .join('agencies as ag', 'ag.id', 'ap.agency_id')
+      .where('ap.id', interview.applicantId)
+      .select('ap.*', 'ag.name as agency_name')
+      .first()) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    const documents = await this.listDocuments(interview.applicantId);
+    return {
+      applicant: this.mapApplicant(row),
+      agencyName: row.agency_name as string,
+      interview,
+      documents,
+    };
+  }
+
+  /**
+   * Store an uploaded document from the applicant portal. Only documents in
+   * 'requested' or 'rejected' state accept an upload (a submitted/verified
+   * file must not be silently replaced), and the document must belong to the
+   * given applicant , the token authorizes exactly one applicant's checklist.
+   */
+  async submitDocumentFile(
+    docId: string,
+    applicantId: string,
+    file: { fileName: string; contentType: string; data: Buffer },
+  ): Promise<OnboardingDocument | null> {
+    const [row] = await this.db('onboarding_documents')
+      .where({ id: docId, applicant_id: applicantId })
+      .whereIn('status', ['requested', 'rejected'])
+      .update({
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        file_name: file.fileName,
+        content_type: file.contentType,
+        file_size: file.data.length,
+        file_data: file.data,
+      })
+      .returning([
+        'id', 'applicant_id', 'document_type', 'status', 'notes', 'requested_at',
+        'submitted_at', 'verified_at', 'verified_by_user_id', 'created_at',
+        'file_name', 'content_type', 'file_size',
+      ]);
+    return row ? this.mapDocument(row) : null;
+  }
+
+  /** The stored file for admin review, tenant-scoped through the applicant. */
+  async getDocumentFile(
+    docId: string,
+    agencyId: string,
+  ): Promise<{ fileName: string; contentType: string; data: Buffer } | null> {
+    const row = (await this.db('onboarding_documents as d')
+      .join('applicants as ap', 'ap.id', 'd.applicant_id')
+      .where('d.id', docId)
+      .andWhere('ap.agency_id', agencyId)
+      .select('d.file_name', 'd.content_type', 'd.file_data')
+      .first()) as
+      | { file_name?: string | null; content_type?: string | null; file_data?: Buffer | null }
+      | undefined;
+    if (!row?.file_data) return null;
+    return {
+      fileName: row.file_name ?? 'document',
+      contentType: row.content_type ?? 'application/octet-stream',
+      data: row.file_data,
+    };
   }
 
   // ── Private mappers ───────────────────────────────────────────────────
@@ -258,6 +345,9 @@ export class OnboardingRepository {
           ? row.verified_at.toISOString()
           : (row.verified_at as string | null) ?? undefined,
       verifiedByUserId: (row.verified_by_user_id as string | null) ?? undefined,
+      fileName: (row.file_name as string | null) ?? undefined,
+      contentType: (row.content_type as string | null) ?? undefined,
+      fileSize: (row.file_size as number | null) ?? undefined,
       createdAt:
         row.created_at instanceof Date
           ? row.created_at.toISOString()

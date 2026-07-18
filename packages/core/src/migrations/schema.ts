@@ -1705,6 +1705,44 @@ export async function up(knex: Knex): Promise<void> {
       t.jsonb('remark_codes').notNullable().defaultTo('[]');
     });
   }
+
+  // ── R30. Agency public hiring pages + applicant document uploads ─────────
+  // Each agency gets a public page at /<slug> (agency intro + "apply" CTA)
+  // and its applicants get a tokenized portal where requested onboarding
+  // documents are actually uploaded , previously "request document" only
+  // created a status row the applicant could never see or fulfil.
+  if (
+    (await knex.schema.hasTable('agencies')) &&
+    !(await knex.schema.hasColumn('agencies', 'public_slug'))
+  ) {
+    await knex.schema.alterTable('agencies', (t) => {
+      // Lowercase [a-z0-9-], unique across the platform ('cyanjelcarellc').
+      t.string('public_slug', 60).nullable().unique();
+    });
+  }
+  if (
+    (await knex.schema.hasTable('agencies')) &&
+    !(await knex.schema.hasColumn('agencies', 'public_about'))
+  ) {
+    await knex.schema.alterTable('agencies', (t) => {
+      t.text('public_about').nullable();
+    });
+  }
+  if (
+    (await knex.schema.hasTable('onboarding_documents')) &&
+    !(await knex.schema.hasColumn('onboarding_documents', 'file_data'))
+  ) {
+    await knex.schema.alterTable('onboarding_documents', (t) => {
+      t.string('file_name', 200).nullable();
+      t.string('content_type', 80).nullable();
+      t.integer('file_size').nullable();
+      // The uploaded document itself (images / PDF, capped at 5 MB by the
+      // route). Stored in-row: documents are few, small, and PHI-adjacent ,
+      // keeping them in Postgres keeps them inside the existing encryption
+      // and backup story instead of adding an object store.
+      t.binary('file_data').nullable();
+    });
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {

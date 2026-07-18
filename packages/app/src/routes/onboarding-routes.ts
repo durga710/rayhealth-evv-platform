@@ -1,14 +1,41 @@
 import { Router } from 'express';
+import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { generateText } from 'ai';
-import { OnboardingRepository, type OnboardingInterview } from '@rayhealth/core';
+import {
+  AgencyRepository,
+  OnboardingRepository,
+  documentTypeValues,
+  type OnboardingInterview,
+} from '@rayhealth/core';
 import { safeError } from '../security/safe-log.js';
 import { aiModel } from '../ai.js';
 import { CURRENT_TERMS_VERSION } from '../terms.js';
 
 const router = Router();
 const TOTAL_QUESTIONS = 8;
+
+/**
+ * The interview must never strand an applicant: when the AI provider is down
+ * or unconfigured, fall back to the same scripted questions the system prompt
+ * drives, keyed off how many answers have come in.
+ */
+const SCRIPTED_QUESTIONS = [
+  "Hi! Thanks for applying. Let's get started, tell me a bit about yourself and your background in caregiving or direct support work.",
+  'Thank you! What draws you to working as a Direct Support Associate in home care specifically?',
+  'Great. Could you describe your availability, days, hours, and whether you can work weekends or holidays?',
+  'Do you have any certifications or training such as CPR, First Aid, CNA, or PA Direct Care Worker training?',
+  'Tell me about a challenging situation you faced while caring for someone. What happened and how did you handle it?',
+  "How do you handle working alone in a client's home without direct supervision?",
+  'What experience do you have assisting with activities of daily living such as bathing, dressing, meal prep, or medication reminders?',
+  "Almost done! Is there anything else you'd like us to know about your qualifications or why you'd be a great fit?",
+];
+const CLOSING_MESSAGE =
+  'Thank you for taking the time to complete this interview. We will review your responses and be in touch soon. Have a great day!';
+
+/** Documents every new applicant is asked for up front, visible in their portal. */
+const STANDARD_DOCUMENT_SET = documentTypeValues;
 
 const applyBodySchema = z.object({
   agencyId: z.string().uuid(),
@@ -152,6 +179,16 @@ router.post('/apply', async (req, res) => {
     const sessionToken = randomUUID();
     const interview = await repo.createInterview(applicant.id!, sessionToken);
 
+    // Open the standard onboarding checklist immediately so the applicant's
+    // portal shows what to upload without waiting on an admin to ask.
+    try {
+      for (const documentType of STANDARD_DOCUMENT_SET) {
+        await repo.requestDocument(applicant.id!, documentType);
+      }
+    } catch (err) {
+      safeError('auto document-request failed (applicant can still interview)', err);
+    }
+
     res.status(201).json({
       applicantId: applicant.id,
       sessionToken: interview.sessionToken,
@@ -163,8 +200,7 @@ router.post('/apply', async (req, res) => {
   }
 });
 
-const FIRST_QUESTION_FALLBACK =
-  "Hi! Thanks for applying. Let's get started, tell me a bit about yourself and your background in caregiving or direct support work.";
+const FIRST_QUESTION_FALLBACK = SCRIPTED_QUESTIONS[0];
 
 // GET /onboarding/interview/:token
 router.get('/interview/:token', async (req, res) => {
@@ -266,9 +302,14 @@ router.post('/interview/:token/message', async (req, res) => {
     try {
       aiReply = await callInterviewAI(aiMessages, INTERVIEW_SYSTEM_PROMPT);
     } catch (err) {
-      safeError('Interview Anthropic call failed', err);
-      res.status(502).json({ message: 'Could not reach the interview service. Please try again.' });
-      return;
+      // Never strand the applicant on an AI outage: continue with the scripted
+      // question for wherever they are in the interview (Q1 was the greeting,
+      // so after N answers the next question is SCRIPTED_QUESTIONS[N]).
+      safeError('Interview AI call failed; using scripted question', err);
+      aiReply =
+        userMessageCount >= TOTAL_QUESTIONS
+          ? CLOSING_MESSAGE
+          : SCRIPTED_QUESTIONS[userMessageCount] ?? CLOSING_MESSAGE;
     }
 
     updatedMessages.push({ role: 'assistant', content: aiReply });
@@ -325,6 +366,130 @@ router.post('/interview/:token/message', async (req, res) => {
     });
   } catch (error) {
     safeError('POST /onboarding/interview/:token/message failed', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// ── Public agency hiring page ───────────────────────────────────────────────
+
+// GET /onboarding/agency-page/:slug , resolve a public slug to the info the
+// public homepage + apply form need. Unauthenticated by design; exposes only
+// public-page fields (see AgencyRepository.getPublicPageBySlug).
+router.get('/agency-page/:slug', async (req, res) => {
+  try {
+    const slug = String(req.params.slug ?? '').toLowerCase();
+    if (!/^[a-z0-9-]{3,60}$/.test(slug)) {
+      res.status(404).json({ message: 'Page not found' });
+      return;
+    }
+    const page = await new AgencyRepository(req.app.get('db')).getPublicPageBySlug(slug);
+    if (!page) {
+      res.status(404).json({ message: 'Page not found' });
+      return;
+    }
+    res.json(page);
+  } catch (error) {
+    safeError('GET /onboarding/agency-page/:slug failed', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// ── Applicant portal (interview token = the applicant's credential) ─────────
+
+// GET /onboarding/portal/:token , the applicant's own view: interview
+// progress + document checklist. Serves metadata only, never file bytes.
+router.get('/portal/:token', async (req, res) => {
+  try {
+    const token = req.params.token;
+    if (!token || token.length > 128) {
+      res.status(400).json({ message: 'Invalid token' });
+      return;
+    }
+    const portal = await new OnboardingRepository(req.app.get('db')).getPortalByToken(token);
+    if (!portal) {
+      res.status(404).json({ message: 'Portal not found' });
+      return;
+    }
+    res.json({
+      applicant: {
+        firstName: portal.applicant.firstName,
+        lastName: portal.applicant.lastName,
+        position: portal.applicant.position,
+        status: portal.applicant.status,
+      },
+      agencyName: portal.agencyName,
+      interview: {
+        status: portal.interview.status,
+        questionsRemaining: Math.max(
+          0,
+          TOTAL_QUESTIONS - portal.interview.messages.filter((m) => m.role === 'user').length,
+        ),
+      },
+      documents: portal.documents.map((d) => ({
+        id: d.id,
+        documentType: d.documentType,
+        status: d.status,
+        fileName: d.fileName ?? null,
+        submittedAt: d.submittedAt ?? null,
+      })),
+    });
+  } catch (error) {
+    safeError('GET /onboarding/portal/:token failed', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/** Upload constraints: the formats agencies actually receive, capped at 5 MB. */
+const UPLOAD_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+const UPLOAD_LIMIT = '5mb';
+const uploadBody = express.raw({ type: () => true, limit: UPLOAD_LIMIT });
+
+// POST /onboarding/portal/:token/documents/:docId , the actual document
+// upload the "request document" flow was always missing. Raw body, typed via
+// content-type header, original filename via ?filename=.
+router.post('/portal/:token/documents/:docId', uploadBody, async (req, res) => {
+  try {
+    const token = req.params.token;
+    if (!token || token.length > 128) {
+      res.status(400).json({ message: 'Invalid token' });
+      return;
+    }
+    const contentType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+    if (!UPLOAD_CONTENT_TYPES.has(contentType)) {
+      res.status(415).json({
+        message: 'Upload must be a JPEG, PNG, WebP image or a PDF',
+      });
+      return;
+    }
+    const data = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    if (data.length === 0) {
+      res.status(400).json({ message: 'Upload body is empty' });
+      return;
+    }
+    const rawName = typeof req.query.filename === 'string' ? req.query.filename : 'document';
+    // Keep only a safe basename , this is echoed back in content-disposition.
+    const fileName = rawName.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 200) || 'document';
+
+    const repo = new OnboardingRepository(req.app.get('db'));
+    const interview = await repo.getInterviewByToken(token);
+    if (!interview) {
+      res.status(404).json({ message: 'Portal not found' });
+      return;
+    }
+    const doc = await repo.submitDocumentFile(String(req.params.docId), interview.applicantId, {
+      fileName,
+      contentType,
+      data,
+    });
+    if (!doc) {
+      res.status(409).json({
+        message: 'This document is not awaiting an upload (already submitted or verified).',
+      });
+      return;
+    }
+    res.status(201).json(doc);
+  } catch (error) {
+    safeError('POST /onboarding/portal/:token/documents/:docId failed', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

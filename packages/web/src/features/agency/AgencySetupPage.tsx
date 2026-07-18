@@ -91,6 +91,12 @@ export function AgencySetupPage() {
   const [feeBanner, setFeeBanner] = useState<Banner>(null);
   const [feeSaving, setFeeSaving] = useState(false);
 
+  // Public hiring page (rayhealthevv.com/<slug>).
+  const [pageSlug, setPageSlug] = useState('');
+  const [pageAbout, setPageAbout] = useState('');
+  const [pageBanner, setPageBanner] = useState<Banner>(null);
+  const [pageSaving, setPageSaving] = useState(false);
+
   useEffect(() => {
     getJson<Agency>('/api/agencies/current')
       .then(data => {
@@ -109,7 +115,37 @@ export function AgencySetupPage() {
         setFees(asDollars);
       })
       .catch(() => { /* fee schedule optional on first load */ });
+    getJson<{ slug: string | null; about: string | null }>('/api/agencies/current/public-page')
+      .then(data => {
+        setPageSlug(data.slug ?? '');
+        setPageAbout(data.about ?? '');
+      })
+      .catch(() => { /* public page optional on first load */ });
   }, []);
+
+  const handlePublicPageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPageBanner(null);
+    setPageSaving(true);
+    try {
+      const saved = await putJson<{ slug: string | null; about: string | null }>(
+        '/api/agencies/current/public-page',
+        { slug: pageSlug.trim() || null, about: pageAbout.trim() || null },
+      );
+      setPageSlug(saved.slug ?? '');
+      setPageAbout(saved.about ?? '');
+      setPageBanner({
+        kind: 'success',
+        text: saved.slug
+          ? `Public page saved. Your hiring page is live at ${window.location.origin}/${saved.slug}`
+          : 'Public page taken offline.',
+      });
+    } catch (err) {
+      setPageBanner({ kind: 'error', text: (err as Error).message || 'Failed to save public page.' });
+    } finally {
+      setPageSaving(false);
+    }
+  };
 
   const handleFeeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -416,6 +452,68 @@ export function AgencySetupPage() {
             style={{ marginTop: '1rem' }}
           >
             {feeBanner.text}
+          </div>
+        )}
+      </div>
+
+      {/* Public hiring page, rayhealthevv.com/<slug> */}
+      <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+        <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.05rem', fontWeight: 800 }}>
+          Public hiring page
+        </h2>
+        <p style={{ margin: '0 0 1rem', color: '#64748B', fontSize: '0.85rem' }}>
+          Give your agency a public homepage and caregiver application page. Share the link on job
+          boards — applicants apply, complete the guided interview, and upload their documents
+          without an account.
+        </p>
+        <form onSubmit={handlePublicPageSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxWidth: 480 }}>
+            <label htmlFor="publicSlug" className="label">Page address</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ color: '#64748B', fontSize: '0.85rem' }}>{window.location.origin}/</span>
+              <input
+                id="publicSlug"
+                className="input-field"
+                value={pageSlug}
+                onChange={e => setPageSlug(e.target.value)}
+                placeholder="cyanjel-care-llc"
+                style={{ flex: 1 }}
+              />
+            </div>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+              Lowercase letters, numbers, and hyphens. Leave blank to take the page offline.
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <label htmlFor="publicAbout" className="label">About your agency</label>
+            <textarea
+              id="publicAbout"
+              className="input-field"
+              rows={4}
+              maxLength={2000}
+              value={pageAbout}
+              onChange={e => setPageAbout(e.target.value)}
+              placeholder="Tell applicants who you are, the communities you serve, and why caregivers love working with you."
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button type="submit" disabled={pageSaving} className="btn-primary" style={{ alignSelf: 'flex-start' }}>
+              {pageSaving ? 'Saving…' : 'Save Public Page'}
+            </button>
+            {pageSlug.trim() && (
+              <a href={`/${pageSlug.trim().toLowerCase()}`} target="_blank" rel="noreferrer" style={{ color: '#107480', fontWeight: 700, fontSize: '0.85rem' }}>
+                View live page →
+              </a>
+            )}
+          </div>
+        </form>
+        {pageBanner && (
+          <div
+            role={pageBanner.kind === 'error' ? 'alert' : 'status'}
+            className={`info-banner ${pageBanner.kind === 'success' ? 'banner-success' : 'banner-error'}`}
+            style={{ marginTop: '1rem' }}
+          >
+            {pageBanner.text}
           </div>
         )}
       </div>

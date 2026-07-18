@@ -75,6 +75,10 @@ export const onboardingDocumentSchema = z.object({
   documentType: z.enum(documentTypeValues),
   status: z.enum(documentStatusValues).default('requested'),
   notes: z.string().optional(),
+  /** Uploaded-file metadata (portal submissions); bytes are never in listings. */
+  fileName: z.string().optional(),
+  contentType: z.string().optional(),
+  fileSize: z.number().int().optional(),
   requestedAt: z.string().datetime().optional(),
   submittedAt: z.string().datetime().optional(),
   verifiedAt: z.string().datetime().optional(),

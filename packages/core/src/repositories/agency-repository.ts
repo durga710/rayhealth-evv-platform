@@ -226,6 +226,62 @@ export class AgencyRepository {
     return clean;
   }
 
+  /** The agency's public hiring-page settings (for the admin settings UI). */
+  async getPublicPage(id: string): Promise<{ slug: string | null; about: string | null } | null> {
+    const row = (await this.db('agencies')
+      .where({ id })
+      .select('public_slug', 'public_about')
+      .first()) as { public_slug?: string | null; public_about?: string | null } | undefined;
+    if (!row) return null;
+    return { slug: row.public_slug ?? null, about: row.public_about ?? null };
+  }
+
+  /**
+   * Resolve a public slug to the agency's public-facing info. This is served
+   * UNAUTHENTICATED , it must expose nothing beyond what belongs on a public
+   * hiring page (no billing identity, no Medicaid number, no config).
+   */
+  async getPublicPageBySlug(
+    slug: string,
+  ): Promise<{ agencyId: string; name: string; state: string; about: string | null } | null> {
+    const row = (await this.db('agencies')
+      .where({ public_slug: slug })
+      .select('id', 'name', 'state', 'public_about')
+      .first()) as
+      | { id: string; name: string; state: string; public_about?: string | null }
+      | undefined;
+    if (!row) return null;
+    return { agencyId: row.id, name: row.name, state: row.state, about: row.public_about ?? null };
+  }
+
+  /**
+   * Set the public slug + about text. Returns 'conflict' when another agency
+   * already owns the slug (unique index is the source of truth , the check is
+   * done by attempting the write, not read-then-write).
+   */
+  async updatePublicPage(
+    id: string,
+    page: { slug: string | null; about: string | null },
+  ): Promise<{ slug: string | null; about: string | null } | 'conflict' | null> {
+    try {
+      const updated = await this.db('agencies')
+        .where({ id })
+        .update({
+          public_slug: page.slug,
+          public_about: page.about,
+          updated_at: this.db.fn.now() as unknown as string,
+        });
+      if (updated === 0) return null;
+      return { slug: page.slug, about: page.about };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('unique') || msg.includes('duplicate') || msg.includes('23505')) {
+        return 'conflict';
+      }
+      throw err;
+    }
+  }
+
   private mapRowToAgency(row: AgencyRow): Agency {
     return {
       id: row.id,

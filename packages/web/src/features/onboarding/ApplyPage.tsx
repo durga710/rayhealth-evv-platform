@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
 interface ApplyResponse {
@@ -8,8 +8,32 @@ interface ApplyResponse {
 }
 
 export function ApplyPage() {
-  const { agencyId } = useParams<{ agencyId: string }>();
+  // Reached either as /apply/:agencyId (direct link) or /<slug>/apply (the
+  // agency's public hiring page). The slug variant resolves to an agencyId.
+  const { agencyId: agencyIdParam, slug } = useParams<{ agencyId?: string; slug?: string }>();
   const navigate = useNavigate();
+  const [agencyId, setAgencyId] = useState<string | null>(agencyIdParam ?? null);
+
+  useEffect(() => {
+    if (!slug || agencyIdParam) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/onboarding/agency-page/${encodeURIComponent(slug)}`);
+        if (!res.ok) {
+          if (!cancelled) void navigate('/', { replace: true });
+          return;
+        }
+        const data = (await res.json()) as { agencyId: string };
+        if (!cancelled) setAgencyId(data.agencyId);
+      } catch {
+        if (!cancelled) void navigate('/', { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, agencyIdParam, navigate]);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -62,7 +86,9 @@ export function ApplyPage() {
       }
 
       const data = (await res.json()) as ApplyResponse;
-      void navigate(`/interview/${data.sessionToken}`);
+      // Land on the applicant portal: it offers the interview AND the
+      // document checklist, and its URL is the applicant's persistent access.
+      void navigate(`/applicant/${data.sessionToken}`);
     } catch {
       setError('Network error. Please check your connection and try again.');
     } finally {
