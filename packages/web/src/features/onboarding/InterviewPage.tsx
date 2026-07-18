@@ -398,6 +398,21 @@ export function InterviewPage() {
               Thank you for completing your interview. Our team will review your responses and reach
               out to you soon. Have a great day!
             </p>
+            <a
+              href={`/applicant/${token ?? ''}`}
+              style={{
+                display: 'inline-block',
+                marginTop: '1rem',
+                background: '#107480',
+                color: '#fff',
+                fontWeight: 700,
+                borderRadius: 8,
+                padding: '0.6rem 1.2rem',
+                textDecoration: 'none',
+              }}
+            >
+              Next: upload your documents →
+            </a>
           </div>
         )}
       </div>

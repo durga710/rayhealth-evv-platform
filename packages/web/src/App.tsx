@@ -71,6 +71,8 @@ const ApplyPage = lazy(() => import('./features/onboarding/ApplyPage.js').then((
 const InterviewPage = lazy(() => import('./features/onboarding/InterviewPage.js').then((m) => ({ default: m.InterviewPage })));
 const OnboardingHubPage = lazy(() => import('./features/onboarding/OnboardingHubPage.js').then((m) => ({ default: m.OnboardingHubPage })));
 const ApplicantDetailPage = lazy(() => import('./features/onboarding/ApplicantDetailPage.js').then((m) => ({ default: m.ApplicantDetailPage })));
+const AgencyPublicPage = lazy(() => import('./features/onboarding/AgencyPublicPage.js').then((m) => ({ default: m.AgencyPublicPage })));
+const ApplicantPortalPage = lazy(() => import('./features/onboarding/ApplicantPortalPage.js').then((m) => ({ default: m.ApplicantPortalPage })));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage.js').then((m) => ({ default: m.ProfilePage })));
 const ComplianceOverviewPage = lazy(() => import('./features/compliance-engine/ComplianceOverviewPage.js').then((m) => ({ default: m.ComplianceOverviewPage })));
 const AuditDefensePage = lazy(() => import('./features/compliance-engine/AuditDefensePage.js').then((m) => ({ default: m.AuditDefensePage })));
@@ -542,6 +544,7 @@ export function App() {
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/apply/:agencyId" element={<ApplyPage />} />
       <Route path="/interview/:token" element={<InterviewPage />} />
+      <Route path="/applicant/:token" element={<ApplicantPortalPage />} />
 
       {/* Caregiver/family portal, full self-service shell. Admins redirected to /admin by CaregiverLayout. */}
       <Route path="/portal" element={<ProtectedRoute />}>
@@ -602,6 +605,11 @@ export function App() {
         </Route>
       </Route>
       
+        {/* Public per-agency hiring pages (rayhealthevv.com/<slug>). MUST stay
+            last: any unmatched single-segment path is treated as a possible
+            agency slug; unknown slugs redirect home from inside the page. */}
+        <Route path="/:slug/apply" element={<ApplyPage />} />
+        <Route path="/:slug" element={<AgencyPublicPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

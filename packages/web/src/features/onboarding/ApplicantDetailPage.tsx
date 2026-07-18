@@ -40,6 +40,8 @@ interface Document {
   requestedAt?: string;
   submittedAt?: string;
   verifiedAt?: string;
+  /** Present once the applicant has uploaded through their portal. */
+  fileName?: string;
 }
 
 interface DetailResponse {
@@ -118,6 +120,7 @@ export function ApplicantDetailPage() {
   const [notesValue, setNotesValue] = useState('');
   const notesSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [docWorking, setDocWorking] = useState<Record<string, boolean>>({});
+  const [portalCopied, setPortalCopied] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -400,6 +403,33 @@ export function ApplicantDetailPage() {
                   </span>
                 </div>
               ))}
+              {interview && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', flexShrink: 0 }}>Portal</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(
+                        `${window.location.origin}/applicant/${interview.sessionToken}`,
+                      );
+                      setPortalCopied(true);
+                      window.setTimeout(() => setPortalCopied(false), 2000);
+                    }}
+                    style={{
+                      padding: '0.25rem 0.6rem',
+                      backgroundColor: portalCopied ? '#F0FDF4' : '#F1F5F9',
+                      color: portalCopied ? '#15803D' : '#0F172A',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {portalCopied ? 'Copied!' : 'Copy applicant portal link'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -552,6 +582,26 @@ export function ApplicantDetailPage() {
                         >
                           {formatStatus(doc.status)}
                         </span>
+                        {doc.fileName && (
+                          <a
+                            href={`/api/admin/onboarding/documents/${doc.id}/file`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={doc.fileName}
+                            style={{
+                              padding: '0.2rem 0.5rem',
+                              backgroundColor: '#EFF6FF',
+                              color: '#1D4ED8',
+                              border: '1px solid #BFDBFE',
+                              borderRadius: '5px',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            View
+                          </a>
+                        )}
                         {doc.status !== 'verified' && (
                           <button
                             type="button"

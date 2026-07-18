@@ -7,6 +7,8 @@ import {
   evvClockInInputSchema,
   evvClockOutInputSchema,
   hasCapability,
+  normalizePublicSlug,
+  publicSlugSchema,
   visitTaskCompletionBatchSchema
 } from '../index.js';
 
@@ -21,6 +23,23 @@ describe('Pennsylvania domain schemas', () => {
     expect(() =>
       assignmentInputSchema.parse({ caregiverId: 'cg-1', visitTemplateId: 'vt-1', credentialStatus: 'expired' })
     ).toThrow('eligible');
+  });
+
+  it('validates public hiring-page slugs', () => {
+    expect(normalizePublicSlug('CyanjelCareLLC')).toBe('cyanjelcarellc');
+    expect(normalizePublicSlug('  Sunrise Home Care ')).toBe('sunrise-home-care');
+    expect(publicSlugSchema.safeParse('cyanjelcarellc').success).toBe(true);
+    expect(publicSlugSchema.safeParse('sunrise-home-care').success).toBe(true);
+    // Reserved, too short, bad chars, leading hyphen: all rejected.
+    expect(publicSlugSchema.safeParse('admin').success).toBe(false);
+    expect(publicSlugSchema.safeParse('ab').success).toBe(false);
+    expect(publicSlugSchema.safeParse('Bad_Slug!').success).toBe(false);
+    expect(publicSlugSchema.safeParse('-leading').success).toBe(false);
+    // Every live top-level SPA route must be reserved , a slug matching one
+    // would save fine but never render (static routes outrank /:slug).
+    for (const route of ['demo', 'launch', 'ads', 'status', 'trust', 'rayverify', 'apply', 'applicant', 'interview', 'portal', 'superadmin', 'accept-invite', 'forgot-password', 'reset-password', 'login', 'signup']) {
+      expect(publicSlugSchema.safeParse(route).success, `'${route}' must be reserved`).toBe(false);
+    }
   });
 
   it('accepts an assignment time window alongside its visit date', () => {

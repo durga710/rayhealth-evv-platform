@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { AgencyRepository } from '@rayhealth/core';
+import { AgencyRepository, normalizePublicSlug, publicSlugSchema } from '@rayhealth/core';
 import { requireCapability } from '../middleware/require-capability.js';
 
 const router = Router();
@@ -157,6 +157,65 @@ router.put('/current/billing', requireCapability('agency.write'), async (req, re
       return;
     }
     res.json(updated);
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// ── Public hiring page settings ─────────────────────────────────────────────
+
+const publicPageBodySchema = z.object({
+  // null clears the page (takes it offline). Input is normalized before the
+  // slug rules apply, so 'CyanjelCareLLC' becomes 'cyanjelcarellc'.
+  slug: z.string().max(80).nullable(),
+  about: z.string().max(2000).nullable().optional(),
+});
+
+router.get('/current/public-page', requireCapability('agency.read'), async (req, res) => {
+  try {
+    const page = await new AgencyRepository(req.app.get('db')).getPublicPage(req.auth.agencyId);
+    if (!page) {
+      res.status(404).json({ message: 'Agency not found' });
+      return;
+    }
+    res.json(page);
+  } catch {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.put('/current/public-page', requireCapability('agency.write'), async (req, res) => {
+  const parsed = publicPageBodySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid public page settings' });
+    return;
+  }
+  let slug: string | null = null;
+  if (parsed.data.slug !== null) {
+    const normalized = normalizePublicSlug(parsed.data.slug);
+    const check = publicSlugSchema.safeParse(normalized);
+    if (!check.success) {
+      res.status(400).json({
+        message: check.error.issues[0]?.message ?? 'Invalid slug',
+      });
+      return;
+    }
+    slug = normalized;
+  }
+  try {
+    const result = await new AgencyRepository(req.app.get('db')).updatePublicPage(
+      req.auth.agencyId,
+      { slug, about: parsed.data.about ?? null },
+    );
+    if (result === 'conflict') {
+      res.status(409).json({ message: 'That page address is already taken by another agency.' });
+      return;
+    }
+    if (!result) {
+      res.status(404).json({ message: 'Agency not found' });
+      return;
+    }
+    res.json(result);
   } catch {
     res.status(500).json({ message: 'Internal Server Error' });
   }
