@@ -22,6 +22,7 @@ export const NAV = {
     { label: 'Scheduling', to: '/solutions/scheduling' },
     { label: 'Electronic visit verification', to: '/solutions/electronic-visit-verification' },
     { label: 'Billing & payroll', to: '/solutions/billing-payroll' },
+    { label: 'Denial dashboard', to: '/solutions/denial-dashboard' },
     { label: 'Workforce & training', to: '/solutions/workforce-training' },
   ],
   resources: [
