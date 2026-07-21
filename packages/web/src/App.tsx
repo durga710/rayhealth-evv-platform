@@ -58,6 +58,7 @@ const AuditChecklistPage = lazy(() => import('./features/marketing/site/AuditChe
 const HipaaCompliancePage = lazy(() => import('./features/marketing/site/HipaaCompliancePage.js').then((m) => ({ default: m.HipaaCompliancePage })));
 const SwitchPage = lazy(() => import('./features/marketing/site/SwitchPage.js').then((m) => ({ default: m.SwitchPage })));
 const ComparePage = lazy(() => import('./features/marketing/site/ComparePage.js').then((m) => ({ default: m.ComparePage })));
+const DenialDashboardPage = lazy(() => import('./features/marketing/site/DenialDashboardPage.js').then((m) => ({ default: m.DenialDashboardPage })));
 const AuditRetentionPage = lazy(() => import('./features/audit/AuditRetentionPage.js').then((m) => ({ default: m.AuditRetentionPage })));
 const DashboardPage = lazy(() => import('./features/admin/DashboardPage.js').then((m) => ({ default: m.DashboardPage })));
 const CommandCenterPage = lazy(() => import('./features/admin/CommandCenterPage.js').then((m) => ({ default: m.CommandCenterPage })));
@@ -534,6 +535,7 @@ export function App() {
       <Route path="/solutions/scheduling" element={<SchedulingPage />} />
       <Route path="/solutions/electronic-visit-verification" element={<EvvSolutionPage />} />
       <Route path="/solutions/billing-payroll" element={<BillingPayrollPage />} />
+      <Route path="/solutions/denial-dashboard" element={<DenialDashboardPage />} />
       <Route path="/solutions/workforce-training" element={<WorkforceTrainingPage />} />
       <Route path="/resources/evv-guide" element={<EvvGuidePage />} />
       <Route path="/resources/task-codes" element={<TaskCodesPage />} />
