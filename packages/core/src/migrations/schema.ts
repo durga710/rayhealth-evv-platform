@@ -511,6 +511,16 @@ export async function up(knex: Knex): Promise<void> {
   // so the only path to mutation is dropping the trigger first (which itself
   // is auditable in PG's DDL log).
   //
+  // One narrow exception: the retention sweep (audit-retention-sweep.ts) may
+  // DELETE rows it has already copied into audit_events_archive. It signals
+  // that intent with a transaction-local GUC (set_config(..., is_local=>true)
+  // reverts on commit/rollback). The sweep previously used
+  // `SET LOCAL session_replication_role = 'replica'`, but Neon refuses that
+  // parameter for non-superuser roles, which took the nightly job down.
+  // UPDATE and TRUNCATE stay refused unconditionally, and the archive-table
+  // trigger below has no such gate — evidence can move to cold storage but
+  // can never be edited or destroyed.
+  //
   // Drop+create is idempotent: existing trigger of this name is replaced.
   await knex.raw(`
     DO $$
@@ -519,6 +529,10 @@ export async function up(knex: Knex): Promise<void> {
                  WHERE table_schema='public' AND table_name='audit_events') THEN
         CREATE OR REPLACE FUNCTION audit_events_block_mutation() RETURNS trigger AS $f$
         BEGIN
+          IF TG_OP = 'DELETE'
+             AND current_setting('rayhealth.audit_retention_sweep', true) = 'on' THEN
+            RETURN NULL;
+          END IF;
           RAISE EXCEPTION 'audit_events is append-only; UPDATE/DELETE refused';
         END;
         $f$ LANGUAGE plpgsql;
