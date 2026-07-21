@@ -9,8 +9,8 @@
  *
  * Why this exists
  *   - `audit_events` is append-only by trigger (no UPDATE, no DELETE allowed
- *     in the normal path) so the trigger has to be temporarily disabled
- *     inside a transaction for the move. This module encapsulates that
+ *     in the normal path); the trigger admits DELETEs only when a
+ *     transaction-local sweep flag is set. This module encapsulates that
  *     pattern safely.
  *   - Every run is logged to `audit_retention_runs` so an auditor can verify
  *     the job is actually running, not just configured.
@@ -125,16 +125,18 @@ interface ChunkResult {
 
 /**
  * Process one chunk inside a single transaction. The append-only trigger on
- * `audit_events` is temporarily disabled inside this transaction's scope
- * so we can DELETE rows, without ever permitting application code to do so.
+ * `audit_events` allows DELETE (and only DELETE) when the transaction-local
+ * `rayhealth.audit_retention_sweep` setting is 'on' — see the trigger
+ * definition in migrations/schema.ts. set_config(..., is_local => true)
+ * reverts on commit/rollback, so the gate never outlives this transaction.
  *
- * Postgres `SET LOCAL session_replication_role = replica` is scoped to the
- * transaction and reverts on commit/rollback. It is the standard pattern for
- * "system-level row maintenance that bypasses normal triggers."
+ * We used `SET LOCAL session_replication_role = 'replica'` here before, but
+ * that parameter is superuser-only and Neon refuses it for app roles, which
+ * failed every nightly run.
  */
 async function processOneChunk(db: Knex, cutoff: Date, limit: number): Promise<ChunkResult> {
   return db.transaction(async (trx) => {
-    await trx.raw("SET LOCAL session_replication_role = 'replica'")
+    await trx.raw("SELECT set_config('rayhealth.audit_retention_sweep', 'on', true)")
 
     // Lock the candidate rows so a concurrent sweep can't double-archive.
     const candidates = (await trx('audit_events')
