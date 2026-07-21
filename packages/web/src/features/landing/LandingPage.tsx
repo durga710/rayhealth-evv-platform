@@ -137,14 +137,6 @@ const exceptionRows: ExceptionRow[] = [
   { id: 'e3', caregiver: 'H. Vance', client: 'Client 2207', issue: 'Missing service code', status: 'Resolved' },
 ];
 
-function chromeDots() {
-  return (
-    <span className="rh-vischrome" aria-hidden>
-      <i data-role="danger" /><i data-role="warning" /><i data-role="success" />
-    </span>
-  );
-}
-
 function CSS() {
   return (
     <style dangerouslySetInnerHTML={{
@@ -266,11 +258,7 @@ button.rh-btn{border:0; cursor:pointer; font-family:inherit;}
 .rh-spotvis{border:1px solid var(--line); border-radius:18px; background:var(--surface2); padding:18px; box-shadow:0 34px 70px -44px rgba(10,30,20,.4); min-height:220px;}
 .rh-spotvis--flush{min-height:0;}
 .rh-vischrome{display:flex; align-items:center; gap:.4rem; padding:0 4px 14px;}
-.rh-vischrome i{width:9px; height:9px; border-radius:50%; display:inline-block;}
-.rh-vischrome i[data-role='danger']{background:var(--color-danger);}
-.rh-vischrome i[data-role='warning']{background:var(--color-warning);}
-.rh-vischrome i[data-role='success']{background:var(--color-success);}
-.rh-vischrome .t{margin-left:.5rem; font-size:.72rem; color:var(--muted); font-weight:500;}
+.rh-vischrome .t{font-size:.72rem; color:var(--muted); font-weight:500;}
 .rh-mockcaption{margin-top:.75rem; font-size:.78rem; color:var(--muted); text-align:center;}
 .rh-heromock-body{display:flex; flex-direction:column; gap:.85rem;}
 
@@ -463,7 +451,6 @@ function HeroMock() {
   return (
     <>
       <div className="rh-spotvis" aria-hidden>
-        {chromeDots()}
         <span className="rh-vischrome"><span className="t">app.rayhealthevv.com/admin</span></span>
         <div className="rh-heromock-body">
           <div className="rh-mock-attn-list">
@@ -764,7 +751,6 @@ export function LandingPage() {
             aria-labelledby={`theater-tab-${theaterTab}`}
             className="rh-spotvis rh-theater-panel"
           >
-            {chromeDots()}
             <span className="rh-vischrome"><span className="t">{THEATER_TABS.find((t) => t.id === theaterTab)?.label}</span></span>
             {theaterTab === 'command' && <TheaterCommand />}
             {theaterTab === 'clockin' && <TheaterClockIn />}
@@ -843,7 +829,6 @@ export function LandingPage() {
             </div>
             <div className="rh-spotvisuals rh-rv" aria-hidden>
               <div className="rh-spotvis rh-spotvis--flush">
-                {chromeDots()}
                 <span className="rh-vischrome"><span className="t">Visit · six-element capture</span></span>
                 <div className="rh-evvgrid">
                   {['Caregiver ID', 'Client ID', 'Service type', 'Date & time', 'Location', 'Visit status'].map((e) => (
@@ -852,7 +837,6 @@ export function LandingPage() {
                 </div>
               </div>
               <div className="rh-spotvis rh-spotvis--flush">
-                {chromeDots()}
                 <span className="rh-vischrome"><span className="t">Audit event log</span></span>
                 <div className="rh-logcard">
                   {[
