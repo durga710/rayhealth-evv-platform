@@ -1011,9 +1011,9 @@ export function LandingPage() {
           <p className="rh-eyelabel rh-rv">FAQ</p>
           <h2 className="rh-h2 rh-rv">Questions, answered honestly.</h2>
         </div>
-        <div className="rh-faqs">
+        <div className="rh-faqs rh-rv">
           {faqs.map((f, i) => (
-            <div className={`rh-faq rh-rv${openFaq === i ? ' open' : ''}`} key={f.q}>
+            <div className={`rh-faq${openFaq === i ? ' open' : ''}`} key={f.q}>
               <button type="button" className="rh-faqq" aria-expanded={openFaq === i} onClick={() => setOpenFaq(openFaq === i ? null : i)}>
                 <h3>{f.q}</h3>
                 <span className="rh-faqtog" aria-hidden>{ic(<path d="M12 5v14M5 12h14" />)}</span>
