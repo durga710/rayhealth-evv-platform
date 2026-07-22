@@ -6,7 +6,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import * as SecureStore from 'expo-secure-store';
+import { secureKvStore as SecureStore } from '../../lib/secure-store';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, { FadeInRight, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import apiClient from '../../lib/api-client';

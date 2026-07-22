@@ -7,4 +7,22 @@ export default defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['src/lib/secure-store.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'expo-secure-store',
+              message:
+                'expo-secure-store throws on web. Import { secureKvStore } from src/lib/secure-store instead; it falls back to localStorage on web.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

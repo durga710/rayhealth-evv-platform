@@ -1,9 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { secureKvStore, secureKvStore as SecureStore } from './secure-store';
 import apiClient, { setMobileAccessToken, setUnauthorizedHandler } from './api-client';
 import { cancelAllShiftAlerts } from './shift-alert-scheduler';
 import { clearCachedVisitSchedule } from './offline-visit-cache';
-import { secureKvStore } from './secure-store';
 
 const TOKEN_KEY = 'rayhealth_mobile_access_token';
 const USER_KEY = 'rayhealth_mobile_user';
