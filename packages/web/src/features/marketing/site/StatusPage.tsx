@@ -157,11 +157,11 @@ function toCard(name: string, body: unknown, networkOk: boolean): ServiceCard {
 }
 
 const PILL_COLORS: Record<ProbeStatus, { bg: string; fg: string; label: string }> = {
-  ok: { bg: '#dcfce7', fg: '#166534', label: 'OK' },
-  stale: { bg: '#fef9c3', fg: '#854d0e', label: 'STALE' },
-  empty: { bg: '#fef9c3', fg: '#854d0e', label: 'EMPTY' },
-  down: { bg: '#fee2e2', fg: '#991b1b', label: 'DOWN' },
-  error: { bg: '#fee2e2', fg: '#991b1b', label: 'ERROR' },
+  ok: { bg: 'var(--color-success-bg)', fg: 'var(--color-success-text)', label: 'OK' },
+  stale: { bg: 'var(--color-warning-bg)', fg: 'var(--color-warning-text)', label: 'STALE' },
+  empty: { bg: 'var(--color-warning-bg)', fg: 'var(--color-warning-text)', label: 'EMPTY' },
+  down: { bg: 'var(--color-danger-border)', fg: 'var(--color-danger-text)', label: 'DOWN' },
+  error: { bg: 'var(--color-danger-border)', fg: 'var(--color-danger-text)', label: 'ERROR' },
 };
 
 function overallStatus(cards: ServiceCard[]): ProbeStatus {
@@ -291,8 +291,8 @@ export function StatusPage() {
               <div
                 role="alert"
                 style={{
-                  backgroundColor: '#fef2f2',
-                  color: '#991b1b',
+                  backgroundColor: 'var(--color-danger-bg)',
+                  color: 'var(--color-danger-text)',
                   padding: '1rem 1.25rem',
                   borderRadius: '12px',
                   fontSize: '0.9rem',

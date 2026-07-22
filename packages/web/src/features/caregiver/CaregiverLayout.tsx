@@ -139,10 +139,10 @@ export function CaregiverLayout() {
                 : initial}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#F1F5F9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-surface-soft)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {displayName}
               </span>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'capitalize' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>
                 {user?.role ?? 'caregiver'}
               </span>
             </div>

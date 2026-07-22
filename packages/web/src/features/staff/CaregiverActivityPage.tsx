@@ -48,7 +48,7 @@ interface Compliance {
   missing: string[];
 }
 
-const TEAL = '#107480';
+const TEAL = 'var(--color-primary)';
 const SERVICE_LABELS: Record<string, string> = {
   T1019: 'Personal Care', S5125: 'Attendant Care', T1004: 'Home Health Aide', T1021: 'HHA Visit',
 };
@@ -75,7 +75,7 @@ function fmtTime(iso?: string): string {
 }
 function statusColor(s: VisitStatus, inProgress: boolean): string {
   if (inProgress) return TEAL;
-  return s === 'verified' ? '#059669' : s === 'flagged' ? '#BE123C' : '#64748B';
+  return s === 'verified' ? 'var(--color-success)' : s === 'flagged' ? 'var(--color-danger-text)' : 'var(--color-text-muted)';
 }
 
 function StatusBadge({ status, inProgress }: { status: VisitStatus; inProgress: boolean }) {
@@ -91,10 +91,10 @@ function StatusBadge({ status, inProgress }: { status: VisitStatus; inProgress: 
 
 function StatTile({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '1rem 1.1rem' }}>
-      <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: '#94A3B8' }}>{label}</div>
-      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: accent ?? '#0F172A', marginTop: 4, lineHeight: 1.1 }}>{value}</div>
-      {sub ? <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: 2 }}>{sub}</div> : null}
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '1rem 1.1rem' }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--color-text-subtle)' }}>{label}</div>
+      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: accent ?? 'var(--color-text)', marginTop: 4, lineHeight: 1.1 }}>{value}</div>
+      {sub ? <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{sub}</div> : null}
     </div>
   );
 }
@@ -183,14 +183,14 @@ export function CaregiverActivityPage() {
       ) : profile ? (
         <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Profile header */}
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '1.1rem 1.25rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, padding: '1.1rem 1.25rem', flexWrap: 'wrap' }}>
             <div style={{ width: 60, height: 60, borderRadius: '50%', background: `${TEAL}14`, color: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.4rem', flexShrink: 0 }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{name}</h1>
-                <span style={{ display: 'inline-block', padding: '0.12em 0.6em', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700, textTransform: 'capitalize', background: profile.status === 'active' ? '#05966918' : '#64748B18', color: profile.status === 'active' ? '#059669' : '#64748B' }}>{profile.status}</span>
+                <span style={{ display: 'inline-block', padding: '0.12em 0.6em', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700, textTransform: 'capitalize', background: profile.status === 'active' ? 'var(--color-success-bg)' : 'var(--color-primary-bg)', color: profile.status === 'active' ? 'var(--color-success)' : 'var(--color-text-muted)' }}>{profile.status}</span>
               </div>
-              <div style={{ color: '#64748B', fontSize: '0.88rem', marginTop: 4, display: 'flex', gap: '1.1rem', flexWrap: 'wrap' }}>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', marginTop: 4, display: 'flex', gap: '1.1rem', flexWrap: 'wrap' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Icon name="mail" size={15} />{profile.email}</span>
                 {profile.phone ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Icon name="phone" size={15} />{profile.phone}</span> : null}
                 {profile.hireDate ? <span>Hired {fmtDate(profile.hireDate)}</span> : null}
@@ -198,7 +198,7 @@ export function CaregiverActivityPage() {
               </div>
             </div>
             {compliance ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', borderRadius: 10, fontWeight: 700, fontSize: '0.85rem', background: compliance.compliant ? '#05966914' : '#BE123C14', color: compliance.compliant ? '#059669' : '#BE123C' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', borderRadius: 10, fontWeight: 700, fontSize: '0.85rem', background: compliance.compliant ? 'var(--color-success-bg)' : 'var(--color-danger-bg)', color: compliance.compliant ? 'var(--color-success)' : 'var(--color-danger-text)' }}>
                 <Icon name={compliance.compliant ? 'shield-check' : 'alert-triangle'} size={16} />
                 {compliance.compliant ? 'Compliant' : 'Action needed'}
               </div>
@@ -210,43 +210,43 @@ export function CaregiverActivityPage() {
             <StatTile label="Total visits" value={String(stats.total)} sub={`${stats.completed} completed`} />
             <StatTile label="Hours (all-time)" value={stats.allMs > 0 ? fmtHours(stats.allMs) : '0m'} accent={TEAL} />
             <StatTile label="Hours this week" value={stats.weekMs > 0 ? fmtHours(stats.weekMs) : '0m'} accent={TEAL} />
-            <StatTile label="Verified" value={String(stats.verified)} accent="#059669" />
-            <StatTile label="Flagged" value={String(stats.flagged)} accent={stats.flagged > 0 ? '#BE123C' : '#0F172A'} sub={stats.flagged > 0 ? 'needs review' : 'all clean'} />
+            <StatTile label="Verified" value={String(stats.verified)} accent="var(--color-success)" />
+            <StatTile label="Flagged" value={String(stats.flagged)} accent={stats.flagged > 0 ? 'var(--color-danger-text)' : 'var(--color-text)'} sub={stats.flagged > 0 ? 'needs review' : 'all clean'} />
           </div>
 
           {/* Charts row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {/* 8-week hours */}
-            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '1rem 1.1rem' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '0.8rem' }}>Hours · last 8 weeks</div>
+            <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '1rem 1.1rem' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.8rem' }}>Hours · last 8 weeks</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 96 }}>
                 {weekBars.buckets.map((b, i) => (
                   <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div title={fmtHours(b.ms)} style={{ width: '100%', height: `${Math.round((b.ms / weekBars.max) * 78)}px`, minHeight: b.ms > 0 ? 4 : 2, background: b.ms > 0 ? TEAL : '#E2E8F0', borderRadius: 4, transition: 'height 0.3s' }} />
-                    <div style={{ fontSize: '0.62rem', color: '#94A3B8' }}>{b.label}</div>
+                    <div title={fmtHours(b.ms)} style={{ width: '100%', height: `${Math.round((b.ms / weekBars.max) * 78)}px`, minHeight: b.ms > 0 ? 4 : 2, background: b.ms > 0 ? TEAL : 'var(--color-border)', borderRadius: 4, transition: 'height 0.3s' }} />
+                    <div style={{ fontSize: '0.62rem', color: 'var(--color-text-subtle)' }}>{b.label}</div>
                   </div>
                 ))}
               </div>
             </div>
             {/* Quality bar */}
-            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '1rem 1.1rem' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '0.8rem' }}>Visit quality</div>
+            <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '1rem 1.1rem' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.8rem' }}>Visit quality</div>
               {stats.verified + stats.flagged > 0 ? (
                 <>
-                  <div style={{ display: 'flex', height: 14, borderRadius: 999, overflow: 'hidden', background: '#F1F5F9' }}>
-                    <div style={{ width: `${(stats.verified / (stats.verified + stats.flagged)) * 100}%`, background: '#059669' }} />
-                    <div style={{ width: `${(stats.flagged / (stats.verified + stats.flagged)) * 100}%`, background: '#BE123C' }} />
+                  <div style={{ display: 'flex', height: 14, borderRadius: 999, overflow: 'hidden', background: 'var(--color-surface-soft)' }}>
+                    <div style={{ width: `${(stats.verified / (stats.verified + stats.flagged)) * 100}%`, background: 'var(--color-success)' }} />
+                    <div style={{ width: `${(stats.flagged / (stats.verified + stats.flagged)) * 100}%`, background: 'var(--color-danger-text)' }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: '0.82rem' }}>
-                    <span style={{ color: '#059669', fontWeight: 700 }}>● {stats.verified} verified</span>
-                    <span style={{ color: '#BE123C', fontWeight: 700 }}>● {stats.flagged} flagged</span>
+                    <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>● {stats.verified} verified</span>
+                    <span style={{ color: 'var(--color-danger-text)', fontWeight: 700 }}>● {stats.flagged} flagged</span>
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: 8 }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 8 }}>
                     {Math.round((stats.verified / (stats.verified + stats.flagged)) * 100)}% of resolved visits verified clean
                   </div>
                 </>
               ) : (
-                <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>No completed visits yet.</div>
+                <div style={{ color: 'var(--color-text-subtle)', fontSize: '0.85rem' }}>No completed visits yet.</div>
               )}
             </div>
           </div>
@@ -285,47 +285,47 @@ export function CaregiverActivityPage() {
                           <td>
                             <StatusBadge status={v.status} inProgress={inProgress} />
                             {hasDocs ? (
-                              <span style={{ marginLeft: 6, fontSize: '0.68rem', fontWeight: 700, color: '#1a5fa8', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.5rem', whiteSpace: 'nowrap' }}>
+                              <span style={{ marginLeft: 6, fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.5rem', whiteSpace: 'nowrap' }}>
                                 {v.tasks && v.tasks.length > 0 ? `${v.tasks.length} task${v.tasks.length === 1 ? '' : 's'}` : 'Note'}
                               </span>
                             ) : null}
-                            {expandable ? <span style={{ marginLeft: 6, color: v.status === 'flagged' ? '#BE123C' : '#94A3B8', fontSize: '0.75rem' }}>{isOpen ? '▲' : '▼'}</span> : null}
+                            {expandable ? <span style={{ marginLeft: 6, color: v.status === 'flagged' ? 'var(--color-danger-text)' : 'var(--color-text-subtle)', fontSize: '0.75rem' }}>{isOpen ? '▲' : '▼'}</span> : null}
                           </td>
                         </tr>,
                         isOpen ? (
                           <tr key={`${v.id}-r`}>
-                            <td colSpan={7} style={{ background: v.status === 'flagged' ? '#FFF7ED' : '#F8FAFC', borderLeft: `3px solid ${v.status === 'flagged' ? '#d97706' : '#1a5fa8'}`, padding: '0.7rem 1rem' }}>
+                            <td colSpan={7} style={{ background: v.status === 'flagged' ? 'var(--color-accent-bg)' : 'var(--color-bg)', borderLeft: `3px solid ${v.status === 'flagged' ? 'var(--color-warning)' : 'var(--color-primary)'}`, padding: '0.7rem 1rem' }}>
                               {v.status === 'flagged' ? (
                                 <div style={{ marginBottom: hasDocs ? '0.6rem' : 0 }}>
-                                  <strong style={{ color: '#92400e' }}>Flag reason: </strong>
-                                  <span style={{ color: '#92400e' }}>{v.flagReason ?? 'No detailed reason recorded.'}</span>
+                                  <strong style={{ color: 'var(--color-warning-text)' }}>Flag reason: </strong>
+                                  <span style={{ color: 'var(--color-warning-text)' }}>{v.flagReason ?? 'No detailed reason recorded.'}</span>
                                 </div>
                               ) : null}
                               {v.tasks && v.tasks.length > 0 ? (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                                  <strong style={{ color: '#0F172A', fontSize: '0.8rem', marginRight: '0.2rem' }}>Tasks documented:</strong>
+                                  <strong style={{ color: 'var(--color-text)', fontSize: '0.8rem', marginRight: '0.2rem' }}>Tasks documented:</strong>
                                   {v.tasks.map((t) => (
-                                    <span key={t.id} style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1a5fa8', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.55rem' }}>
+                                    <span key={t.id} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-primary)', background: 'rgba(26,95,168,0.08)', border: '1px solid rgba(26,95,168,0.18)', borderRadius: '999px', padding: '0.15rem 0.55rem' }}>
                                       {t.duty}
                                     </span>
                                   ))}
                                 </div>
                               ) : null}
                               {v.visitNote ? (
-                                <div style={{ marginTop: v.tasks && v.tasks.length > 0 ? '0.5rem' : 0, fontSize: '0.8rem', color: '#475569' }}>
-                                  <strong style={{ color: '#0F172A' }}>Visit note: </strong>
+                                <div style={{ marginTop: v.tasks && v.tasks.length > 0 ? '0.5rem' : 0, fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                                  <strong style={{ color: 'var(--color-text)' }}>Visit note: </strong>
                                   {v.visitNote}
                                 </div>
                               ) : null}
                               {v.signature ? (
                                 <div style={{ marginTop: '0.6rem' }}>
-                                  <strong style={{ color: '#0F172A', fontSize: '0.8rem' }}>
+                                  <strong style={{ color: 'var(--color-text)', fontSize: '0.8rem' }}>
                                     Signed by {v.signature.signerRole === 'client' ? 'the client' : 'a representative'}
                                     {v.signature.signerName ? ` (${v.signature.signerName})` : ''}:
                                   </strong>
                                   <svg
                                     viewBox={`0 0 ${v.signature.width} ${v.signature.height}`}
-                                    style={{ display: 'block', width: 220, height: 'auto', marginTop: '0.35rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 6 }}
+                                    style={{ display: 'block', width: 220, height: 'auto', marginTop: '0.35rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 6 }}
                                     role="img"
                                     aria-label="Captured signature"
                                   >
@@ -334,7 +334,7 @@ export function CaregiverActivityPage() {
                                         key={i}
                                         points={stroke.map(([x, y]) => `${x},${y}`).join(' ')}
                                         fill="none"
-                                        stroke="#0F172A"
+                                        stroke="var(--color-text)"
                                         strokeWidth={2.5}
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -358,22 +358,22 @@ export function CaregiverActivityPage() {
           {compliance ? (
             <div>
               <h2 className="section-title" style={{ marginBottom: '0.7rem' }}>Credentials & compliance</h2>
-              <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '1rem 1.1rem' }}>
+              <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '1rem 1.1rem' }}>
                 {compliance.missing.length > 0 ? (
-                  <div style={{ marginBottom: '0.8rem', color: '#BE123C', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <div style={{ marginBottom: '0.8rem', color: 'var(--color-danger-text)', fontSize: '0.85rem', fontWeight: 600 }}>
                     Missing required: {compliance.missing.join(', ')}
                   </div>
                 ) : null}
                 {credentials.length === 0 ? (
-                  <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>No credentials on file.</div>
+                  <div style={{ color: 'var(--color-text-subtle)', fontSize: '0.85rem' }}>No credentials on file.</div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.7rem' }}>
                     {credentials.map((c) => {
                       const expired = compliance.expired.some((e) => e.id === c.id);
                       const soon = compliance.expiringSoon.some((e) => e.id === c.id);
-                      const col = expired ? '#BE123C' : soon ? '#d97706' : '#059669';
+                      const col = expired ? 'var(--color-danger-text)' : soon ? 'var(--color-warning)' : 'var(--color-success)';
                       return (
-                        <div key={c.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '0.7rem 0.8rem' }}>
+                        <div key={c.id} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '0.7rem 0.8rem' }}>
                           <div style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'capitalize' }}>{c.credentialType.replace(/-/g, ' ')}</div>
                           <div style={{ fontSize: '0.78rem', color: col, fontWeight: 600, marginTop: 3 }}>
                             {expired ? 'Expired' : soon ? 'Expiring soon' : 'Valid'} · {fmtDate(c.expiresAt)}

@@ -39,13 +39,13 @@ const TABS: { label: string; value: TabStatus }[] = [
 ];
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  applied: { bg: '#EEF2FF', text: '#0c5d66' },
-  interviewing: { bg: '#FFF7ED', text: '#C2410C' },
-  interview_complete: { bg: '#F0FDF4', text: '#15803D' },
-  under_review: { bg: '#FEF9C3', text: '#A16207' },
-  offered: { bg: '#F0F9FF', text: '#0369A1' },
-  hired: { bg: '#F0FDF4', text: '#15803D' },
-  rejected: { bg: '#FFF1F2', text: '#BE123C' },
+  applied: { bg: 'var(--color-info-bg)', text: 'var(--color-primary-dark)' },
+  interviewing: { bg: 'var(--color-accent-bg)', text: 'var(--color-accent-dark)' },
+  interview_complete: { bg: 'var(--color-success-bg)', text: 'var(--color-success-text)' },
+  under_review: { bg: 'var(--color-warning-bg)', text: 'var(--color-warning-text)' },
+  offered: { bg: 'var(--color-primary-bg)', text: 'var(--color-primary-dark)' },
+  hired: { bg: 'var(--color-success-bg)', text: 'var(--color-success-text)' },
+  rejected: { bg: 'var(--color-danger-bg)', text: 'var(--color-danger-text)' },
 };
 
 function formatStatus(s: string): string {
@@ -147,13 +147,13 @@ export function OnboardingHubPage() {
               margin: 0,
               fontSize: '1.5rem',
               fontWeight: 700,
-              color: '#0F172A',
+              color: 'var(--color-text)',
               letterSpacing: '-0.02em',
             }}
           >
             Onboarding Hub
           </h1>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748B', fontSize: '0.875rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             Manage caregiver applications and hiring pipeline.
           </p>
         </div>
@@ -165,9 +165,9 @@ export function OnboardingHubPage() {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.5rem 1rem',
-            backgroundColor: '#EEF2FF',
-            color: '#0c5d66',
-            border: '1px solid #ddd6fe',
+            backgroundColor: 'var(--color-info-bg)',
+            color: 'var(--color-primary-dark)',
+            border: '1px solid var(--color-primary-light)',
             borderRadius: '8px',
             fontWeight: 600,
             fontSize: '0.875rem',
@@ -205,20 +205,20 @@ export function OnboardingHubPage() {
               padding: '1rem 1.25rem',
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
             }}
           >
             <div
               style={{
                 fontSize: '1.75rem',
                 fontWeight: 700,
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 letterSpacing: '-0.02em',
               }}
             >
               {stat.value}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.125rem' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.125rem' }}>
               {stat.label}
             </div>
           </div>
@@ -230,7 +230,7 @@ export function OnboardingHubPage() {
         style={{
           display: 'flex',
           gap: '0.25rem',
-          borderBottom: '1px solid #E2E8F0',
+          borderBottom: '1px solid var(--color-border)',
           overflowX: 'auto',
         }}
       >
@@ -248,9 +248,9 @@ export function OnboardingHubPage() {
                 padding: '0.5rem 0.875rem',
                 border: 'none',
                 borderBottom:
-                  activeTab === tab.value ? '2px solid #0c5d66' : '2px solid transparent',
+                  activeTab === tab.value ? '2px solid var(--color-primary-dark)' : '2px solid transparent',
                 backgroundColor: 'transparent',
-                color: activeTab === tab.value ? '#0c5d66' : '#64748B',
+                color: activeTab === tab.value ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
                 fontWeight: activeTab === tab.value ? 600 : 400,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
@@ -264,8 +264,8 @@ export function OnboardingHubPage() {
               {count > 0 && (
                 <span
                   style={{
-                    backgroundColor: activeTab === tab.value ? '#EEF2FF' : '#F1F5F9',
-                    color: activeTab === tab.value ? '#0c5d66' : '#64748B',
+                    backgroundColor: activeTab === tab.value ? 'var(--color-info-bg)' : 'var(--color-surface-soft)',
+                    color: activeTab === tab.value ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
                     borderRadius: '9999px',
                     padding: '0 0.4rem',
                     fontSize: '0.7rem',
@@ -286,22 +286,22 @@ export function OnboardingHubPage() {
         style={{
           backgroundColor: 'white',
           borderRadius: '10px',
-          border: '1px solid #E2E8F0',
+          border: '1px solid var(--color-border)',
           overflow: 'hidden',
         }}
       >
         {loading ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>Loading…</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>
         ) : error ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#BE123C' }}>{error}</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-danger-text)' }}>{error}</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#94A3B8' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-subtle)' }}>
             No applicants in this category.
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
+              <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                 {['Name', 'Email', 'Position', 'Applied', 'Status', 'Score'].map((h) => (
                   <th
                     key={h}
@@ -310,7 +310,7 @@ export function OnboardingHubPage() {
                       textAlign: 'left',
                       fontSize: '0.75rem',
                       fontWeight: 600,
-                      color: '#64748B',
+                      color: 'var(--color-text-muted)',
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                     }}
@@ -322,17 +322,17 @@ export function OnboardingHubPage() {
             </thead>
             <tbody>
               {filtered.map((a) => {
-                const colors = statusColors[a.status] ?? { bg: '#F1F5F9', text: '#475569' };
+                const colors = statusColors[a.status] ?? { bg: 'var(--color-surface-soft)', text: 'var(--color-text-secondary)' };
                 return (
                   <tr
                     key={a.id}
                     onClick={() => void navigate(`/admin/onboarding/${a.id}`)}
                     style={{
-                      borderBottom: '1px solid #F1F5F9',
+                      borderBottom: '1px solid var(--color-surface-soft)',
                       cursor: 'pointer',
                     }}
                     onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#F8FAFC';
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'var(--color-bg)';
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
@@ -343,18 +343,18 @@ export function OnboardingHubPage() {
                         padding: '0.75rem 1rem',
                         fontSize: '0.9rem',
                         fontWeight: 500,
-                        color: '#0F172A',
+                        color: 'var(--color-text)',
                       }}
                     >
                       {a.firstName} {a.lastName}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#475569' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                       {a.email}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#475569' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                       {a.position}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#64748B' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {formatDate(a.appliedAt)}
                     </td>
                     <td style={{ padding: '0.75rem 1rem' }}>
@@ -371,17 +371,17 @@ export function OnboardingHubPage() {
                         {formatStatus(a.status)}
                       </span>
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#64748B' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {a.aiScore ? (
                         <span
                           style={{
                             fontWeight: 600,
                             color:
                               a.aiScore >= 7
-                                ? '#15803D'
+                                ? 'var(--color-success-text)'
                                 : a.aiScore >= 5
-                                  ? '#A16207'
-                                  : '#BE123C',
+                                  ? 'var(--color-warning-text)'
+                                  : 'var(--color-danger-text)',
                           }}
                         >
                           {a.aiScore}/10

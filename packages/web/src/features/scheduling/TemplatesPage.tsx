@@ -166,7 +166,7 @@ export function TemplatesPage() {
       <header className="page-header">
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>Templates</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
             Create and manage plan-of-care visit templates.
           </p>
         </div>
@@ -200,7 +200,7 @@ export function TemplatesPage() {
                 ))}
               </select>
               {editingId && (
-                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Client can&apos;t be changed on an existing template.</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>Client can&apos;t be changed on an existing template.</span>
               )}
             </div>
 
@@ -215,17 +215,17 @@ export function TemplatesPage() {
                 style={{
                   maxHeight: '280px',
                   overflowY: 'auto',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '8px',
                   padding: '0.4rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.15rem',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: 'var(--color-bg)',
                 }}
               >
                 {availableTasks.length === 0 ? (
-                  <span style={{ fontSize: '0.8125rem', color: '#94A3B8', padding: '0.6rem' }}>Loading tasks…</span>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)', padding: '0.6rem' }}>Loading tasks…</span>
                 ) : (
                   availableTasks.map(task => {
                     const isSelected = selectedTasks.has(task.duty);
@@ -244,16 +244,16 @@ export function TemplatesPage() {
                           backgroundColor: isSelected ? 'rgba(16, 116, 128, 0.08)' : 'transparent',
                           transition: 'background-color 0.1s ease',
                           fontSize: '0.8125rem',
-                          color: '#0F172A',
+                          color: 'var(--color-text)',
                         }}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleTaskToggle(task.duty)}
-                          style={{ width: 'auto', accentColor: '#107480' }}
+                          style={{ width: 'auto', accentColor: 'var(--color-primary)' }}
                         />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#107480', fontWeight: 600 }}>{task.id}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-primary)', fontWeight: 600 }}>{task.id}</span>
                         <span>{task.duty}</span>
                       </label>
                     );
@@ -286,7 +286,7 @@ export function TemplatesPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>Template library</h3>
             {!loading && !loadError && templates.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{templates.length} total</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>{templates.length} total</span>
             )}
           </div>
           {loading ? (
@@ -307,7 +307,7 @@ export function TemplatesPage() {
                   <div
                     key={t.id}
                     style={{
-                      border: '1px solid #E2E8F0',
+                      border: '1px solid var(--color-border)',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       backgroundColor: 'white',
@@ -331,12 +331,12 @@ export function TemplatesPage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>{t.name}</div>
-                          <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.15rem' }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)' }}>{t.name}</div>
+                          <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
                             Client: {clientName(t.clientId)}
                           </div>
                         </div>
-                        <span style={{ color: '#94A3B8', fontSize: '0.875rem' }}>{isExpanded ? '▾' : '▸'}</span>
+                        <span style={{ color: 'var(--color-text-subtle)', fontSize: '0.875rem' }}>{isExpanded ? '▾' : '▸'}</span>
                       </div>
                       <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                         {t.tasks.map((task, i) => (
@@ -345,8 +345,8 @@ export function TemplatesPage() {
                             style={{
                               fontSize: '0.7rem',
                               padding: '0.15rem 0.5rem',
-                              backgroundColor: '#F1F5F9',
-                              color: '#475569',
+                              backgroundColor: 'var(--color-surface-soft)',
+                              color: 'var(--color-text-secondary)',
                               borderRadius: '4px',
                               fontWeight: 500,
                             }}
@@ -360,13 +360,13 @@ export function TemplatesPage() {
                       <div
                         style={{
                           padding: '1rem 1.25rem',
-                          borderTop: '1px solid #E2E8F0',
-                          backgroundColor: '#F8FAFC',
+                          borderTop: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-bg)',
                           fontSize: '0.8125rem',
                           display: 'grid',
                           gridTemplateColumns: 'auto 1fr',
                           gap: '0.35rem 1.25rem',
-                          color: '#475569',
+                          color: 'var(--color-text-secondary)',
                         }}
                       >
                         <div style={{ fontWeight: 600 }}>Template ID</div>
@@ -376,22 +376,22 @@ export function TemplatesPage() {
                         <div style={{ fontWeight: 600 }}>Name</div>
                         <div>{t.name}</div>
                         <div style={{ fontWeight: 600 }}>Tasks ({t.tasks.length})</div>
-                        <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: '#94A3B8' }}>none</em>}</div>
+                        <div>{t.tasks.map(taskLabel).join(', ') || <em style={{ color: 'var(--color-text-subtle)' }}>none</em>}</div>
 
                         <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.6rem', flexWrap: 'wrap' }}>
                           <button type="button" className="btn-ghost btn-sm" onClick={() => startEdit(t)}>Edit</button>
                           {confirmDeleteId === t.id ? (
                             <>
-                              <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this template?</span>
-                              <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(t)}>Confirm delete</button>
+                              <span style={{ fontSize: '0.8125rem', color: 'var(--color-danger-text)', fontWeight: 600 }}>Delete this template?</span>
+                              <button type="button" className="btn-sm" style={{ background: 'var(--color-danger-text)', color: 'var(--color-surface)', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(t)}>Confirm delete</button>
                               <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>Cancel</button>
                             </>
                           ) : (
-                            <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(t.id); setRowError(null); }}>Delete</button>
+                            <button type="button" className="btn-ghost btn-sm" style={{ color: 'var(--color-danger-text)' }} onClick={() => { setConfirmDeleteId(t.id); setRowError(null); }}>Delete</button>
                           )}
                         </div>
                         {rowError && confirmDeleteId === t.id && (
-                          <div role="alert" style={{ gridColumn: '1 / -1', fontSize: '0.8125rem', color: '#BE123C' }}>{rowError}</div>
+                          <div role="alert" style={{ gridColumn: '1 / -1', fontSize: '0.8125rem', color: 'var(--color-danger-text)' }}>{rowError}</div>
                         )}
                       </div>
                     )}

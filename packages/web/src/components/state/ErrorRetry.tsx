@@ -11,8 +11,8 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
       role="alert"
       style={{
         padding: '2rem 1.5rem',
-        backgroundColor: '#FFF1F2',
-        border: '1px solid #FECDD3',
+        backgroundColor: 'var(--color-danger-bg)',
+        border: '1px solid var(--color-danger-border)',
         borderRadius: '12px',
         display: 'flex',
         flexDirection: 'column',
@@ -28,7 +28,7 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
           height: '44px',
           borderRadius: '50%',
           backgroundColor: 'rgba(244, 63, 94, 0.12)',
-          color: '#BE123C',
+          color: 'var(--color-danger-text)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -41,10 +41,10 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h4 style={{ margin: 0, color: '#BE123C', fontSize: '0.9375rem', fontWeight: 600 }}>
+      <h4 style={{ margin: 0, color: 'var(--color-danger-text)', fontSize: '0.9375rem', fontWeight: 600 }}>
         Couldn&apos;t load
       </h4>
-      <p style={{ margin: 0, color: '#9F1239', maxWidth: '36ch', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+      <p style={{ margin: 0, color: 'var(--color-danger-text)', maxWidth: '36ch', fontSize: '0.8125rem', lineHeight: 1.5 }}>
         {message ?? 'Something went wrong while loading this list. Please try again.'}
       </p>
       <button
@@ -52,9 +52,9 @@ export function ErrorRetry({ message, onRetry }: ErrorRetryProps) {
         onClick={onRetry}
         style={{
           marginTop: '0.5rem',
-          backgroundColor: '#107480',
+          backgroundColor: 'var(--color-primary)',
           color: 'white',
-          border: '1px solid #107480',
+          border: '1px solid var(--color-primary)',
           padding: '0.5rem 1.1rem',
           borderRadius: '8px',
           fontWeight: 500,

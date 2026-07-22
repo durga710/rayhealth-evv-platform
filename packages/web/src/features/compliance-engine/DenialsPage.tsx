@@ -101,12 +101,12 @@ const card: React.CSSProperties = {
 };
 
 const STATUS_COLOR: Record<WorkStatus, string> = {
-  new: '#BE123C',
-  working: '#B45309',
-  resubmitted: '#1D4ED8',
-  appealed: '#7C3AED',
-  resolved: '#047857',
-  written_off: '#64748B',
+  new: 'var(--color-danger-text)',
+  working: 'var(--color-warning-text)',
+  resubmitted: 'var(--color-primary-dark)',
+  appealed: 'var(--color-primary)',
+  resolved: 'var(--color-success-text)',
+  written_off: 'var(--color-text-muted)',
 };
 
 export function DenialsPage() {
@@ -181,7 +181,7 @@ export function DenialsPage() {
       ]}
     >
       {error && (
-        <div role="alert" style={{ ...card, borderColor: '#FECDD3', color: '#BE123C' }}>{error}</div>
+        <div role="alert" style={{ ...card, borderColor: 'var(--color-danger-border)', color: 'var(--color-danger-text)' }}>{error}</div>
       )}
 
       {summary && summary.topReasons.length > 0 && (
@@ -211,7 +211,7 @@ export function DenialsPage() {
                       height: 6,
                       borderRadius: 3,
                       width: `${Math.max(4, Math.round((r.amountCents / max) * 100))}%`,
-                      background: '#BE123C',
+                      background: 'var(--color-danger-text)',
                     }}
                   />
                 </div>
@@ -278,7 +278,7 @@ export function DenialsPage() {
                     </td>
                     <td style={{ padding: '0.5rem 0.6rem', whiteSpace: 'nowrap' }}>{fmtDate(r.postedAt)}</td>
                     <td style={{ padding: '0.5rem 0.6rem' }}>
-                      <span style={{ color: r.kind === 'denied' ? '#BE123C' : '#B45309', fontWeight: 700 }}>
+                      <span style={{ color: r.kind === 'denied' ? 'var(--color-danger-text)' : 'var(--color-warning-text)', fontWeight: 700 }}>
                         {r.kind === 'denied' ? 'Denied' : 'Underpaid'}
                       </span>
                     </td>

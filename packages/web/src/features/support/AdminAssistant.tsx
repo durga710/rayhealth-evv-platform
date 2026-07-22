@@ -90,7 +90,7 @@ export function AdminAssistant() {
           height: '56px',
           borderRadius: '50%',
           border: 'none',
-          backgroundColor: 'var(--color-accent, #f97316)',
+          backgroundColor: 'var(--color-accent, var(--color-accent))',
           color: 'white',
           fontSize: '1.5rem',
           cursor: 'pointer',
@@ -131,7 +131,7 @@ export function AdminAssistant() {
           <div
             style={{
               padding: '1rem 1.25rem',
-              backgroundColor: 'var(--color-primary-dark, #0f3a66)',
+              backgroundColor: 'var(--color-primary-dark, var(--color-primary-dark))',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -150,7 +150,7 @@ export function AdminAssistant() {
               flex: 1,
               padding: '1rem',
               overflowY: 'auto',
-              backgroundColor: '#f8fafc',
+              backgroundColor: 'var(--color-bg)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.5rem'
@@ -165,9 +165,9 @@ export function AdminAssistant() {
                   padding: '0.6rem 0.85rem',
                   borderRadius: '12px',
                   backgroundColor:
-                    m.role === 'user' ? 'var(--color-primary-light, #1a5fa8)' : 'white',
-                  color: m.role === 'user' ? 'white' : '#0f172a',
-                  border: m.role === 'assistant' ? '1px solid #e3eaf2' : 'none',
+                    m.role === 'user' ? 'var(--color-primary-light, var(--color-primary))' : 'white',
+                  color: m.role === 'user' ? 'white' : 'var(--color-text)',
+                  border: m.role === 'assistant' ? '1px solid var(--color-primary-bg)' : 'none',
                   fontSize: '0.92rem',
                   lineHeight: 1.45,
                   whiteSpace: 'pre-wrap',
@@ -178,7 +178,7 @@ export function AdminAssistant() {
               </div>
             ))}
             {busy && (
-              <div style={{ alignSelf: 'flex-start', color: '#64748b', fontSize: '0.85rem' }}>
+              <div style={{ alignSelf: 'flex-start', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                 Looking that up…
               </div>
             )}
@@ -189,8 +189,8 @@ export function AdminAssistant() {
                   alignSelf: 'stretch',
                   padding: '0.6rem 0.85rem',
                   borderRadius: '12px',
-                  backgroundColor: '#fef2f2',
-                  color: '#991b1b',
+                  backgroundColor: 'var(--color-danger-bg)',
+                  color: 'var(--color-danger-text)',
                   fontSize: '0.85rem'
                 }}
               >
@@ -216,8 +216,8 @@ export function AdminAssistant() {
                   disabled={busy}
                   style={{
                     fontSize: '0.75rem',
-                    backgroundColor: '#eef2f7',
-                    color: '#0f3a66',
+                    backgroundColor: 'var(--color-primary-bg)',
+                    color: 'var(--color-primary-dark)',
                     border: 'none',
                     borderRadius: '999px',
                     padding: '0.3rem 0.7rem',
@@ -230,7 +230,7 @@ export function AdminAssistant() {
             </div>
           )}
 
-          <div style={{ padding: '0.75rem', borderTop: '1px solid #e3eaf2', backgroundColor: 'white' }}>
+          <div style={{ padding: '0.75rem', borderTop: '1px solid var(--color-primary-bg)', backgroundColor: 'white' }}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -242,7 +242,7 @@ export function AdminAssistant() {
               style={{
                 width: '100%',
                 resize: 'none',
-                border: '1px solid #c9d8e8',
+                border: '1px solid var(--color-primary-light)',
                 borderRadius: '8px',
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.9rem',
@@ -257,7 +257,7 @@ export function AdminAssistant() {
                 marginTop: '0.5rem'
               }}
             >
-              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
                 Read-only · scoped to your agency · Enter to send
               </div>
               <button
@@ -265,7 +265,7 @@ export function AdminAssistant() {
                 onClick={() => void send()}
                 disabled={busy || input.trim().length === 0}
                 style={{
-                  backgroundColor: 'var(--color-accent, #f97316)',
+                  backgroundColor: 'var(--color-accent, var(--color-accent))',
                   color: 'white',
                   border: 'none',
                   padding: '0.5rem 1rem',

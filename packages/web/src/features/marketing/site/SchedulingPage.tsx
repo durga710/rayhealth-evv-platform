@@ -68,9 +68,9 @@ const faqs: Faq[] = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -93,22 +93,22 @@ interface BoardColumn {
 
 const board: BoardColumn[] = [
   { day: 'Mon', cards: [
-    { t: '8:00 AM', who: 'M. Santos', bg: '#e7f3f4', bar: '#107480' },
-    { t: '1:00 PM', who: 'R. Vance', bg: '#eef3fb', bar: '#3b82f6' },
+    { t: '8:00 AM', who: 'M. Santos', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary)' },
+    { t: '1:00 PM', who: 'R. Vance', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary)' },
   ] },
   { day: 'Tue', cards: [
-    { t: '9:30 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#1690a0' },
+    { t: '9:30 AM', who: 'A. Brooks', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary-dark)' },
   ] },
   { day: 'Wed', cards: [
-    { t: '8:00 AM', who: 'M. Santos', bg: '#e7f3f4', bar: '#107480' },
-    { t: '11:00 AM', who: 'Open shift', bg: '#fdf1e3', bar: '#d97706' },
+    { t: '8:00 AM', who: 'M. Santos', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary)' },
+    { t: '11:00 AM', who: 'Open shift', bg: 'var(--color-accent-bg)', bar: 'var(--color-warning)' },
   ] },
   { day: 'Thu', cards: [
-    { t: '10:00 AM', who: 'R. Vance', bg: '#eef3fb', bar: '#3b82f6' },
+    { t: '10:00 AM', who: 'R. Vance', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary)' },
   ] },
   { day: 'Fri', cards: [
-    { t: '8:00 AM', who: 'A. Brooks', bg: '#f3eefb', bar: '#1690a0' },
-    { t: '2:00 PM', who: 'M. Santos', bg: '#e7f3f4', bar: '#107480' },
+    { t: '8:00 AM', who: 'A. Brooks', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary-dark)' },
+    { t: '2:00 PM', who: 'M. Santos', bg: 'var(--color-primary-bg)', bar: 'var(--color-primary)' },
   ] },
 ];
 
@@ -223,17 +223,17 @@ export function SchedulingPage() {
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
                   <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '.9rem' }}>Wed &middot; 1:00 PM &middot; J. Carter</div>
-                  {pill('#fdecec', '#b91c1c', 'Conflict')}
+                  {pill('var(--color-danger-bg)', 'var(--color-danger-text)', 'Conflict')}
                 </div>
-                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: '#fdecec', borderRadius: 10, border: '1px solid #f6d4d4' }}>
-                  <span style={{ color: '#b91c1c', flexShrink: 0 }}>{mkic(<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>)}</span>
-                  <div style={{ fontSize: '.82rem', color: '#7f1d1d', lineHeight: 1.5 }}>
+                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: 'var(--color-danger-bg)', borderRadius: 10, border: '1px solid var(--color-danger-border)' }}>
+                  <span style={{ color: 'var(--color-danger-text)', flexShrink: 0 }}>{mkic(<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>)}</span>
+                  <div style={{ fontSize: '.82rem', color: 'var(--color-danger-text)', lineHeight: 1.5 }}>
                     <strong>Travel conflict.</strong> R. Vance ends a visit 9 mi away at 1:00 PM. Earliest reachable start is 1:35 PM.
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '.6rem', marginTop: 10, padding: 12, background: '#fdf1e3', borderRadius: 10, border: '1px solid #f3e0c4' }}>
-                  <span style={{ color: '#b45309', flexShrink: 0 }}>{mkic(<><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></>)}</span>
-                  <div style={{ fontSize: '.82rem', color: '#7c4a07', lineHeight: 1.5 }}>
+                <div style={{ display: 'flex', gap: '.6rem', marginTop: 10, padding: 12, background: 'var(--color-accent-bg)', borderRadius: 10, border: '1px solid var(--color-accent-light)' }}>
+                  <span style={{ color: 'var(--color-warning-text)', flexShrink: 0 }}>{mkic(<><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></>)}</span>
+                  <div style={{ fontSize: '.82rem', color: 'var(--color-accent-dark)', lineHeight: 1.5 }}>
                     <strong>Authorization low.</strong> Client has 3 units remaining this week.
                   </div>
                 </div>

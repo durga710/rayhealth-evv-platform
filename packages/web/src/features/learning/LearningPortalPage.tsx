@@ -90,7 +90,7 @@ export function LearningPortalPage() {
             <h1 style={{ margin: 0 }}>My Training</h1>
           </div>
         </header>
-        <div style={{ padding: '2rem', color: '#94A3B8' }}>Loading your training…</div>
+        <div style={{ padding: '2rem', color: 'var(--color-text-subtle)' }}>Loading your training…</div>
       </div>
     );
   }
@@ -101,17 +101,17 @@ export function LearningPortalPage() {
         <header className="page-header">
           <div className="page-header__title">
             <h1 style={{ margin: 0 }}>My Training</h1>
-            <p style={{ margin: 0, color: '#64748B' }}>PA §52.18 caregiver training portal.</p>
+            <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>PA §52.18 caregiver training portal.</p>
           </div>
         </header>
         <div
           style={{
             padding: '2.5rem',
             backgroundColor: 'white',
-            border: '1px dashed #CBD5E1',
+            border: '1px dashed var(--color-border-strong)',
             borderRadius: '12px',
             textAlign: 'center',
-            color: '#94A3B8',
+            color: 'var(--color-text-subtle)',
           }}
         >
           No training courses assigned yet. Your coordinator will assign courses based on your role.
@@ -129,7 +129,7 @@ export function LearningPortalPage() {
       <header className="page-header">
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>My Training</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
             PA §52.18 caregiver training portal
           </p>
         </div>
@@ -137,7 +137,7 @@ export function LearningPortalPage() {
           style={{
             padding: '0.85rem 1.25rem',
             backgroundColor: progress.isCompliant ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)',
-            border: `1px solid ${progress.isCompliant ? '#A7F3D0' : '#FECDD3'}`,
+            border: `1px solid ${progress.isCompliant ? 'var(--color-success-border)' : 'var(--color-danger-border)'}`,
             borderRadius: '10px',
             textAlign: 'center',
           }}
@@ -146,13 +146,13 @@ export function LearningPortalPage() {
             style={{
               fontSize: '1.25rem',
               fontWeight: 700,
-              color: progress.isCompliant ? '#047857' : '#BE123C',
+              color: progress.isCompliant ? 'var(--color-success-text)' : 'var(--color-danger-text)',
               letterSpacing: '-0.01em',
             }}
           >
             {progress.isCompliant ? 'Compliant' : 'Action needed'}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
             {completedCount}/{required.length} required done
           </div>
         </div>
@@ -178,7 +178,7 @@ export function LearningPortalPage() {
               return (
                 <div
                   key={enrollment.id}
-                  style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
+                  style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
                 >
                   <div
                     style={{
@@ -190,13 +190,13 @@ export function LearningPortalPage() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <strong style={{ color: '#0F172A', fontSize: '0.9375rem', fontWeight: 600 }}>
+                      <strong style={{ color: 'var(--color-text)', fontSize: '0.9375rem', fontWeight: 600 }}>
                         {course.title}
                       </strong>
-                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#64748B', lineHeight: 1.5 }}>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
                         {course.description}
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#94A3B8' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>
                         <span>{course.durationMinutes} min</span>
                         {enrollment.dueAt && <span>Due {formatDate(enrollment.dueAt)}</span>}
                         {enrollment.lastCompletedAt && <span>Completed {formatDate(enrollment.lastCompletedAt)}</span>}
@@ -222,14 +222,14 @@ export function LearningPortalPage() {
                       onSubmit={(e) => handleComplete(e, enrollment.id, course.id)}
                       style={{
                         padding: '1rem 1.25rem',
-                        borderTop: '1px solid #E2E8F0',
-                        backgroundColor: '#F8FAFC',
+                        borderTop: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-bg)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '0.75rem',
                       }}
                     >
-                      <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748B' }}>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                         Record that you have completed <strong>{course.title}</strong>.
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -259,7 +259,7 @@ export function LearningPortalPage() {
                       <button
                         type="submit"
                         className="btn-primary btn-sm"
-                        style={{ alignSelf: 'flex-start', backgroundColor: '#10B981', borderColor: '#10B981' }}
+                        style={{ alignSelf: 'flex-start', backgroundColor: 'var(--color-success)', borderColor: 'var(--color-success)' }}
                       >
                         Confirm completion
                       </button>
@@ -282,7 +282,7 @@ export function LearningPortalPage() {
               return (
                 <div
                   key={enrollment.id}
-                  style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
+                  style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}
                 >
                   <div
                     style={{
@@ -294,10 +294,10 @@ export function LearningPortalPage() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <strong style={{ color: '#0F172A', fontSize: '0.9rem', fontWeight: 600 }}>
+                      <strong style={{ color: 'var(--color-text)', fontSize: '0.9rem', fontWeight: 600 }}>
                         {course.title}
                       </strong>
-                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)', marginTop: '0.2rem' }}>
                         {course.durationMinutes} min
                         {enrollment.lastCompletedAt && ` · completed ${formatDate(enrollment.lastCompletedAt)}`}
                       </div>
@@ -321,8 +321,8 @@ export function LearningPortalPage() {
                       onSubmit={(e) => handleComplete(e, enrollment.id, course.id)}
                       style={{
                         padding: '0.95rem 1.25rem',
-                        borderTop: '1px solid #E2E8F0',
-                        backgroundColor: '#F8FAFC',
+                        borderTop: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-bg)',
                         display: 'flex',
                         gap: '0.75rem',
                         alignItems: 'flex-end',
@@ -343,7 +343,7 @@ export function LearningPortalPage() {
                       <button
                         type="submit"
                         className="btn-primary btn-sm"
-                        style={{ backgroundColor: '#10B981', borderColor: '#10B981' }}
+                        style={{ backgroundColor: 'var(--color-success)', borderColor: 'var(--color-success)' }}
                       >
                         Confirm
                       </button>

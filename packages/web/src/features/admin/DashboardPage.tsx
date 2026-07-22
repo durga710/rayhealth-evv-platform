@@ -49,7 +49,7 @@ const quickActions = [
     to: '/admin/clients',
     cta: 'Open clients',
     icon: ICONS.client,
-    tint: '#4F46E5',
+    tint: 'var(--color-primary)',
     tintBg: 'rgba(79,70,229,0.08)',
   },
   {
@@ -58,7 +58,7 @@ const quickActions = [
     to: '/admin/staff',
     cta: 'Open staff',
     icon: ICONS.staff,
-    tint: '#2563EB',
+    tint: 'var(--color-primary)',
     tintBg: 'rgba(37,99,235,0.08)',
   },
   {
@@ -67,7 +67,7 @@ const quickActions = [
     to: '/admin/templates',
     cta: 'Open templates',
     icon: ICONS.template,
-    tint: '#0891B2',
+    tint: 'var(--color-primary-dark)',
     tintBg: 'rgba(8,145,178,0.08)',
   },
   {
@@ -76,7 +76,7 @@ const quickActions = [
     to: '/admin/assignments',
     cta: 'Open assignments',
     icon: ICONS.calendar,
-    tint: '#16A34A',
+    tint: 'var(--color-success)',
     tintBg: 'rgba(22,163,74,0.08)',
   },
   {
@@ -85,7 +85,7 @@ const quickActions = [
     to: '/admin/learning',
     cta: 'Open Learning Hub',
     icon: ICONS.training,
-    tint: '#D97706',
+    tint: 'var(--color-warning)',
     tintBg: 'rgba(217,119,6,0.08)',
   },
 ];
@@ -158,10 +158,10 @@ export function DashboardPage() {
 
   const complianceDisplay = counts.complianceRate === null ? '-' : `${counts.complianceRate}%`;
   const complianceTint = counts.complianceRate === null
-    ? '#94A3B8'
+    ? 'var(--color-text-subtle)'
     : counts.complianceRate >= 80
-      ? '#16A34A'
-      : '#DC2626';
+      ? 'var(--color-success)'
+      : 'var(--color-danger)';
 
   const todayStr = new Date().toLocaleDateString([], {
     weekday: 'long', month: 'long', day: 'numeric',
@@ -178,7 +178,7 @@ export function DashboardPage() {
     {
       label: 'Clients',
       value: formatCount(counts.clients),
-      tint: '#4F46E5',
+      tint: 'var(--color-primary)',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -189,7 +189,7 @@ export function DashboardPage() {
     {
       label: 'Staff & caregivers',
       value: formatCount(counts.staff),
-      tint: '#2563EB',
+      tint: 'var(--color-primary)',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -201,7 +201,7 @@ export function DashboardPage() {
     {
       label: 'Assignments',
       value: formatCount(counts.assignments),
-      tint: '#0891B2',
+      tint: 'var(--color-primary-dark)',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -214,7 +214,7 @@ export function DashboardPage() {
     {
       label: 'Total visits',
       value: formatCount(counts.visits),
-      tint: '#16A34A',
+      tint: 'var(--color-success)',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -240,8 +240,8 @@ export function DashboardPage() {
 
       {/* Header */}
       <div style={{
-        background: '#fff',
-        border: '1px solid #E2E8F0',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
         borderRadius: '14px',
         padding: '1.75rem 2rem',
       }}>
@@ -251,13 +251,13 @@ export function DashboardPage() {
               margin: 0,
               fontSize: '1.625rem',
               fontWeight: 700,
-              color: '#0F172A',
+              color: 'var(--color-text)',
               letterSpacing: '-0.02em',
               lineHeight: 1.2,
             }}>
               {timeGreeting}{displayName ? `, ${displayName}` : ''}
             </h1>
-            <p style={{ margin: '0.35rem 0 0', color: '#64748B', fontSize: '0.9375rem' }}>
+            <p style={{ margin: '0.35rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
               {todayStr}
             </p>
           </div>
@@ -265,23 +265,23 @@ export function DashboardPage() {
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-              background: '#F0FDF4', borderRadius: '8px',
+              background: 'var(--color-success-bg)', borderRadius: '8px',
               padding: '0.35rem 0.75rem',
               fontSize: '0.75rem', fontWeight: 600,
-              color: '#15803D',
-              border: '1px solid #BBF7D0',
+              color: 'var(--color-success-text)',
+              border: '1px solid var(--color-success-border)',
             }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#16A34A', display: 'inline-block' }} />
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--color-success)', display: 'inline-block' }} />
               Secure session
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center',
-              background: '#F1F5F9', borderRadius: '8px',
+              background: 'var(--color-surface-soft)', borderRadius: '8px',
               padding: '0.35rem 0.75rem',
               fontSize: '0.75rem', fontWeight: 600,
-              color: '#475569', letterSpacing: '0.04em',
+              color: 'var(--color-text-secondary)', letterSpacing: '0.04em',
               textTransform: 'capitalize',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
             }}>
               {roleLabel}
             </span>
@@ -291,7 +291,7 @@ export function DashboardPage() {
 
       {/* Stats grid */}
       <section>
-        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
           Overview
         </h2>
         <div style={{
@@ -316,13 +316,13 @@ export function DashboardPage() {
               </div>
               <div style={{
                 fontSize: '2rem', fontWeight: 800,
-                color: '#0F172A', lineHeight: 1,
+                color: 'var(--color-text)', lineHeight: 1,
                 letterSpacing: '-0.03em',
                 fontVariantNumeric: 'tabular-nums',
               }}>
                 {s.value}
               </div>
-              <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.35rem', fontWeight: 500 }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', fontWeight: 500 }}>
                 {s.label}
               </div>
             </div>
@@ -332,7 +332,7 @@ export function DashboardPage() {
 
       {/* Quick actions */}
       <section>
-        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
           Quick actions
         </h2>
         <div style={{
@@ -354,10 +354,10 @@ export function DashboardPage() {
                     {q.icon}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: '0 0 0.3rem', fontSize: '0.9375rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.3 }}>
+                    <h3 style={{ margin: '0 0 0.3rem', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.3 }}>
                       {q.title}
                     </h3>
-                    <p style={{ margin: 0, color: '#64748B', fontSize: '0.8125rem', lineHeight: 1.55 }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.8125rem', lineHeight: 1.55 }}>
                       {q.body}
                     </p>
                   </div>
@@ -381,33 +381,33 @@ export function DashboardPage() {
 
       {/* Security posture */}
       <section>
-        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+        <h2 style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
           Security posture
         </h2>
         <div style={{
-          backgroundColor: '#fff',
+          backgroundColor: 'var(--color-surface)',
           borderRadius: '14px',
           padding: '1.75rem 2rem',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
           gap: '1.5rem',
-          border: '1px solid #E2E8F0',
+          border: '1px solid var(--color-border)',
         }}>
           {securityHighlights.map((h) => (
             <div key={h.label} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
               <span style={{
                 width: '34px', height: '34px', borderRadius: '8px',
-                backgroundColor: '#F1F5F9', color: '#475569',
+                backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-text-secondary)',
                 display: 'grid', placeItems: 'center', flexShrink: 0,
               }} aria-hidden>{h.icon}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <span style={{
                   fontSize: '0.65rem', letterSpacing: '0.08em',
-                  textTransform: 'uppercase', color: '#94A3B8', fontWeight: 700,
+                  textTransform: 'uppercase', color: 'var(--color-text-subtle)', fontWeight: 700,
                 }}>
                   {h.label}
                 </span>
-                <span style={{ fontSize: '0.875rem', lineHeight: 1.5, color: '#334155', fontWeight: 500 }}>
+                <span style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                   {h.value}
                 </span>
               </div>

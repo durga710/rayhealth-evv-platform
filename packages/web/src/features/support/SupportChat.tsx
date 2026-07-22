@@ -155,7 +155,7 @@ export function SupportChat() {
               flex: 1,
               padding: '1rem',
               overflowY: 'auto',
-              backgroundColor: '#f8fafc',
+              backgroundColor: 'var(--color-bg)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.5rem'
@@ -171,7 +171,7 @@ export function SupportChat() {
                   borderRadius: '12px',
                   backgroundColor: m.role === 'user' ? 'var(--color-primary-light)' : 'white',
                   color: m.role === 'user' ? 'white' : 'var(--color-text)',
-                  border: m.role === 'assistant' ? '1px solid #e3eaf2' : 'none',
+                  border: m.role === 'assistant' ? '1px solid var(--color-primary-bg)' : 'none',
                   fontSize: '0.92rem',
                   lineHeight: 1.45,
                   whiteSpace: 'pre-wrap',
@@ -193,8 +193,8 @@ export function SupportChat() {
                   alignSelf: 'stretch',
                   padding: '0.6rem 0.85rem',
                   borderRadius: '12px',
-                  backgroundColor: '#fef2f2',
-                  color: '#991b1b',
+                  backgroundColor: 'var(--color-danger-bg)',
+                  color: 'var(--color-danger-text)',
                   fontSize: '0.85rem'
                 }}
               >
@@ -203,7 +203,7 @@ export function SupportChat() {
             )}
           </div>
 
-          <div style={{ padding: '0.75rem', borderTop: '1px solid #e3eaf2', backgroundColor: 'white' }}>
+          <div style={{ padding: '0.75rem', borderTop: '1px solid var(--color-primary-bg)', backgroundColor: 'white' }}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -215,7 +215,7 @@ export function SupportChat() {
               style={{
                 width: '100%',
                 resize: 'none',
-                border: '1px solid #c9d8e8',
+                border: '1px solid var(--color-primary-light)',
                 borderRadius: '8px',
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.9rem',

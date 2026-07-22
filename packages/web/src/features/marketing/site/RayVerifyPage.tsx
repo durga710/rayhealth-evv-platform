@@ -24,9 +24,9 @@ const statusPill = (s: Status) => (
       textTransform: 'uppercase',
       padding: '.2rem .55rem',
       borderRadius: 999,
-      background: s === 'live' ? '#e7f6ec' : '#fdeee4',
-      color: s === 'live' ? '#0a7d3f' : '#c2541a',
-      border: `1px solid ${s === 'live' ? '#bfe6cb' : '#f6cdab'}`,
+      background: s === 'live' ? 'var(--color-success-bg)' : 'var(--color-accent-bg)',
+      color: s === 'live' ? 'var(--color-success-text)' : 'var(--color-accent)',
+      border: `1px solid ${s === 'live' ? 'var(--color-success-border)' : 'var(--color-accent-light)'}`,
     }}
   >
     {s === 'live' ? 'Live' : 'Rolling out'}
@@ -108,9 +108,9 @@ const faqs: Faq[] = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -193,10 +193,10 @@ export function RayVerifyPage() {
               </ul>
             </div>
             <div className="mk-visual">
-              <Chrome url="app.rayhealthevv.com &middot; RayVerify · Visit #4821" />
+              <Chrome url="app.rayhealthevv.com &middot; RayVerify · Visit var(--color-success-bg)" />
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: 14, borderBottom: '1px solid var(--line)' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0, background: 'conic-gradient(#16a34a 0 96%, #e8eae4 96% 100%)' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0, background: 'conic-gradient(var(--color-success) 0 96%, var(--color-border) 96% 100%)' }}>
                     <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--paper)', display: 'grid', placeItems: 'center', fontWeight: 700, color: 'var(--ink)', fontSize: '1.05rem' }}>96</div>
                   </div>
                   <div>
@@ -207,7 +207,7 @@ export function RayVerifyPage() {
                 <div style={{ marginTop: 12 }}>
                   {scoreRows.map((r, i) => (
                     <div key={r.l} style={{ display: 'flex', alignItems: 'center', gap: '.55rem', padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none', fontSize: '.82rem' }}>
-                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: '#e7f6ec', color: '#16a34a', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
+                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: 'var(--color-success-bg)', color: 'var(--color-success)', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
                       <span style={{ color: 'var(--mut)', minWidth: 122 }}>{r.l}</span>
                       <span style={{ color: 'var(--ink)', fontWeight: 600, marginLeft: 'auto' }}>{r.v}</span>
                     </div>

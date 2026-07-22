@@ -37,12 +37,24 @@ interface AuthContextType {
 
 function applyAgencyTheme(theme?: AgencyTheme | null) {
   const root = document.documentElement;
-  const primary = theme?.primaryColor ?? '#107480';
-  const primaryDark = theme?.primaryDark ?? '#0c5d66';
-  root.style.setProperty('--color-primary', primary);
-  root.style.setProperty('--color-primary-dark', primaryDark);
-  // Derive a low-opacity bg tint from the primary color for hover/active states.
-  root.style.setProperty('--color-primary-bg', primary + '14');
+  const primary = theme?.primaryColor?.trim();
+  const primaryDark = theme?.primaryDark?.trim();
+
+  // With no agency override, remove inline values so the shared stylesheet is
+  // the single source of truth for public, admin, and caregiver experiences.
+  if (!primary) {
+    root.style.removeProperty('--color-primary');
+    root.style.removeProperty('--color-primary-bg');
+  } else {
+    root.style.setProperty('--color-primary', primary);
+    root.style.setProperty('--color-primary-bg', `color-mix(in srgb, ${primary} 8%, transparent)`);
+  }
+
+  if (!primaryDark) {
+    root.style.removeProperty('--color-primary-dark');
+  } else {
+    root.style.setProperty('--color-primary-dark', primaryDark);
+  }
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

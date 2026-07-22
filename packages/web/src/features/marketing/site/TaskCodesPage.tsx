@@ -67,13 +67,13 @@ const Disclaimer = ({ compact = false }: { compact?: boolean }) => (
       display: 'flex',
       gap: '.7rem',
       padding: compact ? '14px 16px' : '18px 20px',
-      background: '#fdf8ee',
-      border: '1px solid #f0e2c4',
+      background: 'var(--color-warning-bg)',
+      border: '1px solid var(--color-warning-border)',
       borderRadius: 14,
       marginTop: compact ? 24 : 28,
     }}
   >
-    <span style={{ color: '#b45309', flexShrink: 0 }}>
+    <span style={{ color: 'var(--color-warning-text)', flexShrink: 0 }}>
       {mkic(
         <>
           <path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0z" />
@@ -81,8 +81,8 @@ const Disclaimer = ({ compact = false }: { compact?: boolean }) => (
         </>,
       )}
     </span>
-    <div style={{ fontSize: compact ? '.85rem' : '.92rem', color: '#7c5410', lineHeight: 1.55 }}>
-      <strong style={{ color: '#5f3e08' }}>Representative reference only.</strong>{' '}
+    <div style={{ fontSize: compact ? '.85rem' : '.92rem', color: 'var(--color-accent-dark)', lineHeight: 1.55 }}>
+      <strong style={{ color: 'var(--color-accent-dark)' }}>Representative reference only.</strong>{' '}
       Confirm exact codes and descriptions against current PA DHS / OLTL bulletins. The numbers below
       are <em>illustrative examples</em>, not official code assignments. RayHealth ships the current,
       authoritative code set in-product and updates it as the state publishes changes.

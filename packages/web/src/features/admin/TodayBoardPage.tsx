@@ -24,10 +24,10 @@ interface TodayBoard {
 type Filter = 'all' | VisitStatus;
 
 const STATUS_META: Record<VisitStatus, { label: string; bg: string; border: string; color: string }> = {
-  late: { label: 'Late to start', bg: '#FEF2F2', border: '#FECACA', color: '#991B1B' },
-  in_progress: { label: 'In progress', bg: '#ECFEFF', border: '#A5F3FC', color: '#155E75' },
-  upcoming: { label: 'Upcoming', bg: '#F1F5F9', border: '#E2E8F0', color: '#475569' },
-  completed: { label: 'Completed', bg: '#F0FDF4', border: '#BBF7D0', color: '#166534' },
+  late: { label: 'Late to start', bg: 'var(--color-danger-bg)', border: 'var(--color-danger-border)', color: 'var(--color-danger-text)' },
+  in_progress: { label: 'In progress', bg: 'var(--color-info-bg)', border: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' },
+  upcoming: { label: 'Upcoming', bg: 'var(--color-surface-soft)', border: 'var(--color-border)', color: 'var(--color-text-secondary)' },
+  completed: { label: 'Completed', bg: 'var(--color-success-bg)', border: 'var(--color-success-border)', color: 'var(--color-success-text)' },
 };
 
 function fmtTime(iso: string | null): string {
@@ -100,14 +100,14 @@ export function TodayBoardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <div style={{ fontSize: '0.8125rem', marginBottom: '0.35rem' }}>
-            <Link to="/admin" style={{ color: '#107480', textDecoration: 'none', fontWeight: 600 }}>
+            <Link to="/admin" style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}>
               ← Command Center
             </Link>
           </div>
-          <h1 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+          <h1 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
             Today's visits
           </h1>
-          <p style={{ margin: '0.3rem 0 0', color: '#64748B', fontSize: '0.9375rem' }}>
+          <p style={{ margin: '0.3rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
             Live status of every visit scheduled today, act on late starts first.
           </p>
         </div>
@@ -138,9 +138,9 @@ export function TodayBoardPage() {
                     fontWeight: 600,
                     padding: '0.4rem 0.85rem',
                     borderRadius: '999px',
-                    border: `1px solid ${active ? '#107480' : isLate ? '#FECACA' : '#E2E8F0'}`,
-                    background: active ? '#107480' : isLate ? '#FEF2F2' : '#fff',
-                    color: active ? '#fff' : isLate ? '#991B1B' : '#475569',
+                    border: `1px solid ${active ? 'var(--color-primary)' : isLate ? 'var(--color-danger-border)' : 'var(--color-border)'}`,
+                    background: active ? 'var(--color-primary)' : isLate ? 'var(--color-danger-bg)' : 'var(--color-surface)',
+                    color: active ? 'var(--color-surface)' : isLate ? 'var(--color-danger-text)' : 'var(--color-text-secondary)',
                   }}
                 >
                   {tab.label}
@@ -178,7 +178,7 @@ export function TodayBoardPage() {
                   {filtered.map((v) => (
                     <tr key={v.assignmentId}>
                       <td><StatusBadge status={v.status} /></td>
-                      <td style={{ fontWeight: 600, color: '#0F172A' }}>{v.clientName || '-'}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--color-text)' }}>{v.clientName || '-'}</td>
                       <td>{v.caregiverName || '-'}</td>
                       <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtTime(v.scheduledStartTime)}</td>
                       <td style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtTime(v.clockInTime)}</td>
@@ -190,7 +190,7 @@ export function TodayBoardPage() {
             </div>
           )}
 
-          <p style={{ fontSize: '0.7rem', color: '#94A3B8', margin: 0 }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--color-text-subtle)', margin: 0 }}>
             As of {fmtTime(data.generatedAt)} · auto-refreshes every minute
           </p>
         </>

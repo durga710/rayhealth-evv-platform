@@ -159,12 +159,12 @@ export function SwitchPage() {
               </ul>
             </div>
             <div className="mk-visual" aria-hidden>
-              <div style={{ padding: '18px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.8rem', lineHeight: 2, color: '#39433e' }}>
-                <div>clients.csv <span style={{ color: '#107480' }}>→ 84 imported · 84 verified</span></div>
-                <div>caregivers.csv <span style={{ color: '#107480' }}>→ 31 imported · 31 verified</span></div>
-                <div>authorizations.csv <span style={{ color: '#107480' }}>→ 112 imported · units reconciled</span></div>
-                <div style={{ color: '#8a948e' }}>parallel week · day 5 of 5</div>
-                <div style={{ color: '#0c5d66', fontWeight: 600 }}>✓ ready to cut over</div>
+              <div style={{ padding: '18px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.8rem', lineHeight: 2, color: 'var(--color-text-secondary)' }}>
+                <div>clients.csv <span style={{ color: 'var(--color-primary)' }}>→ 84 imported · 84 verified</span></div>
+                <div>caregivers.csv <span style={{ color: 'var(--color-primary)' }}>→ 31 imported · 31 verified</span></div>
+                <div>authorizations.csv <span style={{ color: 'var(--color-primary)' }}>→ 112 imported · units reconciled</span></div>
+                <div style={{ color: 'var(--color-text-muted)' }}>parallel week · day 5 of 5</div>
+                <div style={{ color: 'var(--color-primary-dark)', fontWeight: 600 }}>✓ ready to cut over</div>
               </div>
             </div>
           </div>

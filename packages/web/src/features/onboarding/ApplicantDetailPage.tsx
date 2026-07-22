@@ -80,16 +80,16 @@ const DOCUMENT_TYPES: { value: string; label: string }[] = [
 ];
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  applied: { bg: '#EEF2FF', text: '#0c5d66' },
-  interviewing: { bg: '#FFF7ED', text: '#C2410C' },
-  interview_complete: { bg: '#F0FDF4', text: '#15803D' },
-  under_review: { bg: '#FEF9C3', text: '#A16207' },
-  offered: { bg: '#F0F9FF', text: '#0369A1' },
-  hired: { bg: '#F0FDF4', text: '#15803D' },
-  rejected: { bg: '#FFF1F2', text: '#BE123C' },
-  requested: { bg: '#F1F5F9', text: '#475569' },
-  submitted: { bg: '#FFF7ED', text: '#C2410C' },
-  verified: { bg: '#F0FDF4', text: '#15803D' },
+  applied: { bg: 'var(--color-info-bg)', text: 'var(--color-primary-dark)' },
+  interviewing: { bg: 'var(--color-accent-bg)', text: 'var(--color-accent-dark)' },
+  interview_complete: { bg: 'var(--color-success-bg)', text: 'var(--color-success-text)' },
+  under_review: { bg: 'var(--color-warning-bg)', text: 'var(--color-warning-text)' },
+  offered: { bg: 'var(--color-primary-bg)', text: 'var(--color-primary-dark)' },
+  hired: { bg: 'var(--color-success-bg)', text: 'var(--color-success-text)' },
+  rejected: { bg: 'var(--color-danger-bg)', text: 'var(--color-danger-text)' },
+  requested: { bg: 'var(--color-surface-soft)', text: 'var(--color-text-secondary)' },
+  submitted: { bg: 'var(--color-accent-bg)', text: 'var(--color-accent-dark)' },
+  verified: { bg: 'var(--color-success-bg)', text: 'var(--color-success-text)' },
 };
 
 function formatStatus(s: string): string {
@@ -242,20 +242,20 @@ export function ApplicantDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>Loading…</div>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>
     );
   }
 
   if (error && !data) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#BE123C' }}>{error}</div>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-danger-text)' }}>{error}</div>
     );
   }
 
   if (!data) return null;
 
   const { applicant, interview, documents } = data;
-  const statusColor = statusColors[applicant.status] ?? { bg: '#F1F5F9', text: '#475569' };
+  const statusColor = statusColors[applicant.status] ?? { bg: 'var(--color-surface-soft)', text: 'var(--color-text-secondary)' };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -270,10 +270,10 @@ export function ApplicantDetailPage() {
             gap: '0.4rem',
             padding: '0.4rem 0.75rem',
             backgroundColor: 'transparent',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--color-border)',
             borderRadius: '6px',
             fontSize: '0.875rem',
-            color: '#475569',
+            color: 'var(--color-text-secondary)',
             cursor: 'pointer',
           }}
         >
@@ -297,7 +297,7 @@ export function ApplicantDetailPage() {
             margin: 0,
             fontSize: '1.375rem',
             fontWeight: 700,
-            color: '#0F172A',
+            color: 'var(--color-text)',
             letterSpacing: '-0.02em',
             flex: 1,
           }}
@@ -323,7 +323,7 @@ export function ApplicantDetailPage() {
             disabled={hiring}
             style={{
               padding: '0.5rem 1.25rem',
-              backgroundColor: hiring ? '#BBF7D0' : '#16A34A',
+              backgroundColor: hiring ? 'var(--color-success-border)' : 'var(--color-success)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -342,8 +342,8 @@ export function ApplicantDetailPage() {
           role="alert"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#FFF1F2',
-            color: '#BE123C',
+            backgroundColor: 'var(--color-danger-bg)',
+            color: 'var(--color-danger-text)',
             borderRadius: '8px',
             fontSize: '0.875rem',
           }}
@@ -368,7 +368,7 @@ export function ApplicantDetailPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               padding: '1.25rem',
             }}
           >
@@ -377,7 +377,7 @@ export function ApplicantDetailPage() {
                 margin: '0 0 1rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -395,17 +395,17 @@ export function ApplicantDetailPage() {
                   key={label}
                   style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}
                 >
-                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-subtle)', flexShrink: 0 }}>
                     {label}
                   </span>
-                  <span style={{ fontSize: '0.875rem', color: '#0F172A', textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', textAlign: 'right' }}>
                     {value}
                   </span>
                 </div>
               ))}
               {interview && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', flexShrink: 0 }}>Portal</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-subtle)', flexShrink: 0 }}>Portal</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -417,9 +417,9 @@ export function ApplicantDetailPage() {
                     }}
                     style={{
                       padding: '0.25rem 0.6rem',
-                      backgroundColor: portalCopied ? '#F0FDF4' : '#F1F5F9',
-                      color: portalCopied ? '#15803D' : '#0F172A',
-                      border: '1px solid #E2E8F0',
+                      backgroundColor: portalCopied ? 'var(--color-success-bg)' : 'var(--color-surface-soft)',
+                      color: portalCopied ? 'var(--color-success-text)' : 'var(--color-text)',
+                      border: '1px solid var(--color-border)',
                       borderRadius: '6px',
                       fontSize: '0.75rem',
                       fontWeight: 600,
@@ -438,7 +438,7 @@ export function ApplicantDetailPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               padding: '1.25rem',
             }}
           >
@@ -447,7 +447,7 @@ export function ApplicantDetailPage() {
                 margin: '0 0 0.75rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -461,10 +461,10 @@ export function ApplicantDetailPage() {
               style={{
                 width: '100%',
                 padding: '0.5rem 0.75rem',
-                border: '1px solid #CBD5E1',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '8px',
                 fontSize: '0.875rem',
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 cursor: statusUpdating ? 'wait' : 'pointer',
               }}
             >
@@ -481,7 +481,7 @@ export function ApplicantDetailPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               padding: '1.25rem',
             }}
           >
@@ -490,7 +490,7 @@ export function ApplicantDetailPage() {
                 margin: '0 0 0.75rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -506,16 +506,16 @@ export function ApplicantDetailPage() {
               style={{
                 width: '100%',
                 resize: 'vertical',
-                border: '1px solid #CBD5E1',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '8px',
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 boxSizing: 'border-box',
               }}
             />
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#94A3B8' }}>
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: 'var(--color-text-subtle)' }}>
               Auto-saved on blur
             </p>
           </div>
@@ -525,7 +525,7 @@ export function ApplicantDetailPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               padding: '1.25rem',
             }}
           >
@@ -534,7 +534,7 @@ export function ApplicantDetailPage() {
                 margin: '0 0 0.75rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -546,7 +546,7 @@ export function ApplicantDetailPage() {
                 const doc = documents.find((d) => d.documentType === dt.value);
                 const busy = !!docWorking[doc?.id ?? dt.value];
                 const docColor = doc
-                  ? (statusColors[doc.status] ?? { bg: '#F1F5F9', text: '#475569' })
+                  ? (statusColors[doc.status] ?? { bg: 'var(--color-surface-soft)', text: 'var(--color-text-secondary)' })
                   : null;
                 return (
                   <div
@@ -558,7 +558,7 @@ export function ApplicantDetailPage() {
                       gap: '0.5rem',
                     }}
                   >
-                    <span style={{ fontSize: '0.875rem', color: '#0F172A', flex: 1 }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', flex: 1 }}>
                       {dt.label}
                     </span>
                     {doc ? (
@@ -572,8 +572,8 @@ export function ApplicantDetailPage() {
                       >
                         <span
                           style={{
-                            backgroundColor: docColor?.bg ?? '#F1F5F9',
-                            color: docColor?.text ?? '#475569',
+                            backgroundColor: docColor?.bg ?? 'var(--color-surface-soft)',
+                            color: docColor?.text ?? 'var(--color-text-secondary)',
                             padding: '0.15rem 0.5rem',
                             borderRadius: '9999px',
                             fontSize: '0.7rem',
@@ -590,9 +590,9 @@ export function ApplicantDetailPage() {
                             title={doc.fileName}
                             style={{
                               padding: '0.2rem 0.5rem',
-                              backgroundColor: '#EFF6FF',
-                              color: '#1D4ED8',
-                              border: '1px solid #BFDBFE',
+                              backgroundColor: 'var(--color-info-bg)',
+                              color: 'var(--color-primary-dark)',
+                              border: '1px solid var(--color-info-border)',
                               borderRadius: '5px',
                               fontSize: '0.7rem',
                               fontWeight: 600,
@@ -609,9 +609,9 @@ export function ApplicantDetailPage() {
                             onClick={() => void updateDocStatus(doc.id, 'verified')}
                             style={{
                               padding: '0.2rem 0.5rem',
-                              backgroundColor: '#F0FDF4',
-                              color: '#15803D',
-                              border: '1px solid #BBF7D0',
+                              backgroundColor: 'var(--color-success-bg)',
+                              color: 'var(--color-success-text)',
+                              border: '1px solid var(--color-success-border)',
                               borderRadius: '5px',
                               fontSize: '0.7rem',
                               cursor: busy ? 'wait' : 'pointer',
@@ -628,9 +628,9 @@ export function ApplicantDetailPage() {
                             onClick={() => void updateDocStatus(doc.id, 'rejected')}
                             style={{
                               padding: '0.2rem 0.5rem',
-                              backgroundColor: '#FFF1F2',
-                              color: '#BE123C',
-                              border: '1px solid #FECDD3',
+                              backgroundColor: 'var(--color-danger-bg)',
+                              color: 'var(--color-danger-text)',
+                              border: '1px solid var(--color-danger-border)',
                               borderRadius: '5px',
                               fontSize: '0.7rem',
                               cursor: busy ? 'wait' : 'pointer',
@@ -648,9 +648,9 @@ export function ApplicantDetailPage() {
                         onClick={() => void requestDocument(dt.value)}
                         style={{
                           padding: '0.2rem 0.6rem',
-                          backgroundColor: '#EEF2FF',
-                          color: '#0c5d66',
-                          border: '1px solid #ddd6fe',
+                          backgroundColor: 'var(--color-info-bg)',
+                          color: 'var(--color-primary-dark)',
+                          border: '1px solid var(--color-primary-light)',
                           borderRadius: '5px',
                           fontSize: '0.7rem',
                           cursor: docWorking[dt.value] ? 'wait' : 'pointer',
@@ -674,9 +674,9 @@ export function ApplicantDetailPage() {
           {interview?.aiSummary && (
             <div
               style={{
-                backgroundColor: '#EEF2FF',
+                backgroundColor: 'var(--color-info-bg)',
                 borderRadius: '10px',
-                border: '1px solid #ddd6fe',
+                border: '1px solid var(--color-primary-light)',
                 padding: '1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -695,7 +695,7 @@ export function ApplicantDetailPage() {
                     margin: 0,
                     fontSize: '0.875rem',
                     fontWeight: 600,
-                    color: '#0c5d66',
+                    color: 'var(--color-primary-dark)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -707,16 +707,16 @@ export function ApplicantDetailPage() {
                     style={{
                       backgroundColor:
                         interview.aiScore >= 7
-                          ? '#F0FDF4'
+                          ? 'var(--color-success-bg)'
                           : interview.aiScore >= 5
-                            ? '#FEF9C3'
-                            : '#FFF1F2',
+                            ? 'var(--color-warning-bg)'
+                            : 'var(--color-danger-bg)',
                       color:
                         interview.aiScore >= 7
-                          ? '#15803D'
+                          ? 'var(--color-success-text)'
                           : interview.aiScore >= 5
-                            ? '#A16207'
-                            : '#BE123C',
+                            ? 'var(--color-warning-text)'
+                            : 'var(--color-danger-text)',
                       padding: '0.2rem 0.75rem',
                       borderRadius: '9999px',
                       fontSize: '0.875rem',
@@ -728,7 +728,7 @@ export function ApplicantDetailPage() {
                 )}
               </div>
               <p
-                style={{ margin: 0, fontSize: '0.9rem', color: '#374151', lineHeight: 1.6 }}
+                style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}
               >
                 {interview.aiSummary}
               </p>
@@ -740,14 +740,14 @@ export function ApplicantDetailPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '10px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               overflow: 'hidden',
             }}
           >
             <div
               style={{
                 padding: '1rem 1.25rem',
-                borderBottom: '1px solid #E2E8F0',
+                borderBottom: '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -758,7 +758,7 @@ export function ApplicantDetailPage() {
                   margin: 0,
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: '#64748B',
+                  color: 'var(--color-text-muted)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                 }}
@@ -768,8 +768,8 @@ export function ApplicantDetailPage() {
               {interview && (
                 <span
                   style={{
-                    backgroundColor: statusColors[interview.status]?.bg ?? '#F1F5F9',
-                    color: statusColors[interview.status]?.text ?? '#475569',
+                    backgroundColor: statusColors[interview.status]?.bg ?? 'var(--color-surface-soft)',
+                    color: statusColors[interview.status]?.text ?? 'var(--color-text-secondary)',
                     padding: '0.15rem 0.5rem',
                     borderRadius: '9999px',
                     fontSize: '0.7rem',
@@ -786,7 +786,7 @@ export function ApplicantDetailPage() {
                 style={{
                   padding: '2rem',
                   textAlign: 'center',
-                  color: '#94A3B8',
+                  color: 'var(--color-text-subtle)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -801,7 +801,7 @@ export function ApplicantDetailPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.6rem',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: 'var(--color-bg)',
                 }}
               >
                 {interview.messages.map((m, i) => (
@@ -820,13 +820,13 @@ export function ApplicantDetailPage() {
                           m.role === 'user'
                             ? '12px 12px 3px 12px'
                             : '12px 12px 12px 3px',
-                        backgroundColor: m.role === 'user' ? '#0c5d66' : 'white',
-                        color: m.role === 'user' ? 'white' : '#0F172A',
+                        backgroundColor: m.role === 'user' ? 'var(--color-primary-dark)' : 'white',
+                        color: m.role === 'user' ? 'white' : 'var(--color-text)',
                         fontSize: '0.875rem',
                         lineHeight: 1.5,
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
-                        border: m.role === 'assistant' ? '1px solid #E2E8F0' : 'none',
+                        border: m.role === 'assistant' ? '1px solid var(--color-border)' : 'none',
                       }}
                     >
                       {m.content}

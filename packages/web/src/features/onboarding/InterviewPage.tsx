@@ -129,10 +129,10 @@ export function InterviewPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#F8FAFC',
+          backgroundColor: 'var(--color-bg)',
         }}
       >
-        <p style={{ color: '#64748B', fontSize: '1rem' }}>Loading interview…</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '1rem' }}>Loading interview…</p>
       </div>
     );
   }
@@ -146,13 +146,13 @@ export function InterviewPage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#F8FAFC',
+          backgroundColor: 'var(--color-bg)',
           gap: '1rem',
           padding: '2rem',
         }}
       >
-        <p style={{ color: '#BE123C', fontSize: '1rem', textAlign: 'center' }}>{error}</p>
-        <Link to="/" style={{ color: '#107480', fontSize: '0.875rem' }}>
+        <p style={{ color: 'var(--color-danger-text)', fontSize: '1rem', textAlign: 'center' }}>{error}</p>
+        <Link to="/" style={{ color: 'var(--color-primary)', fontSize: '0.875rem' }}>
           Return home
         </Link>
       </div>
@@ -163,7 +163,7 @@ export function InterviewPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: 'var(--color-bg)',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -171,7 +171,7 @@ export function InterviewPage() {
       {/* Header */}
       <header
         style={{
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--color-text)',
           color: 'white',
           padding: '0.875rem 1.5rem',
           display: 'flex',
@@ -186,7 +186,7 @@ export function InterviewPage() {
           </span>
           <span
             style={{
-              background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
+              background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
               padding: '2px 6px',
               borderRadius: '4px',
               fontSize: '0.6rem',
@@ -197,7 +197,7 @@ export function InterviewPage() {
           >
             EVV
           </span>
-          <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#94A3B8' }}>
+          <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-subtle)' }}>
             Caregiver Interview
           </span>
         </div>
@@ -206,7 +206,7 @@ export function InterviewPage() {
           <div
             style={{
               fontSize: '0.8rem',
-              color: '#94A3B8',
+              color: 'var(--color-text-subtle)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -228,7 +228,7 @@ export function InterviewPage() {
                 style={{
                   height: '100%',
                   width: `${Math.min(100, (userMessageCount / TOTAL_QUESTIONS) * 100)}%`,
-                  backgroundColor: '#107480',
+                  backgroundColor: 'var(--color-primary)',
                   borderRadius: '2px',
                   transition: 'width 0.3s ease',
                 }}
@@ -258,13 +258,13 @@ export function InterviewPage() {
           <div
             style={{
               textAlign: 'center',
-              color: '#64748B',
+              color: 'var(--color-text-muted)',
               fontSize: '0.9rem',
               padding: '2rem 0',
             }}
           >
             <p>Welcome! Type your first message to begin the interview.</p>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#94A3B8' }}>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-subtle)' }}>
               Press Enter to send, Shift+Enter for a new line.
             </p>
           </div>
@@ -283,13 +283,13 @@ export function InterviewPage() {
                 maxWidth: '80%',
                 padding: '0.7rem 1rem',
                 borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                backgroundColor: m.role === 'user' ? '#0c5d66' : 'white',
-                color: m.role === 'user' ? 'white' : '#0F172A',
+                backgroundColor: m.role === 'user' ? 'var(--color-primary-dark)' : 'white',
+                color: m.role === 'user' ? 'white' : 'var(--color-text)',
                 fontSize: '0.9375rem',
                 lineHeight: 1.5,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
-                border: m.role === 'assistant' ? '1px solid #E2E8F0' : 'none',
+                border: m.role === 'assistant' ? '1px solid var(--color-border)' : 'none',
                 boxShadow:
                   m.role === 'assistant'
                     ? '0 1px 3px rgba(0,0,0,0.06)'
@@ -308,8 +308,8 @@ export function InterviewPage() {
                 padding: '0.7rem 1rem',
                 borderRadius: '16px 16px 16px 4px',
                 backgroundColor: 'white',
-                border: '1px solid #E2E8F0',
-                color: '#94A3B8',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-subtle)',
                 fontSize: '0.875rem',
               }}
             >
@@ -324,10 +324,10 @@ export function InterviewPage() {
             style={{
               padding: '0.6rem 1rem',
               borderRadius: '8px',
-              backgroundColor: '#FFF1F2',
-              color: '#BE123C',
+              backgroundColor: 'var(--color-danger-bg)',
+              color: 'var(--color-danger-text)',
               fontSize: '0.875rem',
-              border: '1px solid #FECDD3',
+              border: '1px solid var(--color-danger-border)',
             }}
           >
             {error}
@@ -341,7 +341,7 @@ export function InterviewPage() {
               padding: '2rem',
               borderRadius: '16px',
               backgroundColor: 'white',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--color-border)',
               boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
               textAlign: 'center',
               display: 'flex',
@@ -366,7 +366,7 @@ export function InterviewPage() {
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#107480"
+                stroke="var(--color-primary)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -380,7 +380,7 @@ export function InterviewPage() {
                 margin: 0,
                 fontSize: '1.375rem',
                 fontWeight: 700,
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 letterSpacing: '-0.01em',
               }}
             >
@@ -389,7 +389,7 @@ export function InterviewPage() {
             <p
               style={{
                 margin: 0,
-                color: '#475569',
+                color: 'var(--color-text-secondary)',
                 fontSize: '0.9375rem',
                 lineHeight: 1.6,
                 maxWidth: '380px',
@@ -403,8 +403,8 @@ export function InterviewPage() {
               style={{
                 display: 'inline-block',
                 marginTop: '1rem',
-                background: '#107480',
-                color: '#fff',
+                background: 'var(--color-primary)',
+                color: 'var(--color-surface)',
                 fontWeight: 700,
                 borderRadius: 8,
                 padding: '0.6rem 1.2rem',
@@ -421,7 +421,7 @@ export function InterviewPage() {
       {!completed && (
         <div
           style={{
-            borderTop: '1px solid #E2E8F0',
+            borderTop: '1px solid var(--color-border)',
             backgroundColor: 'white',
             padding: '0.875rem 1.5rem',
             flexShrink: 0,
@@ -448,13 +448,13 @@ export function InterviewPage() {
               style={{
                 flex: 1,
                 resize: 'none',
-                border: '1px solid #CBD5E1',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '10px',
                 padding: '0.625rem 0.875rem',
                 fontSize: '0.9375rem',
                 fontFamily: 'inherit',
                 lineHeight: 1.5,
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
@@ -464,7 +464,7 @@ export function InterviewPage() {
               disabled={sending || !input.trim()}
               style={{
                 flexShrink: 0,
-                backgroundColor: sending || !input.trim() ? '#CBD5E1' : '#0c5d66',
+                backgroundColor: sending || !input.trim() ? 'var(--color-border-strong)' : 'var(--color-primary-dark)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '10px',
@@ -484,7 +484,7 @@ export function InterviewPage() {
               maxWidth: '720px',
               margin: '0.4rem auto 0',
               fontSize: '0.75rem',
-              color: '#94A3B8',
+              color: 'var(--color-text-subtle)',
               textAlign: 'right',
             }}
           >

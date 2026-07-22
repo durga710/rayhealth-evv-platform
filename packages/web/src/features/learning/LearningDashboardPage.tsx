@@ -55,16 +55,16 @@ export function LearningDashboardPage() {
 
   const compliancePercent = rollup ? Math.round(rollup.complianceRate * 100) : 0;
   const complianceColor =
-    compliancePercent >= 95 ? '#10A4A4' :
-    compliancePercent >= 80 ? '#BA7517' :
-    '#E24B4A';
+    compliancePercent >= 95 ? 'var(--color-primary-dark)' :
+    compliancePercent >= 80 ? 'var(--color-accent-dark)' :
+    'var(--color-danger)';
 
   return (
     <div>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Learning Hub</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
             Caregiver training compliance, at-a-glance and per-person.
           </p>
         </div>
@@ -104,11 +104,11 @@ export function LearningDashboardPage() {
           <section style={{ marginTop: '2rem' }}>
             <h3 style={sectionHeadingStyle}>Enrollments by status</h3>
             <div style={statusGridStyle}>
-              <StatusCard label="Completed" value={rollup.completed} color="#10A4A4" />
-              <StatusCard label="In progress" value={rollup.inProgress} color="#185FA5" />
-              <StatusCard label="Not started" value={rollup.notStarted} color="#888780" />
-              <StatusCard label="Overdue" value={rollup.overdue} color="#BA7517" />
-              <StatusCard label="Expired" value={rollup.expired} color="#E24B4A" />
+              <StatusCard label="Completed" value={rollup.completed} color="var(--color-primary-dark)" />
+              <StatusCard label="In progress" value={rollup.inProgress} color="var(--color-primary)" />
+              <StatusCard label="Not started" value={rollup.notStarted} color="var(--color-text-subtle)" />
+              <StatusCard label="Overdue" value={rollup.overdue} color="var(--color-accent-dark)" />
+              <StatusCard label="Expired" value={rollup.expired} color="var(--color-danger)" />
             </div>
           </section>
 
@@ -150,8 +150,8 @@ interface KpiCardProps {
 function KpiCard({ label, value, accent }: KpiCardProps) {
   return (
     <div style={kpiCardStyle}>
-      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.4rem' }}>{label}</div>
-      <div style={{ fontSize: '1.75rem', fontWeight: 500, color: accent ?? '#0b1220' }}>{value}</div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, var(--color-text-muted))', marginBottom: '0.4rem' }}>{label}</div>
+      <div style={{ fontSize: '1.75rem', fontWeight: 500, color: accent ?? 'var(--color-primary-dark)' }}>{value}</div>
     </div>
   );
 }
@@ -165,7 +165,7 @@ interface StatusCardProps {
 function StatusCard({ label, value, color }: StatusCardProps) {
   return (
     <div style={{ ...kpiCardStyle, borderLeft: `4px solid ${color}` }}>
-      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.4rem' }}>{label}</div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, var(--color-text-muted))', marginBottom: '0.4rem' }}>{label}</div>
       <div style={{ fontSize: '1.5rem', fontWeight: 500 }}>{value}</div>
     </div>
   );
@@ -178,16 +178,16 @@ interface ComplianceBarProps {
 function ComplianceBar({ rollup }: ComplianceBarProps) {
   const total = rollup.totalEnrollments || 1;
   const segments = [
-    { label: 'Completed', value: rollup.completed, color: '#10A4A4' },
-    { label: 'In progress', value: rollup.inProgress, color: '#185FA5' },
-    { label: 'Not started', value: rollup.notStarted, color: '#888780' },
-    { label: 'Overdue', value: rollup.overdue, color: '#BA7517' },
-    { label: 'Expired', value: rollup.expired, color: '#E24B4A' }
+    { label: 'Completed', value: rollup.completed, color: 'var(--color-primary-dark)' },
+    { label: 'In progress', value: rollup.inProgress, color: 'var(--color-primary)' },
+    { label: 'Not started', value: rollup.notStarted, color: 'var(--color-text-subtle)' },
+    { label: 'Overdue', value: rollup.overdue, color: 'var(--color-accent-dark)' },
+    { label: 'Expired', value: rollup.expired, color: 'var(--color-danger)' }
   ];
 
   return (
     <>
-      <div style={{ display: 'flex', height: '32px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+      <div style={{ display: 'flex', height: '32px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
         {segments.map((seg) => (
           <div
             key={seg.label}
@@ -227,8 +227,8 @@ const statusGridStyle: React.CSSProperties = {
 };
 
 const kpiCardStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
   padding: '1rem 1.25rem',
 };
@@ -237,21 +237,21 @@ const sectionHeadingStyle: React.CSSProperties = {
   margin: '0 0 0.75rem',
   fontSize: '1rem',
   fontWeight: 500,
-  color: 'var(--color-text-muted, #475569)',
+  color: 'var(--color-text-muted, var(--color-text-secondary))',
 };
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const primaryActionStyle: React.CSSProperties = {
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.5rem 1rem',
   borderRadius: '6px',
@@ -262,8 +262,8 @@ const primaryActionStyle: React.CSSProperties = {
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   marginBottom: '1rem',
 };
@@ -271,8 +271,8 @@ const errorBoxStyle: React.CSSProperties = {
 const alertBoxStyle: React.CSSProperties = {
   marginTop: '2rem',
   padding: '0.85rem 1rem',
-  backgroundColor: '#fef3c7',
-  color: '#7c2d12',
+  backgroundColor: 'var(--color-warning-bg)',
+  color: 'var(--color-accent-dark)',
   borderRadius: '6px',
-  borderLeft: '4px solid #BA7517',
+  borderLeft: '4px solid var(--color-accent-dark)',
 };

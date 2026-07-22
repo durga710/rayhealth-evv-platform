@@ -61,7 +61,7 @@ export function CourseCatalogPage() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Course catalog</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
             Training courses available to assign to caregivers.
           </p>
         </div>
@@ -93,10 +93,10 @@ export function CourseCatalogPage() {
                 {course.required && <span style={requiredBadgeStyle}>Required</span>}
                 {course.agencyId === null && <span style={globalBadgeStyle}>Global</span>}
               </div>
-              <p style={{ margin: '0 0 0.75rem', color: 'var(--color-text-muted, #475569)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              <p style={{ margin: '0 0 0.75rem', color: 'var(--color-text-muted, var(--color-text-secondary))', fontSize: '0.9rem', lineHeight: 1.5 }}>
                 {course.description}
               </p>
-              <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--color-text-muted, var(--color-text-muted))', flexWrap: 'wrap' }}>
                 <span><strong>Code:</strong> {course.code}</span>
                 <span><strong>Cadence:</strong> {CADENCE_LABEL[course.cadence]}</span>
                 <span><strong>Duration:</strong> {course.durationMinutes} min</span>
@@ -115,8 +115,8 @@ export function CourseCatalogPage() {
 // ---------- Styles ----------
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
   padding: '1rem 1.25rem',
 };
@@ -125,8 +125,8 @@ const requiredBadgeStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '12px',
-  backgroundColor: '#fef3c7',
-  color: '#7c2d12',
+  backgroundColor: 'var(--color-warning-bg)',
+  color: 'var(--color-accent-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -136,8 +136,8 @@ const globalBadgeStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '12px',
-  backgroundColor: '#e6f1fb',
-  color: '#0c447c',
+  backgroundColor: 'var(--color-info-bg)',
+  color: 'var(--color-primary-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -145,33 +145,33 @@ const globalBadgeStyle: React.CSSProperties = {
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   marginBottom: '1rem',
 };
 
 const emptyStateStyle: React.CSSProperties = {
   padding: '1.5rem',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '8px',
-  border: '1px dashed #cbd5e1',
+  border: '1px dashed var(--color-border-strong)',
 };
 
 const codeBlockStyle: React.CSSProperties = {
   marginTop: '0.5rem',
   padding: '0.5rem 0.75rem',
-  backgroundColor: '#0f172a',
-  color: '#e2e8f0',
+  backgroundColor: 'var(--color-text)',
+  color: 'var(--color-border)',
   borderRadius: '4px',
   fontSize: '0.85rem',
   fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',

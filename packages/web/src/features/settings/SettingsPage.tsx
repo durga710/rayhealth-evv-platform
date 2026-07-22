@@ -40,13 +40,13 @@ interface SessionInfo {
   expiresAt: string;
 }
 
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.25rem' };
-const h2: React.CSSProperties = { fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' };
-const sub: React.CSSProperties = { fontSize: '0.8125rem', color: '#64748B', margin: '0 0 1rem' };
-const btnPrimary: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: '#fff', background: '#107480', border: 'none', borderRadius: '8px', cursor: 'pointer' };
-const btnGhost: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: '#334155', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' };
-const btnDanger: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', cursor: 'pointer' };
-const inputStyle: React.CSSProperties = { padding: '0.5rem 0.7rem', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.875rem', color: '#0F172A' };
+const card: React.CSSProperties = { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.25rem' };
+const h2: React.CSSProperties = { fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 0.25rem' };
+const sub: React.CSSProperties = { fontSize: '0.8125rem', color: 'var(--color-text-muted)', margin: '0 0 1rem' };
+const btnPrimary: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-surface)', background: 'var(--color-primary)', border: 'none', borderRadius: '8px', cursor: 'pointer' };
+const btnGhost: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text-secondary)', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '8px', cursor: 'pointer' };
+const btnDanger: React.CSSProperties = { padding: '0.5rem 1.1rem', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-danger)', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px', cursor: 'pointer' };
+const inputStyle: React.CSSProperties = { padding: '0.5rem 0.7rem', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '0.875rem', color: 'var(--color-text)' };
 
 const NOTIF_ROWS: Array<{ key: keyof NotificationPrefs; label: string }> = [
   { key: 'visitReminders', label: 'Visit reminders' },
@@ -68,9 +68,9 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      style={{ width: 40, height: 22, borderRadius: 999, border: 'none', cursor: 'pointer', background: on ? '#107480' : '#CBD5E1', position: 'relative', transition: 'background .15s', flexShrink: 0 }}
+      style={{ width: 40, height: 22, borderRadius: 999, border: 'none', cursor: 'pointer', background: on ? 'var(--color-primary)' : 'var(--color-border-strong)', position: 'relative', transition: 'background .15s', flexShrink: 0 }}
     >
-      <span style={{ position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+      <span style={{ position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: 'var(--color-surface)', transition: 'left .15s' }} />
     </button>
   );
 }
@@ -168,14 +168,14 @@ export function SettingsPage() {
     try { await deleteJson('/api/settings/account/delete-request'); flash('Deletion request canceled'); reload(); } catch { flash('Failed'); }
   };
 
-  if (loading) return <div style={{ padding: '2rem', color: '#64748B' }}>Loading settings…</div>;
+  if (loading) return <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading settings…</div>;
 
   return (
     <div style={{ maxWidth: '720px' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 1.25rem' }}>Settings</h1>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 1.25rem' }}>Settings</h1>
 
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, background: '#0F172A', color: '#fff', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.875rem', zIndex: 50 }}>{toast}</div>
+        <div style={{ position: 'fixed', top: 20, right: 20, background: 'var(--color-text)', color: 'var(--color-surface)', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.875rem', zIndex: 50 }}>{toast}</div>
       )}
 
       {/* Security */}
@@ -184,10 +184,10 @@ export function SettingsPage() {
         <p style={sub}>Add a second step at sign-in using an authenticator app (Google Authenticator, Authy, 1Password).</p>
 
         {backupCodes && (
-          <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
-            <div style={{ fontWeight: 700, color: '#92400E', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Save your backup codes</div>
-            <p style={{ fontSize: '0.8125rem', color: '#92400E', margin: '0 0 0.75rem' }}>Each code works once if you lose your authenticator. Store them somewhere safe, they won&rsquo;t be shown again.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontFamily: 'monospace', fontSize: '0.875rem', color: '#0F172A' }}>
+          <div style={{ background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+            <div style={{ fontWeight: 700, color: 'var(--color-warning-text)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Save your backup codes</div>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-warning-text)', margin: '0 0 0.75rem' }}>Each code works once if you lose your authenticator. Store them somewhere safe, they won&rsquo;t be shown again.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--color-text)' }}>
               {backupCodes.map((c) => <span key={c}>{c}</span>)}
             </div>
             <button type="button" style={{ ...btnGhost, marginTop: '0.85rem' }} onClick={() => setBackupCodes(null)}>I&rsquo;ve saved these</button>
@@ -196,14 +196,14 @@ export function SettingsPage() {
 
         {summary?.twoFactorEnabled ? (
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#15803D', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-success-text)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.85rem' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M20 6 9 17l-5-5"/></svg>
               Enabled
             </div>
             {showDisable ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '320px' }}>
                 <input type="password" placeholder="Confirm your password" value={disablePassword} onChange={(e) => setDisablePassword(e.target.value)} style={inputStyle} />
-                {twoFaError && <span style={{ color: '#DC2626', fontSize: '0.8125rem' }}>{twoFaError}</span>}
+                {twoFaError && <span style={{ color: 'var(--color-danger)', fontSize: '0.8125rem' }}>{twoFaError}</span>}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button type="button" style={btnDanger} onClick={() => void disableTwoFa()}>Disable 2FA</button>
                   <button type="button" style={btnGhost} onClick={() => { setShowDisable(false); setTwoFaError(null); }}>Cancel</button>
@@ -215,10 +215,10 @@ export function SettingsPage() {
           </div>
         ) : twoFaSetup ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '360px' }}>
-            <img src={twoFaSetup.qrDataUrl} alt="2FA QR code" width={180} height={180} style={{ border: '1px solid #E2E8F0', borderRadius: '8px' }} />
-            <div style={{ fontSize: '0.8125rem', color: '#64748B' }}>Or enter this key manually: <code style={{ fontFamily: 'monospace', color: '#0F172A' }}>{twoFaSetup.secret}</code></div>
+            <img src={twoFaSetup.qrDataUrl} alt="2FA QR code" width={180} height={180} style={{ border: '1px solid var(--color-border)', borderRadius: '8px' }} />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>Or enter this key manually: <code style={{ fontFamily: 'monospace', color: 'var(--color-text)' }}>{twoFaSetup.secret}</code></div>
             <input type="text" inputMode="numeric" placeholder="6-digit code" value={twoFaCode} onChange={(e) => setTwoFaCode(e.target.value)} style={inputStyle} />
-            {twoFaError && <span style={{ color: '#DC2626', fontSize: '0.8125rem' }}>{twoFaError}</span>}
+            {twoFaError && <span style={{ color: 'var(--color-danger)', fontSize: '0.8125rem' }}>{twoFaError}</span>}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button type="button" style={btnPrimary} onClick={() => void enableTwoFa()}>Verify & enable</button>
               <button type="button" style={btnGhost} onClick={() => { setTwoFaSetup(null); setTwoFaError(null); }}>Cancel</button>
@@ -226,7 +226,7 @@ export function SettingsPage() {
           </div>
         ) : (
           <>
-            {twoFaError && <div style={{ color: '#DC2626', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>{twoFaError}</div>}
+            {twoFaError && <div style={{ color: 'var(--color-danger)', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>{twoFaError}</div>}
             <button type="button" style={btnPrimary} onClick={() => void startTwoFa()}>Enable two-factor</button>
           </>
         )}
@@ -238,12 +238,12 @@ export function SettingsPage() {
         <p style={sub}>Devices currently signed in to your account.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {sessions.map((s) => (
-            <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', border: '1px solid #E2E8F0', borderRadius: '8px', gap: '0.75rem' }}>
+            <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', border: '1px solid var(--color-border)', borderRadius: '8px', gap: '0.75rem' }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.8125rem', color: '#0F172A', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {s.userAgent ?? 'Unknown device'} {s.current && <span style={{ color: '#15803D', fontWeight: 700 }}>· This device</span>}
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {s.userAgent ?? 'Unknown device'} {s.current && <span style={{ color: 'var(--color-success-text)', fontWeight: 700 }}>· This device</span>}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{s.ipAddress ?? '-'} · expires {new Date(s.expiresAt).toLocaleDateString()}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>{s.ipAddress ?? '-'} · expires {new Date(s.expiresAt).toLocaleDateString()}</div>
               </div>
               {!s.current && <button type="button" style={btnGhost} onClick={() => void revokeSession(s.id)}>Revoke</button>}
             </div>
@@ -258,17 +258,17 @@ export function SettingsPage() {
       <div style={card}>
         <h2 style={h2}>Notifications</h2>
         <p style={sub}>Choose how and what you&rsquo;re notified about.</p>
-        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.5rem' }}>Channels</div>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.5rem' }}>Channels</div>
         {CHANNEL_ROWS.map((r) => (
           <div key={r.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0' }}>
-            <span style={{ fontSize: '0.875rem', color: '#334155' }}>{r.label}</span>
+            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{r.label}</span>
             <Toggle on={notif[r.key] ?? (r.key !== 'channelSms')} onChange={(v) => void saveNotif(r.key, v)} />
           </div>
         ))}
-        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '1rem 0 0.5rem' }}>Events</div>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '1rem 0 0.5rem' }}>Events</div>
         {NOTIF_ROWS.map((r) => (
           <div key={r.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0' }}>
-            <span style={{ fontSize: '0.875rem', color: '#334155' }}>{r.label}</span>
+            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{r.label}</span>
             <Toggle on={notif[r.key] ?? true} onChange={(v) => void saveNotif(r.key, v)} />
           </div>
         ))}
@@ -280,7 +280,7 @@ export function SettingsPage() {
         <p style={sub}>Personal display preferences for your account.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>Theme</label>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.3rem' }}>Theme</label>
             <select value={prefs.theme ?? 'system'} onChange={(e) => void savePref({ theme: e.target.value as Preferences['theme'] })} style={{ ...inputStyle, width: '100%' }}>
               <option value="system">System</option>
               <option value="light">Light</option>
@@ -288,7 +288,7 @@ export function SettingsPage() {
             </select>
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>Time zone</label>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.3rem' }}>Time zone</label>
             <select value={prefs.timezone ?? 'America/New_York'} onChange={(e) => void savePref({ timezone: e.target.value })} style={{ ...inputStyle, width: '100%' }}>
               <option value="America/New_York">Eastern (New York)</option>
               <option value="America/Chicago">Central (Chicago)</option>
@@ -312,7 +312,7 @@ export function SettingsPage() {
           )}
         </div>
         {summary?.deletionRequestedAt && (
-          <p style={{ fontSize: '0.8125rem', color: '#B45309', margin: '0.85rem 0 0' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--color-warning-text)', margin: '0.85rem 0 0' }}>
             Deletion requested on {new Date(summary.deletionRequestedAt).toLocaleDateString()}. Your administrator will process it.
           </p>
         )}

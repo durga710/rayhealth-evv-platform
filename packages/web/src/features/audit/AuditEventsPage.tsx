@@ -77,32 +77,32 @@ const card: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
   padding: '1.5rem',
-  border: '1px solid #E2E8F0'
+  border: '1px solid var(--color-border)'
 };
 
 const statLabel: React.CSSProperties = {
   fontSize: '0.7rem',
   fontWeight: 600,
-  color: '#475569',
+  color: 'var(--color-text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.06em'
 };
 
 const input: React.CSSProperties = {
   padding: '0.5rem 0.7rem',
-  border: '1px solid #CBD5E1',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '8px',
   fontSize: '0.85rem',
   backgroundColor: 'white',
   fontFamily: 'inherit',
-  color: '#0F172A',
+  color: 'var(--color-text)',
 };
 
 function outcomePillStyle(outcome: Outcome): React.CSSProperties {
   const palette: Record<Outcome, { bg: string; fg: string; border: string }> = {
-    success: { bg: '#f0fdf4', fg: '#15803d', border: '#86efac' },
-    failure: { bg: '#fef2f2', fg: '#991b1b', border: '#fca5a5' },
-    denied: { bg: '#fffbeb', fg: '#92400e', border: '#fcd34d' }
+    success: { bg: 'var(--color-success-bg)', fg: 'var(--color-success-text)', border: 'var(--color-success-border)' },
+    failure: { bg: 'var(--color-danger-bg)', fg: 'var(--color-danger-text)', border: 'var(--color-danger-border)' },
+    denied: { bg: 'var(--color-warning-bg)', fg: 'var(--color-warning-text)', border: 'var(--color-warning-border)' }
   };
   const p = palette[outcome] ?? palette.success;
   return {
@@ -122,20 +122,20 @@ function outcomePillStyle(outcome: Outcome): React.CSSProperties {
 function eventTypeBadgeStyle(eventType: string): React.CSSProperties {
   // Group-coded: auth/session/csrf = blue; phi = purple; permission = red;
   // invite = teal; everything else = slate. Visual scan for "what kind".
-  let bg = '#f1f5f9';
-  let fg = '#334155';
+  let bg = 'var(--color-surface-soft)';
+  let fg = 'var(--color-text-secondary)';
   if (eventType.startsWith('auth.') || eventType.startsWith('session.') || eventType === 'csrf.failure') {
-    bg = '#eff6ff';
-    fg = '#1d4ed8';
+    bg = 'var(--color-info-bg)';
+    fg = 'var(--color-primary-dark)';
   } else if (eventType.startsWith('phi.')) {
-    bg = '#faf5ff';
-    fg = '#6b21a8';
+    bg = 'var(--color-primary-bg)';
+    fg = 'var(--color-primary-dark)';
   } else if (eventType === 'permission.denied') {
-    bg = '#fef2f2';
-    fg = '#991b1b';
+    bg = 'var(--color-danger-bg)';
+    fg = 'var(--color-danger-text)';
   } else if (eventType.startsWith('invite.')) {
-    bg = '#ecfeff';
-    fg = '#155e75';
+    bg = 'var(--color-info-bg)';
+    fg = 'var(--color-primary-dark)';
   }
   return {
     display: 'inline-block',
@@ -266,11 +266,11 @@ export function AuditEventsPage() {
       {/* Dark gradient hero banner */}
       <header
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background: 'linear-gradient(135deg, var(--color-text) 0%, var(--color-slate-800) 100%)',
           borderRadius: '14px',
           padding: '1.75rem 2rem',
           marginBottom: '1.5rem',
-          border: '1px solid #1e293b',
+          border: '1px solid var(--color-slate-800)',
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
@@ -284,7 +284,7 @@ export function AuditEventsPage() {
               lineHeight: 1,
               marginTop: '0.1rem',
               flexShrink: 0,
-              color: '#0ea5e9'
+              color: 'var(--color-primary)'
             }}
           >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -298,7 +298,7 @@ export function AuditEventsPage() {
                 margin: 0,
                 fontSize: '1.5rem',
                 fontWeight: 700,
-                color: '#F1F5F9',
+                color: 'var(--color-surface-soft)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.2
               }}
@@ -308,7 +308,7 @@ export function AuditEventsPage() {
             <p
               style={{
                 margin: '0.4rem 0 0',
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 maxWidth: '620px',
                 fontSize: '0.9rem',
                 lineHeight: 1.5
@@ -326,7 +326,7 @@ export function AuditEventsPage() {
             alignItems: 'center',
             gap: '0.4rem',
             background: 'rgba(16, 116, 128,0.2)',
-            color: '#ddd6fe',
+            color: 'var(--color-primary-light)',
             borderRadius: '6px',
             padding: '0.3rem 0.75rem',
             fontSize: '0.72rem',
@@ -347,14 +347,14 @@ export function AuditEventsPage() {
         style={{
           ...card,
           marginBottom: '1rem',
-          borderTop: '3px solid #107480'
+          borderTop: '3px solid var(--color-primary)'
         }}
       >
         <div
           style={{
             fontSize: '0.7rem',
             fontWeight: 600,
-            color: '#94A3B8',
+            color: 'var(--color-text-subtle)',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             marginBottom: '0.85rem'
@@ -457,17 +457,17 @@ export function AuditEventsPage() {
       </form>
 
       {loading && (
-        <div style={{ ...card, textAlign: 'center', color: '#64748b' }}>Loading...</div>
+        <div style={{ ...card, textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading...</div>
       )}
 
       {!loading && error && (
-        <div role="alert" style={{ ...card, backgroundColor: '#fef2f2', color: '#991b1b' }}>
+        <div role="alert" style={{ ...card, backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger-text)' }}>
           {error}
         </div>
       )}
 
       {!loading && !error && data && data.rows.length === 0 && (
-        <div style={{ ...card, textAlign: 'center', color: '#64748b' }}>
+        <div style={{ ...card, textAlign: 'center', color: 'var(--color-text-muted)' }}>
           No audit events match your filters.
         </div>
       )}
@@ -481,7 +481,7 @@ export function AuditEventsPage() {
               alignItems: 'center',
               marginBottom: '0.75rem',
               fontSize: '0.85rem',
-              color: '#475569'
+              color: 'var(--color-text-secondary)'
             }}
           >
             <span>
@@ -511,7 +511,7 @@ export function AuditEventsPage() {
 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--color-border)' }}>
                 <th style={{ padding: '0.6rem' }}>Occurred</th>
                 <th style={{ padding: '0.6rem' }}>Event</th>
                 <th style={{ padding: '0.6rem' }}>Actor</th>
@@ -527,9 +527,9 @@ export function AuditEventsPage() {
                     <tr
                       onClick={() => setExpandedId(isOpen ? null : row.id)}
                       style={{
-                        borderBottom: '1px solid #f1f5f9',
+                        borderBottom: '1px solid var(--color-surface-soft)',
                         cursor: 'pointer',
-                        backgroundColor: isOpen ? '#f8fafc' : 'white'
+                        backgroundColor: isOpen ? 'var(--color-bg)' : 'white'
                       }}
                     >
                       <td style={{ padding: '0.6rem', whiteSpace: 'nowrap' }}>
@@ -549,11 +549,11 @@ export function AuditEventsPage() {
                         {row.actorId ? `${row.actorId.slice(0, 8)}...` : '-'}
                       </td>
                       <td style={{ padding: '0.6rem', fontSize: '0.8rem' }}>
-                        <span style={{ color: '#475569' }}>{row.entityType}</span>{' '}
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{row.entityType}</span>{' '}
                         <span
                           style={{
                             fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                            color: '#94a3b8'
+                            color: 'var(--color-text-subtle)'
                           }}
                           title={row.entityId}
                         >
@@ -565,10 +565,10 @@ export function AuditEventsPage() {
                       </td>
                     </tr>
                     {isOpen && (
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+                      <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                         <td colSpan={5} style={{ padding: '0.75rem 1rem' }}>
                           <div style={{ display: 'grid', gap: '0.5rem' }}>
-                            <div style={{ fontSize: '0.78rem', color: '#475569' }}>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>
                               <strong>Event ID:</strong>{' '}
                               <code>{row.id}</code>
                               {row.correlationId && (
@@ -587,8 +587,8 @@ export function AuditEventsPage() {
                                 style={{
                                   marginTop: '0.4rem',
                                   padding: '0.75rem',
-                                  backgroundColor: '#0f172a',
-                                  color: '#e2e8f0',
+                                  backgroundColor: 'var(--color-text)',
+                                  color: 'var(--color-border)',
                                   borderRadius: '6px',
                                   fontSize: '0.75rem',
                                   overflowX: 'auto',

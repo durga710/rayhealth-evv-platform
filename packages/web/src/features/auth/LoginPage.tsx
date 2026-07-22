@@ -93,7 +93,7 @@ export function LoginPage() {
       {/* Dark brand panel */}
       <aside
         style={{
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--color-text)',
           color: 'white',
           padding: '3rem 4rem',
           display: 'flex',
@@ -135,7 +135,7 @@ export function LoginPage() {
           RayHealth
           <span
             style={{
-              background: 'linear-gradient(135deg, #ee6c2c 0%, #f59e3c 100%)',
+              background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent) 100%)',
               color: 'white',
               padding: '3px 8px',
               borderRadius: '5px',
@@ -162,7 +162,7 @@ export function LoginPage() {
           >
             The verified care platform for Pennsylvania agencies.
           </h1>
-          <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: 'var(--color-border-strong)', fontSize: '1rem', lineHeight: 1.6 }}>
             Schedule, verify, and audit every visit &mdash; built around PA DHS Personal Assistance Services and the 21st Century Cures Act.
           </p>
 
@@ -183,7 +183,7 @@ export function LoginPage() {
                   display: 'flex',
                   gap: '0.75rem',
                   alignItems: 'flex-start',
-                  color: '#94A3B8',
+                  color: 'var(--color-text-subtle)',
                   fontSize: '0.9rem',
                   lineHeight: 1.5,
                 }}
@@ -194,7 +194,7 @@ export function LoginPage() {
                   height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#5fd0d6"
+                  stroke="var(--color-primary-light)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -208,7 +208,7 @@ export function LoginPage() {
           </ul>
         </div>
 
-        <div style={{ position: 'relative', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.04em' }}>
+        <div style={{ position: 'relative', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
           Pennsylvania-only &middot; HIPAA-aware &middot; 21st Century Cures Act compliant
         </div>
       </aside>
@@ -238,13 +238,13 @@ export function LoginPage() {
                 margin: 0,
                 fontSize: '1.625rem',
                 fontWeight: 700,
-                color: '#0F172A',
+                color: 'var(--color-text)',
                 letterSpacing: '-0.02em',
               }}
             >
               Sign in
             </h2>
-            <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem' }}>
+            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
               Welcome back. Enter your credentials to continue.
             </p>
           </div>
@@ -253,11 +253,11 @@ export function LoginPage() {
             <div
               role="status"
               style={{
-                backgroundColor: '#F0FDF4',
-                border: '1px solid #BBF7D0',
+                backgroundColor: 'var(--color-success-bg)',
+                border: '1px solid var(--color-success-border)',
                 borderRadius: '8px',
                 padding: '0.75rem 1rem',
-                color: '#166534',
+                color: 'var(--color-success-text)',
                 fontSize: '0.9rem',
               }}
             >
@@ -295,7 +295,7 @@ export function LoginPage() {
                   required
                   className="input-field"
                 />
-                <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                   Enter the code from your authenticator app, or a backup code.
                 </span>
               </div>
@@ -310,7 +310,7 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setChallengeToken(null); setCode(''); setError(''); }}
-                style={{ background: 'none', border: 'none', color: '#107480', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}
               >
                 ← Back to sign in
               </button>
@@ -364,7 +364,7 @@ export function LoginPage() {
             <div style={{ textAlign: 'center' }}>
               <Link
                 to="/forgot-password"
-                style={{ fontSize: '0.875rem', color: '#107480', fontWeight: 500 }}
+                style={{ fontSize: '0.875rem', color: 'var(--color-primary)', fontWeight: 500 }}
               >
                 Forgot your password?
               </Link>
@@ -374,7 +374,7 @@ export function LoginPage() {
 
           <div
             style={{
-              borderTop: '1px solid #E2E8F0',
+              borderTop: '1px solid var(--color-border)',
               paddingTop: '1.25rem',
               display: 'flex',
               flexDirection: 'column',
@@ -389,25 +389,25 @@ export function LoginPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 fontSize: '0.75rem',
                 fontWeight: 500,
                 letterSpacing: '0.04em',
                 textDecoration: 'none',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M9 12l2 2 4-4" />
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA compliance documentation
             </Link>
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-              Need access? <Link to="/" style={{ color: '#107480', fontWeight: 500 }}>Contact your agency admin.</Link>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>
+              Need access? <Link to="/" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>Contact your agency admin.</Link>
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>
               New agency?{' '}
-              <Link to="/signup" style={{ color: '#107480', fontWeight: 500 }}>Create an account.</Link>
+              <Link to="/signup" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>Create an account.</Link>
             </span>
           </div>
         </div>

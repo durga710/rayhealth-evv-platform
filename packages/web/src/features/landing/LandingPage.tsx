@@ -221,8 +221,8 @@ button.rh-btn{border:0; cursor:pointer; font-family:inherit;}
 .rh-hero-grid{position:absolute; inset:0; pointer-events:none;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:64px 64px; opacity:.45;
-  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, #000 8%, transparent 64%);
-  mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, #000 8%, transparent 64%);}
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, var(--color-text) 8%, transparent 64%);
+  mask-image:radial-gradient(ellipse 80% 70% at 28% 8%, var(--color-text) 8%, transparent 64%);}
 .rh-heroin{position:relative; max-width:var(--maxw); margin:0 auto; padding:72px 24px 64px; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;}
 .rh-herotext{max-width:34rem;}
 .rh-eyebrow{display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .8rem .4rem .55rem; border-radius:999px; background:var(--paper); border:1px solid var(--line-2); font-size:.78rem; font-weight:550; color:var(--ink-soft); box-shadow:0 1px 2px rgba(10,20,15,.03);}

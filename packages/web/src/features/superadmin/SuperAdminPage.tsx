@@ -46,25 +46,25 @@ interface AgencyDetail extends AgencyRow {
 // Restrained, near-monochrome palette. One brand accent (emerald). Color is
 // used sparingly and only where it carries meaning.
 const C = {
-  canvas: '#f6f7f9',
-  surface: '#ffffff',
-  ink: '#15171c',
-  ink2: '#565b66',
-  ink3: '#969ba6',
-  line: '#eceef1',
-  line2: '#e1e3e8',
-  sidebar: '#16181d',
-  sidebarPanel: '#1d2026',
-  accent: '#0b7a52',
-  accentInk: '#0b7a52',
-  accentSoft: '#e8f3ee',
-  green: '#0b7a52', greenSoft: '#e8f3ee',
-  amber: '#8a6400', amberSoft: '#f8f0dd',
-  red: '#b3261e', redSoft: '#fbeae8',
-  blue: '#2b5cc4', blueSoft: '#e9eefb',
+  canvas: 'var(--color-primary-bg)',
+  surface: 'var(--color-surface)',
+  ink: 'var(--color-text)',
+  ink2: 'var(--color-text-muted)',
+  ink3: 'var(--color-text-subtle)',
+  line: 'var(--color-bg)',
+  line2: 'var(--color-border)',
+  sidebar: 'var(--color-text)',
+  sidebarPanel: 'var(--color-text)',
+  accent: 'var(--color-success-text)',
+  accentInk: 'var(--color-success-text)',
+  accentSoft: 'var(--color-success-bg)',
+  green: 'var(--color-success-text)', greenSoft: 'var(--color-success-bg)',
+  amber: 'var(--color-warning-text)', amberSoft: 'var(--color-warning-bg)',
+  red: 'var(--color-danger-text)', redSoft: 'var(--color-danger-bg)',
+  blue: 'var(--color-primary)', blueSoft: 'var(--color-primary-bg)',
 };
-const SIDE_INK = '#9aa0ad';
-const SIDE_INK_DIM = '#6b7180';
+const SIDE_INK = 'var(--color-text-subtle)';
+const SIDE_INK_DIM = 'var(--color-text-muted)';
 
 const money = (cents: number): string =>
   `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -166,7 +166,7 @@ function Kpi({ label, value, sub, icon, subTone }: { label: string; value: strin
 
 const btn = (kind: 'primary' | 'default' | 'danger' | 'ghost'): React.CSSProperties => {
   const base: React.CSSProperties = { borderRadius: 8, padding: '0.45rem 0.85rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1.2 };
-  if (kind === 'primary') return { ...base, background: C.accent, color: '#fff', border: 'none' };
+  if (kind === 'primary') return { ...base, background: C.accent, color: 'var(--color-surface)', border: 'none' };
   if (kind === 'danger') return { ...base, background: C.surface, color: C.red, border: `1px solid ${C.line2}` };
   if (kind === 'ghost') return { ...base, background: 'transparent', color: C.ink2, border: `1px solid ${C.line2}` };
   return { ...base, background: C.surface, color: C.ink, border: `1px solid ${C.line2}` };
@@ -379,13 +379,13 @@ export function SuperAdminPage() {
         style={{
           display: 'flex', alignItems: 'center', gap: '0.7rem', width: '100%', textAlign: 'left',
           background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
-          color: active ? '#fff' : SIDE_INK, borderRadius: 8, padding: '0.6rem 0.7rem', cursor: 'pointer',
+          color: active ? 'var(--color-surface)' : SIDE_INK, borderRadius: 8, padding: '0.6rem 0.7rem', cursor: 'pointer',
           fontSize: '0.88rem', fontWeight: active ? 600 : 500, position: 'relative',
           border: 'none', borderLeft: `2px solid ${active ? C.accent : 'transparent'}`,
         }}>
         <Icon name={icon} size={17} />
         <span style={{ flex: 1 }}>{label}</span>
-        {badge ? <span style={{ background: C.accent, color: '#fff', borderRadius: 999, fontSize: '0.68rem', fontWeight: 700, padding: '0.05rem 0.4rem' }}>{badge}</span> : null}
+        {badge ? <span style={{ background: C.accent, color: 'var(--color-surface)', borderRadius: 999, fontSize: '0.68rem', fontWeight: 700, padding: '0.05rem 0.4rem' }}>{badge}</span> : null}
       </button>
     );
   };
@@ -393,9 +393,9 @@ export function SuperAdminPage() {
   return (
     <div style={{ minHeight: '100vh', background: C.canvas, color: C.ink, fontFamily: 'Inter, -apple-system, system-ui, sans-serif', display: 'flex' }}>
       {/* sidebar */}
-      <aside style={{ width: 244, flexShrink: 0, background: C.sidebar, color: '#fff', padding: '1.3rem 0.85rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh' }}>
+      <aside style={{ width: 244, flexShrink: 0, background: C.sidebar, color: 'var(--color-surface)', padding: '1.3rem 0.85rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.4rem 1.3rem', borderBottom: `1px solid ${C.sidebarPanel}` }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
             <BrandLogo variant="mark" height={24} />
           </div>
           <div style={{ fontWeight: 700, fontSize: '0.92rem', letterSpacing: '-0.01em' }}>RayHealth</div>
@@ -409,10 +409,10 @@ export function SuperAdminPage() {
         </nav>
         <div style={{ marginTop: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: SIDE_INK_DIM, padding: '0 0.6rem 0.9rem' }}>
-            <span style={{ width: 7, height: 7, borderRadius: 99, background: '#34d399' }} />Live · refreshes every 30s
+            <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--color-success)' }} />Live · refreshes every 30s
           </div>
           <div style={{ background: C.sidebarPanel, borderRadius: 10, padding: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', color: '#fff' }}>{CEO_INITIALS}</div>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', color: 'var(--color-surface)' }}>{CEO_INITIALS}</div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CEO_NAME}</div>
               <div style={{ fontSize: '0.7rem', color: SIDE_INK }}>{CEO_TITLE}</div>

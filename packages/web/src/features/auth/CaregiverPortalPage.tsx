@@ -19,7 +19,7 @@ export function CaregiverPortalPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0F172A',
+        backgroundColor: 'var(--color-text)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -30,7 +30,7 @@ export function CaregiverPortalPage() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span style={{ color: 'white', fontWeight: 800, fontSize: '1.125rem', letterSpacing: '-0.02em' }}>RayHealth</span>
-        <span style={{ background: 'linear-gradient(135deg, #107480, #7fc7cf)', color: 'white', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: '4px' }}>EVV</span>
+        <span style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', color: 'white', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: '4px' }}>EVV</span>
       </div>
 
       <div
@@ -61,7 +61,7 @@ export function CaregiverPortalPage() {
             margin: '0 auto',
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7fc7cf" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-light)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="5" y="2" width="14" height="20" rx="2" />
             <line x1="12" y1="18" x2="12.01" y2="18" />
           </svg>
@@ -71,7 +71,7 @@ export function CaregiverPortalPage() {
           <h1 style={{ color: 'white', fontSize: '1.375rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
             {roleLabel} account active
           </h1>
-          <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
             {role === 'family'
               ? "Your family member's care plan and visit history are available in the RayHealth mobile app."
               : 'Use the RayHealthEVV™ mobile app to clock in, document tasks, and clock out.'}
@@ -89,9 +89,9 @@ export function CaregiverPortalPage() {
             gap: '0.35rem',
           }}
         >
-          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#107480', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Signed in as</span>
-          <span style={{ color: '#E2E8F0', fontSize: '0.875rem', fontWeight: 500, textTransform: 'capitalize' }}>{user?.role ?? '-'}</span>
-          <span style={{ color: '#475569', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>{user?.userId?.slice(0, 12)}…</span>
+          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-primary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Signed in as</span>
+          <span style={{ color: 'var(--color-border)', fontSize: '0.875rem', fontWeight: 500, textTransform: 'capitalize' }}>{user?.role ?? '-'}</span>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>{user?.userId?.slice(0, 12)}…</span>
         </div>
 
         <button
@@ -100,7 +100,7 @@ export function CaregiverPortalPage() {
           style={{
             backgroundColor: 'transparent',
             border: '1px solid rgba(255,255,255,0.1)',
-            color: '#94A3B8',
+            color: 'var(--color-text-subtle)',
             borderRadius: '9px',
             padding: '0.6875rem 1.25rem',
             fontWeight: 600,
@@ -112,7 +112,7 @@ export function CaregiverPortalPage() {
         </button>
       </div>
 
-      <p style={{ color: '#1E293B', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
+      <p style={{ color: 'var(--color-slate-800)', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
         Pennsylvania-only &middot; HIPAA-aware
       </p>
     </div>

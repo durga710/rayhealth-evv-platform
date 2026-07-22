@@ -63,9 +63,9 @@ interface BlockersResponse {
 }
 
 const BLOCKER_META: Record<BlockerReason, { label: string; detail: string; fg: string; bg: string; to: string }> = {
-  open: { label: 'Not clocked out', detail: 'Caregiver clocked in but never clocked out, no duration to bill or pay.', fg: '#991B1B', bg: '#FEF2F2', to: '/admin/review' },
-  flagged: { label: 'Flagged', detail: 'Failed an EVV check, review before it can be billed.', fg: '#92400E', bg: '#FFFBEB', to: '/admin/compliance-engine/exceptions' },
-  pending: { label: 'Pending verification', detail: 'Awaiting verification before it becomes claim-ready.', fg: '#155E75', bg: '#ECFEFF', to: '/admin/review' },
+  open: { label: 'Not clocked out', detail: 'Caregiver clocked in but never clocked out, no duration to bill or pay.', fg: 'var(--color-danger-text)', bg: 'var(--color-danger-bg)', to: '/admin/review' },
+  flagged: { label: 'Flagged', detail: 'Failed an EVV check, review before it can be billed.', fg: 'var(--color-warning-text)', bg: 'var(--color-warning-bg)', to: '/admin/compliance-engine/exceptions' },
+  pending: { label: 'Pending verification', detail: 'Awaiting verification before it becomes claim-ready.', fg: 'var(--color-primary-dark)', bg: 'var(--color-info-bg)', to: '/admin/review' },
 };
 
 const primaryButtonStyle: React.CSSProperties = {
@@ -421,10 +421,10 @@ export function ClaimMatchingPage() {
         <div
           role="status"
           style={{
-            backgroundColor: 'var(--color-success-bg, #ECFDF5)',
-            border: '1px solid var(--color-success, #047857)',
+            backgroundColor: 'var(--color-success-bg, var(--color-success-bg))',
+            border: '1px solid var(--color-success, var(--color-success-text))',
             borderRadius: 10,
-            color: 'var(--color-success, #047857)',
+            color: 'var(--color-success, var(--color-success-text))',
             fontSize: '0.9rem',
             fontWeight: 700,
             marginTop: '1rem',

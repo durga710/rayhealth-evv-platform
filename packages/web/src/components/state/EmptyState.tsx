@@ -18,7 +18,7 @@ export function EmptyState({ title, body, cta }: EmptyStateProps) {
     padding: '3rem 1.5rem',
     textAlign: 'center',
     backgroundColor: 'white',
-    border: '1px dashed #CBD5E1',
+    border: '1px dashed var(--color-border-strong)',
     borderRadius: '12px',
     display: 'flex',
     flexDirection: 'column',
@@ -30,19 +30,19 @@ export function EmptyState({ title, body, cta }: EmptyStateProps) {
     width: '52px',
     height: '52px',
     borderRadius: '50%',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'var(--color-surface-soft)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#94A3B8',
-    border: '1px solid #E2E8F0',
+    color: 'var(--color-text-subtle)',
+    border: '1px solid var(--color-border)',
   };
 
   const ctaStyle: React.CSSProperties = {
     marginTop: '0.75rem',
-    backgroundColor: '#107480',
+    backgroundColor: 'var(--color-primary)',
     color: 'white',
-    border: '1px solid #107480',
+    border: '1px solid var(--color-primary)',
     padding: '0.55rem 1.1rem',
     borderRadius: '8px',
     fontWeight: 500,
@@ -62,9 +62,9 @@ export function EmptyState({ title, body, cta }: EmptyStateProps) {
           <line x1="8" y1="12" x2="16" y2="12" />
         </svg>
       </div>
-      <h4 style={{ margin: 0, color: '#0F172A', fontSize: '0.9375rem', fontWeight: 600 }}>{title}</h4>
+      <h4 style={{ margin: 0, color: 'var(--color-text)', fontSize: '0.9375rem', fontWeight: 600 }}>{title}</h4>
       {body && (
-        <p style={{ margin: 0, color: '#64748B', maxWidth: '36ch', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+        <p style={{ margin: 0, color: 'var(--color-text-muted)', maxWidth: '36ch', fontSize: '0.8125rem', lineHeight: 1.5 }}>
           {body}
         </p>
       )}

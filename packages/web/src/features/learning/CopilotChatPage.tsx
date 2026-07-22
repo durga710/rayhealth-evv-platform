@@ -237,20 +237,20 @@ export function CopilotChatPage(): ReactElement {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem' }}>AI Workflow Copilot</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
             Conversational copilot scoped to your role. Every proposed action requires your confirmation.
           </p>
         </div>
         <Link to="/admin/learning" style={linkButtonStyle}>← Learning Hub</Link>
       </header>
 
-      {statusLoading && <p style={{ color: '#64748b' }}>Checking Copilot status…</p>}
+      {statusLoading && <p style={{ color: 'var(--color-text-muted)' }}>Checking Copilot status…</p>}
 
       {!statusLoading && status && !status.enabled && (
         <div style={lockedBoxStyle}>
           <strong>Copilot is not enabled for this agency.</strong>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-            An agency admin can enable the add-on in <Link to="/admin/settings" style={{ color: '#185FA5' }}>Settings</Link>.
+            An agency admin can enable the add-on in <Link to="/admin/settings" style={{ color: 'var(--color-primary)' }}>Settings</Link>.
           </p>
         </div>
       )}
@@ -268,7 +268,7 @@ export function CopilotChatPage(): ReactElement {
         <>
           {turns.length === 0 && (
             <div style={suggestionsCardStyle}>
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#64748b' }}>Suggested prompts:</p>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Suggested prompts:</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {suggestions.map((s) => (
                   <button key={s} onClick={() => void submit(s)} style={suggestionBtnStyle} disabled={submitting}>
@@ -344,7 +344,7 @@ function TurnView({
         <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{turn.text}</p>
         {turn.proposedAction && (
           <div style={proposedActionStyle}>
-            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#3C3489', marginBottom: '0.4rem' }}>
+            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-primary-dark)', marginBottom: '0.4rem' }}>
               {resolved ? `Action ${turn.resolution}` : 'Proposed action'}
               {turn.proposedActionData && !resolved && <span style={executableBadgeStyle}>Executable</span>}
             </div>
@@ -359,7 +359,7 @@ function TurnView({
             )}
           </div>
         )}
-        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-subtle)', marginTop: '0.5rem' }}>
           {turn.model}
         </div>
       </div>
@@ -371,46 +371,46 @@ function TurnView({
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const lockedBoxStyle: React.CSSProperties = {
   padding: '1rem 1.25rem',
-  backgroundColor: '#FAEEDA',
-  borderLeft: '4px solid #BA7517',
-  color: '#633806',
+  backgroundColor: 'var(--color-accent-bg)',
+  borderLeft: '4px solid var(--color-accent-dark)',
+  color: 'var(--color-accent-dark)',
   borderRadius: '8px',
 };
 
 const warningBoxStyle: React.CSSProperties = {
   padding: '1rem 1.25rem',
-  backgroundColor: '#FCEBEB',
-  borderLeft: '4px solid #E24B4A',
-  color: '#791F1F',
+  backgroundColor: 'var(--color-danger-bg)',
+  borderLeft: '4px solid var(--color-danger)',
+  color: 'var(--color-danger-text)',
   borderRadius: '8px',
 };
 
 const suggestionsCardStyle: React.CSSProperties = {
   marginBottom: '1rem',
   padding: '1rem 1.25rem',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '8px',
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--color-border)',
 };
 
 const suggestionBtnStyle: React.CSSProperties = {
   textAlign: 'left',
   padding: '0.5rem 0.75rem',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '6px',
   cursor: 'pointer',
   fontSize: '0.9rem',
-  color: '#0b1220',
+  color: 'var(--color-primary-dark)',
 };
 
 const chatScrollStyle: React.CSSProperties = {
@@ -420,8 +420,8 @@ const chatScrollStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: '0.6rem',
   padding: '0.5rem',
-  backgroundColor: '#fbfcfd',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-primary-bg)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
 };
 
@@ -433,8 +433,8 @@ const userBubbleWrapStyle: React.CSSProperties = {
 const userBubbleStyle: React.CSSProperties = {
   maxWidth: '80%',
   padding: '0.6rem 0.85rem',
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   borderRadius: '12px 12px 4px 12px',
   fontSize: '0.92rem',
   lineHeight: 1.5,
@@ -448,25 +448,25 @@ const assistantBubbleWrapStyle: React.CSSProperties = {
 const assistantBubbleStyle: React.CSSProperties = {
   maxWidth: '80%',
   padding: '0.75rem 1rem',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '12px 12px 12px 4px',
   fontSize: '0.92rem',
   lineHeight: 1.55,
-  color: '#0b1220',
+  color: 'var(--color-primary-dark)',
 };
 
 const proposedActionStyle: React.CSSProperties = {
   marginTop: '0.75rem',
   padding: '0.75rem 0.85rem',
-  backgroundColor: '#EEEDFE',
+  backgroundColor: 'var(--color-primary-bg)',
   borderRadius: '8px',
-  border: '1px solid #AFA9EC',
+  border: '1px solid var(--color-primary-light)',
 };
 
 const confirmBtnStyle: React.CSSProperties = {
-  backgroundColor: '#534AB7',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.45rem 0.9rem',
   borderRadius: '6px',
@@ -477,8 +477,8 @@ const confirmBtnStyle: React.CSSProperties = {
 
 const declineBtnStyle: React.CSSProperties = {
   backgroundColor: 'transparent',
-  color: '#3C3489',
-  border: '1px solid #AFA9EC',
+  color: 'var(--color-primary-dark)',
+  border: '1px solid var(--color-primary-light)',
   padding: '0.45rem 0.9rem',
   borderRadius: '6px',
   fontSize: '0.85rem',
@@ -489,8 +489,8 @@ const executableBadgeStyle: React.CSSProperties = {
   marginLeft: '0.5rem',
   fontSize: '0.65rem',
   padding: '0.1rem 0.45rem',
-  backgroundColor: '#534AB7',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   borderRadius: '999px',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -500,7 +500,7 @@ const executableBadgeStyle: React.CSSProperties = {
 const typingStyle: React.CSSProperties = {
   alignSelf: 'flex-start',
   fontSize: '0.85rem',
-  color: '#64748b',
+  color: 'var(--color-text-muted)',
   fontStyle: 'italic',
   padding: '0.4rem 0.85rem',
 };
@@ -514,7 +514,7 @@ const formStyle: React.CSSProperties = {
 const textareaStyle: React.CSSProperties = {
   flex: 1,
   padding: '0.6rem 0.85rem',
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '8px',
   fontFamily: 'inherit',
   fontSize: '0.95rem',
@@ -523,8 +523,8 @@ const textareaStyle: React.CSSProperties = {
 
 const sendBtnStyle: React.CSSProperties = {
   alignSelf: 'flex-end',
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.6rem 1.1rem',
   borderRadius: '8px',
@@ -536,15 +536,15 @@ const sendBtnStyle: React.CSSProperties = {
 const attestationStyle: React.CSSProperties = {
   margin: '0.75rem 0 0',
   fontSize: '0.75rem',
-  color: 'var(--color-text-muted, #94a3b8)',
+  color: 'var(--color-text-muted, var(--color-text-subtle))',
   textAlign: 'center',
 };
 
 const errorBoxStyle: React.CSSProperties = {
   marginTop: '0.75rem',
   padding: '0.6rem 0.85rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   fontSize: '0.9rem',
 };

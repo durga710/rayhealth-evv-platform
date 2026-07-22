@@ -81,7 +81,7 @@ function LockedPanel({ userRole }: { userRole?: string }): ReactElement {
     <section style={lockedSectionStyle}>
       <div style={lockedInnerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-          <span aria-hidden style={{ display: 'inline-flex', color: '#475569' }}>
+          <span aria-hidden style={{ display: 'inline-flex', color: 'var(--color-text-secondary)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -90,7 +90,7 @@ function LockedPanel({ userRole }: { userRole?: string }): ReactElement {
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>AI Workflow Copilot</h3>
           <span style={addonBadgeStyle}>Add-on</span>
         </div>
-        <p style={{ margin: '0 0 0.85rem', color: '#475569', fontSize: '0.9rem', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 0.85rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
           Ask plain-English questions about your training compliance. "Who's due for
           HIPAA refresh next week?" "Why is Roberto stuck on dementia care?"
           Coordinator-level decisions stay in your hands, the copilot proposes,
@@ -130,7 +130,7 @@ function UnlockedPanel({ plan }: { plan: 'starter' | 'pro' | 'off' }): ReactElem
     <section style={unlockedSectionStyle}>
       <div style={lockedInnerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-          <span aria-hidden style={{ display: 'inline-flex', color: '#534AB7' }}>
+          <span aria-hidden style={{ display: 'inline-flex', color: 'var(--color-primary)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
             </svg>
@@ -138,7 +138,7 @@ function UnlockedPanel({ plan }: { plan: 'starter' | 'pro' | 'off' }): ReactElem
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>AI Workflow Copilot</h3>
           <span style={planBadgeStyle}>{plan === 'pro' ? 'Pro' : 'Starter'}</span>
         </div>
-        <p style={{ margin: '0 0 0.85rem', color: '#475569', fontSize: '0.9rem' }}>
+        <p style={{ margin: '0 0 0.85rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
           Copilot is active. The chat surface and per-role assistants land in the next release.
           For now, the deterministic insights above cover most coordinator needs.
         </p>
@@ -155,8 +155,8 @@ function UnlockedPanel({ plan }: { plan: 'starter' | 'pro' | 'off' }): ReactElem
 const lockedSectionStyle: React.CSSProperties = {
   marginTop: '2rem',
   padding: '1.25rem',
-  backgroundColor: '#f8fafc',
-  border: '1px dashed #cbd5e1',
+  backgroundColor: 'var(--color-bg)',
+  border: '1px dashed var(--color-border-strong)',
   borderRadius: '12px',
   position: 'relative',
 };
@@ -164,8 +164,8 @@ const lockedSectionStyle: React.CSSProperties = {
 const unlockedSectionStyle: React.CSSProperties = {
   marginTop: '2rem',
   padding: '1.25rem',
-  backgroundColor: '#EEEDFE',
-  border: '1px solid #AFA9EC',
+  backgroundColor: 'var(--color-primary-bg)',
+  border: '1px solid var(--color-primary-light)',
   borderRadius: '12px',
 };
 
@@ -176,7 +176,7 @@ const lockedInnerStyle: React.CSSProperties = {
 const featureListStyle: React.CSSProperties = {
   margin: '0 0 0.5rem',
   padding: '0 0 0 1.25rem',
-  color: '#475569',
+  color: 'var(--color-text-secondary)',
   fontSize: '0.85rem',
   lineHeight: 1.7,
 };
@@ -185,8 +185,8 @@ const addonBadgeStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '999px',
-  backgroundColor: '#E6F1FB',
-  color: '#0C447C',
+  backgroundColor: 'var(--color-info-bg)',
+  color: 'var(--color-primary-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -196,8 +196,8 @@ const planBadgeStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '999px',
-  backgroundColor: '#CECBF6',
-  color: '#3C3489',
+  backgroundColor: 'var(--color-primary-light)',
+  color: 'var(--color-primary-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -205,8 +205,8 @@ const planBadgeStyle: React.CSSProperties = {
 
 const primaryCtaStyle: React.CSSProperties = {
   textDecoration: 'none',
-  backgroundColor: '#534AB7',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   padding: '0.55rem 1rem',
   borderRadius: '6px',
   fontSize: '0.9rem',
@@ -215,14 +215,14 @@ const primaryCtaStyle: React.CSSProperties = {
 
 const secondaryLinkStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#534AB7',
+  color: 'var(--color-primary)',
   fontSize: '0.85rem',
   alignSelf: 'center',
   fontWeight: 500,
 };
 
 const mutedNoteStyle: React.CSSProperties = {
-  color: 'var(--color-text-muted, #64748b)',
+  color: 'var(--color-text-muted, var(--color-text-muted))',
   fontSize: '0.85rem',
   alignSelf: 'center',
 };

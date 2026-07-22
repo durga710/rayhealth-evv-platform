@@ -110,13 +110,13 @@ export function DenialDashboardPage() {
               </ul>
             </div>
             <div className="mk-visual" aria-hidden>
-              <div style={{ padding: '18px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.78rem', lineHeight: 2.1, color: '#39433e' }}>
-                <div>denial rate <span style={{ color: '#d8551b', fontWeight: 600 }}>11.2%</span> · at risk <span style={{ color: '#d8551b', fontWeight: 600 }}>$14,380</span></div>
-                <div>CO/197 — precert absent <span style={{ color: '#8a948e' }}>$6,210 · 9×</span></div>
-                <div>CO/45 — exceeds fee schedule <span style={{ color: '#8a948e' }}>$4,660 · 21×</span></div>
-                <div>CO/16 — info missing <span style={{ color: '#8a948e' }}>$2,110 · 6×</span></div>
-                <div style={{ color: '#8a948e' }}>worklist · 12 open · 3 resubmitted</div>
-                <div style={{ color: '#0c5d66', fontWeight: 600 }}>✓ $3,890 recovered this month</div>
+              <div style={{ padding: '18px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.78rem', lineHeight: 2.1, color: 'var(--color-text-secondary)' }}>
+                <div>denial rate <span style={{ color: 'var(--color-accent-dark)', fontWeight: 600 }}>11.2%</span> · at risk <span style={{ color: 'var(--color-accent-dark)', fontWeight: 600 }}>$14,380</span></div>
+                <div>CO/197 — precert absent <span style={{ color: 'var(--color-text-muted)' }}>$6,210 · 9×</span></div>
+                <div>CO/45 — exceeds fee schedule <span style={{ color: 'var(--color-text-muted)' }}>$4,660 · 21×</span></div>
+                <div>CO/16 — info missing <span style={{ color: 'var(--color-text-muted)' }}>$2,110 · 6×</span></div>
+                <div style={{ color: 'var(--color-text-muted)' }}>worklist · 12 open · 3 resubmitted</div>
+                <div style={{ color: 'var(--color-primary-dark)', fontWeight: 600 }}>✓ $3,890 recovered this month</div>
               </div>
             </div>
           </div>

@@ -430,12 +430,12 @@ export function MedicaidWorkflowPage() {
             role={submitMsg.kind === 'err' ? 'alert' : 'status'}
             style={{
               backgroundColor:
-                submitMsg.kind === 'err' ? 'var(--color-danger-bg)' : 'var(--color-success-bg, #ecfdf5)',
+                submitMsg.kind === 'err' ? 'var(--color-danger-bg)' : 'var(--color-success-bg, var(--color-success-bg))',
               border: `1px solid ${
-                submitMsg.kind === 'err' ? 'var(--color-danger-border)' : 'var(--color-success-border, #a7f3d0)'
+                submitMsg.kind === 'err' ? 'var(--color-danger-border)' : 'var(--color-success-border, var(--color-success-border))'
               }`,
               borderRadius: 10,
-              color: submitMsg.kind === 'err' ? 'var(--color-danger)' : 'var(--color-success, #047857)',
+              color: submitMsg.kind === 'err' ? 'var(--color-danger)' : 'var(--color-success, var(--color-success-text))',
               fontSize: '0.9rem',
               fontWeight: 700,
               marginTop: '1rem',
@@ -521,12 +521,12 @@ export function MedicaidWorkflowPage() {
             role={hhaxMsg.kind === 'err' ? 'alert' : 'status'}
             style={{
               backgroundColor:
-                hhaxMsg.kind === 'err' ? 'var(--color-danger-bg)' : 'var(--color-success-bg, #ecfdf5)',
+                hhaxMsg.kind === 'err' ? 'var(--color-danger-bg)' : 'var(--color-success-bg, var(--color-success-bg))',
               border: `1px solid ${
-                hhaxMsg.kind === 'err' ? 'var(--color-danger-border)' : 'var(--color-success-border, #a7f3d0)'
+                hhaxMsg.kind === 'err' ? 'var(--color-danger-border)' : 'var(--color-success-border, var(--color-success-border))'
               }`,
               borderRadius: 10,
-              color: hhaxMsg.kind === 'err' ? 'var(--color-danger)' : 'var(--color-success, #047857)',
+              color: hhaxMsg.kind === 'err' ? 'var(--color-danger)' : 'var(--color-success, var(--color-success-text))',
               fontSize: '0.9rem',
               fontWeight: 700,
               marginTop: '1rem',

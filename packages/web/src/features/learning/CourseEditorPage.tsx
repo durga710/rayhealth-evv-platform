@@ -56,12 +56,12 @@ const CADENCES: Array<{ value: Cadence; label: string }> = [
   { value: 'certification', label: 'Certification (expires)' },
 ];
 
-const labelStyle: React.CSSProperties = { fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem', display: 'block' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '0.55rem 0.7rem', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.875rem', fontFamily: 'inherit', color: '#0F172A', background: '#fff' };
-const cardStyle: React.CSSProperties = { background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' };
-const sectionTitleStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.85rem' };
-const smallBtn: React.CSSProperties = { padding: '0.35rem 0.75rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '7px', border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#334155', cursor: 'pointer' };
-const removeBtn: React.CSSProperties = { ...smallBtn, color: '#DC2626', borderColor: '#FECACA', background: '#FEF2F2' };
+const labelStyle: React.CSSProperties = { fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.3rem', display: 'block' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '0.55rem 0.7rem', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '0.875rem', fontFamily: 'inherit', color: 'var(--color-text)', background: 'var(--color-surface)' };
+const cardStyle: React.CSSProperties = { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' };
+const sectionTitleStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.85rem' };
+const smallBtn: React.CSSProperties = { padding: '0.35rem 0.75rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '7px', border: '1px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-text-secondary)', cursor: 'pointer' };
+const removeBtn: React.CSSProperties = { ...smallBtn, color: 'var(--color-danger)', borderColor: 'var(--color-danger-border)', background: 'var(--color-danger-bg)' };
 
 export function CourseEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -179,7 +179,7 @@ export function CourseEditorPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', color: '#64748B' }}>Loading course…</div>;
+    return <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading course…</div>;
   }
 
   return (
@@ -187,20 +187,20 @@ export function CourseEditorPage() {
       <button
         type="button"
         onClick={() => navigate('/admin/learning')}
-        style={{ background: 'none', border: 'none', color: '#107480', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', padding: '0 0 1rem' }}
+        style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', padding: '0 0 1rem' }}
       >
         ← Back to Learning Hub
       </button>
 
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 0.35rem' }}>
         {isEdit ? 'Edit course' : 'New course'}
       </h1>
-      <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>
         Build the lesson content and an optional knowledge-check quiz. Caregivers must pass the quiz (80%) to complete the course.
       </p>
 
       {error && (
-        <div role="alert" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+        <div role="alert" style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
           {error}
         </div>
       )}
@@ -238,8 +238,8 @@ export function CourseEditorPage() {
             <input id="expires" type="number" min={0} style={inputStyle} value={expiresAfterDays} onChange={(e) => setExpiresAfterDays(e.target.value)} placeholder="never" />
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#334155', cursor: 'pointer', paddingBottom: '0.55rem' }}>
-              <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#107480' }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)', cursor: 'pointer', paddingBottom: '0.55rem' }}>
+              <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} style={{ width: 16, height: 16, accentColor: 'var(--color-primary)' }} />
               Required for compliance
             </label>
           </div>
@@ -274,9 +274,9 @@ export function CourseEditorPage() {
         <h2 style={sectionTitleStyle}>Lesson sections</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {sections.map((s, i) => (
-            <div key={i} style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.9rem 1rem', background: '#F8FAFC' }}>
+            <div key={i} style={{ border: '1px solid var(--color-border)', borderRadius: '10px', padding: '0.9rem 1rem', background: 'var(--color-bg)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94A3B8' }}>Section {i + 1}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-subtle)' }}>Section {i + 1}</span>
                 <button type="button" style={removeBtn} onClick={() => setSections((prev) => prev.filter((_, j) => j !== i))}>Remove</button>
               </div>
               <input
@@ -309,14 +309,14 @@ export function CourseEditorPage() {
       {/* Quiz */}
       <div style={cardStyle}>
         <h2 style={sectionTitleStyle}>Knowledge check (quiz)</h2>
-        <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0 0 0.85rem' }}>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', margin: '0 0 0.85rem' }}>
           If you add questions, caregivers must score 80% to complete the course. Select the correct answer with the radio button.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {quiz.map((q, qi) => (
-            <div key={qi} style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.9rem 1rem', background: '#F8FAFC' }}>
+            <div key={qi} style={{ border: '1px solid var(--color-border)', borderRadius: '10px', padding: '0.9rem 1rem', background: 'var(--color-bg)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94A3B8' }}>Question {qi + 1}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-subtle)' }}>Question {qi + 1}</span>
                 <button type="button" style={removeBtn} onClick={() => setQuiz((prev) => prev.filter((_, j) => j !== qi))}>Remove</button>
               </div>
               <input
@@ -333,7 +333,7 @@ export function CourseEditorPage() {
                       name={`correct-${qi}`}
                       checked={q.correct === oi}
                       onChange={() => setQuiz((prev) => prev.map((x, j) => (j === qi ? { ...x, correct: oi } : x)))}
-                      style={{ accentColor: '#107480', flexShrink: 0 }}
+                      style={{ accentColor: 'var(--color-primary)', flexShrink: 0 }}
                       aria-label={`Mark option ${oi + 1} correct`}
                     />
                     <input
@@ -384,7 +384,7 @@ export function CourseEditorPage() {
           type="button"
           disabled={saving}
           onClick={() => void handleSave()}
-          style={{ padding: '0.6rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem', color: '#fff', background: saving ? '#94A3B8' : '#107480', border: 'none', borderRadius: '8px', cursor: saving ? 'wait' : 'pointer' }}
+          style={{ padding: '0.6rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--color-surface)', background: saving ? 'var(--color-text-subtle)' : 'var(--color-primary)', border: 'none', borderRadius: '8px', cursor: saving ? 'wait' : 'pointer' }}
         >
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create course'}
         </button>

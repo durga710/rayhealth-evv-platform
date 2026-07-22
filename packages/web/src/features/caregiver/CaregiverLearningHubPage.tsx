@@ -37,11 +37,11 @@ const CADENCE_LABEL: Record<string, string> = {
 };
 
 const STATUS_MAP = {
-  completed:   { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Completed' },
-  in_progress: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'In Progress' },
-  overdue:     { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Overdue' },
-  expired:     { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Expired' },
-  not_started: { bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0', label: 'Not Started' },
+  completed:   { bg: 'var(--color-success-bg)', color: 'var(--color-success)', border: 'var(--color-success-border)', label: 'Completed' },
+  in_progress: { bg: 'var(--color-info-bg)', color: 'var(--color-primary)', border: 'var(--color-info-border)', label: 'In Progress' },
+  overdue:     { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)', label: 'Overdue' },
+  expired:     { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)', label: 'Expired' },
+  not_started: { bg: 'var(--color-bg)', color: 'var(--color-text-muted)', border: 'var(--color-border)', label: 'Not Started' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -123,24 +123,24 @@ export function CaregiverLearningHubPage() {
     borderRadius: '6px',
     border: 'none',
     cursor: 'pointer',
-    background: active ? 'var(--color-primary, #107480)' : 'transparent',
-    color: active ? '#fff' : '#64748B',
+    background: active ? 'var(--color-primary, var(--color-primary))' : 'transparent',
+    color: active ? 'var(--color-surface)' : 'var(--color-text-muted)',
   });
 
   return (
     <div style={{ maxWidth: '860px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.25rem' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.25rem' }}>
             Learning Hub
           </h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748B', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
             Your training catalog and compliance courses
           </p>
         </div>
         <Link
           to="/portal/training"
-          style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary, #107480)', textDecoration: 'none' }}
+          style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary, var(--color-primary))', textDecoration: 'none' }}
         >
           My Training →
         </Link>
@@ -150,19 +150,19 @@ export function CaregiverLearningHubPage() {
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
             { label: 'Total courses', value: String(courses.length) },
-            { label: 'Completed', value: String(completedCourses), color: '#16A34A' },
-            { label: 'Overdue', value: String(overdueCourses), color: overdueCourses > 0 ? '#DC2626' : '#64748B' },
+            { label: 'Completed', value: String(completedCourses), color: 'var(--color-success)' },
+            { label: 'Overdue', value: String(overdueCourses), color: overdueCourses > 0 ? 'var(--color-danger)' : 'var(--color-text-muted)' },
             {
               label: 'Compliant',
               value: progress?.isCompliant ? 'Yes' : 'No',
-              color: progress?.isCompliant ? '#16A34A' : '#DC2626',
+              color: progress?.isCompliant ? 'var(--color-success)' : 'var(--color-danger)',
             },
           ].map((s) => (
-            <div key={s.label} style={{ flex: 1, background: '#fff', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div key={s.label} style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {s.label}
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: s.color ?? '#0F172A', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: s.color ?? 'var(--color-text)', marginTop: '0.2rem' }}>
                 {s.value}
               </div>
             </div>
@@ -176,9 +176,9 @@ export function CaregiverLearningHubPage() {
           placeholder="Search courses…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, minWidth: '180px', padding: '0.45rem 0.75rem', fontSize: '0.875rem', border: '1px solid #CBD5E1', borderRadius: '8px', outline: 'none' }}
+          style={{ flex: 1, minWidth: '180px', padding: '0.45rem 0.75rem', fontSize: '0.875rem', border: '1px solid var(--color-border-strong)', borderRadius: '8px', outline: 'none' }}
         />
-        <div style={{ display: 'flex', gap: '0.25rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.25rem' }}>
+        <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.25rem' }}>
           {(['all', 'required', 'optional'] as FilterTab[]).map((t) => (
             <button key={t} type="button" style={tabStyle(tab === t)} onClick={() => setTab(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -188,24 +188,24 @@ export function CaregiverLearningHubPage() {
         <select
           value={cadenceFilter}
           onChange={(e) => setCadenceFilter(e.target.value)}
-          style={{ padding: '0.45rem 0.75rem', fontSize: '0.8125rem', border: '1px solid #CBD5E1', borderRadius: '8px', outline: 'none', background: '#fff' }}
+          style={{ padding: '0.45rem 0.75rem', fontSize: '0.8125rem', border: '1px solid var(--color-border-strong)', borderRadius: '8px', outline: 'none', background: 'var(--color-surface)' }}
         >
           <option value="all">All types</option>
           {Object.entries(CADENCE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
 
-      {loading && <div style={{ color: '#64748B' }}>Loading…</div>}
+      {loading && <div style={{ color: 'var(--color-text-muted)' }}>Loading…</div>}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '2.5rem', textAlign: 'center', color: '#94A3B8' }}>
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '2.5rem', textAlign: 'center', color: 'var(--color-text-subtle)' }}>
           No courses match your filter.
         </div>
       )}
 
       {[...grouped.entries()].map(([group, groupCourses]) => (
         <div key={group} style={{ marginBottom: '1.75rem' }}>
-          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
             {group}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
@@ -223,8 +223,8 @@ export function CaregiverLearningHubPage() {
                 <div
                   key={course.id}
                   style={{
-                    background: '#fff',
-                    border: `1px solid ${status === 'overdue' ? '#FECACA' : '#E2E8F0'}`,
+                    background: 'var(--color-surface)',
+                    border: `1px solid ${status === 'overdue' ? 'var(--color-danger-border)' : 'var(--color-border)'}`,
                     borderRadius: '10px',
                     padding: '1rem 1.25rem',
                     display: 'grid',
@@ -235,18 +235,18 @@ export function CaregiverLearningHubPage() {
                 >
                   <div>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>{course.title}</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)' }}>{course.title}</span>
                       {course.required && (
-                        <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: '#FEF3C7', color: '#92400E', borderRadius: '4px', padding: '0.1rem 0.45rem' }}>
+                        <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'var(--color-warning-bg)', color: 'var(--color-warning-text)', borderRadius: '4px', padding: '0.1rem 0.45rem' }}>
                           Required
                         </span>
                       )}
                       <StatusBadge status={status} />
                     </div>
-                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0 0 0.5rem' }}>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', margin: '0 0 0.5rem' }}>
                       {course.description}
                     </p>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#94A3B8', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-subtle)', flexWrap: 'wrap' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {course.durationMinutes} min
@@ -265,8 +265,8 @@ export function CaregiverLearningHubPage() {
                       padding: '0.45rem 1rem',
                       fontSize: '0.8125rem',
                       fontWeight: 600,
-                      color: '#fff',
-                      background: status === 'completed' ? '#64748B' : 'var(--color-primary, #107480)',
+                      color: 'var(--color-surface)',
+                      background: status === 'completed' ? 'var(--color-text-muted)' : 'var(--color-primary, var(--color-primary))',
                       borderRadius: '8px',
                       textDecoration: 'none',
                       whiteSpace: 'nowrap',

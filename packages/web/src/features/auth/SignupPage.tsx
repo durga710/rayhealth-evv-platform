@@ -64,7 +64,7 @@ export function SignupPage() {
       {/* Brand panel */}
       <aside
         style={{
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--color-text)',
           color: 'white',
           padding: '3rem 4rem',
           display: 'flex',
@@ -103,7 +103,7 @@ export function SignupPage() {
           RayHealth
           <span
             style={{
-              background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
+              background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
               color: 'white',
               padding: '3px 8px',
               borderRadius: '5px',
@@ -121,12 +121,12 @@ export function SignupPage() {
           <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, margin: 0, color: 'white', fontWeight: 700, letterSpacing: '-0.02em' }}>
             Start verifying visits in minutes.
           </h1>
-          <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: 'var(--color-border-strong)', fontSize: '1rem', lineHeight: 1.6 }}>
             Create your agency account and get access to scheduling, EVV clock-in/out, and Sandata-ready exports &mdash; built for Pennsylvania Personal Assistance agencies.
           </p>
           {['No setup fee &mdash; cancel any time.', 'PA DHS & 21st Century Cures Act compliant.', 'HIPAA-aware infrastructure, ready on day one.'].map((p, i) => (
-            <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#107480" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
+            <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: 'var(--color-text-subtle)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               <span dangerouslySetInnerHTML={{ __html: p }} />
@@ -134,7 +134,7 @@ export function SignupPage() {
           ))}
         </div>
 
-        <div style={{ position: 'relative', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.04em' }}>
+        <div style={{ position: 'relative', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
           Pennsylvania-only &middot; HIPAA-aware &middot; 21st Century Cures Act compliant
         </div>
       </aside>
@@ -144,17 +144,17 @@ export function SignupPage() {
         <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {submitted ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center', padding: '1rem 0' }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#107480" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: 'var(--color-success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <div>
-                <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
                   Agency registered
                 </h2>
-                <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.6 }}>
+                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem', lineHeight: 1.6 }}>
                   Your agency is awaiting review. We&rsquo;ll email <strong>{email}</strong> once it&rsquo;s approved, and you&rsquo;ll be able to sign in.
                 </p>
               </div>
@@ -177,8 +177,8 @@ export function SignupPage() {
                     style={{
                       width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '0.75rem', fontWeight: 700,
-                      backgroundColor: i <= step ? '#107480' : '#E2E8F0',
-                      color: i <= step ? 'white' : '#94A3B8',
+                      backgroundColor: i <= step ? 'var(--color-primary)' : 'var(--color-border)',
+                      color: i <= step ? 'white' : 'var(--color-text-subtle)',
                     }}
                   >
                     {i < step ? (
@@ -187,20 +187,20 @@ export function SignupPage() {
                       </svg>
                     ) : i + 1}
                   </div>
-                  <span style={{ fontSize: '0.8125rem', color: i === step ? '#0F172A' : '#94A3B8', fontWeight: i === step ? 600 : 400 }}>{label}</span>
+                  <span style={{ fontSize: '0.8125rem', color: i === step ? 'var(--color-text)' : 'var(--color-text-subtle)', fontWeight: i === step ? 600 : 400 }}>{label}</span>
                 </div>
                 {i < steps.length - 1 && (
-                  <div style={{ flex: 1, height: 1, backgroundColor: i < step ? '#107480' : '#E2E8F0' }} />
+                  <div style={{ flex: 1, height: 1, backgroundColor: i < step ? 'var(--color-primary)' : 'var(--color-border)' }} />
                 )}
               </React.Fragment>
             ))}
           </div>
 
           <div>
-            <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.625rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+            <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.625rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
               {step === 0 ? 'Create your agency' : 'Admin account'}
             </h2>
-            <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem' }}>
+            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
               {step === 0 ? 'Start by naming your Pennsylvania home care agency.' : 'Set up the first admin login for your agency.'}
             </p>
           </div>
@@ -233,7 +233,7 @@ export function SignupPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label className="label">State</label>
-                <div className="input-field" style={{ color: '#64748B', userSelect: 'none' }}>Pennsylvania (PA)</div>
+                <div className="input-field" style={{ color: 'var(--color-text-muted)', userSelect: 'none' }}>Pennsylvania (PA)</div>
               </div>
               <button type="submit" className="btn-primary" style={{ width: '100%', padding: '0.75rem', fontWeight: 600, marginTop: '0.5rem', fontSize: '0.9375rem' }}>
                 Continue
@@ -282,20 +282,20 @@ export function SignupPage() {
               </div>
               <label
                 htmlFor="agreeTerms"
-                style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5, cursor: 'pointer' }}
+                style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, cursor: 'pointer' }}
               >
                 <input
                   id="agreeTerms"
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  style={{ marginTop: '2px', width: 16, height: 16, accentColor: '#107480', flexShrink: 0 }}
+                  style={{ marginTop: '2px', width: 16, height: 16, accentColor: 'var(--color-primary)', flexShrink: 0 }}
                 />
                 <span>
                   I agree to the{' '}
-                  <Link to="/terms" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                  <Link to="/terms" target="_blank" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
                   {' '}and{' '}
-                  <Link to="/privacy" target="_blank" style={{ color: '#107480', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>.
+                  <Link to="/privacy" target="_blank" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>.
                 </span>
               </label>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -304,8 +304,8 @@ export function SignupPage() {
                   onClick={() => { setError(''); setStep(0); }}
                   style={{
                     flex: 1, padding: '0.75rem', fontWeight: 600, fontSize: '0.9375rem',
-                    border: '1px solid #E2E8F0', borderRadius: 8, cursor: 'pointer',
-                    backgroundColor: 'white', color: '#0F172A',
+                    border: '1px solid var(--color-border)', borderRadius: 8, cursor: 'pointer',
+                    backgroundColor: 'white', color: 'var(--color-text)',
                   }}
                 >
                   Back
@@ -322,9 +322,9 @@ export function SignupPage() {
             </form>
           )}
 
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem', textAlign: 'center', fontSize: '0.875rem', color: '#64748B' }}>
+          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: '#107480', fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
+            <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
           </div>
           </>
           )}

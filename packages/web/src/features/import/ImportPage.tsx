@@ -51,18 +51,18 @@ const ENTITIES: { value: ImportEntity; label: string; blurb: string }[] = [
 ];
 
 const card: React.CSSProperties = {
-  background: 'var(--color-surface, #fff)',
-  border: '1px solid var(--color-border, #E2E8F0)',
+  background: 'var(--color-surface, var(--color-surface))',
+  border: '1px solid var(--color-border, var(--color-border))',
   borderRadius: 12,
   padding: '1.25rem',
   marginBottom: '1.25rem',
 };
 
 const primaryBtn: React.CSSProperties = {
-  background: '#107480',
+  background: 'var(--color-primary)',
   border: 'none',
   borderRadius: 8,
-  color: '#fff',
+  color: 'var(--color-surface)',
   cursor: 'pointer',
   fontWeight: 700,
   padding: '0.55rem 1rem',
@@ -70,9 +70,9 @@ const primaryBtn: React.CSSProperties = {
 
 const ghostBtn: React.CSSProperties = {
   background: 'transparent',
-  border: '1px solid #CBD5E1',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: 8,
-  color: '#0F172A',
+  color: 'var(--color-text)',
   cursor: 'pointer',
   fontWeight: 600,
   padding: '0.5rem 0.9rem',
@@ -157,7 +157,7 @@ export function ImportPage() {
       <header className="page-header" style={{ marginBottom: '1.25rem' }}>
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>Data Import</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
             Migrate clients, caregivers, and authorizations from HHAeXchange, Sandata, or a
             spreadsheet. Upload a CSV, preview validation, then commit. Re-running the same file
             updates existing records (matched on the source <code>external_id</code>) instead of
@@ -177,14 +177,14 @@ export function ImportPage() {
               onClick={() => onEntityChange(e.value)}
               style={{
                 ...ghostBtn,
-                ...(entity === e.value ? { borderColor: '#107480', color: '#107480', fontWeight: 700 } : {}),
+                ...(entity === e.value ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)', fontWeight: 700 } : {}),
               }}
             >
               {e.label}
             </button>
           ))}
         </div>
-        <p style={{ color: '#64748B', fontSize: '0.875rem', margin: 0 }}>{active.blurb}</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: 0 }}>{active.blurb}</p>
         <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
           <a href={`/api/import/${entity}/template.csv`} style={ghostBtn}>
             Download {active.label} template
@@ -205,15 +205,15 @@ export function ImportPage() {
           >
             {busy === 'previewing' ? 'Validating…' : 'Preview'}
           </button>
-          {fileName && <span style={{ color: '#64748B', fontSize: '0.85rem' }}>{fileName}</span>}
+          {fileName && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{fileName}</span>}
         </div>
 
         {preview && (
           <div style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontWeight: 600 }}>
               <span>Total rows: {preview.total}</span>
-              <span style={{ color: '#059669' }}>Valid: {preview.okCount}</span>
-              <span style={{ color: preview.errorCount ? '#BE123C' : '#94A3B8' }}>
+              <span style={{ color: 'var(--color-success)' }}>Valid: {preview.okCount}</span>
+              <span style={{ color: preview.errorCount ? 'var(--color-danger-text)' : 'var(--color-text-subtle)' }}>
                 Errors: {preview.errorCount}
               </span>
             </div>
@@ -229,14 +229,14 @@ export function ImportPage() {
                   {errorRows.slice(0, 100).map((r) => (
                     <tr key={r.rowNumber}>
                       <td>{r.rowNumber}</td>
-                      <td style={{ color: '#BE123C' }}>{r.errors.join('; ')}</td>
+                      <td style={{ color: 'var(--color-danger-text)' }}>{r.errors.join('; ')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
             {errorRows.length > 100 && (
-              <p style={{ color: '#94A3B8', fontSize: '0.8rem' }}>
+              <p style={{ color: 'var(--color-text-subtle)', fontSize: '0.8rem' }}>
                 Showing first 100 of {errorRows.length} error rows.
               </p>
             )}
@@ -247,7 +247,7 @@ export function ImportPage() {
       {/* Step 3, commit */}
       <div style={card}>
         <h3 className="section-title" style={{ marginTop: 0 }}>3 · Commit</h3>
-        <p style={{ color: '#64748B', fontSize: '0.875rem', marginTop: 0 }}>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: 0 }}>
           Commit is all-or-nothing: a file with any errors is refused and nothing is written. Fix
           the rows above and re-preview.
         </p>
@@ -267,9 +267,9 @@ export function ImportPage() {
               marginTop: '1rem',
               padding: '0.75rem 1rem',
               borderRadius: 8,
-              background: '#ecfdf5',
-              border: '1px solid #a7f3d0',
-              color: '#047857',
+              background: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success-border)',
+              color: 'var(--color-success-text)',
               fontWeight: 600,
             }}
           >
@@ -286,9 +286,9 @@ export function ImportPage() {
           style={{
             padding: '0.75rem 1rem',
             borderRadius: 8,
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#BE123C',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger-text)',
             fontWeight: 600,
           }}
         >

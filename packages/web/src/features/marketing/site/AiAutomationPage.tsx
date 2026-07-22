@@ -139,9 +139,9 @@ const faqs: readonly Faq[] = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -165,7 +165,7 @@ function CopilotVisual() {
       <Chrome url="app.rayhealthevv.com · Copilot" />
       <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* User question */}
-        <div style={{ alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--accent)', color: '#fff', borderRadius: '12px 12px 4px 12px', padding: '9px 12px', fontSize: '.85rem', lineHeight: 1.5 }}>
+        <div style={{ alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--accent)', color: 'var(--color-surface)', borderRadius: '12px 12px 4px 12px', padding: '9px 12px', fontSize: '.85rem', lineHeight: 1.5 }}>
           Enroll Maria Santos in EVV Fundamentals.
         </div>
 
@@ -185,7 +185,7 @@ function CopilotVisual() {
             <div style={{ color: 'var(--mut)', fontSize: '.74rem', marginTop: 2 }}>M. Santos → EVV Fundamentals · validated against your agency</div>
           </div>
           <div style={{ display: 'flex', gap: '.5rem', marginTop: 12 }}>
-            <span style={{ flex: 1, textAlign: 'center', fontSize: '.78rem', fontWeight: 600, color: '#fff', background: 'var(--accent)', borderRadius: 8, padding: '8px 0' }}>Confirm</span>
+            <span style={{ flex: 1, textAlign: 'center', fontSize: '.78rem', fontWeight: 600, color: 'var(--color-surface)', background: 'var(--accent)', borderRadius: 8, padding: '8px 0' }}>Confirm</span>
             <span style={{ flex: 1, textAlign: 'center', fontSize: '.78rem', fontWeight: 600, color: 'var(--ink-soft)', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 0' }}>Decline</span>
           </div>
         </div>
@@ -309,9 +309,9 @@ export function AiAutomationPage() {
                 key={r.t}
                 style={{ background: 'rgba(255,255,255,.04)', border: '1px solid var(--dark-line)' }}
               >
-                <div className="mk-ficon" style={{ background: 'rgba(95,214,166,.14)', color: '#5fd0d6' }}>{r.i}</div>
-                <h3 style={{ color: '#fff' }}>{r.t}</h3>
-                <p style={{ color: '#9fa8a3' }}>{r.b}</p>
+                <div className="mk-ficon" style={{ background: 'rgba(95,214,166,.14)', color: 'var(--color-primary-light)' }}>{r.i}</div>
+                <h3 style={{ color: 'var(--color-surface)' }}>{r.t}</h3>
+                <p style={{ color: 'var(--color-text-subtle)' }}>{r.b}</p>
               </div>
             ))}
           </div>

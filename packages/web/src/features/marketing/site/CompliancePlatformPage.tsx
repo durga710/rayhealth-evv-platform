@@ -43,9 +43,9 @@ const faqs = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -53,12 +53,12 @@ const Chrome = ({ url }: { url: string }) => (
 type LogRow = { actor: string; action: string; ts: string; dot: string };
 
 const logRows: readonly LogRow[] = [
-  { actor: 'm.santos@agency', action: 'visit.clock_in', ts: '2026-06-22 09:01:14', dot: '#16a34a' },
-  { actor: 'm.santos@agency', action: 'visit.task_complete', ts: '2026-06-22 09:46:03', dot: '#16a34a' },
-  { actor: 'm.santos@agency', action: 'visit.clock_out', ts: '2026-06-22 11:02:51', dot: '#16a34a' },
-  { actor: 'k.lee@agency', action: 'visit.edit_time', ts: '2026-06-22 14:18:22', dot: '#b45309' },
-  { actor: 'k.lee@agency', action: 'visit.approve', ts: '2026-06-22 14:19:07', dot: '#107480' },
-  { actor: 'system', action: 'evv.submit.sandata', ts: '2026-06-22 18:00:00', dot: '#107480' },
+  { actor: 'm.santos@agency', action: 'visit.clock_in', ts: '2026-06-22 09:01:14', dot: 'var(--color-success)' },
+  { actor: 'm.santos@agency', action: 'visit.task_complete', ts: '2026-06-22 09:46:03', dot: 'var(--color-success)' },
+  { actor: 'm.santos@agency', action: 'visit.clock_out', ts: '2026-06-22 11:02:51', dot: 'var(--color-success)' },
+  { actor: 'k.lee@agency', action: 'visit.edit_time', ts: '2026-06-22 14:18:22', dot: 'var(--color-warning-text)' },
+  { actor: 'k.lee@agency', action: 'visit.approve', ts: '2026-06-22 14:19:07', dot: 'var(--color-primary)' },
+  { actor: 'system', action: 'evv.submit.sandata', ts: '2026-06-22 18:00:00', dot: 'var(--color-primary)' },
 ] as const;
 
 export function CompliancePlatformPage() {
@@ -124,13 +124,13 @@ export function CompliancePlatformPage() {
             </div>
             <div className="mk-visual">
               <Chrome url="app.rayhealthevv.com · Audit trail · visit #48217" />
-              <div style={{ background: '#0a0f0d', border: '1px solid var(--line)', borderRadius: 12, padding: 14, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace' }}>
+              <div style={{ background: 'var(--color-text)', border: '1px solid var(--line)', borderRadius: 12, padding: 14, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace' }}>
                 {logRows.map((r, i) => (
                   <div key={r.ts} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '9px 2px', borderTop: i ? '1px solid rgba(255,255,255,.08)' : 'none' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: '.72rem', color: '#9fa8a3', width: '6.2rem', flexShrink: 0 }}>{r.actor}</span>
-                    <span style={{ fontSize: '.72rem', color: '#5fd0d6', flex: 1 }}>{r.action}</span>
-                    <span style={{ fontSize: '.68rem', color: '#6b746f', flexShrink: 0 }}>{r.ts}</span>
+                    <span style={{ fontSize: '.72rem', color: 'var(--color-text-subtle)', width: '6.2rem', flexShrink: 0 }}>{r.actor}</span>
+                    <span style={{ fontSize: '.72rem', color: 'var(--color-primary-light)', flex: 1 }}>{r.action}</span>
+                    <span style={{ fontSize: '.68rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{r.ts}</span>
                   </div>
                 ))}
               </div>
@@ -165,7 +165,7 @@ export function CompliancePlatformPage() {
                   { l: 'Begin & end time', v: '09:01, 11:02' },
                 ].map((r, i) => (
                   <div key={r.l} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '10px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                    <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: '#e7f6ec', color: '#16a34a', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
+                    <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: 'var(--color-success-bg)', color: 'var(--color-success)', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
                     <span style={{ fontSize: '.82rem', color: 'var(--mut)', flex: 1 }}>{r.l}</span>
                     <span style={{ fontSize: '.82rem', color: 'var(--ink)', fontWeight: 600 }}>{r.v}</span>
                   </div>

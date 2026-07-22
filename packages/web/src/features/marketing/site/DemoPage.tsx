@@ -32,9 +32,9 @@ function Chrome({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', background: 'var(--paper)' }}>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '8px 10px', background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d8dcd6' }} />
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d8dcd6' }} />
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d8dcd6' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-border)' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-border)' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-border)' }} />
       </div>
       <div style={{ padding: 14 }}>{children}</div>
     </div>
@@ -90,7 +90,7 @@ export function DemoPage() {
                         {pill('var(--accent-tint)', 'var(--accent-deep)', 'Scheduled')}
                       </div>
                       <div style={{ fontSize: '.62rem', color: 'var(--mut)', marginBottom: 10 }}>Tue 9:00 AM · W1793 Personal care</div>
-                      <div style={{ background: 'var(--accent)', color: '#fff', textAlign: 'center', borderRadius: 8, padding: '8px 0', fontSize: '.72rem', fontWeight: 600 }}>Clock in</div>
+                      <div style={{ background: 'var(--accent)', color: 'var(--color-surface)', textAlign: 'center', borderRadius: 8, padding: '8px 0', fontSize: '.72rem', fontWeight: 600 }}>Clock in</div>
                       <div style={{ fontSize: '.58rem', color: 'var(--mut)', textAlign: 'center', marginTop: 8 }}>GPS verified · 12 ft accuracy</div>
                     </Chrome>
                   )}
@@ -109,21 +109,21 @@ export function DemoPage() {
                   {i === 2 && (
                     <Chrome>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: 7, borderRadius: 6, background: 'var(--accent-tint)', borderLeft: '3px solid var(--accent)', marginBottom: 6 }}>
-                        {pill('var(--accent)', '#fff', 'Verified')}
+                        {pill('var(--accent)', 'var(--color-surface)', 'Verified')}
                         <span style={{ fontSize: '.6rem', color: 'var(--ink)' }}>K. Anders · 2.93 hrs</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: 7, borderRadius: 6, background: 'var(--accent2-tint)', borderLeft: '3px solid var(--accent2)' }}>
-                        {pill('var(--accent2)', '#fff', 'Flagged')}
+                        {pill('var(--accent2)', 'var(--color-surface)', 'Flagged')}
                         <span style={{ fontSize: '.6rem', color: 'var(--ink)' }}>R. Patel · late clock-out</span>
                       </div>
                     </Chrome>
                   )}
                   {i === 3 && (
                     <Chrome>
-                      <div style={{ background: 'var(--ink-bg)', color: '#cfe6e9', borderRadius: 6, padding: '8px 10px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.55rem', lineHeight: 1.7 }}>
-                        <div><span style={{ color: '#5fd0d6' }}>service:</span> W1793</div>
-                        <div><span style={{ color: '#5fd0d6' }}>clock-in:</span> 09:02:17</div>
-                        <div><span style={{ color: '#5fd0d6' }}>lat/long:</span> 40.43, -79.99</div>
+                      <div style={{ background: 'var(--ink-bg)', color: 'var(--color-primary-light)', borderRadius: 6, padding: '8px 10px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '.55rem', lineHeight: 1.7 }}>
+                        <div><span style={{ color: 'var(--color-primary-light)' }}>service:</span> W1793</div>
+                        <div><span style={{ color: 'var(--color-primary-light)' }}>clock-in:</span> 09:02:17</div>
+                        <div><span style={{ color: 'var(--color-primary-light)' }}>lat/long:</span> 40.43, -79.99</div>
                       </div>
                       <div style={{ fontSize: '.58rem', color: 'var(--mut)', textAlign: 'center', marginTop: 8 }}>Sandata-aligned · 6/6 elements</div>
                     </Chrome>

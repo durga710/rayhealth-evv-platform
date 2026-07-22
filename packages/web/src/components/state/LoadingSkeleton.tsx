@@ -18,7 +18,7 @@ export function LoadingSkeleton({ rows = 5, columns = 4 }: LoadingSkeletonProps)
       style={{
         padding: '1.25rem 1.5rem',
         backgroundColor: 'white',
-        border: '1px solid #E2E8F0',
+        border: '1px solid var(--color-border)',
         borderRadius: '12px',
         display: 'flex',
         flexDirection: 'column',

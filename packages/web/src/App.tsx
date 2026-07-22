@@ -117,7 +117,7 @@ function RouteFallback() {
           width: 28px;
           height: 28px;
           border: 3px solid rgba(16, 116, 128, 0.18);
-          border-top-color: #107480;
+          border-top-color: var(--color-primary);
           border-radius: 50%;
           animation: rh-route-spin 0.7s linear infinite;
         }
@@ -462,7 +462,7 @@ function AdminLayout() {
                 style={{
                   fontSize: '0.8125rem',
                   fontWeight: 500,
-                  color: '#F1F5F9',
+                  color: 'var(--color-surface-soft)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -473,7 +473,7 @@ function AdminLayout() {
               <span
                 style={{
                   fontSize: '0.7rem',
-                  color: '#64748B',
+                  color: 'var(--color-text-muted)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',

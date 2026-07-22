@@ -247,7 +247,7 @@ export function ApplyPage() {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                style={{ marginTop: 2, width: 16, height: 16, accentColor: '#96222E', flexShrink: 0 }}
+                style={{ marginTop: 2, width: 16, height: 16, accentColor: 'var(--color-primary)', flexShrink: 0 }}
               />
               <span>
                 I confirm my information is accurate and I agree to the{' '}

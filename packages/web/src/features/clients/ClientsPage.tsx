@@ -181,7 +181,7 @@ export function ClientsPage() {
       {/* Gradient banner header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
           borderRadius: '12px',
           padding: '1.75rem 2rem',
           marginBottom: '1.75rem',
@@ -193,7 +193,7 @@ export function ClientsPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+          <h1 style={{ margin: 0, color: 'var(--color-surface)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
             Clients
           </h1>
           <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
@@ -205,7 +205,7 @@ export function ClientsPage() {
           onClick={focusAddClient}
           style={{
             backgroundColor: 'rgba(255,255,255,0.15)',
-            color: '#fff',
+            color: 'var(--color-surface)',
             border: '1px solid rgba(255,255,255,0.25)',
             borderRadius: '8px',
             padding: '0.5rem 1.1rem',
@@ -221,7 +221,7 @@ export function ClientsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card" style={{ borderTop: '3px solid #107480' }}>
+        <div className="form-card" style={{ borderTop: '3px solid var(--color-primary)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>{editingId ? 'Edit client' : 'Add new client'}</h3>
             {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV && (
@@ -258,7 +258,7 @@ export function ClientsPage() {
                   cursor: 'pointer',
                   fontSize: '0.8125rem',
                   fontWeight: 500,
-                  color: '#107480',
+                  color: 'var(--color-primary)',
                 }}
               >
                 Show optional fields
@@ -271,7 +271,7 @@ export function ClientsPage() {
               <div style={{ marginTop: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 <div>
                   <span className="label" style={{ display: 'block' }}>Service address &amp; EVV geofence</span>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#64748B', lineHeight: 1.5 }}>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
                     The address where care is delivered. Add latitude &amp; longitude to
                     activate the clock-in / clock-out geofence, without coordinates,
                     location verification can&apos;t be enforced for this client.
@@ -338,7 +338,7 @@ export function ClientsPage() {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
-                color: '#94A3B8',
+                color: 'var(--color-text-subtle)',
               }}
             >
               Client roster
@@ -348,7 +348,7 @@ export function ClientsPage() {
                 style={{
                   fontSize: '0.7rem',
                   fontWeight: 700,
-                  color: '#107480',
+                  color: 'var(--color-primary)',
                   background: 'rgba(16, 116, 128,0.1)',
                   border: '1px solid rgba(16, 116, 128,0.2)',
                   borderRadius: '999px',
@@ -400,7 +400,7 @@ export function ClientsPage() {
                                 width: '28px',
                                 height: '28px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
+                                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
                                 color: 'white',
                                 display: 'grid',
                                 placeItems: 'center',
@@ -414,20 +414,20 @@ export function ClientsPage() {
                             <span style={{ fontWeight: 500 }}>{c.firstName} {c.lastName}</span>
                           </div>
                         </td>
-                        <td style={{ color: '#475569', fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{c.dateOfBirth}</td>
+                        <td style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{c.dateOfBirth}</td>
                         <td>
                           {c.medicaidNumber ? (
                             <span className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{c.medicaidNumber}</span>
                           ) : (
-                            <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>, </span>
+                            <span style={{ color: 'var(--color-text-subtle)', fontSize: '0.8125rem' }}>, </span>
                           )}
                         </td>
-                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                        <td style={{ color: 'var(--color-text-subtle)' }}>{isExpanded ? '▾' : '▸'}</td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={4} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                          <td colSpan={4} style={{ backgroundColor: 'var(--color-bg)', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                               <div style={{ fontWeight: 600 }}>Client ID</div>
                               <div style={{ fontFamily: 'var(--font-mono)' }}>{c.id}</div>
                               <div style={{ fontWeight: 600 }}>Full name</div>
@@ -435,12 +435,12 @@ export function ClientsPage() {
                               <div style={{ fontWeight: 600 }}>Date of birth</div>
                               <div>{c.dateOfBirth}</div>
                               <div style={{ fontWeight: 600 }}>Medicaid #</div>
-                              <div>{c.medicaidNumber || <em style={{ color: '#94A3B8' }}>not on file</em>}</div>
+                              <div>{c.medicaidNumber || <em style={{ color: 'var(--color-text-subtle)' }}>not on file</em>}</div>
                               <div style={{ fontWeight: 600 }}>Service address</div>
                               <div>
                                 {c.addressLine1
                                   ? [c.addressLine1, c.city, c.state, c.postalCode].filter(Boolean).join(', ')
-                                  : <em style={{ color: '#94A3B8' }}>not on file</em>}
+                                  : <em style={{ color: 'var(--color-text-subtle)' }}>not on file</em>}
                               </div>
                               <div style={{ fontWeight: 600 }}>EVV geofence</div>
                               <div>
@@ -462,8 +462,8 @@ export function ClientsPage() {
                               </button>
                               {confirmDeleteId === c.id ? (
                                 <>
-                                  <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this client?</span>
-                                  <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(c)}>
+                                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-danger-text)', fontWeight: 600 }}>Delete this client?</span>
+                                  <button type="button" className="btn-sm" style={{ background: 'var(--color-danger-text)', color: 'var(--color-surface)', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(c)}>
                                     Confirm delete
                                   </button>
                                   <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>
@@ -471,13 +471,13 @@ export function ClientsPage() {
                                   </button>
                                 </>
                               ) : (
-                                <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(c.id); setRowError(null); }}>
+                                <button type="button" className="btn-ghost btn-sm" style={{ color: 'var(--color-danger-text)' }} onClick={() => { setConfirmDeleteId(c.id); setRowError(null); }}>
                                   Delete
                                 </button>
                               )}
                             </div>
                             {rowError && confirmDeleteId === c.id && (
-                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: '#BE123C' }}>
+                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: 'var(--color-danger-text)' }}>
                                 {rowError}
                               </div>
                             )}

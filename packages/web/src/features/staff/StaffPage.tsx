@@ -73,10 +73,10 @@ type ResendState =
   | { status: 'failed'; reason: string };
 
 const ROLE_COLORS: Record<string, string> = {
-  admin:       '#107480',
-  coordinator: '#0EA5E9',
-  caregiver:   '#10B981',
-  family:      '#F59E0B',
+  admin:       'var(--color-primary)',
+  coordinator: 'var(--color-primary)',
+  caregiver:   'var(--color-success)',
+  family:      'var(--color-warning)',
 };
 
 function Avatar({ email, active }: { email: string; active: boolean }) {
@@ -85,8 +85,8 @@ function Avatar({ email, active }: { email: string; active: boolean }) {
       aria-hidden
       style={{
         width: 28, height: 28, borderRadius: '50%',
-        background: active ? 'linear-gradient(135deg,#107480 0%,#7fc7cf 100%)' : '#E2E8F0',
-        color: active ? 'white' : '#64748B',
+        background: active ? 'linear-gradient(135deg,var(--color-primary) 0%,var(--color-primary-light) 100%)' : 'var(--color-border)',
+        color: active ? 'white' : 'var(--color-text-muted)',
         display: 'grid', placeItems: 'center',
         fontWeight: 600, fontSize: '0.75rem', flexShrink: 0,
       }}
@@ -97,7 +97,7 @@ function Avatar({ email, active }: { email: string; active: boolean }) {
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const color = ROLE_COLORS[role] ?? '#94A3B8';
+  const color = ROLE_COLORS[role] ?? 'var(--color-text-subtle)';
   return (
     <span style={{
       display: 'inline-block', padding: '0.15em 0.55em', borderRadius: '999px',
@@ -347,7 +347,7 @@ export function StaffPage() {
       <header className="page-header">
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>Staff</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>Manage caregivers, coordinators, and invite new staff members.</p>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Manage caregivers, coordinators, and invite new staff members.</p>
         </div>
         <button type="button" onClick={focusInvite} className="btn-primary">Invite staff</button>
       </header>
@@ -384,8 +384,8 @@ export function StaffPage() {
             </div>
           )}
           {createdInvite && inviteUrl && (
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #E2E8F0', borderRadius: '8px', backgroundColor: '#F8FAFC' }}>
-              <div style={{ fontSize: '0.8125rem', color: '#475569', marginBottom: '0.6rem', lineHeight: 1.5 }}>
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'var(--color-bg)' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '0.6rem', lineHeight: 1.5 }}>
                 {createdInvite.emailDelivery === 'sent'
                   ? `Backup link, only needed if ${createdInvite.email} doesn't see the email.`
                   : `Share this link with ${createdInvite.email}.`}
@@ -394,7 +394,7 @@ export function StaffPage() {
                 <input id="invite-url" type="text" readOnly value={inviteUrl} onFocus={e => e.currentTarget.select()} style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', backgroundColor: 'white' }} />
                 <button type="button" onClick={handleCopy} className="btn-secondary" style={{ whiteSpace: 'nowrap' }}>{copied ? 'Copied' : 'Copy link'}</button>
               </div>
-              <div style={{ marginTop: '0.6rem', fontSize: '0.75rem', color: '#94A3B8' }}>
+              <div style={{ marginTop: '0.6rem', fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>
                 Expires {new Date(createdInvite.expiresAt).toLocaleString()} &middot; single-use
               </div>
             </div>
@@ -409,7 +409,7 @@ export function StaffPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
               <h3 className="section-title" style={{ margin: 0 }}>Active staff directory</h3>
               {!loading && !loadError && activeStaff.length > 0 && (
-                <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{activeStaff.length} member{activeStaff.length === 1 ? '' : 's'}</span>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>{activeStaff.length} member{activeStaff.length === 1 ? '' : 's'}</span>
               )}
             </div>
             {loading ? <LoadingSkeleton rows={5} columns={3} /> :
@@ -444,13 +444,13 @@ export function StaffPage() {
                              </div>
                            </td>
                            <td><RoleBadge role={s.role} /></td>
-                           <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                           <td style={{ color: 'var(--color-text-subtle)' }}>{isExpanded ? '▾' : '▸'}</td>
                          </tr>
 
                          {isExpanded && (
                            <tr>
-                             <td colSpan={3} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
-                               <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569', marginBottom: '1rem' }}>
+                             <td colSpan={3} style={{ backgroundColor: 'var(--color-bg)', padding: '1rem 1.25rem' }}>
+                               <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
                                  <div style={{ fontWeight: 600 }}>User ID</div>
                                  <div style={{ fontFamily: 'var(--font-mono)' }}>{s.id}</div>
                                  <div style={{ fontWeight: 600 }}>Email</div>
@@ -460,12 +460,12 @@ export function StaffPage() {
                                </div>
 
                                {!isUser && (
-                                 <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8 }}>
-                                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0F172A', marginBottom: '0.4rem' }}>
+                                 <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+                                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--color-text)', marginBottom: '0.4rem' }}>
                                      Rendering NPI{' '}
                                      {s.hasNpi
-                                       ? <span style={{ color: '#059669', fontWeight: 500 }}>· on file</span>
-                                       : <span style={{ color: '#BE123C', fontWeight: 500 }}>· not set (blocks clean 837 claims)</span>}
+                                       ? <span style={{ color: 'var(--color-success)', fontWeight: 500 }}>· on file</span>
+                                       : <span style={{ color: 'var(--color-danger-text)', fontWeight: 500 }}>· not set (blocks clean 837 claims)</span>}
                                    </div>
                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                      <input
@@ -492,16 +492,16 @@ export function StaffPage() {
 
                                {!isUser && (
                                  <div
-                                   style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8 }}
+                                   style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8 }}
                                    onClick={e => e.stopPropagation()}
                                  >
                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
-                                     <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0F172A' }}>Credentials &amp; compliance</span>
+                                     <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--color-text)' }}>Credentials &amp; compliance</span>
                                      {credCompliance[s.id] && (
                                        <span style={{
                                          fontSize: '0.75rem', fontWeight: 600, padding: '0.1em 0.5em', borderRadius: 999,
-                                         background: credCompliance[s.id].compliant ? '#05966918' : '#BE123C18',
-                                         color: credCompliance[s.id].compliant ? '#059669' : '#BE123C',
+                                         background: credCompliance[s.id].compliant ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
+                                         color: credCompliance[s.id].compliant ? 'var(--color-success)' : 'var(--color-danger-text)',
                                        }}>
                                          {credCompliance[s.id].compliant ? 'Compliant' : 'Action needed'}
                                        </span>
@@ -509,7 +509,7 @@ export function StaffPage() {
                                    </div>
 
                                    {credLoading[s.id] && creds[s.id] === undefined ? (
-                                     <div style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Loading credentials…</div>
+                                     <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>Loading credentials…</div>
                                    ) : (
                                      <>
                                        {(creds[s.id]?.length ?? 0) > 0 ? (
@@ -526,17 +526,17 @@ export function StaffPage() {
                                                  <tr key={c.id}>
                                                    <td>{CRED_TYPE_LABEL[c.credentialType] ?? c.credentialType}</td>
                                                    <td>
-                                                     <span style={{ color: expired ? '#BE123C' : '#059669', fontWeight: 500, textTransform: 'capitalize' }}>
+                                                     <span style={{ color: expired ? 'var(--color-danger-text)' : 'var(--color-success)', fontWeight: 500, textTransform: 'capitalize' }}>
                                                        {expired ? 'expired' : c.status}
                                                      </span>
                                                    </td>
-                                                   <td style={{ color: expired ? '#BE123C' : '#475569' }}>{c.expiresAt}</td>
+                                                   <td style={{ color: expired ? 'var(--color-danger-text)' : 'var(--color-text-secondary)' }}>{c.expiresAt}</td>
                                                    <td style={{ textAlign: 'right' }}>
                                                      {!expired && (
                                                        <button
                                                          type="button"
                                                          className="btn-ghost btn-sm"
-                                                         style={{ color: '#BE123C' }}
+                                                         style={{ color: 'var(--color-danger-text)' }}
                                                          onClick={() => handleExpireCredential(s.id, c.id)}
                                                        >
                                                          Expire
@@ -549,17 +549,17 @@ export function StaffPage() {
                                            </tbody>
                                          </table>
                                        ) : (
-                                         <div style={{ fontSize: '0.8125rem', color: '#94A3B8', marginBottom: '0.75rem' }}>No credentials on file yet.</div>
+                                         <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)', marginBottom: '0.75rem' }}>No credentials on file yet.</div>
                                        )}
 
                                        {credCompliance[s.id] && credCompliance[s.id].missing.length > 0 && (
-                                         <div style={{ fontSize: '0.75rem', color: '#BE123C', marginBottom: '0.75rem' }}>
+                                         <div style={{ fontSize: '0.75rem', color: 'var(--color-danger-text)', marginBottom: '0.75rem' }}>
                                            Missing required: {credCompliance[s.id].missing.map(m => CRED_TYPE_LABEL[m] ?? m).join(', ')}
                                          </div>
                                        )}
 
                                        {/* Add credential */}
-                                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #F1F5F9', paddingTop: '0.6rem' }}>
+                                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--color-surface-soft)', paddingTop: '0.6rem' }}>
                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                                            <label className="label" style={{ fontSize: '0.7rem' }}>Type</label>
                                            <select
@@ -643,7 +643,7 @@ export function StaffPage() {
                                    className="btn-ghost btn-sm"
                                    disabled={isRemoving}
                                    onClick={() => handleRemove(s)}
-                                   style={{ color: '#BE123C', marginLeft: isUser ? 'auto' : undefined }}
+                                   style={{ color: 'var(--color-danger-text)', marginLeft: isUser ? 'auto' : undefined }}
                                  >
                                    {isRemoving
                                      ? (s.role === 'caregiver' ? 'Deactivating…' : 'Removing…')
@@ -668,14 +668,14 @@ export function StaffPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem' }}>
                 <div>
                   <h3 className="section-title" style={{ margin: 0 }}>Pending invitations</h3>
-                  <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{pendingInvites.length} awaiting acceptance</span>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>{pendingInvites.length} awaiting acceptance</span>
                 </div>
                 <button
                   type="button"
                   className="btn-ghost btn-sm"
                   onClick={handleRevokeAll}
                   disabled={revokingAll}
-                  style={{ color: '#BE123C', whiteSpace: 'nowrap', flexShrink: 0 }}
+                  style={{ color: 'var(--color-danger-text)', whiteSpace: 'nowrap', flexShrink: 0 }}
                 >
                   {revokingAll ? 'Revoking…' : `Revoke all (${pendingInvites.length})`}
                 </button>
@@ -698,7 +698,7 @@ export function StaffPage() {
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <Avatar email={s.email} active={false} />
-                            <span style={{ fontWeight: 500, color: '#64748B' }}>{s.email}</span>
+                            <span style={{ fontWeight: 500, color: 'var(--color-text-muted)' }}>{s.email}</span>
                           </div>
                         </td>
                         <td><RoleBadge role={s.role} /></td>
@@ -724,13 +724,13 @@ export function StaffPage() {
                               onClick={() => handleRevokeInvite(s.id, s.email)}
                               disabled={isRevoking}
                               className="btn-ghost btn-sm"
-                              style={{ color: '#BE123C' }}
+                              style={{ color: 'var(--color-danger-text)' }}
                             >
                               {isRevoking ? 'Revoking…' : 'Revoke'}
                             </button>
                           </div>
                           {resend.status === 'failed' && (
-                            <div style={{ fontSize: '0.75rem', color: '#BE123C', marginTop: '0.25rem' }}>{resend.reason}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-danger-text)', marginTop: '0.25rem' }}>{resend.reason}</div>
                           )}
                         </td>
                       </tr>

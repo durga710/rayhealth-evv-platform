@@ -50,12 +50,12 @@ function isThisMonth(dateStr: string): boolean {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
-    verified:  { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Verified' },
-    pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
-    flagged:   { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Flagged' },
-    corrected: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Corrected' },
+    verified:  { bg: 'var(--color-success-bg)', color: 'var(--color-success)', border: 'var(--color-success-border)', label: 'Verified' },
+    pending:   { bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)', label: 'Pending' },
+    flagged:   { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)', label: 'Flagged' },
+    corrected: { bg: 'var(--color-info-bg)', color: 'var(--color-primary)', border: 'var(--color-info-border)', label: 'Corrected' },
   };
-  const fallback = { bg: '#F1F5F9', color: '#475569', border: '#E2E8F0', label: status || 'Unknown' };
+  const fallback = { bg: 'var(--color-surface-soft)', color: 'var(--color-text-secondary)', border: 'var(--color-border)', label: status || 'Unknown' };
   const s = map[status] ?? fallback;
   return (
     <span style={{
@@ -111,7 +111,7 @@ export function CaregiverDashboard() {
       <div style={{ maxWidth: '900px' }}>
         <style>{`@keyframes rh-pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }`}</style>
         <div style={{
-          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
           borderRadius: '16px',
           height: '100px',
           marginBottom: '1.75rem',
@@ -120,14 +120,14 @@ export function CaregiverDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
           {[0, 1, 2].map((i) => (
             <div key={i} style={{
-              background: '#fff',
-              border: '1px solid #E2E8F0',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '12px',
               padding: '1.25rem 1.5rem',
               animation: 'rh-pulse 1.5s ease-in-out infinite',
             }}>
-              <div style={{ background: '#F1F5F9', borderRadius: '6px', height: '10px', width: '55%', marginBottom: '0.85rem' }} />
-              <div style={{ background: '#E2E8F0', borderRadius: '6px', height: '28px', width: '40%' }} />
+              <div style={{ background: 'var(--color-surface-soft)', borderRadius: '6px', height: '10px', width: '55%', marginBottom: '0.85rem' }} />
+              <div style={{ background: 'var(--color-border)', borderRadius: '6px', height: '28px', width: '40%' }} />
             </div>
           ))}
         </div>
@@ -147,10 +147,10 @@ export function CaregiverDashboard() {
       label: 'Hours This Week',
       value: formatHours(weekHours),
       sub: 'completed shifts',
-      accent: '#6366F1',
+      accent: 'var(--color-primary)',
       iconBg: 'rgba(99,102,241,0.10)',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
         </svg>
@@ -160,10 +160,10 @@ export function CaregiverDashboard() {
       label: 'Visits This Month',
       value: String(monthVisits),
       sub: 'completed visits',
-      accent: '#10B981',
+      accent: 'var(--color-success)',
       iconBg: 'rgba(16,185,129,0.10)',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
           <circle cx="12" cy="12" r="3" />
         </svg>
@@ -173,10 +173,10 @@ export function CaregiverDashboard() {
       label: 'Total Hours Worked',
       value: formatHours(totalHours),
       sub: 'all time',
-      accent: '#0EA5E9',
+      accent: 'var(--color-primary)',
       iconBg: 'rgba(14,165,233,0.10)',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
         </svg>
       ),
@@ -188,7 +188,7 @@ export function CaregiverDashboard() {
 
       {/* ── Hero banner ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+        background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
         borderRadius: '16px',
         padding: '2rem 2.25rem',
         marginBottom: '1.75rem',
@@ -205,7 +205,7 @@ export function CaregiverDashboard() {
           background: 'rgba(255,255,255,0.05)',
           pointerEvents: 'none',
         }} />
-        <h1 style={{ fontSize: '1.625rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: '1.625rem', fontWeight: 800, color: 'var(--color-surface)', margin: '0 0 0.3rem', lineHeight: 1.2 }}>
           {greeting}, {firstName}
         </h1>
         <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', margin: 0 }}>
@@ -219,8 +219,8 @@ export function CaregiverDashboard() {
           <div
             key={stat.label}
             style={{
-              background: '#fff',
-              border: '1px solid #E2E8F0',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderTop: `3px solid ${stat.accent}`,
               borderRadius: '12px',
               padding: '1.25rem 1.5rem',
@@ -239,7 +239,7 @@ export function CaregiverDashboard() {
               <div style={{
                 fontSize: '0.7rem',
                 fontWeight: 600,
-                color: '#94A3B8',
+                color: 'var(--color-text-subtle)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 lineHeight: 1.4,
@@ -260,10 +260,10 @@ export function CaregiverDashboard() {
                 {stat.icon}
               </div>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', lineHeight: 1, marginBottom: '0.3rem' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-text)', lineHeight: 1, marginBottom: '0.3rem' }}>
               {stat.value}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{stat.sub}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>{stat.sub}</div>
           </div>
         ))}
       </div>
@@ -273,14 +273,14 @@ export function CaregiverDashboard() {
 
         {/* Recent Visits card */}
         <div style={{
-          background: '#fff',
-          border: '1px solid #E2E8F0',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
           borderRadius: '12px',
           overflow: 'hidden',
         }}>
           <div style={{
             padding: '1rem 1.25rem 0.75rem',
-            borderBottom: '1px solid #F1F5F9',
+            borderBottom: '1px solid var(--color-surface-soft)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -289,18 +289,18 @@ export function CaregiverDashboard() {
               <div style={{
                 fontSize: '0.7rem',
                 fontWeight: 600,
-                color: '#94A3B8',
+                color: 'var(--color-text-subtle)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 marginBottom: '0.2rem',
               }}>
                 Recent Activity
               </div>
-              <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#0F172A', margin: 0 }}>Recent Visits</h2>
+              <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>Recent Visits</h2>
             </div>
             <Link
               to="/portal/visits"
-              style={{ fontSize: '0.8125rem', color: '#6366F1', textDecoration: 'none', fontWeight: 500 }}
+              style={{ fontSize: '0.8125rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 500 }}
             >
               View all →
             </Link>
@@ -308,7 +308,7 @@ export function CaregiverDashboard() {
 
           <div style={{ padding: '0.25rem 0' }}>
             {recentVisits.length === 0 ? (
-              <p style={{ color: '#94A3B8', fontSize: '0.875rem', margin: 0, padding: '1rem 1.25rem' }}>No visits yet</p>
+              <p style={{ color: 'var(--color-text-subtle)', fontSize: '0.875rem', margin: 0, padding: '1rem 1.25rem' }}>No visits yet</p>
             ) : (
               recentVisits.map((v, idx) => (
                 <div
@@ -318,15 +318,15 @@ export function CaregiverDashboard() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.625rem 1.25rem',
-                    borderBottom: idx < recentVisits.length - 1 ? '1px solid #F8FAFC' : 'none',
+                    borderBottom: idx < recentVisits.length - 1 ? '1px solid var(--color-bg)' : 'none',
                     fontSize: '0.8125rem',
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 500, color: '#1E293B' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--color-slate-800)' }}>
                       {new Date(v.clockInTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
-                    <div style={{ color: '#64748B', fontSize: '0.75rem', marginTop: '0.1rem' }}>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', marginTop: '0.1rem' }}>
                       {new Date(v.clockInTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                       {v.clockOutTime && `, ${new Date(v.clockOutTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
                       {v.clockOutTime && ` (${formatHours(hoursFromVisit(v))})`}
@@ -341,14 +341,14 @@ export function CaregiverDashboard() {
 
         {/* My Assignments card */}
         <div style={{
-          background: '#fff',
-          border: '1px solid #E2E8F0',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
           borderRadius: '12px',
           overflow: 'hidden',
         }}>
           <div style={{
             padding: '1rem 1.25rem 0.75rem',
-            borderBottom: '1px solid #F1F5F9',
+            borderBottom: '1px solid var(--color-surface-soft)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -357,18 +357,18 @@ export function CaregiverDashboard() {
               <div style={{
                 fontSize: '0.7rem',
                 fontWeight: 600,
-                color: '#94A3B8',
+                color: 'var(--color-text-subtle)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 marginBottom: '0.2rem',
               }}>
                 Assigned Clients
               </div>
-              <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#0F172A', margin: 0 }}>My Assignments</h2>
+              <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>My Assignments</h2>
             </div>
             <Link
               to="/portal/schedule"
-              style={{ fontSize: '0.8125rem', color: '#6366F1', textDecoration: 'none', fontWeight: 500 }}
+              style={{ fontSize: '0.8125rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 500 }}
             >
               View all →
             </Link>
@@ -376,7 +376,7 @@ export function CaregiverDashboard() {
 
           <div style={{ padding: '0.25rem 0' }}>
             {assignments.length === 0 ? (
-              <p style={{ color: '#94A3B8', fontSize: '0.875rem', margin: 0, padding: '1rem 1.25rem' }}>No assignments</p>
+              <p style={{ color: 'var(--color-text-subtle)', fontSize: '0.875rem', margin: 0, padding: '1rem 1.25rem' }}>No assignments</p>
             ) : (
               <>
                 {assignments.slice(0, 5).map((a, idx) => {
@@ -389,7 +389,7 @@ export function CaregiverDashboard() {
                         alignItems: 'center',
                         gap: '0.75rem',
                         padding: '0.625rem 1.25rem',
-                        borderBottom: idx < Math.min(assignments.length, 5) - 1 ? '1px solid #F8FAFC' : 'none',
+                        borderBottom: idx < Math.min(assignments.length, 5) - 1 ? '1px solid var(--color-bg)' : 'none',
                         fontSize: '0.8125rem',
                       }}
                     >
@@ -397,11 +397,11 @@ export function CaregiverDashboard() {
                         width: '34px',
                         height: '34px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+                        background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#fff',
+                        color: 'var(--color-surface)',
                         fontSize: '0.8125rem',
                         fontWeight: 700,
                         flexShrink: 0,
@@ -409,11 +409,11 @@ export function CaregiverDashboard() {
                         {initial}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontWeight: 500, color: 'var(--color-slate-800)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {a.clientName}
                         </div>
                         {a.serviceCode && (
-                          <div style={{ color: '#64748B', fontSize: '0.75rem', marginTop: '0.1rem' }}>
+                          <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', marginTop: '0.1rem' }}>
                             {a.serviceCode}
                           </div>
                         )}
@@ -422,7 +422,7 @@ export function CaregiverDashboard() {
                   );
                 })}
                 {assignments.length > 5 && (
-                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', padding: '0.5rem 1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)', padding: '0.5rem 1.25rem' }}>
                     +{assignments.length - 5} more
                   </div>
                 )}

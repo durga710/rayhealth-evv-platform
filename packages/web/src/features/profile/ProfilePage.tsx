@@ -145,13 +145,13 @@ export function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', color: '#64748B' }}>Loading profile…</div>
+      <div style={{ padding: '2rem', color: 'var(--color-text-muted)' }}>Loading profile…</div>
     );
   }
 
   if (error && !profile) {
     return (
-      <div style={{ padding: '2rem', color: '#EF4444' }}>{error}</div>
+      <div style={{ padding: '2rem', color: 'var(--color-danger)' }}>{error}</div>
     );
   }
 
@@ -160,16 +160,16 @@ export function ProfilePage() {
 
   return (
     <div style={{ maxWidth: '900px' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.25rem' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.25rem' }}>
         My Profile
       </h1>
-      <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '2rem' }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
         Manage your account details and security settings
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left column: avatar + account info */}
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.5rem', textAlign: 'center' }}>
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem', textAlign: 'center' }}>
           <div
             style={{
               width: '96px',
@@ -177,14 +177,14 @@ export function ProfilePage() {
               borderRadius: '50%',
               margin: '0 auto 1rem',
               overflow: 'hidden',
-              background: 'var(--color-primary, #107480)',
+              background: 'var(--color-primary, var(--color-primary))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '2rem',
               fontWeight: 700,
-              color: '#fff',
-              border: '3px solid #E2E8F0',
+              color: 'var(--color-surface)',
+              border: '3px solid var(--color-border)',
               flexShrink: 0,
             }}
           >
@@ -210,9 +210,9 @@ export function ProfilePage() {
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 500,
-                color: 'var(--color-primary, #107480)',
+                color: 'var(--color-primary, var(--color-primary))',
                 background: 'transparent',
-                border: '1px solid var(--color-primary, #107480)',
+                border: '1px solid var(--color-primary, var(--color-primary))',
                 borderRadius: '6px',
                 padding: '0.35rem 0.75rem',
                 cursor: 'pointer',
@@ -227,9 +227,9 @@ export function ProfilePage() {
                 style={{
                   fontSize: '0.75rem',
                   fontWeight: 500,
-                  color: '#EF4444',
+                  color: 'var(--color-danger)',
                   background: 'transparent',
-                  border: '1px solid #FECACA',
+                  border: '1px solid var(--color-danger-border)',
                   borderRadius: '6px',
                   padding: '0.35rem 0.75rem',
                   cursor: 'pointer',
@@ -240,29 +240,29 @@ export function ProfilePage() {
             )}
           </div>
 
-          <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginBottom: '1.25rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)', marginBottom: '1.25rem' }}>
             JPG, PNG, GIF up to 300 KB
           </div>
 
-          <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '1rem', textAlign: 'left' }}>
+          <div style={{ borderTop: '1px solid var(--color-surface-soft)', paddingTop: '1rem', textAlign: 'left' }}>
             <div style={{ marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
                 Email
               </div>
-              <div style={{ fontSize: '0.8125rem', color: '#334155', wordBreak: 'break-all' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', wordBreak: 'break-all' }}>
                 {profile?.email}
               </div>
             </div>
             <div style={{ marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
                 Role
               </div>
               <span style={{
                 display: 'inline-block',
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                background: 'var(--color-primary-bg, #EEF2FF)',
-                color: 'var(--color-primary, #107480)',
+                background: 'var(--color-primary-bg, var(--color-info-bg))',
+                color: 'var(--color-primary, var(--color-primary))',
                 borderRadius: '100px',
                 padding: '0.15rem 0.6rem',
                 textTransform: 'capitalize',
@@ -271,10 +271,10 @@ export function ProfilePage() {
               </span>
             </div>
             <div>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
                 Member since
               </div>
-              <div style={{ fontSize: '0.8125rem', color: '#334155' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                 {memberSince}
               </div>
             </div>
@@ -284,20 +284,20 @@ export function ProfilePage() {
         {/* Right column: profile form + password form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Personal info */}
-          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#0F172A', marginBottom: '1.25rem' }}>
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '1.25rem' }}>
               Personal Information
             </h2>
 
             {error && (
-              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#DC2626' }}>
+              <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--color-danger)' }}>
                 {error}
               </div>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>First name</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>First name</span>
                 <input
                   type="text"
                   value={firstName}
@@ -308,7 +308,7 @@ export function ProfilePage() {
                 />
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>Last name</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Last name</span>
                 <input
                   type="text"
                   value={lastName}
@@ -321,18 +321,18 @@ export function ProfilePage() {
             </div>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>Email address</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Email address</span>
               <input
                 type="email"
                 value={profile?.email ?? ''}
                 readOnly
-                style={{ ...inputStyle, background: '#F8FAFC', color: '#64748B', cursor: 'default' }}
+                style={{ ...inputStyle, background: 'var(--color-bg)', color: 'var(--color-text-muted)', cursor: 'default' }}
               />
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Email cannot be changed here. Contact support.</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>Email cannot be changed here. Contact support.</span>
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.25rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>Phone number</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Phone number</span>
               <input
                 type="tel"
                 value={phone}
@@ -353,28 +353,28 @@ export function ProfilePage() {
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
               {saveMsg && (
-                <span style={{ fontSize: '0.875rem', color: '#16A34A' }}>{saveMsg}</span>
+                <span style={{ fontSize: '0.875rem', color: 'var(--color-success)' }}>{saveMsg}</span>
               )}
             </div>
           </div>
 
           {/* Change password */}
-          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#0F172A', marginBottom: '0.25rem' }}>
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.25rem' }}>
               Change Password
             </h2>
-            <p style={{ fontSize: '0.8125rem', color: '#64748B', marginBottom: '1.25rem' }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
               Must be at least 12 characters and different from your current password.
             </p>
 
             {pwError && (
-              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#DC2626' }}>
+              <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--color-danger)' }}>
                 {pwError}
               </div>
             )}
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>Current password</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Current password</span>
               <input
                 type="password"
                 value={currentPassword}
@@ -385,7 +385,7 @@ export function ProfilePage() {
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>New password</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>New password</span>
               <input
                 type="password"
                 value={newPassword}
@@ -396,7 +396,7 @@ export function ProfilePage() {
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.25rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#374151' }}>Confirm new password</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Confirm new password</span>
               <input
                 type="password"
                 value={confirmPassword}
@@ -405,12 +405,12 @@ export function ProfilePage() {
                 style={{
                   ...inputStyle,
                   ...(confirmPassword && newPassword !== confirmPassword
-                    ? { borderColor: '#EF4444', outline: 'none' }
+                    ? { borderColor: 'var(--color-danger)', outline: 'none' }
                     : {}),
                 }}
               />
               {confirmPassword && newPassword !== confirmPassword && (
-                <span style={{ fontSize: '0.75rem', color: '#EF4444' }}>Passwords do not match</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-danger)' }}>Passwords do not match</span>
               )}
             </label>
 
@@ -427,7 +427,7 @@ export function ProfilePage() {
                 {pwSaving ? 'Updating…' : 'Update password'}
               </button>
               {pwMsg && (
-                <span style={{ fontSize: '0.875rem', color: '#16A34A' }}>{pwMsg}</span>
+                <span style={{ fontSize: '0.875rem', color: 'var(--color-success)' }}>{pwMsg}</span>
               )}
             </div>
           </div>
@@ -441,9 +441,9 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5rem 0.75rem',
   fontSize: '0.875rem',
-  color: '#0F172A',
-  background: '#fff',
-  border: '1px solid #CBD5E1',
+  color: 'var(--color-text)',
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '8px',
   outline: 'none',
   boxSizing: 'border-box',
@@ -453,8 +453,8 @@ const primaryButtonStyle: React.CSSProperties = {
   padding: '0.5rem 1.25rem',
   fontSize: '0.875rem',
   fontWeight: 600,
-  color: '#fff',
-  background: 'var(--color-primary, #107480)',
+  color: 'var(--color-surface)',
+  background: 'var(--color-primary, var(--color-primary))',
   border: 'none',
   borderRadius: '8px',
   cursor: 'pointer',

@@ -83,9 +83,9 @@ const faqs: Faq[] = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -183,20 +183,20 @@ export function EvvSolutionPage() {
               <Chrome url="RayHealth mobile &middot; Visit verified" />
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 14 }}>
                 {/* map box with a pin */}
-                <div style={{ position: 'relative', height: 132, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)', background: 'linear-gradient(135deg,#eef3ee,#e4ece6)' }}>
+                <div style={{ position: 'relative', height: 132, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)', background: 'linear-gradient(135deg,var(--color-success-bg),var(--color-success-bg))' }}>
                   <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px)', backgroundSize: '26px 26px', opacity: 0.7 }} />
-                  <div aria-hidden style={{ position: 'absolute', top: 26, left: 0, right: 0, height: 8, background: '#cfe0d4' }} />
-                  <div aria-hidden style={{ position: 'absolute', top: 0, bottom: 0, left: '62%', width: 10, background: '#cfe0d4' }} />
+                  <div aria-hidden style={{ position: 'absolute', top: 26, left: 0, right: 0, height: 8, background: 'var(--color-success-border)' }} />
+                  <div aria-hidden style={{ position: 'absolute', top: 0, bottom: 0, left: '62%', width: 10, background: 'var(--color-success-border)' }} />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-100%)', color: 'var(--accent-deep)' }}>
                     {mkic(<><circle cx="12" cy="10" r="3" /><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z" /></>)}
                   </div>
-                  <div style={{ position: 'absolute', bottom: 8, left: 8 }}>{pill('#e7f3f4', '#0c5d66', 'Within client home')}</div>
+                  <div style={{ position: 'absolute', bottom: 8, left: 8 }}>{pill('var(--color-primary-bg)', 'var(--color-primary-dark)', 'Within client home')}</div>
                 </div>
                 {/* element checklist */}
                 <div style={{ marginTop: 12 }}>
                   {verifyRows.map((r, i) => (
                     <div key={r.l} style={{ display: 'flex', alignItems: 'center', gap: '.55rem', padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none', fontSize: '.82rem' }}>
-                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: '#e7f6ec', color: '#16a34a', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
+                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: 'var(--color-success-bg)', color: 'var(--color-success)', flexShrink: 0 }}>{mkic(MK_CHECK)}</span>
                       <span style={{ color: 'var(--mut)', minWidth: 96 }}>{r.l}</span>
                       <span style={{ color: 'var(--ink)', fontWeight: 600, marginLeft: 'auto' }}>{r.v}</span>
                     </div>
@@ -219,15 +219,15 @@ export function EvvSolutionPage() {
               </ul>
             </div>
             <div className="mk-visual">
-              <Chrome url="app.rayhealthevv.com &middot; Visit #4821" />
+              <Chrome url="app.rayhealthevv.com &middot; Visit var(--color-success-bg)" />
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
                   <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '.9rem' }}>Visit verified &amp; locked</div>
-                  {pill('#e7f3f4', '#0c5d66', 'Mapped to Sandata')}
+                  {pill('var(--color-primary-bg)', 'var(--color-primary-dark)', 'Mapped to Sandata')}
                 </div>
-                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: '#e7f3f4', borderRadius: 10, border: '1px solid #cdeede' }}>
-                  <span style={{ color: '#0c5d66', flexShrink: 0 }}>{mkic(<><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>)}</span>
-                  <div style={{ fontSize: '.82rem', color: '#0a5c40', lineHeight: 1.5 }}>
+                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: 'var(--color-primary-bg)', borderRadius: 10, border: '1px solid var(--color-success-border)' }}>
+                  <span style={{ color: 'var(--color-primary-dark)', flexShrink: 0 }}>{mkic(<><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>)}</span>
+                  <div style={{ fontSize: '.82rem', color: 'var(--color-success-text)', lineHeight: 1.5 }}>
                     <strong>Tamper-evident.</strong> Verified by GPS at 10:01 AM. Any edit is logged with user and timestamp.
                   </div>
                 </div>

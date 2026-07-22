@@ -1,29 +1,28 @@
 /* ==========================================================================
-   RayHealth EVV. Design System
-   Dark sidebar + light content (inspired by Linear/Rippling/Gusto)
+   RayHealth EVV design system
+   One teal + orange visual language for public, admin, and caregiver pages.
    ========================================================================== */
 
 :root {
-  /* Brand colors. Purple primary + Deep Red accent (2026-05-26 rebrand).
-     Replaces the prior indigo + indigo-alias system. Contrast against the
-     #F8FAFC content bg: primary 5.61:1, primary-dark 6.66:1, accent 6.44:1
-     All clear WCAG AA for body text and AAA for UI surfaces. */
-  --color-primary: #107480;        /* violet-600, strong, regal, healthcare-trustworthy */
-  --color-primary-dark: #0c5d66;   /* violet-700, headings, focus, hover */
-  --color-primary-light: #7fc7cf;  /* violet-300, soft tints, sidebar-active */
+  /* Brand. Teal communicates clinical trust; orange is the deliberate
+     high-energy accent. These are the only non-semantic hues in the UI. */
+  --color-primary: #107480;
+  --color-primary-dark: #0C5D66;
+  --color-primary-light: #7FC7CF;
   --color-primary-bg: rgba(16, 116, 128, 0.08);
 
-  /* Deep Red accent. Distinct from the danger semantic, accent is the
-     secondary brand color (CTAs, badges, attention chips) while danger is
-     reserved for error states. */
-  --color-accent: #ee6c2c;         /* RayHealth orange, brand accent */
-  --color-accent-dark: #d8551b;    /* deep orange, pressed/hover */
-  --color-accent-light: #fcd9c2;   /* soft orange, accent-bg tints */
+  --color-accent: #EE6C2C;
+  --color-accent-dark: #D8551B;
+  --color-accent-light: #FCD9C2;
   --color-accent-bg: rgba(238, 108, 44, 0.08);
+  --color-on-brand: #FFFFFF;
+  --color-text-on-dark: #F8FAFC;
 
   /* Surfaces */
   --color-bg: #F8FAFC;             /* slate-50, main content bg */
   --color-surface: #FFFFFF;        /* card/form bg */
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-soft: #F1F5F9;
   --color-sidebar: #0F172A;        /* slate-900, dark sidebar (kept) */
   --color-sidebar-hover: rgba(255, 255, 255, 0.06);
   --color-sidebar-active: rgba(16, 116, 128, 0.22);  /* purple-tinted active */
@@ -38,6 +37,7 @@
   --color-text: #0F172A;           /* slate-900 */
   --color-text-secondary: #475569; /* slate-600 */
   --color-text-muted: #64748B;     /* slate-500, kept richer than design spec for legibility */
+  --color-text-subtle: #94A3B8;
 
   /* Semantic, kept independent of brand colors. Danger uses red-600 (not the
      accent red-700) so a true error state reads distinct from brand chrome. */
@@ -91,10 +91,15 @@
   --shadow-md: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.05);
   --shadow-focus: 0 0 0 3px rgba(16, 116, 128, 0.28);
+  --shadow-brand: 0 14px 30px -16px rgba(12, 93, 102, 0.72);
+  --shadow-card-hover: 0 22px 50px -28px rgba(12, 93, 102, 0.42), 0 8px 20px -16px rgba(15, 23, 42, 0.28);
 
   /* Dark "command panel" surface (AI briefing, callouts on light pages) , 
      named gradient so no component hardcodes the sidebar-adjacent hex pair. */
   --gradient-panel-dark: linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-slate-800) 100%);
+  --gradient-brand: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 58%, var(--color-accent) 135%);
+  --gradient-brand-hover: linear-gradient(135deg, #084D55 0%, var(--color-primary-dark) 58%, var(--color-accent-dark) 135%);
+  --gradient-page: radial-gradient(circle at 12% -10%, rgba(127, 199, 207, 0.26), transparent 28rem), linear-gradient(180deg, #F4FAFA 0%, var(--color-bg) 24rem);
 }
 
 /* ==========================================================================
@@ -112,6 +117,8 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--color-bg);
+  background-image: var(--gradient-page);
+  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -127,17 +134,17 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
 }
 
-h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
-h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; }
-h3 { font-size: 1.125rem; font-weight: 600; }
-h4 { font-size: 1rem; font-weight: 600; }
+h1 { font-size: 1.875rem; font-weight: 800; letter-spacing: -0.025em; }
+h2 { font-size: 1.5rem; font-weight: 750; letter-spacing: -0.02em; }
+h3 { font-size: 1.125rem; font-weight: 700; }
+h4 { font-size: 1rem; font-weight: 700; }
 
 p {
   margin: 0;
@@ -151,6 +158,12 @@ a {
 
 a:hover {
   color: var(--color-primary-dark);
+}
+
+a:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 3px solid rgba(16, 116, 128, 0.34);
+  outline-offset: 3px;
 }
 
 code {
@@ -277,20 +290,23 @@ select {
 button {
   font-family: inherit;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   padding: 0.625rem 1rem;
-  background-color: var(--color-primary);
-  color: white;
+  min-height: 40px;
+  background: var(--gradient-brand);
+  color: var(--color-on-brand);
+  box-shadow: var(--shadow-brand);
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
   outline: none;
 }
 
 button:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
+  background: var(--gradient-brand-hover);
+  transform: translateY(-1px);
 }
 
 button:focus-visible {
@@ -417,40 +433,44 @@ button:disabled {
    ========================================================================== */
 
 .form-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
+  box-shadow: var(--shadow-md);
 }
 
 .stat-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-strong);
+  border-top: 3px solid var(--color-primary);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.25rem 1.4rem;
   transition: box-shadow 0.18s ease, transform 0.18s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .stat-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-3px);
 }
 
 .action-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .action-card:hover {
-  border-color: var(--color-primary-light);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-3px);
 }
 
 .page-header {
@@ -595,7 +615,7 @@ button:disabled {
 .admin-sidebar {
   width: 240px;
   flex-shrink: 0;
-  background-color: var(--color-sidebar);
+  background: linear-gradient(180deg, #0B2730 0%, var(--color-sidebar) 44%, #09131F 100%);
   color: var(--color-sidebar-text);
   display: flex;
   flex-direction: column;
@@ -604,6 +624,8 @@ button:disabled {
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  border-right: 1px solid rgba(127, 199, 207, 0.18);
+  box-shadow: 16px 0 42px -34px rgba(15, 23, 42, 0.72);
 }
 
 .admin-sidebar__brand {
@@ -623,7 +645,7 @@ button:disabled {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
+  background: var(--gradient-brand);
   display: grid;
   place-items: center;
   font-size: 0.875rem;
@@ -634,7 +656,7 @@ button:disabled {
 }
 
 .admin-sidebar__evv-badge {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
+  background: var(--gradient-brand);
   color: white;
   font-size: 0.6rem;
   font-weight: 700;
@@ -736,7 +758,7 @@ button:disabled {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #5fbfca 100%);
+  background: var(--gradient-brand);
   color: white;
   display: grid;
   place-items: center;
@@ -781,12 +803,13 @@ button:disabled {
 .admin-main {
   flex: 1;
   background-color: var(--color-bg);
+  background-image: var(--gradient-page);
   overflow-y: auto;
   min-height: 100vh;
 }
 
 .admin-main__inner {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 2.5rem;
 }
@@ -840,13 +863,23 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
+  position: relative;
+}
+
+.page-shell::before {
+  content: '';
+  width: 72px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gradient-brand);
+  box-shadow: var(--shadow-brand);
 }
 
 /* ---- PageHeader (extends the existing .page-header) ---- */
 .page-header__eyebrow {
   display: inline-block;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--color-primary);
   text-decoration: none;
   margin-bottom: var(--space-2);
@@ -883,31 +916,33 @@ button:disabled {
   margin: 0;
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--color-text-muted);
+  color: var(--color-primary-dark);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
 
 .section-card--bordered {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
+  box-shadow: var(--shadow-md);
 }
 
 /* ---- MetricCard ---- */
 .metric-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.25rem 1.4rem;
   border-top: 3px solid var(--color-primary);
   transition: box-shadow 0.18s ease, transform 0.18s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .metric-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-3px);
 }
 
 .metric-card[data-tone='accent'] { border-top-color: var(--color-accent); }

@@ -46,9 +46,9 @@ interface InsightsPanelProps {
 
 const SEVERITY_STYLES: Record<InsightSeverity, { bg: string; border: string; fg: string; icon: ReactNode }> = {
   critical: {
-    bg: '#FCEBEB',
-    border: '#E24B4A',
-    fg: '#791F1F',
+    bg: 'var(--color-danger-bg)',
+    border: 'var(--color-danger)',
+    fg: 'var(--color-danger-text)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -58,9 +58,9 @@ const SEVERITY_STYLES: Record<InsightSeverity, { bg: string; border: string; fg:
     ),
   },
   warning: {
-    bg: '#FAEEDA',
-    border: '#BA7517',
-    fg: '#633806',
+    bg: 'var(--color-accent-bg)',
+    border: 'var(--color-accent-dark)',
+    fg: 'var(--color-accent-dark)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <circle cx="12" cy="12" r="10" />
@@ -69,9 +69,9 @@ const SEVERITY_STYLES: Record<InsightSeverity, { bg: string; border: string; fg:
     ),
   },
   info: {
-    bg: '#E6F1FB',
-    border: '#185FA5',
-    fg: '#0C447C',
+    bg: 'var(--color-info-bg)',
+    border: 'var(--color-primary)',
+    fg: 'var(--color-primary-dark)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <circle cx="12" cy="12" r="10" />
@@ -113,7 +113,7 @@ export function InsightsPanel({ refreshKey = 0 }: InsightsPanelProps): ReactElem
     return (
       <section style={{ marginTop: '2rem' }}>
         <SectionHeader />
-        <p style={{ color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>Loading insights…</p>
+        <p style={{ color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>Loading insights…</p>
       </section>
     );
   }
@@ -137,7 +137,7 @@ export function InsightsPanel({ refreshKey = 0 }: InsightsPanelProps): ReactElem
           <p style={{ margin: 0 }}>
             <strong>All clear.</strong> No actionable training items right now.
           </p>
-          <p style={{ margin: '0.5rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.85rem' }}>
+          <p style={{ margin: '0.5rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.85rem' }}>
             Compliance signals refresh on every page load. Last checked {formatTime(envelope?.generatedAt ?? new Date().toISOString())}.
           </p>
         </div>
@@ -162,11 +162,11 @@ export function InsightsPanel({ refreshKey = 0 }: InsightsPanelProps): ReactElem
 function SectionHeader({ subtitle }: { subtitle?: string }): ReactElement {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.85rem' }}>
-      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: 'var(--color-text-muted, #475569)' }}>
+      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: 'var(--color-text-muted, var(--color-text-secondary))' }}>
         Compliance signals
       </h3>
       {subtitle && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #94a3b8)' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, var(--color-text-subtle))' }}>
           {subtitle}
         </span>
       )}
@@ -229,7 +229,7 @@ function chipStyle(color: string): React.CSSProperties {
     display: 'inline-flex',
     alignItems: 'center',
     padding: '0.25rem 0.6rem',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     color,
     fontSize: '0.8rem',
     borderRadius: '12px',
@@ -240,15 +240,15 @@ function chipStyle(color: string): React.CSSProperties {
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
 };
 
 const emptyStyle: React.CSSProperties = {
   padding: '1rem 1.25rem',
-  backgroundColor: '#E1F5EE',
+  backgroundColor: 'var(--color-success-bg)',
   borderRadius: '8px',
-  borderLeft: '4px solid #10A4A4',
-  color: '#085041',
+  borderLeft: '4px solid var(--color-primary-dark)',
+  color: 'var(--color-primary-dark)',
 };

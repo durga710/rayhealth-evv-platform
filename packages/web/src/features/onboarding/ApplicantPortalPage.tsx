@@ -28,10 +28,10 @@ const DOC_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<PortalDocument['status'], { label: string; color: string; bg: string }> = {
-  requested: { label: 'Needed', color: '#8A4B12', bg: '#FBEFE0' },
-  submitted: { label: 'Submitted — under review', color: '#1D4ED8', bg: '#EFF6FF' },
-  verified: { label: 'Verified', color: '#047857', bg: '#ECFDF5' },
-  rejected: { label: 'Rejected — please re-upload', color: '#96222E', bg: '#F8ECE8' },
+  requested: { label: 'Needed', color: 'var(--color-accent-dark)', bg: 'var(--color-accent-bg)' },
+  submitted: { label: 'Submitted — under review', color: 'var(--color-primary-dark)', bg: 'var(--color-info-bg)' },
+  verified: { label: 'Verified', color: 'var(--color-success-text)', bg: 'var(--color-success-bg)' },
+  rejected: { label: 'Rejected — please re-upload', color: 'var(--color-primary)', bg: 'var(--color-primary-bg)' },
 };
 
 const ACCEPTED = '.jpg,.jpeg,.png,.webp,.pdf';
@@ -113,7 +113,7 @@ export function ApplicantPortalPage() {
     return (
       <div className="pub-root" style={{ display: 'grid', placeItems: 'center' }}>
         <PublicBrandStyles />
-        <span style={{ color: 'var(--pub-faint, #8A7B74)' }}>Loading your portal…</span>
+        <span style={{ color: 'var(--pub-faint, var(--color-text-muted))' }}>Loading your portal…</span>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export function ApplicantPortalPage() {
             <span style={{ color: 'var(--pub-brand)', fontStyle: 'italic', fontWeight: 500 }}>01</span> · Your interview
           </h2>
           {interviewDone ? (
-            <p style={{ margin: 0, color: '#047857', fontWeight: 600 }}>
+            <p style={{ margin: 0, color: 'var(--color-success-text)', fontWeight: 600 }}>
               ✓ Interview complete. Thanks — the team will review your responses.
             </p>
           ) : (
@@ -177,7 +177,7 @@ export function ApplicantPortalPage() {
               const style = STATUS_STYLE[doc.status];
               const canUpload = doc.status === 'requested' || doc.status === 'rejected';
               return (
-                <div key={doc.id} style={{ border: '1px solid var(--pub-line)', borderRadius: 14, padding: '0.9rem 1.05rem', background: '#fff' }}>
+                <div key={doc.id} style={{ border: '1px solid var(--pub-line)', borderRadius: 14, padding: '0.9rem 1.05rem', background: 'var(--color-surface)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ fontWeight: 700, color: 'var(--pub-ink)' }}>{DOC_LABELS[doc.documentType] ?? doc.documentType}</div>

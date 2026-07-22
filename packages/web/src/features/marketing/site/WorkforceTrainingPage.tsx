@@ -47,9 +47,9 @@ const faqs = [
 
 const Chrome = ({ url }: { url: string }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '0 4px 14px' }}>
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-danger)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-warning)' }} />
+    <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-success-text)' }} />
     <span style={{ marginLeft: '.5rem', fontSize: '.72rem', color: 'var(--mut)', fontWeight: 500 }}>{url}</span>
   </div>
 );
@@ -134,10 +134,10 @@ export function WorkforceTrainingPage() {
               <Chrome url="app.rayhealthevv.com · Maria Santos" />
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 14 }}>
                 {[
-                  { n: 'Background check', s: 'Valid', c: '#16a34a', bg: '#e7f6ec', d: 'Expires Apr 2027' },
-                  { n: 'TB test', s: 'Valid', c: '#16a34a', bg: '#e7f6ec', d: 'Expires Nov 2026' },
-                  { n: 'FBI clearance', s: 'Expiring', c: '#b45309', bg: '#fdf1e3', d: 'In 14 days' },
-                  { n: 'CPR / First aid', s: 'Valid', c: '#16a34a', bg: '#e7f6ec', d: 'Expires Jan 2027' },
+                  { n: 'Background check', s: 'Valid', c: 'var(--color-success)', bg: 'var(--color-success-bg)', d: 'Expires Apr 2027' },
+                  { n: 'TB test', s: 'Valid', c: 'var(--color-success)', bg: 'var(--color-success-bg)', d: 'Expires Nov 2026' },
+                  { n: 'FBI clearance', s: 'Expiring', c: 'var(--color-warning-text)', bg: 'var(--color-accent-bg)', d: 'In 14 days' },
+                  { n: 'CPR / First aid', s: 'Valid', c: 'var(--color-success)', bg: 'var(--color-success-bg)', d: 'Expires Jan 2027' },
                 ].map((r, i) => (
                   <div key={r.n} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                     <div><div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '.85rem' }}>{r.n}</div><div style={{ color: 'var(--mut)', fontSize: '.72rem' }}>{r.d}</div></div>
@@ -165,10 +165,10 @@ export function WorkforceTrainingPage() {
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontWeight: 700, color: 'var(--ink)' }}>EVV Fundamentals</div>
-                  {pill('#e7f3f4', '#0c5d66', '80% complete')}
+                  {pill('var(--color-primary-bg)', 'var(--color-primary-dark)', '80% complete')}
                 </div>
                 <div style={{ height: 7, borderRadius: 999, background: 'var(--surface)', marginTop: 12, overflow: 'hidden' }}>
-                  <div style={{ width: '80%', height: '100%', background: 'linear-gradient(90deg,#107480,#5fd0d6)' }} />
+                  <div style={{ width: '80%', height: '100%', background: 'linear-gradient(90deg,var(--color-primary),var(--color-primary-light))' }} />
                 </div>
                 <div style={{ marginTop: 14 }}>
                   {[
@@ -178,7 +178,7 @@ export function WorkforceTrainingPage() {
                     { m: 'Quiz · 8 questions', done: false },
                   ].map((m, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.55rem', padding: '9px 0', borderTop: i ? '1px solid var(--line)' : 'none', fontSize: '.85rem', color: 'var(--ink-soft)' }}>
-                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: m.done ? '#e7f6ec' : 'var(--surface)', color: m.done ? '#16a34a' : 'var(--mut)', border: m.done ? 'none' : '1px solid var(--line)' }}>{m.done ? mkic(MK_CHECK) : null}</span>
+                      <span style={{ width: 18, height: 18, borderRadius: 5, display: 'grid', placeItems: 'center', background: m.done ? 'var(--color-success-bg)' : 'var(--surface)', color: m.done ? 'var(--color-success)' : 'var(--mut)', border: m.done ? 'none' : '1px solid var(--line)' }}>{m.done ? mkic(MK_CHECK) : null}</span>
                       {m.m}
                     </div>
                   ))}
@@ -204,11 +204,11 @@ export function WorkforceTrainingPage() {
               <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
                   <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '.9rem' }}>Wed · 10:00 AM · A. Brooks</div>
-                  {pill('#fdecec', '#b91c1c', 'Blocked')}
+                  {pill('var(--color-danger-bg)', 'var(--color-danger-text)', 'Blocked')}
                 </div>
-                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: '#fdecec', borderRadius: 10, border: '1px solid #f6d4d4' }}>
-                  <span style={{ color: '#b91c1c', flexShrink: 0 }}>{mkic(<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>)}</span>
-                  <div style={{ fontSize: '.82rem', color: '#7f1d1d', lineHeight: 1.5 }}>
+                <div style={{ display: 'flex', gap: '.6rem', marginTop: 12, padding: 12, background: 'var(--color-danger-bg)', borderRadius: 10, border: '1px solid var(--color-danger-border)' }}>
+                  <span style={{ color: 'var(--color-danger-text)', flexShrink: 0 }}>{mkic(<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>)}</span>
+                  <div style={{ fontSize: '.82rem', color: 'var(--color-danger-text)', lineHeight: 1.5 }}>
                     <strong>Cannot assign R. Vance.</strong> CPR / First aid expired 3 days ago. Renew the credential or choose an eligible caregiver.
                   </div>
                 </div>
@@ -236,9 +236,9 @@ export function WorkforceTrainingPage() {
             <div className="mk-card" style={{ background: 'var(--paper)' }}>
               <div style={{ fontWeight: 700, color: 'var(--ink)', marginBottom: 14 }}>Training compliance · this quarter</div>
               {[
-                { l: 'Current on annual hours', v: '83%', c: '#16a34a' },
-                { l: 'In progress', v: '12%', c: '#b45309' },
-                { l: 'Overdue', v: '5%', c: '#b91c1c' },
+                { l: 'Current on annual hours', v: '83%', c: 'var(--color-success)' },
+                { l: 'In progress', v: '12%', c: 'var(--color-warning-text)' },
+                { l: 'Overdue', v: '5%', c: 'var(--color-danger-text)' },
               ].map((r) => (
                 <div key={r.l} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.85rem', color: 'var(--ink-soft)' }}><span>{r.l}</span><span style={{ fontWeight: 600, color: r.c }}>{r.v}</span></div>

@@ -19,7 +19,7 @@ type PageState =
 
 function CheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#107480" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -117,7 +117,7 @@ export function AcceptInvitePage() {
   const brandPanel = (
     <aside
       style={{
-        backgroundColor: '#0F172A',
+        backgroundColor: 'var(--color-text)',
         color: 'white',
         padding: '3rem 4rem',
         display: 'flex',
@@ -156,7 +156,7 @@ export function AcceptInvitePage() {
         RayHealth
         <span
           style={{
-            background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
+            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
             color: 'white',
             padding: '3px 8px',
             borderRadius: '5px',
@@ -174,7 +174,7 @@ export function AcceptInvitePage() {
         <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, margin: 0, color: 'white', fontWeight: 700, letterSpacing: '-0.02em' }}>
           Set up your care account.
         </h1>
-        <p style={{ margin: 0, color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: 'var(--color-border-strong)', fontSize: '1rem', lineHeight: 1.6 }}>
           You've been invited to join your agency on RayHealthEVV™. Create your password to finish setting up your account.
         </p>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -183,7 +183,7 @@ export function AcceptInvitePage() {
             'This link is single-use and expires after acceptance.',
             'After setup, sign in at rayhealthevv.com/login.',
           ].map((point) => (
-            <li key={point} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+            <li key={point} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', color: 'var(--color-text-subtle)', fontSize: '0.9rem', lineHeight: 1.5 }}>
               <CheckIcon />
               <span>{point}</span>
             </li>
@@ -191,7 +191,7 @@ export function AcceptInvitePage() {
         </ul>
       </div>
 
-      <div style={{ position: 'relative', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.04em' }}>
+      <div style={{ position: 'relative', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
         Pennsylvania-only &middot; HIPAA-aware &middot; 21st Century Cures Act compliant
       </div>
     </aside>
@@ -202,7 +202,7 @@ export function AcceptInvitePage() {
       <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', backgroundColor: 'white' }}>
         {brandPanel}
         <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-          <p style={{ color: '#64748B' }}>Loading invite…</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>Loading invite…</p>
         </main>
       </div>
     );
@@ -214,11 +214,11 @@ export function AcceptInvitePage() {
         {brandPanel}
         <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
           <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#0F172A' }}>Invite unavailable</h2>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)' }}>Invite unavailable</h2>
             <div role="alert" className="info-banner banner-error">
               {pageState.message}
             </div>
-            <Link to="/login" style={{ color: '#107480', fontWeight: 500, fontSize: '0.9375rem' }}>
+            <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 500, fontSize: '0.9375rem' }}>
               Go to sign in →
             </Link>
           </div>
@@ -235,15 +235,15 @@ export function AcceptInvitePage() {
           <div style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
             <div
               aria-hidden
-              style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>Account created!</h2>
-              <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.6 }}>
+              <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>Account created!</h2>
+              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem', lineHeight: 1.6 }}>
                 Your account is ready. Sign in with your email and the password you just set.
               </p>
             </div>
@@ -270,13 +270,13 @@ export function AcceptInvitePage() {
       <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', overflowY: 'auto' }}>
         <div style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+            <h2 style={{ margin: 0, fontSize: '1.625rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
               Create your account
             </h2>
-            <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem', lineHeight: 1.5 }}>
-              Joining <strong style={{ color: '#0F172A' }}>{info.agencyName ?? 'your agency'}</strong> as <span style={{ textTransform: 'capitalize' }}>{info.role}</span>.
+            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem', lineHeight: 1.5 }}>
+              Joining <strong style={{ color: 'var(--color-text)' }}>{info.agencyName ?? 'your agency'}</strong> as <span style={{ textTransform: 'capitalize' }}>{info.role}</span>.
             </p>
-            <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.8125rem' }}>{info.email}</p>
+            <p style={{ margin: 0, color: 'var(--color-text-subtle)', fontSize: '0.8125rem' }}>{info.email}</p>
           </div>
 
           {formError && (
@@ -317,7 +317,7 @@ export function AcceptInvitePage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label htmlFor="phone" className="label">
-                Phone <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span>
+                Phone <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>(optional)</span>
               </label>
               <input
                 id="phone"
@@ -369,9 +369,9 @@ export function AcceptInvitePage() {
             </button>
           </form>
 
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1rem', fontSize: '0.8125rem', color: '#94A3B8' }}>
+          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: '#107480', fontWeight: 500 }}>Sign in</Link>
+            <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>Sign in</Link>
           </div>
         </div>
       </main>

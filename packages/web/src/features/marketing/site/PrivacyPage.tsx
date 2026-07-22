@@ -99,7 +99,7 @@ export function PrivacyPage() {
               }}
             >
               <ul style={{ margin: 0, paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <li style={{ color: '#cfd6d2', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
+                <li style={{ color: 'var(--color-border-strong)', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -111,12 +111,12 @@ export function PrivacyPage() {
                       verticalAlign: 'middle',
                     }}
                   />
-                  <strong style={{ color: '#fff' }}>In transit:</strong>{' '}
+                  <strong style={{ color: 'var(--color-surface)' }}>In transit:</strong>{' '}
                   TLS 1.2+ everywhere. HSTS is enforced
                   on <code style={{ color: 'var(--accent-tint)', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>rayhealthevv.com</code> end-to-end through Cloudflare to
                   our compute origin.
                 </li>
-                <li style={{ color: '#cfd6d2', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
+                <li style={{ color: 'var(--color-border-strong)', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -128,7 +128,7 @@ export function PrivacyPage() {
                       verticalAlign: 'middle',
                     }}
                   />
-                  <strong style={{ color: '#fff' }}>At rest:</strong>{' '}
+                  <strong style={{ color: 'var(--color-surface)' }}>At rest:</strong>{' '}
                   Database storage is encrypted by our
                   Postgres provider (Neon). Two especially sensitive fields , 
                   client Medicaid numbers and caregiver NPIs, get an additional
@@ -136,7 +136,7 @@ export function PrivacyPage() {
                   snapshot exfiltration would expose only ciphertext for those
                   columns.
                 </li>
-                <li style={{ color: '#cfd6d2', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
+                <li style={{ color: 'var(--color-border-strong)', lineHeight: 1.6, listStyle: 'none', display: 'block' }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -148,7 +148,7 @@ export function PrivacyPage() {
                       verticalAlign: 'middle',
                     }}
                   />
-                  <strong style={{ color: '#fff' }}>Mobile credentials:</strong>{' '}
+                  <strong style={{ color: 'var(--color-surface)' }}>Mobile credentials:</strong>{' '}
                   Stored in the device
                   platform's secure storage. We treat short-lived bearer JWTs
                   (8-hour expiry) and any device-level keys as the highest

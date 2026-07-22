@@ -245,7 +245,7 @@ export function EnrollCaregiverModal({
               )}
               <div style={caregiverListStyle}>
                 {filteredCaregivers.length === 0 && (
-                  <p style={{ padding: '0.75rem', margin: 0, color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+                  <p style={{ padding: '0.75rem', margin: 0, color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
                     No active caregivers match.
                   </p>
                 )}
@@ -255,7 +255,7 @@ export function EnrollCaregiverModal({
                   return (
                     <label
                       key={c.id}
-                      style={{ ...caregiverRowStyle, backgroundColor: isSelected ? '#E6F1FB' : 'transparent' }}
+                      style={{ ...caregiverRowStyle, backgroundColor: isSelected ? 'var(--color-info-bg)' : 'transparent' }}
                     >
                       <input
                         type="checkbox"
@@ -265,7 +265,7 @@ export function EnrollCaregiverModal({
                       />
                       <span style={{ flex: 1, marginLeft: '0.6rem' }}>
                         <strong>{c.firstName} {c.lastName}</strong>
-                        <span style={{ color: 'var(--color-text-muted, #64748b)', marginLeft: '0.5rem', fontSize: '0.85rem' }}>
+                        <span style={{ color: 'var(--color-text-muted, var(--color-text-muted))', marginLeft: '0.5rem', fontSize: '0.85rem' }}>
                           {c.email}
                         </span>
                       </span>
@@ -314,7 +314,7 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-surface)',
   borderRadius: '12px',
   width: '100%',
   maxWidth: '560px',
@@ -328,7 +328,7 @@ const headerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '1rem 1.5rem',
-  borderBottom: '1px solid #e2e8f0',
+  borderBottom: '1px solid var(--color-border)',
 };
 
 const bodyStyle: React.CSSProperties = {
@@ -339,7 +339,7 @@ const bodyStyle: React.CSSProperties = {
 
 const footerStyle: React.CSSProperties = {
   padding: '1rem 1.5rem',
-  borderTop: '1px solid #e2e8f0',
+  borderTop: '1px solid var(--color-border)',
   display: 'flex',
   justifyContent: 'flex-end',
   gap: '0.75rem',
@@ -348,7 +348,7 @@ const footerStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '0.85rem',
-  color: 'var(--color-text-muted, #475569)',
+  color: 'var(--color-text-muted, var(--color-text-secondary))',
   marginBottom: '0.4rem',
   fontWeight: 500,
 };
@@ -356,20 +356,20 @@ const labelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5rem 0.75rem',
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '6px',
   fontSize: '0.95rem',
   boxSizing: 'border-box',
 };
 
 const mutedStyle: React.CSSProperties = {
-  color: 'var(--color-text-muted, #94a3b8)',
+  color: 'var(--color-text-muted, var(--color-text-subtle))',
   fontWeight: 400,
   fontSize: '0.8rem',
 };
 
 const caregiverListStyle: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--color-border)',
   borderRadius: '6px',
   maxHeight: '240px',
   overflowY: 'auto',
@@ -379,7 +379,7 @@ const caregiverRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   padding: '0.55rem 0.75rem',
-  borderBottom: '1px solid #f1f5f9',
+  borderBottom: '1px solid var(--color-surface-soft)',
   cursor: 'pointer',
 };
 
@@ -388,7 +388,7 @@ const closeBtnStyle: React.CSSProperties = {
   border: 'none',
   fontSize: '1.5rem',
   cursor: 'pointer',
-  color: 'var(--color-text-muted, #64748b)',
+  color: 'var(--color-text-muted, var(--color-text-muted))',
   padding: 0,
   lineHeight: 1,
   width: '32px',
@@ -396,8 +396,8 @@ const closeBtnStyle: React.CSSProperties = {
 };
 
 const primaryButtonStyle: React.CSSProperties = {
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.55rem 1.1rem',
   borderRadius: '6px',
@@ -408,8 +408,8 @@ const primaryButtonStyle: React.CSSProperties = {
 
 const secondaryButtonStyle: React.CSSProperties = {
   backgroundColor: 'transparent',
-  color: '#475569',
-  border: '1px solid #cbd5e1',
+  color: 'var(--color-text-secondary)',
+  border: '1px solid var(--color-border-strong)',
   padding: '0.55rem 1.1rem',
   borderRadius: '6px',
   fontSize: '0.9rem',
@@ -419,8 +419,8 @@ const secondaryButtonStyle: React.CSSProperties = {
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
   margin: '0 1.5rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   fontSize: '0.9rem',
 };

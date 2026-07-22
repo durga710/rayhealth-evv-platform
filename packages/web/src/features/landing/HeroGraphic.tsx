@@ -5,28 +5,28 @@ export function HeroGraphic() {
     <svg width="700" height="220" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style={{ margin: '3rem 0', maxWidth: '100%' }}>
       <defs>
         <linearGradient id="banBg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1248a0"/>
-          <stop offset="50%" stopColor="#1a5fa8"/>
-          <stop offset="100%" stopColor="#0d3878"/>
+          <stop offset="0%" stopColor="var(--color-primary-dark)"/>
+          <stop offset="50%" stopColor="var(--color-primary)"/>
+          <stop offset="100%" stopColor="var(--color-primary-dark)"/>
         </linearGradient>
         <radialGradient id="banHalo" cx="25%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#5ba8f5" stopOpacity="0.25"/>
-          <stop offset="100%" stopColor="#1248a0" stopOpacity="0"/>
+          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="var(--color-primary-dark)" stopOpacity="0"/>
         </radialGradient>
         <radialGradient id="banHalo2" cx="80%" cy="50%" r="40%">
-          <stop offset="0%" stopColor="#3b8de0" stopOpacity="0.18"/>
-          <stop offset="100%" stopColor="#1248a0" stopOpacity="0"/>
+          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.18"/>
+          <stop offset="100%" stopColor="var(--color-primary-dark)" stopOpacity="0"/>
         </radialGradient>
         <filter id="banShadow">
-          <feDropShadow dx="0" dy="10" stdDeviation="20" floodColor="#0d3878" floodOpacity="0.5"/>
+          <feDropShadow dx="0" dy="10" stdDeviation="20" floodColor="var(--color-primary-dark)" floodOpacity="0.5"/>
         </filter>
         <filter id="banGl">
           <feGaussianBlur stdDeviation="4" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <linearGradient id="banEvv" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f97316"/>
-          <stop offset="100%" stopColor="#fb923c"/>
+          <stop offset="0%" stopColor="var(--color-accent)"/>
+          <stop offset="100%" stopColor="var(--color-accent)"/>
         </linearGradient>
         <clipPath id="banClip">
           <rect width="700" height="220" rx="22"/>
@@ -52,8 +52,8 @@ export function HeroGraphic() {
       <polyline points="96,110 108,110 116,86 124,134 132,96 140,124 148,110 172,110 180,82 190,138 198,110 218,110 240,110"
                 fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
                 opacity="0.9"/>
-      <circle cx="198" cy="110" r="7" fill="#f97316" filter="url(#banGl)"/>
-      <circle cx="198" cy="110" r="7" fill="#f97316" opacity="0.35">
+      <circle cx="198" cy="110" r="7" fill="var(--color-accent)" filter="url(#banGl)"/>
+      <circle cx="198" cy="110" r="7" fill="var(--color-accent)" opacity="0.35">
         <animate attributeName="r" values="7;20;7" dur="2s" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="0.35;0;0.35" dur="2s" repeatCount="indefinite"/>
       </circle>
@@ -76,7 +76,7 @@ export function HeroGraphic() {
       <rect x="595" y="55" width="12" height="60" rx="6" fill="white" opacity="0.05"/>
       <rect x="570" y="80" width="62" height="12" rx="6" fill="white" opacity="0.05"/>
 
-      <rect x="0" y="210" width="700" height="10" rx="0" fill="#f97316" opacity="0.75"/>
+      <rect x="0" y="210" width="700" height="10" rx="0" fill="var(--color-accent)" opacity="0.75"/>
     </svg>
   );
 }

@@ -54,11 +54,11 @@ const STATUS_LABEL: Record<EnrollmentStatus, string> = {
 };
 
 const STATUS_COLOR: Record<EnrollmentStatus, { fg: string; bg: string }> = {
-  not_started: { fg: '#5F5E5A', bg: '#F1EFE8' },
-  in_progress: { fg: '#0C447C', bg: '#E6F1FB' },
-  completed: { fg: '#085041', bg: '#E1F5EE' },
-  overdue: { fg: '#633806', bg: '#FAEEDA' },
-  expired: { fg: '#791F1F', bg: '#FCEBEB' },
+  not_started: { fg: 'var(--color-text-muted)', bg: 'var(--color-warning-bg)' },
+  in_progress: { fg: 'var(--color-primary-dark)', bg: 'var(--color-info-bg)' },
+  completed: { fg: 'var(--color-primary-dark)', bg: 'var(--color-success-bg)' },
+  overdue: { fg: 'var(--color-accent-dark)', bg: 'var(--color-accent-bg)' },
+  expired: { fg: 'var(--color-danger-text)', bg: 'var(--color-danger-bg)' },
 };
 
 export function CaregiverLearningPage() {
@@ -127,7 +127,7 @@ export function CaregiverLearningPage() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Caregiver learning</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
             Caregiver <code style={codeStyle}>{caregiverId}</code>
           </p>
         </div>
@@ -150,7 +150,7 @@ export function CaregiverLearningPage() {
             <span style={progress.isCompliant ? compliantBadgeStyle : nonCompliantBadgeStyle}>
               {progress.isCompliant ? 'Compliant' : 'Non-compliant'}
             </span>
-            <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)' }}>
+            <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted, var(--color-text-muted))' }}>
               {progress.enrollments.length} enrollment{progress.enrollments.length === 1 ? '' : 's'}
             </span>
           </div>
@@ -158,7 +158,7 @@ export function CaregiverLearningPage() {
           {progress.enrollments.length === 0 && (
             <div style={emptyStateStyle}>
               <p style={{ margin: 0 }}>No courses assigned yet.</p>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)' }}>
+              <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted, var(--color-text-muted))' }}>
                 Use the Enroll button on the Learning Hub to assign training.
               </p>
             </div>
@@ -236,8 +236,8 @@ function formatDate(iso: string): string {
 // ---------- Styles ----------
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
   padding: '1rem 1.25rem',
 };
@@ -247,7 +247,7 @@ const metaRowStyle: React.CSSProperties = {
   flexWrap: 'wrap',
   gap: '1.25rem',
   fontSize: '0.85rem',
-  color: 'var(--color-text-muted, #64748b)',
+  color: 'var(--color-text-muted, var(--color-text-muted))',
 };
 
 const codeStyle: React.CSSProperties = {
@@ -268,8 +268,8 @@ const requiredBadgeStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '12px',
-  backgroundColor: '#fef3c7',
-  color: '#7c2d12',
+  backgroundColor: 'var(--color-warning-bg)',
+  color: 'var(--color-accent-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -279,8 +279,8 @@ const compliantBadgeStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   padding: '0.3rem 0.75rem',
   borderRadius: '6px',
-  backgroundColor: '#E1F5EE',
-  color: '#085041',
+  backgroundColor: 'var(--color-success-bg)',
+  color: 'var(--color-primary-dark)',
   fontWeight: 500,
 };
 
@@ -288,23 +288,23 @@ const nonCompliantBadgeStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   padding: '0.3rem 0.75rem',
   borderRadius: '6px',
-  backgroundColor: '#FCEBEB',
-  color: '#791F1F',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   fontWeight: 500,
 };
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const actionButtonStyle: React.CSSProperties = {
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.45rem 0.9rem',
   borderRadius: '6px',
@@ -313,8 +313,8 @@ const actionButtonStyle: React.CSSProperties = {
 };
 
 const primaryActionStyle: React.CSSProperties = {
-  backgroundColor: '#185FA5',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-primary)',
+  color: 'var(--color-surface)',
   border: 'none',
   padding: '0.5rem 1rem',
   borderRadius: '6px',
@@ -325,15 +325,15 @@ const primaryActionStyle: React.CSSProperties = {
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   marginBottom: '1rem',
 };
 
 const emptyStateStyle: React.CSSProperties = {
   padding: '1.5rem',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '8px',
-  border: '1px dashed #cbd5e1',
+  border: '1px dashed var(--color-border-strong)',
 };

@@ -61,7 +61,7 @@ export function LearningAnalyticsPage(): ReactElement {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Course analytics</h2>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
             Per-course completion rates and bottleneck signal. Sorted by completion rate ascending, worst-performing courses first.
           </p>
         </div>
@@ -79,7 +79,7 @@ export function LearningAnalyticsPage(): ReactElement {
       {!loading && envelope && envelope.rows.length === 0 && (
         <div style={emptyStateStyle}>
           <p style={{ margin: 0 }}>No courses in the catalog yet.</p>
-          <p style={{ margin: '0.5rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.85rem' }}>
+          <p style={{ margin: '0.5rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.85rem' }}>
             Seed the PA-required baseline, then come back when caregivers have enrollments.
           </p>
         </div>
@@ -121,7 +121,7 @@ export function LearningAnalyticsPage(): ReactElement {
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
                     {row.averageDaysToComplete === null
-                      ? <span style={{ color: '#94a3b8' }}>, </span>
+                      ? <span style={{ color: 'var(--color-text-subtle)' }}>, </span>
                       : `${Math.round(row.averageDaysToComplete)} d`}
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
@@ -153,10 +153,10 @@ interface CompletionBarProps {
 
 function CompletionBar({ rate, completed, total }: CompletionBarProps): ReactElement {
   const percent = Math.round(rate * 100);
-  const color = percent >= 95 ? '#10A4A4' : percent >= 80 ? '#BA7517' : percent >= 50 ? '#D85A30' : '#E24B4A';
+  const color = percent >= 95 ? 'var(--color-primary-dark)' : percent >= 80 ? 'var(--color-accent-dark)' : percent >= 50 ? 'var(--color-accent)' : 'var(--color-danger)';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-      <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', minWidth: '120px' }}>
+      <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden', minWidth: '120px' }}>
         <div style={{ width: `${Math.min(100, percent)}%`, height: '100%', backgroundColor: color }} />
       </div>
       <span style={{ fontSize: '0.85rem', fontWeight: 500, color, minWidth: '60px', textAlign: 'right' }}>
@@ -175,15 +175,15 @@ interface ActionCountProps {
 function ActionCount({ overdue, expired, pending }: ActionCountProps): ReactElement {
   const total = overdue + expired + pending;
   if (total === 0) {
-    return <span style={{ color: '#10A4A4', fontWeight: 500 }}>All clear</span>;
+    return <span style={{ color: 'var(--color-primary-dark)', fontWeight: 500 }}>All clear</span>;
   }
   return (
     <div style={{ fontSize: '0.85rem' }}>
-      {expired > 0 && <span style={{ color: '#E24B4A', fontWeight: 500 }}>{expired} expired</span>}
-      {expired > 0 && (overdue > 0 || pending > 0) && <span style={{ color: '#94a3b8' }}>, </span>}
-      {overdue > 0 && <span style={{ color: '#BA7517', fontWeight: 500 }}>{overdue} overdue</span>}
-      {overdue > 0 && pending > 0 && <span style={{ color: '#94a3b8' }}>, </span>}
-      {pending > 0 && <span style={{ color: '#64748b' }}>{pending} pending</span>}
+      {expired > 0 && <span style={{ color: 'var(--color-danger)', fontWeight: 500 }}>{expired} expired</span>}
+      {expired > 0 && (overdue > 0 || pending > 0) && <span style={{ color: 'var(--color-text-subtle)' }}>, </span>}
+      {overdue > 0 && <span style={{ color: 'var(--color-accent-dark)', fontWeight: 500 }}>{overdue} overdue</span>}
+      {overdue > 0 && pending > 0 && <span style={{ color: 'var(--color-text-subtle)' }}>, </span>}
+      {pending > 0 && <span style={{ color: 'var(--color-text-muted)' }}>{pending} pending</span>}
     </div>
   );
 }
@@ -202,8 +202,8 @@ function cadenceLabel(cadence: CourseCadence): string {
 const tableStyle: React.CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
   overflow: 'hidden',
 };
@@ -214,14 +214,14 @@ const thStyle: React.CSSProperties = {
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
-  color: '#64748b',
+  color: 'var(--color-text-muted)',
   padding: '0.85rem 1rem',
-  borderBottom: '1px solid #e2e8f0',
-  backgroundColor: '#f8fafc',
+  borderBottom: '1px solid var(--color-border)',
+  backgroundColor: 'var(--color-bg)',
 };
 
 const trStyle: React.CSSProperties = {
-  borderBottom: '1px solid #f1f5f9',
+  borderBottom: '1px solid var(--color-surface-soft)',
 };
 
 const tdStyle: React.CSSProperties = {
@@ -232,7 +232,7 @@ const tdStyle: React.CSSProperties = {
 
 const courseMetaStyle: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: 'var(--color-text-muted, #64748b)',
+  color: 'var(--color-text-muted, var(--color-text-muted))',
   marginTop: '0.2rem',
 };
 
@@ -240,8 +240,8 @@ const requiredBadgeStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   padding: '0.1rem 0.4rem',
   borderRadius: '10px',
-  backgroundColor: '#fef3c7',
-  color: '#7c2d12',
+  backgroundColor: 'var(--color-warning-bg)',
+  color: 'var(--color-accent-dark)',
   fontWeight: 500,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
@@ -251,36 +251,36 @@ const requiredBadgeStyle: React.CSSProperties = {
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const courseLinkStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#0b1220',
+  color: 'var(--color-primary-dark)',
 };
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   marginBottom: '1rem',
 };
 
 const emptyStateStyle: React.CSSProperties = {
   padding: '1.5rem',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '8px',
-  border: '1px dashed #cbd5e1',
+  border: '1px dashed var(--color-border-strong)',
 };
 
 const generatedAtStyle: React.CSSProperties = {
   marginTop: '1rem',
   fontSize: '0.75rem',
-  color: 'var(--color-text-muted, #94a3b8)',
+  color: 'var(--color-text-muted, var(--color-text-subtle))',
   textAlign: 'right',
 };

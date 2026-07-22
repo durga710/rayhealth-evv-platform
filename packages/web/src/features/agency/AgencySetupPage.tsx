@@ -292,14 +292,14 @@ export function AgencySetupPage() {
   const gradientBanner = (
     <div
       style={{
-        background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+        background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
         borderRadius: '12px',
         padding: '1.75rem 2rem',
         marginBottom: '1.75rem',
         boxShadow: '0 4px 24px rgba(15,45,82,0.18)',
       }}
     >
-      <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+      <h1 style={{ margin: 0, color: 'var(--color-surface)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
         Agency Setup
       </h1>
       <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
@@ -312,7 +312,7 @@ export function AgencySetupPage() {
     return (
       <div>
         {gradientBanner}
-        <div style={{ padding: '2rem', color: '#94A3B8' }}>Loading agency details…</div>
+        <div style={{ padding: '2rem', color: 'var(--color-text-subtle)' }}>Loading agency details…</div>
       </div>
     );
   }
@@ -333,7 +333,7 @@ export function AgencySetupPage() {
       {gradientBanner}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 480px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card" style={{ borderTop: '3px solid #107480' }}>
+        <div className="form-card" style={{ borderTop: '3px solid var(--color-primary)' }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label htmlFor="agencyName" className="label">Agency Name</label>
@@ -355,7 +355,7 @@ export function AgencySetupPage() {
                 disabled
                 className="input-field"
               />
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-subtle)', lineHeight: 1.5 }}>
                 State is locked to Pennsylvania. RayHealthEVV™ is purpose-built for PA DHS Personal Assistance Services.
               </p>
             </div>
@@ -384,20 +384,20 @@ export function AgencySetupPage() {
         {/* Info card */}
         <div
           style={{
-            background: '#0F172A',
+            background: 'var(--color-text)',
             borderRadius: '12px',
             padding: '1.5rem',
-            border: '1px solid #1E293B',
+            border: '1px solid var(--color-slate-800)',
           }}
         >
-          <p style={{ margin: '0 0 0.75rem', color: '#E2E8F0', fontWeight: 700, fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <p style={{ margin: '0 0 0.75rem', color: 'var(--color-border)', fontWeight: 700, fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
               <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
             Pennsylvania Only
           </p>
-          <p style={{ margin: '0 0 1rem', color: '#94A3B8', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+          <p style={{ margin: '0 0 1rem', color: 'var(--color-text-subtle)', fontSize: '0.8125rem', lineHeight: 1.6 }}>
             RayHealthEVV™ is purpose-built for Pennsylvania DHS Personal Assistance Services, ensuring full compliance with state and federal requirements.
           </p>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
@@ -406,8 +406,8 @@ export function AgencySetupPage() {
               '21st Century Cures Act compliance',
               'Sandata aggregator ready',
             ].map(item => (
-              <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8125rem', color: '#94A3B8' }}>
-                <span style={{ color: '#10B981', display: 'flex', flexShrink: 0, marginTop: '0.1rem' }}>
+              <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>
+                <span style={{ color: 'var(--color-success)', display: 'flex', flexShrink: 0, marginTop: '0.1rem' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
@@ -420,13 +420,13 @@ export function AgencySetupPage() {
       </div>
 
       {/* Billing & Clearinghouse, 837 billing-provider identity */}
-      <div className="form-card" style={{ borderTop: '3px solid #107480', marginTop: '1.5rem' }}>
-        <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 700, color: '#0F172A' }}>
+      <div className="form-card" style={{ borderTop: '3px solid var(--color-primary)', marginTop: '1.5rem' }}>
+        <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
           Billing &amp; Clearinghouse
         </h2>
-        <p style={{ margin: '0 0 1.1rem', fontSize: '0.8125rem', color: '#64748B', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 1.1rem', fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
           Your billing-provider identity for X12 837P claims. Required fields (marked&nbsp;
-          <span style={{ color: '#DC2626' }}>*</span>) must be complete before an 837 can be generated
+          <span style={{ color: 'var(--color-danger)' }}>*</span>) must be complete before an 837 can be generated
           for a payer or clearinghouse.
         </p>
         <form onSubmit={handleBillingSubmit}>
@@ -434,7 +434,7 @@ export function AgencySetupPage() {
             {BILLING_FIELDS.map(f => (
               <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor={f.key} className="label">
-                  {f.label}{f.required ? <span style={{ color: '#DC2626' }}> *</span> : null}
+                  {f.label}{f.required ? <span style={{ color: 'var(--color-danger)' }}> *</span> : null}
                 </label>
                 <input
                   id={f.key}
@@ -467,11 +467,11 @@ export function AgencySetupPage() {
       </div>
 
       {/* Fee Schedule, cents per billing unit by HCPCS code */}
-      <div className="form-card" style={{ borderTop: '3px solid #107480', marginTop: '1.5rem' }}>
-        <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 700, color: '#0F172A' }}>
+      <div className="form-card" style={{ borderTop: '3px solid var(--color-primary)', marginTop: '1.5rem' }}>
+        <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
           Fee Schedule
         </h2>
-        <p style={{ margin: '0 0 1.1rem', fontSize: '0.8125rem', color: '#64748B', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 1.1rem', fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
           Your contracted rate per billing unit for each PA service code. Claims compute charges from
           these rates, a code left blank bills $0.00 and is flagged before submission.
         </p>
@@ -480,10 +480,10 @@ export function AgencySetupPage() {
             {FEE_CODES.map(f => (
               <div key={f.code} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor={`fee-${f.code}`} className="label">
-                  {f.label} <span style={{ color: '#94A3B8', fontWeight: 400 }}>({f.unit})</span>
+                  {f.label} <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>({f.unit})</span>
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ color: '#64748B' }}>$</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>$</span>
                   <input
                     id={`fee-${f.code}`}
                     type="number"
@@ -524,7 +524,7 @@ export function AgencySetupPage() {
         <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.05rem', fontWeight: 800 }}>
           Public hiring page
         </h2>
-        <p style={{ margin: '0 0 1rem', color: '#64748B', fontSize: '0.85rem' }}>
+        <p style={{ margin: '0 0 1rem', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
           Give your agency a public homepage and caregiver application page. Share the link on job
           boards — applicants apply, complete the guided interview, and upload their documents
           without an account.
@@ -533,7 +533,7 @@ export function AgencySetupPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxWidth: 480 }}>
             <label htmlFor="publicSlug" className="label">Page address</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ color: '#64748B', fontSize: '0.85rem' }}>{window.location.origin}/</span>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{window.location.origin}/</span>
               <input
                 id="publicSlug"
                 className="input-field"
@@ -543,7 +543,7 @@ export function AgencySetupPage() {
                 style={{ flex: 1 }}
               />
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>
               Lowercase letters, numbers, and hyphens. Leave blank to take the page offline.
             </span>
           </div>
@@ -586,7 +586,7 @@ export function AgencySetupPage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <label htmlFor="publicServices" className="label">Services <span style={{ color: '#94A3B8', fontWeight: 400 }}>(one per line, "Name: short description")</span></label>
+            <label htmlFor="publicServices" className="label">Services <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>(one per line, "Name: short description")</span></label>
             <textarea
               id="publicServices"
               className="input-field"
@@ -603,7 +603,7 @@ export function AgencySetupPage() {
             {pageSlug.trim() && (
               // Href built only from the slug's legal charset , raw input never
               // reaches the attribute (CodeQL js/xss-through-dom).
-              <a href={`/${pageSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')}`} target="_blank" rel="noreferrer" style={{ color: '#107480', fontWeight: 700, fontSize: '0.85rem' }}>
+              <a href={`/${pageSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.85rem' }}>
                 View live page →
               </a>
             )}

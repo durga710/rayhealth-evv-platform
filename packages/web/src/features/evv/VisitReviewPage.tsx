@@ -35,10 +35,10 @@ interface FraudVerdict {
 type Banner = { kind: 'success' | 'error'; text: string } | null;
 
 const RISK_COLOR: Record<FraudVerdict['riskLevel'], string> = {
-  low: '#64748B',
-  medium: '#D97706',
-  high: '#EA580C',
-  critical: '#DC2626',
+  low: 'var(--color-text-muted)',
+  medium: 'var(--color-warning)',
+  high: 'var(--color-accent)',
+  critical: 'var(--color-danger)',
 };
 
 const SIGNAL_LABEL: Record<string, string> = {
@@ -120,7 +120,7 @@ export function VisitReviewPage() {
       {/* Gradient banner header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
           borderRadius: '12px',
           padding: '1.75rem 2rem',
           marginBottom: '1.75rem',
@@ -132,7 +132,7 @@ export function VisitReviewPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+          <h1 style={{ margin: 0, color: 'var(--color-surface)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
             Visit Review
           </h1>
           <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
@@ -158,7 +158,7 @@ export function VisitReviewPage() {
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(100,116,139,0.18)',
               borderRadius: '999px', padding: '0.3rem 0.85rem',
-              fontSize: '0.7rem', fontWeight: 700, color: '#64748B',
+              fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)',
             }}
           >
             Total: {totalVisits}
@@ -168,7 +168,7 @@ export function VisitReviewPage() {
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.18)',
               borderRadius: '999px', padding: '0.3rem 0.85rem',
-              fontSize: '0.7rem', fontWeight: 700, color: '#D97706',
+              fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-warning)',
             }}
           >
             Pending: {pendingCount}
@@ -178,7 +178,7 @@ export function VisitReviewPage() {
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)',
               borderRadius: '999px', padding: '0.3rem 0.85rem',
-              fontSize: '0.7rem', fontWeight: 700, color: '#059669',
+              fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-success)',
             }}
           >
             Verified: {verifiedCount}
@@ -188,7 +188,7 @@ export function VisitReviewPage() {
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)',
               borderRadius: '999px', padding: '0.3rem 0.85rem',
-              fontSize: '0.7rem', fontWeight: 700, color: '#DC2626',
+              fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-danger)',
             }}
           >
             Flagged: {flaggedCount}
@@ -226,24 +226,24 @@ export function VisitReviewPage() {
               <React.Fragment key={visit.id}>
               <tr>
                 <td>{caregiverLabel(visit.caregiverId)}</td>
-                <td style={{ whiteSpace: 'nowrap', color: '#475569', fontSize: '0.8125rem' }}>{new Date(visit.clockInTime).toLocaleString()}</td>
-                <td style={{ whiteSpace: 'nowrap', color: '#475569', fontSize: '0.8125rem' }}>
-                  {visit.clockOutTime ? new Date(visit.clockOutTime).toLocaleString() : <em style={{ color: '#94A3B8' }}>In progress</em>}
+                <td style={{ whiteSpace: 'nowrap', color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>{new Date(visit.clockInTime).toLocaleString()}</td>
+                <td style={{ whiteSpace: 'nowrap', color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>
+                  {visit.clockOutTime ? new Date(visit.clockOutTime).toLocaleString() : <em style={{ color: 'var(--color-text-subtle)' }}>In progress</em>}
                 </td>
                 <td style={{ maxWidth: 240 }}>
                   {visit.tasks && visit.tasks.length > 0 ? (
                     <div
                       title={visit.tasks.map((t) => t.duty).join(', ')}
-                      style={{ fontSize: '0.78rem', color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                     >
-                      <strong style={{ color: '#1a5fa8' }}>{visit.tasks.length}</strong>{' '}
+                      <strong style={{ color: 'var(--color-primary)' }}>{visit.tasks.length}</strong>{' '}
                       task{visit.tasks.length === 1 ? '' : 's'}: {visit.tasks.map((t) => t.duty).join(', ')}
                     </div>
                   ) : null}
                   {visit.visitNote ? (
                     <div
                       title={visit.visitNote}
-                      style={{ fontSize: '0.75rem', color: '#64748B', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                     >
                       “{visit.visitNote}”
                     </div>
@@ -251,13 +251,13 @@ export function VisitReviewPage() {
                   {visit.signature ? (
                     <span
                       title={`Signed by ${visit.signature.signerRole === 'client' ? 'the client' : 'a representative'}${visit.signature.signerName ? ` (${visit.signature.signerName})` : ''}`}
-                      style={{ display: 'inline-block', marginTop: '0.15rem', fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)', borderRadius: '999px', padding: '0.12rem 0.5rem' }}
+                      style={{ display: 'inline-block', marginTop: '0.15rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-success)', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)', borderRadius: '999px', padding: '0.12rem 0.5rem' }}
                     >
                       Signed
                     </span>
                   ) : null}
                   {!(visit.tasks && visit.tasks.length > 0) && !visit.visitNote && !visit.signature ? (
-                    <em style={{ color: '#94A3B8', fontSize: '0.78rem' }}>None</em>
+                    <em style={{ color: 'var(--color-text-subtle)', fontSize: '0.78rem' }}>None</em>
                   ) : null}
                 </td>
                 <td>
@@ -277,7 +277,7 @@ export function VisitReviewPage() {
                       <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>{expanded ? '▲' : '▼'}</span>
                     </button>
                   ) : (
-                    <span style={{ color: '#94A3B8', fontSize: '0.78rem' }}>Clear</span>
+                    <span style={{ color: 'var(--color-text-subtle)', fontSize: '0.78rem' }}>Clear</span>
                   )}
                 </td>
                 <td>
@@ -294,10 +294,10 @@ export function VisitReviewPage() {
                       </button>
                     )}
                     {visit.status === 'verified' && (
-                      <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Closed</span>
+                      <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>Closed</span>
                     )}
                     {visit.status === 'corrected' && (
-                      <span style={{ fontSize: '0.8125rem', color: '#0c5d66' }}>Corrected</span>
+                      <span style={{ fontSize: '0.8125rem', color: 'var(--color-primary-dark)' }}>Corrected</span>
                     )}
                     <Link to={`/admin/audit-packet/${visit.id}`} className="btn-ghost btn-sm">
                       Audit packet
@@ -307,19 +307,19 @@ export function VisitReviewPage() {
               </tr>
               {expanded && fraud && (
                 <tr>
-                  <td colSpan={7} style={{ background: '#F8FAFC', borderTop: `2px solid ${RISK_COLOR[fraud.riskLevel]}` }}>
+                  <td colSpan={7} style={{ background: 'var(--color-bg)', borderTop: `2px solid ${RISK_COLOR[fraud.riskLevel]}` }}>
                     <div style={{ padding: '0.5rem 0.25rem' }}>
                       <div style={{ fontSize: '0.72rem', fontWeight: 800, color: RISK_COLOR[fraud.riskLevel], textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.5rem' }}>
                         Why this visit scored {fraud.score}/100
                       </div>
                       {fraud.factors.length === 0 ? (
-                        <em style={{ color: '#94A3B8', fontSize: '0.8rem' }}>No individual signals recorded.</em>
+                        <em style={{ color: 'var(--color-text-subtle)', fontSize: '0.8rem' }}>No individual signals recorded.</em>
                       ) : (
                         <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {fraud.factors.map((f, i) => (
-                            <li key={i} style={{ fontSize: '0.8rem', color: '#334155' }}>
+                            <li key={i} style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                               <strong>{SIGNAL_LABEL[f.type] ?? f.type}</strong>
-                              <span style={{ color: '#64748B' }}> ({Math.round(f.contribution * 100)}% of score)</span>: {f.explanation}
+                              <span style={{ color: 'var(--color-text-muted)' }}> ({Math.round(f.contribution * 100)}% of score)</span>: {f.explanation}
                             </li>
                           ))}
                         </ul>

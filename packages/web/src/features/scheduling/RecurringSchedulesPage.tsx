@@ -64,9 +64,9 @@ function dowLabel(days: number[]): string {
 }
 
 const STATUS_COLORS: Record<RecurringSchedule['status'], { bg: string; fg: string }> = {
-  active: { bg: 'rgba(16, 116, 128, 0.1)', fg: '#107480' },
-  paused: { bg: '#FEF3C7', fg: '#92400E' },
-  ended: { bg: '#F1F5F9', fg: '#64748B' },
+  active: { bg: 'rgba(16, 116, 128, 0.1)', fg: 'var(--color-primary)' },
+  paused: { bg: 'var(--color-warning-bg)', fg: 'var(--color-warning-text)' },
+  ended: { bg: 'var(--color-surface-soft)', fg: 'var(--color-text-muted)' },
 };
 
 export function RecurringSchedulesPage() {
@@ -229,7 +229,7 @@ export function RecurringSchedulesPage() {
       <header className="page-header">
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>Recurring Schedules</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
             Define weekly recurring visit patterns and auto-generate the assignment calendar.
           </p>
         </div>
@@ -258,8 +258,8 @@ export function RecurringSchedulesPage() {
           role="status"
           style={{
             marginBottom: '1rem',
-            background: '#FFFBEB',
-            border: '1px solid #FDE68A',
+            background: 'var(--color-warning-bg)',
+            border: '1px solid var(--color-warning-border)',
             borderRadius: '10px',
             padding: '0.9rem 1.1rem',
             display: 'flex',
@@ -268,12 +268,12 @@ export function RecurringSchedulesPage() {
             flexWrap: 'wrap',
           }}
         >
-          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D97706', flexShrink: 0 }} />
+          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-warning)', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: '12rem' }}>
-            <div style={{ fontWeight: 700, color: '#92400E' }}>
+            <div style={{ fontWeight: 700, color: 'var(--color-warning-text)' }}>
               {forecast.totalGaps} upcoming visit{forecast.totalGaps === 1 ? '' : 's'} not yet generated
             </div>
-            <div style={{ fontSize: '0.8125rem', color: '#92400E', opacity: 0.9 }}>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-warning-text)', opacity: 0.9 }}>
               Active recurring patterns have visits in the next 14 days that aren't on the calendar yet, caregivers won't see them until you generate them.
               {' '}
               {forecast.gaps.slice(0, 3).map((g, i) => (
@@ -334,9 +334,9 @@ export function RecurringSchedulesPage() {
                       style={{
                         padding: '0.4rem 0.7rem',
                         borderRadius: '6px',
-                        border: `1px solid ${on ? '#107480' : '#E2E8F0'}`,
+                        border: `1px solid ${on ? 'var(--color-primary)' : 'var(--color-border)'}`,
                         backgroundColor: on ? 'rgba(16, 116, 128, 0.1)' : 'white',
-                        color: on ? '#107480' : '#64748B',
+                        color: on ? 'var(--color-primary)' : 'var(--color-text-muted)',
                         fontWeight: 600,
                         fontSize: '0.8125rem',
                         cursor: 'pointer',
@@ -381,7 +381,7 @@ export function RecurringSchedulesPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>Active patterns</h3>
             {!loading && !loadError && schedules.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{schedules.length} total</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>{schedules.length} total</span>
             )}
           </div>
           {loading ? (
@@ -401,17 +401,17 @@ export function RecurringSchedulesPage() {
                 return (
                   <div
                     key={s.id}
-                    style={{ border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.1rem 1.25rem', backgroundColor: 'white' }}
+                    style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.1rem 1.25rem', backgroundColor: 'white' }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>
-                          {s.templateName} <span style={{ color: '#94A3B8', fontWeight: 400 }}>· {s.clientName}</span>
+                        <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)' }}>
+                          {s.templateName} <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>· {s.clientName}</span>
                         </div>
-                        <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.2rem' }}>
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
                           {s.caregiverName || s.caregiverId.slice(0, 8) + '…'}, {dowLabel(s.daysOfWeek)} · {s.startTime}-{s.endTime}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)', marginTop: '0.2rem' }}>
                           {s.startDate} → {s.endDate}
                         </div>
                       </div>
@@ -449,7 +449,7 @@ export function RecurringSchedulesPage() {
                           End
                         </button>
                       )}
-                      <button type="button" className="btn-ghost btn-sm" disabled={busy} onClick={() => remove(s.id)} style={{ color: '#B91C1C' }}>
+                      <button type="button" className="btn-ghost btn-sm" disabled={busy} onClick={() => remove(s.id)} style={{ color: 'var(--color-danger-text)' }}>
                         Delete
                       </button>
                     </div>

@@ -37,9 +37,9 @@ export function ResetPasswordPage() {
   if (!token) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <p style={{ color: '#EF4444' }}>
+        <p style={{ color: 'var(--color-danger)' }}>
           Invalid reset link.{' '}
-          <Link to="/forgot-password" style={{ color: '#107480' }}>Request a new one.</Link>
+          <Link to="/forgot-password" style={{ color: 'var(--color-primary)' }}>Request a new one.</Link>
         </p>
       </div>
     );
@@ -52,7 +52,7 @@ export function ResetPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: 'var(--color-bg)',
         padding: '2rem',
       }}
     >
@@ -64,7 +64,7 @@ export function ResetPasswordPage() {
           borderRadius: '12px',
           padding: '2.5rem',
           boxShadow: '0 1px 3px rgba(15,23,42,0.08)',
-          border: '1px solid #E2E8F0',
+          border: '1px solid var(--color-border)',
         }}
       >
         <div style={{ marginBottom: '2rem' }}>
@@ -73,13 +73,13 @@ export function ResetPasswordPage() {
               margin: '0 0 0.5rem',
               fontSize: '1.5rem',
               fontWeight: 700,
-              color: '#0F172A',
+              color: 'var(--color-text)',
               letterSpacing: '-0.02em',
             }}
           >
             Set a new password
           </h1>
-          <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
             Must be at least 12 characters.
           </p>
         </div>

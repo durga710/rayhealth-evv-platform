@@ -203,7 +203,7 @@ export function AssignmentsPage() {
       <header className="page-header">
         <div className="page-header__title">
           <h1 style={{ margin: 0 }}>Assignments</h1>
-          <p style={{ margin: 0, color: '#64748B' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
             Schedule and assign caregivers to client visits.
           </p>
         </div>
@@ -251,17 +251,17 @@ export function AssignmentsPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="visitDate" className="label">Visit Date <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <label htmlFor="visitDate" className="label">Visit Date <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>(optional)</span></label>
                 <input id="visitDate" type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="input-field" />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="assignStartTime" className="label">Start Time <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <label htmlFor="assignStartTime" className="label">Start Time <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>(optional)</span></label>
                 <input id="assignStartTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="input-field" />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="assignEndTime" className="label">End Time <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional)</span></label>
+                <label htmlFor="assignEndTime" className="label">End Time <span style={{ color: 'var(--color-text-subtle)', fontWeight: 400 }}>(optional)</span></label>
                 <input id="assignEndTime" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="input-field" />
               </div>
             </div>
@@ -303,7 +303,7 @@ export function AssignmentsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
             <h3 className="section-title" style={{ margin: 0 }}>Upcoming assignments</h3>
             {!loading && !loadError && assignments.length > 0 && (
-              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>{assignments.length} total</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-subtle)' }}>{assignments.length} total</span>
             )}
           </div>
           {loading ? (
@@ -339,23 +339,23 @@ export function AssignmentsPage() {
                         aria-expanded={isExpanded}
                       >
                         <td style={{ fontWeight: 500 }}>{caregiverLabel(a.caregiverId)}</td>
-                        <td style={{ color: '#475569' }}>{clientName(a.clientId)}</td>
-                        <td style={{ color: '#475569', fontSize: '0.8125rem' }}>{templateLabel(a.visitTemplateId)}</td>
+                        <td style={{ color: 'var(--color-text-secondary)' }}>{clientName(a.clientId)}</td>
+                        <td style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>{templateLabel(a.visitTemplateId)}</td>
                         <td>
                           {a.visitDate ? (
                             <span className="badge badge-success" style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>
                               {a.visitDate}{a.startTime && a.endTime ? ` ${a.startTime}–${a.endTime}` : ''}
                             </span>
                           ) : (
-                            <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>, </span>
+                            <span style={{ color: 'var(--color-text-subtle)', fontSize: '0.8125rem' }}>, </span>
                           )}
                         </td>
-                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                        <td style={{ color: 'var(--color-text-subtle)' }}>{isExpanded ? '▾' : '▸'}</td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={5} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                          <td colSpan={5} style={{ backgroundColor: 'var(--color-bg)', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                               <div style={{ fontWeight: 600 }}>Assignment ID</div>
                               <div style={{ fontFamily: 'var(--font-mono)' }}>{a.id}</div>
                               <div style={{ fontWeight: 600 }}>Caregiver</div>
@@ -365,25 +365,25 @@ export function AssignmentsPage() {
                               <div style={{ fontWeight: 600 }}>Template</div>
                               <div>{templateLabel(a.visitTemplateId)}</div>
                               <div style={{ fontWeight: 600 }}>Visit date</div>
-                              <div>{a.visitDate || <em style={{ color: '#94A3B8' }}>not set</em>}</div>
+                              <div>{a.visitDate || <em style={{ color: 'var(--color-text-subtle)' }}>not set</em>}</div>
                               <div style={{ fontWeight: 600 }}>Time window</div>
-                              <div>{a.startTime && a.endTime ? `${a.startTime}–${a.endTime}` : <em style={{ color: '#94A3B8' }}>day-granular</em>}</div>
+                              <div>{a.startTime && a.endTime ? `${a.startTime}–${a.endTime}` : <em style={{ color: 'var(--color-text-subtle)' }}>day-granular</em>}</div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
                               <button type="button" className="btn-ghost btn-sm" onClick={() => startEdit(a)}>Edit</button>
                               {confirmDeleteId === a.id ? (
                                 <>
-                                  <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this assignment?</span>
-                                  <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(a)}>Confirm delete</button>
+                                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-danger-text)', fontWeight: 600 }}>Delete this assignment?</span>
+                                  <button type="button" className="btn-sm" style={{ background: 'var(--color-danger-text)', color: 'var(--color-surface)', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(a)}>Confirm delete</button>
                                   <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>Cancel</button>
                                 </>
                               ) : (
-                                <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(a.id); setRowError(null); }}>Delete</button>
+                                <button type="button" className="btn-ghost btn-sm" style={{ color: 'var(--color-danger-text)' }} onClick={() => { setConfirmDeleteId(a.id); setRowError(null); }}>Delete</button>
                               )}
                             </div>
                             {rowError && confirmDeleteId === a.id && (
-                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: '#BE123C' }}>{rowError}</div>
+                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: 'var(--color-danger-text)' }}>{rowError}</div>
                             )}
                           </td>
                         </tr>

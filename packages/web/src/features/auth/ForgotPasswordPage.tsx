@@ -29,7 +29,7 @@ export function ForgotPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: 'var(--color-bg)',
         padding: '2rem',
       }}
     >
@@ -41,7 +41,7 @@ export function ForgotPasswordPage() {
           borderRadius: '12px',
           padding: '2.5rem',
           boxShadow: '0 1px 3px rgba(15,23,42,0.08)',
-          border: '1px solid #E2E8F0',
+          border: '1px solid var(--color-border)',
         }}
       >
         <div style={{ marginBottom: '2rem' }}>
@@ -51,7 +51,7 @@ export function ForgotPasswordPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              color: '#107480',
+              color: 'var(--color-primary)',
               fontSize: '0.875rem',
               fontWeight: 500,
               textDecoration: 'none',
@@ -68,13 +68,13 @@ export function ForgotPasswordPage() {
               margin: '0 0 0.5rem',
               fontSize: '1.5rem',
               fontWeight: 700,
-              color: '#0F172A',
+              color: 'var(--color-text)',
               letterSpacing: '-0.02em',
             }}
           >
             Forgot your password?
           </h1>
-          <p style={{ margin: 0, color: '#64748B', fontSize: '0.9375rem' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9375rem' }}>
             Enter your email and we&rsquo;ll send you a reset link.
           </p>
         </div>
@@ -83,11 +83,11 @@ export function ForgotPasswordPage() {
           <div
             role="status"
             style={{
-              backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
+              backgroundColor: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success-border)',
               borderRadius: '8px',
               padding: '1rem 1.25rem',
-              color: '#166534',
+              color: 'var(--color-success-text)',
               fontSize: '0.9375rem',
               lineHeight: 1.55,
             }}

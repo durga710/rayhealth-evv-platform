@@ -37,11 +37,11 @@ interface ProgressData {
 type TrainingTab = 'all' | 'required' | 'in_progress' | 'completed' | 'overdue';
 
 const STATUS_CONFIG = {
-  completed:   { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Completed' },
-  in_progress: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'In Progress' },
-  overdue:     { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Overdue' },
-  expired:     { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Expired' },
-  not_started: { bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0', label: 'Not Started' },
+  completed:   { bg: 'var(--color-success-bg)', color: 'var(--color-success)', border: 'var(--color-success-border)', label: 'Completed' },
+  in_progress: { bg: 'var(--color-info-bg)', color: 'var(--color-primary)', border: 'var(--color-info-border)', label: 'In Progress' },
+  overdue:     { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)', label: 'Overdue' },
+  expired:     { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)', label: 'Expired' },
+  not_started: { bg: 'var(--color-bg)', color: 'var(--color-text-muted)', border: 'var(--color-border)', label: 'Not Started' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -60,11 +60,11 @@ function formatDate(iso: string | null): string {
 
 function ProgressBar({ pct }: { pct: number }) {
   return (
-    <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '100px', overflow: 'hidden', width: '100%' }}>
+    <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '100px', overflow: 'hidden', width: '100%' }}>
       <div style={{
         height: '100%',
         width: `${pct}%`,
-        background: pct === 100 ? '#16A34A' : 'var(--color-primary, #107480)',
+        background: pct === 100 ? 'var(--color-success)' : 'var(--color-primary, var(--color-primary))',
         borderRadius: '100px',
         transition: 'width 0.3s',
       }} />
@@ -141,16 +141,16 @@ export function CaregiverTrainingPage() {
     borderRadius: '6px',
     border: 'none',
     cursor: 'pointer',
-    background: active ? 'var(--color-primary, #107480)' : 'transparent',
-    color: active ? '#fff' : '#64748B',
+    background: active ? 'var(--color-primary, var(--color-primary))' : 'transparent',
+    color: active ? 'var(--color-surface)' : 'var(--color-text-muted)',
   });
 
   return (
     <div style={{ maxWidth: '800px' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.25rem' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.25rem' }}>
         My Training
       </h1>
-      <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
         Your assigned courses, progress, and certificates
       </p>
 
@@ -160,12 +160,12 @@ export function CaregiverTrainingPage() {
           gap: '0.75rem',
           padding: '0.85rem 1.25rem',
           marginBottom: '1.25rem',
-          background: data.isCompliant ? '#F0FDF4' : '#FFFBEB',
-          border: `1px solid ${data.isCompliant ? '#BBF7D0' : '#FDE68A'}`,
+          background: data.isCompliant ? 'var(--color-success-bg)' : 'var(--color-warning-bg)',
+          border: `1px solid ${data.isCompliant ? 'var(--color-success-border)' : 'var(--color-warning-border)'}`,
           borderRadius: '10px',
           alignItems: 'center',
         }}>
-          <span style={{ display: 'inline-flex', flexShrink: 0, color: data.isCompliant ? '#15803D' : '#92400E' }}>
+          <span style={{ display: 'inline-flex', flexShrink: 0, color: data.isCompliant ? 'var(--color-success-text)' : 'var(--color-warning-text)' }}>
             {data.isCompliant ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             ) : (
@@ -173,10 +173,10 @@ export function CaregiverTrainingPage() {
             )}
           </span>
           <div>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: data.isCompliant ? '#15803D' : '#92400E' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: data.isCompliant ? 'var(--color-success-text)' : 'var(--color-warning-text)' }}>
               {data.isCompliant ? 'Training compliant' : 'Training incomplete'}
             </div>
-            <div style={{ fontSize: '0.8125rem', color: data.isCompliant ? '#16A34A' : '#B45309' }}>
+            <div style={{ fontSize: '0.8125rem', color: data.isCompliant ? 'var(--color-success)' : 'var(--color-warning-text)' }}>
               {data.isCompliant
                 ? 'All required training is up to date.'
                 : `${counts.overdue} course(s) overdue or expired. Complete them to maintain compliance.`}
@@ -186,12 +186,12 @@ export function CaregiverTrainingPage() {
       )}
 
       {error && (
-        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#DC2626' }}>
+        <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--color-danger)' }}>
           {error}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.25rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.25rem', flexWrap: 'wrap' }}>
         {([
           ['all', 'All'],
           ['required', 'Required'],
@@ -205,10 +205,10 @@ export function CaregiverTrainingPage() {
         ))}
       </div>
 
-      {loading && <div style={{ color: '#64748B' }}>Loading…</div>}
+      {loading && <div style={{ color: 'var(--color-text-muted)' }}>Loading…</div>}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '2.5rem', textAlign: 'center', color: '#94A3B8' }}>
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '2.5rem', textAlign: 'center', color: 'var(--color-text-subtle)' }}>
           {tab === 'all'
             ? 'No training assigned yet. Your coordinator will enroll you in required courses.'
             : 'No courses in this category.'}
@@ -225,8 +225,8 @@ export function CaregiverTrainingPage() {
             <div
               key={enrollment.id}
               style={{
-                background: '#fff',
-                border: `1px solid ${enrollment.status === 'overdue' ? '#FECACA' : '#E2E8F0'}`,
+                background: 'var(--color-surface)',
+                border: `1px solid ${enrollment.status === 'overdue' ? 'var(--color-danger-border)' : 'var(--color-border)'}`,
                 borderRadius: '12px',
                 padding: '1.1rem 1.25rem',
               }}
@@ -234,15 +234,15 @@ export function CaregiverTrainingPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.6rem' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>{course.title}</span>
+                    <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)' }}>{course.title}</span>
                     {course.required && (
-                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: '#FEF3C7', color: '#92400E', borderRadius: '4px', padding: '0.1rem 0.45rem' }}>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'var(--color-warning-bg)', color: 'var(--color-warning-text)', borderRadius: '4px', padding: '0.1rem 0.45rem' }}>
                         Required
                       </span>
                     )}
                     <StatusBadge status={enrollment.status} />
                   </div>
-                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>{course.description}</p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', margin: 0 }}>{course.description}</p>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
@@ -251,7 +251,7 @@ export function CaregiverTrainingPage() {
                       type="button"
                       onClick={() => navigate(`/portal/training/${course.id}/certificate`)}
                       title="View certificate of completion"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: '#16A34A', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-success)', background: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)', borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer' }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                       Certificate
@@ -264,9 +264,9 @@ export function CaregiverTrainingPage() {
                       padding: '0.35rem 0.85rem',
                       fontSize: '0.8125rem',
                       fontWeight: 600,
-                      color: isCompleted ? '#64748B' : '#fff',
-                      background: isCompleted ? '#F8FAFC' : 'var(--color-primary, #107480)',
-                      border: isCompleted ? '1px solid #E2E8F0' : 'none',
+                      color: isCompleted ? 'var(--color-text-muted)' : 'var(--color-surface)',
+                      background: isCompleted ? 'var(--color-bg)' : 'var(--color-primary, var(--color-primary))',
+                      border: isCompleted ? '1px solid var(--color-border)' : 'none',
                       borderRadius: '6px',
                       cursor: 'pointer',
                     }}
@@ -278,7 +278,7 @@ export function CaregiverTrainingPage() {
 
               <ProgressBar pct={pct} />
 
-              <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.75rem', color: 'var(--color-text-subtle)', marginTop: '0.6rem', flexWrap: 'wrap' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   {course.durationMinutes} min

@@ -32,7 +32,7 @@ export function CaregiverSchedulePage() {
 
       {/* ── Hero banner ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+        background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
         borderRadius: '16px',
         padding: '2rem 2.25rem',
         marginBottom: '1.75rem',
@@ -59,7 +59,7 @@ export function CaregiverSchedulePage() {
         }}>
           Caregiver Portal
         </div>
-        <h1 style={{ fontSize: '1.625rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: '1.625rem', fontWeight: 800, color: 'var(--color-surface)', margin: '0 0 0.3rem', lineHeight: 1.2 }}>
           My Schedule
         </h1>
         <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', margin: 0 }}>
@@ -73,15 +73,15 @@ export function CaregiverSchedulePage() {
           <style>{`@keyframes rh-sched-pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }`}</style>
           {[0, 1, 2].map((i) => (
             <div key={i} style={{
-              background: '#fff',
-              border: '1px solid #E2E8F0',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '12px',
               padding: '1rem 1.25rem',
               height: '72px',
               animation: 'rh-sched-pulse 1.5s ease-in-out infinite',
             }}>
-              <div style={{ background: '#F1F5F9', borderRadius: '6px', height: '12px', width: '45%', marginBottom: '0.6rem' }} />
-              <div style={{ background: '#E2E8F0', borderRadius: '6px', height: '10px', width: '30%' }} />
+              <div style={{ background: 'var(--color-surface-soft)', borderRadius: '6px', height: '12px', width: '45%', marginBottom: '0.6rem' }} />
+              <div style={{ background: 'var(--color-border)', borderRadius: '6px', height: '10px', width: '30%' }} />
             </div>
           ))}
         </div>
@@ -97,19 +97,19 @@ export function CaregiverSchedulePage() {
       {/* ── Empty state ── */}
       {!loading && !error && assignments.length === 0 && (
         <div style={{
-          background: '#fff',
-          border: '1px solid #E2E8F0',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
           borderRadius: '16px',
           padding: '3rem 2rem',
           textAlign: 'center',
         }}>
-          <div style={{ color: '#94A3B8', marginBottom: '0.75rem', lineHeight: 0 }} aria-hidden>
+          <div style={{ color: 'var(--color-text-subtle)', marginBottom: '0.75rem', lineHeight: 0 }} aria-hidden>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#0F172A', marginBottom: '0.35rem' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
             No assignments yet
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#94A3B8', maxWidth: '300px', margin: '0 auto' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-subtle)', maxWidth: '300px', margin: '0 auto' }}>
             Your coordinator will assign clients to you. Check back soon.
           </div>
         </div>
@@ -127,8 +127,8 @@ export function CaregiverSchedulePage() {
               <div
                 key={a.id}
                 style={{
-                  background: '#fff',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '12px',
                   padding: '1rem 1.25rem',
                   display: 'flex',
@@ -150,11 +150,11 @@ export function CaregiverSchedulePage() {
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #107480 0%, #7fc7cf 100%)',
+                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#fff',
+                  color: 'var(--color-surface)',
                   fontSize: '1.0625rem',
                   fontWeight: 700,
                   flexShrink: 0,
@@ -164,19 +164,19 @@ export function CaregiverSchedulePage() {
 
                 {/* Client info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {a.clientName}
                   </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {a.serviceCode && (
                       <span style={{
                         fontSize: '0.6875rem',
                         fontWeight: 600,
-                        background: '#F1F5F9',
-                        color: '#475569',
+                        background: 'var(--color-surface-soft)',
+                        color: 'var(--color-text-secondary)',
                         borderRadius: '4px',
                         padding: '0.1rem 0.45rem',
-                        border: '1px solid #E2E8F0',
+                        border: '1px solid var(--color-border)',
                       }}>
                         {a.serviceCode}
                       </span>
@@ -189,9 +189,9 @@ export function CaregiverSchedulePage() {
                 <div style={{
                   fontSize: '0.75rem',
                   fontWeight: 600,
-                  color: '#107480',
-                  background: '#EEF2FF',
-                  border: '1px solid #ddd6fe',
+                  color: 'var(--color-primary)',
+                  background: 'var(--color-info-bg)',
+                  border: '1px solid var(--color-primary-light)',
                   borderRadius: '100px',
                   padding: '0.25rem 0.7rem',
                   whiteSpace: 'nowrap',

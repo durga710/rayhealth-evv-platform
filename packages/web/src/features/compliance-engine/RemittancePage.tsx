@@ -109,7 +109,7 @@ function AdjustmentDetail({ adjustments, remarks, lines }: {
   lines: ServiceLine[];
 }) {
   if (adjustments.length === 0 && remarks.length === 0 && lines.length === 0) {
-    return <span style={{ color: '#94A3B8' }}>—</span>;
+    return <span style={{ color: 'var(--color-text-subtle)' }}>—</span>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.78rem' }}>
@@ -117,17 +117,17 @@ function AdjustmentDetail({ adjustments, remarks, lines }: {
         <div key={`a-${i}`} style={{ color: 'var(--color-text-muted)' }}>{adjText(a)}</div>
       ))}
       {remarks.map((r, i) => (
-        <div key={`r-${i}`} style={{ color: '#7C3AED' }}>Remark {remarkText(r)}</div>
+        <div key={`r-${i}`} style={{ color: 'var(--color-primary)' }}>Remark {remarkText(r)}</div>
       ))}
       {lines.map((l, i) => (
-        <div key={`l-${i}`} style={{ paddingLeft: '0.6rem', borderLeft: '2px solid #E2E8F0' }}>
+        <div key={`l-${i}`} style={{ paddingLeft: '0.6rem', borderLeft: '2px solid var(--color-border)' }}>
           <span style={{ fontFamily: 'var(--font-mono)' }}>{l.procedureCode}{l.modifiers.length ? `:${l.modifiers.join(':')}` : ''}</span>
           {l.serviceDate ? ` ${l.serviceDate}` : ''} · {l.units} unit{l.units === 1 ? '' : 's'} · {usd(l.paidCents)} of {usd(l.chargeCents)}
           {l.adjustments.map((a, j) => (
             <div key={`la-${j}`} style={{ color: 'var(--color-text-muted)' }}>{adjText(a)}</div>
           ))}
           {l.remarkCodes.map((r, j) => (
-            <div key={`lr-${j}`} style={{ color: '#7C3AED' }}>Remark {remarkText(r)}</div>
+            <div key={`lr-${j}`} style={{ color: 'var(--color-primary)' }}>Remark {remarkText(r)}</div>
           ))}
         </div>
       ))}
@@ -141,18 +141,18 @@ const usdFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'US
 const usd = (cents: number) => usdFmt.format((Number.isFinite(cents) ? cents : 0) / 100);
 
 const card: React.CSSProperties = {
-  background: 'var(--color-surface, #fff)',
-  border: '1px solid var(--color-border, #E2E8F0)',
+  background: 'var(--color-surface, var(--color-surface))',
+  border: '1px solid var(--color-border, var(--color-border))',
   borderRadius: 12,
   padding: '1.25rem',
   marginTop: '1rem',
 };
 
 const primaryBtn: React.CSSProperties = {
-  background: 'var(--color-primary, #107480)',
+  background: 'var(--color-primary, var(--color-primary))',
   border: 'none',
   borderRadius: 8,
-  color: '#fff',
+  color: 'var(--color-surface)',
   cursor: 'pointer',
   fontWeight: 700,
   padding: '0.55rem 1rem',
@@ -298,8 +298,8 @@ export function RemittancePage() {
               marginTop: '0.75rem',
               padding: '0.65rem 0.9rem',
               borderRadius: 8,
-              background: sweepMsg.tone === 'error' ? 'var(--color-danger-bg, #fef2f2)' : 'var(--color-success-bg, #ecfdf5)',
-              color: sweepMsg.tone === 'error' ? 'var(--color-danger, #BE123C)' : 'var(--color-success, #047857)',
+              background: sweepMsg.tone === 'error' ? 'var(--color-danger-bg, var(--color-danger-bg))' : 'var(--color-success-bg, var(--color-success-bg))',
+              color: sweepMsg.tone === 'error' ? 'var(--color-danger, var(--color-danger-text))' : 'var(--color-success, var(--color-success-text))',
               fontWeight: 600,
               fontSize: '0.9rem',
             }}
@@ -353,8 +353,8 @@ export function RemittancePage() {
           <div style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontWeight: 600 }}>
               <span>Claims in file: {preview.total}</span>
-              <span style={{ color: '#059669' }}>Matched: {preview.matchedCount}</span>
-              <span style={{ color: preview.total - preview.matchedCount ? '#BE123C' : '#94A3B8' }}>
+              <span style={{ color: 'var(--color-success)' }}>Matched: {preview.matchedCount}</span>
+              <span style={{ color: preview.total - preview.matchedCount ? 'var(--color-danger-text)' : 'var(--color-text-subtle)' }}>
                 Unmatched: {preview.total - preview.matchedCount}
               </span>
               <span>Total paid: {usd(preview.totalPaidCents)}</span>
@@ -369,7 +369,7 @@ export function RemittancePage() {
                 {preview.claims.slice(0, 200).map((c) => (
                   <tr key={c.controlNumber}>
                     <td style={{ fontFamily: 'var(--font-mono)' }}>{c.controlNumber}</td>
-                    <td style={{ color: c.matched ? '#059669' : '#BE123C' }}>{c.matched ? 'yes' : 'no'}</td>
+                    <td style={{ color: c.matched ? 'var(--color-success)' : 'var(--color-danger-text)' }}>{c.matched ? 'yes' : 'no'}</td>
                     <td style={{ textTransform: 'capitalize' }}>{c.derivedStatus}</td>
                     <td>{usd(c.chargeCents)}</td>
                     <td>{usd(c.paidCents)}</td>
@@ -398,9 +398,9 @@ export function RemittancePage() {
               marginTop: '1rem',
               padding: '0.75rem 1rem',
               borderRadius: 8,
-              background: 'var(--color-success-bg, #ecfdf5)',
-              border: '1px solid var(--color-success-border, #a7f3d0)',
-              color: 'var(--color-success, #047857)',
+              background: 'var(--color-success-bg, var(--color-success-bg))',
+              border: '1px solid var(--color-success-border, var(--color-success-border))',
+              color: 'var(--color-success, var(--color-success-text))',
               fontWeight: 600,
             }}
           >
@@ -416,9 +416,9 @@ export function RemittancePage() {
               marginTop: '1rem',
               padding: '0.75rem 1rem',
               borderRadius: 8,
-              background: 'var(--color-danger-bg, #fef2f2)',
-              border: '1px solid var(--color-danger-border, #fecaca)',
-              color: 'var(--color-danger, #BE123C)',
+              background: 'var(--color-danger-bg, var(--color-danger-bg))',
+              border: '1px solid var(--color-danger-border, var(--color-danger-border))',
+              color: 'var(--color-danger, var(--color-danger-text))',
               fontWeight: 600,
             }}
           >
@@ -440,7 +440,7 @@ export function RemittancePage() {
               {history.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontFamily: 'var(--font-mono)' }}>{r.controlNumber}</td>
-                  <td style={{ color: r.matched ? '#059669' : '#BE123C' }}>{r.matched ? 'yes' : 'no'}</td>
+                  <td style={{ color: r.matched ? 'var(--color-success)' : 'var(--color-danger-text)' }}>{r.matched ? 'yes' : 'no'}</td>
                   <td>{usd(r.chargeCents)}</td>
                   <td>{usd(r.paidCents)}</td>
                   <td>{usd(r.adjustmentCents)}</td>

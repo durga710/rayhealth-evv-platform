@@ -52,11 +52,11 @@ const STATUS_LABEL: Record<EnrollmentStatus, string> = {
 const STATUS_ORDER: EnrollmentStatus[] = ['expired', 'overdue', 'in_progress', 'not_started', 'completed'];
 
 const STATUS_THEME: Record<EnrollmentStatus, { bg: string; fg: string }> = {
-  not_started: { bg: '#F1EFE8', fg: '#5F5E5A' },
-  in_progress: { bg: '#E6F1FB', fg: '#0C447C' },
-  completed:   { bg: '#E1F5EE', fg: '#085041' },
-  overdue:     { bg: '#FAEEDA', fg: '#633806' },
-  expired:     { bg: '#FCEBEB', fg: '#791F1F' },
+  not_started: { bg: 'var(--color-warning-bg)', fg: 'var(--color-text-muted)' },
+  in_progress: { bg: 'var(--color-info-bg)', fg: 'var(--color-primary-dark)' },
+  completed:   { bg: 'var(--color-success-bg)', fg: 'var(--color-primary-dark)' },
+  overdue:     { bg: 'var(--color-accent-bg)', fg: 'var(--color-accent-dark)' },
+  expired:     { bg: 'var(--color-danger-bg)', fg: 'var(--color-danger-text)' },
 };
 
 export function CourseDetailPage(): ReactElement {
@@ -103,7 +103,7 @@ export function CourseDetailPage(): ReactElement {
             {envelope?.course.title ?? 'Course detail'}
           </h2>
           {envelope?.course && (
-            <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, #64748b)', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.9rem' }}>
               {envelope.course.code} · {envelope.course.required ? 'Required · ' : ''}{cadenceLabel(envelope.course.cadence)}
             </p>
           )}
@@ -120,7 +120,7 @@ export function CourseDetailPage(): ReactElement {
       )}
 
       {envelope && envelope.course.description && (
-        <p style={{ margin: '0 0 1.5rem', color: '#334155', lineHeight: 1.55, fontSize: '0.95rem' }}>
+        <p style={{ margin: '0 0 1.5rem', color: 'var(--color-text-secondary)', lineHeight: 1.55, fontSize: '0.95rem' }}>
           {envelope.course.description}
         </p>
       )}
@@ -143,7 +143,7 @@ export function CourseDetailPage(): ReactElement {
                   <span style={{ ...statusPillStyle, color: theme.fg, backgroundColor: theme.bg }}>
                     {STATUS_LABEL[status]}
                   </span>
-                  <span style={{ color: 'var(--color-text-muted, #64748b)', fontSize: '0.85rem', fontWeight: 400 }}>
+                  <span style={{ color: 'var(--color-text-muted, var(--color-text-muted))', fontSize: '0.85rem', fontWeight: 400 }}>
                     {rows.length} caregiver{rows.length === 1 ? '' : 's'}
                   </span>
                 </h3>
@@ -161,7 +161,7 @@ export function CourseDetailPage(): ReactElement {
                               {row.enrollment.expiresAt && ` · Expires ${formatDate(row.enrollment.expiresAt)}`}
                             </div>
                           </div>
-                          <span style={{ color: 'var(--color-text-muted, #94a3b8)', fontSize: '0.85rem' }}>→</span>
+                          <span style={{ color: 'var(--color-text-muted, var(--color-text-subtle))', fontSize: '0.85rem' }}>→</span>
                         </article>
                       </Link>
                     </li>
@@ -226,37 +226,37 @@ const rowCardStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0.85rem 1rem',
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
+  backgroundColor: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '8px',
 };
 
 const metaLineStyle: React.CSSProperties = {
   fontSize: '0.85rem',
-  color: 'var(--color-text-muted, #64748b)',
+  color: 'var(--color-text-muted, var(--color-text-muted))',
   marginTop: '0.25rem',
 };
 
 const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#185FA5',
+  color: 'var(--color-primary)',
   fontSize: '0.9rem',
-  border: '1px solid #185FA5',
+  border: '1px solid var(--color-primary)',
   padding: '0.4rem 0.85rem',
   borderRadius: '6px',
 };
 
 const errorBoxStyle: React.CSSProperties = {
   padding: '0.75rem 1rem',
-  backgroundColor: '#fef2f2',
-  color: '#991b1b',
+  backgroundColor: 'var(--color-danger-bg)',
+  color: 'var(--color-danger-text)',
   borderRadius: '6px',
   marginBottom: '1rem',
 };
 
 const emptyStateStyle: React.CSSProperties = {
   padding: '1.5rem',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-bg)',
   borderRadius: '8px',
-  border: '1px dashed #cbd5e1',
+  border: '1px dashed var(--color-border-strong)',
 };

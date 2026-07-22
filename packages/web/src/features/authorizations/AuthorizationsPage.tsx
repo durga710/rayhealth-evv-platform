@@ -37,16 +37,16 @@ function UnitsMeter({ authorized, used }: { authorized: number; used?: number })
   const consumed = Math.max(0, used ?? 0);
   const remaining = authorized - consumed;
   const pct = authorized > 0 ? Math.min(100, Math.round((consumed / authorized) * 100)) : 0;
-  const tone = remaining <= 0 ? '#BE123C' : remaining / authorized <= 0.2 ? '#B45309' : '#107480';
+  const tone = remaining <= 0 ? 'var(--color-danger-text)' : remaining / authorized <= 0.2 ? 'var(--color-warning-text)' : 'var(--color-primary)';
   return (
     <div style={{ minWidth: '92px' }}>
       <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: tone }}>
         {remaining <= 0 ? 'Exhausted' : `${remaining} left`}
       </div>
-      <div style={{ fontSize: '0.6875rem', color: '#94A3B8', marginBottom: '0.2rem' }}>
+      <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-subtle)', marginBottom: '0.2rem' }}>
         {consumed} / {authorized} used
       </div>
-      <div style={{ height: '4px', borderRadius: '999px', background: '#E2E8F0', overflow: 'hidden' }}>
+      <div style={{ height: '4px', borderRadius: '999px', background: 'var(--color-border)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: tone }} />
       </div>
     </div>
@@ -185,7 +185,7 @@ export function AuthorizationsPage() {
       {/* Gradient banner header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f2d52 0%, #1a5fa8 60%, #2d7dd2 100%)',
+          background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary) 100%)',
           borderRadius: '12px',
           padding: '1.75rem 2rem',
           marginBottom: '1.75rem',
@@ -197,7 +197,7 @@ export function AuthorizationsPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+          <h1 style={{ margin: 0, color: 'var(--color-surface)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
             Authorizations
           </h1>
           <p style={{ margin: '0.3rem 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
@@ -209,7 +209,7 @@ export function AuthorizationsPage() {
           onClick={focusAdd}
           style={{
             backgroundColor: 'rgba(255,255,255,0.15)',
-            color: '#fff',
+            color: 'var(--color-surface)',
             border: '1px solid rgba(255,255,255,0.25)',
             borderRadius: '8px',
             padding: '0.5rem 1.1rem',
@@ -225,7 +225,7 @@ export function AuthorizationsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 420px) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="form-card" style={{ borderTop: '3px solid #1690a0' }}>
+        <div className="form-card" style={{ borderTop: '3px solid var(--color-primary-dark)' }}>
           <h3 className="section-title" style={{ margin: 0, marginBottom: '1.25rem' }}>{editingId ? 'Edit authorization' : 'Add authorization'}</h3>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -237,7 +237,7 @@ export function AuthorizationsPage() {
                 ))}
               </select>
               {editingId && (
-                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Client can&apos;t be changed on an existing authorization.</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)' }}>Client can&apos;t be changed on an existing authorization.</span>
               )}
             </div>
 
@@ -274,7 +274,7 @@ export function AuthorizationsPage() {
             </div>
 
             {validationError && (
-              <div role="alert" style={{ color: '#BE123C', fontSize: '0.8125rem', fontWeight: 500 }}>
+              <div role="alert" style={{ color: 'var(--color-danger-text)', fontSize: '0.8125rem', fontWeight: 500 }}>
                 {validationError}
               </div>
             )}
@@ -307,7 +307,7 @@ export function AuthorizationsPage() {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
-                color: '#94A3B8',
+                color: 'var(--color-text-subtle)',
               }}
             >
               Active authorizations
@@ -317,7 +317,7 @@ export function AuthorizationsPage() {
                 style={{
                   fontSize: '0.7rem',
                   fontWeight: 700,
-                  color: '#1690a0',
+                  color: 'var(--color-primary-dark)',
                   background: 'rgba(22, 144, 160,0.1)',
                   border: '1px solid rgba(22, 144, 160,0.2)',
                   borderRadius: '999px',
@@ -370,7 +370,7 @@ export function AuthorizationsPage() {
                         </td>
                         <td>{clientName(a.clientId)}</td>
                         <td><UnitsMeter authorized={a.unitsAuthorized} used={a.unitsUsed} /></td>
-                        <td style={{ color: '#475569', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
+                        <td style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
                           {a.startDate} → {a.endDate}
                         </td>
                         <td>
@@ -382,12 +382,12 @@ export function AuthorizationsPage() {
                             <span className="badge badge-success">Active</span>
                           )}
                         </td>
-                        <td style={{ color: '#94A3B8' }}>{isExpanded ? '▾' : '▸'}</td>
+                        <td style={{ color: 'var(--color-text-subtle)' }}>{isExpanded ? '▾' : '▸'}</td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={6} style={{ backgroundColor: '#F8FAFC', padding: '1rem 1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: '#475569' }}>
+                          <td colSpan={6} style={{ backgroundColor: 'var(--color-bg)', padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1.25rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                               <div style={{ fontWeight: 600 }}>Authorization ID</div><div style={{ fontFamily: 'var(--font-mono)' }}>{a.id}</div>
                               <div style={{ fontWeight: 600 }}>Client</div><div>{clientName(a.clientId)}</div>
                               <div style={{ fontWeight: 600 }}>Payer ID</div><div>{a.payerId}</div>
@@ -395,7 +395,7 @@ export function AuthorizationsPage() {
                               <div style={{ fontWeight: 600 }}>Units authorized</div><div>{a.unitsAuthorized}</div>
                               <div style={{ fontWeight: 600 }}>Units used (billed)</div><div>{a.unitsUsed ?? 0}</div>
                               <div style={{ fontWeight: 600 }}>Units remaining</div>
-                              <div style={{ fontWeight: 600, color: (a.unitsRemaining ?? a.unitsAuthorized) <= 0 ? '#BE123C' : '#107480' }}>
+                              <div style={{ fontWeight: 600, color: (a.unitsRemaining ?? a.unitsAuthorized) <= 0 ? 'var(--color-danger-text)' : 'var(--color-primary)' }}>
                                 {a.unitsRemaining ?? a.unitsAuthorized}
                               </div>
                               <div style={{ fontWeight: 600 }}>Effective</div><div>{a.startDate} → {a.endDate}</div>
@@ -405,16 +405,16 @@ export function AuthorizationsPage() {
                               <button type="button" className="btn-ghost btn-sm" onClick={() => startEdit(a)}>Edit</button>
                               {confirmDeleteId === a.id ? (
                                 <>
-                                  <span style={{ fontSize: '0.8125rem', color: '#BE123C', fontWeight: 600 }}>Delete this authorization?</span>
-                                  <button type="button" className="btn-sm" style={{ background: '#BE123C', color: '#fff', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(a)}>Confirm delete</button>
+                                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-danger-text)', fontWeight: 600 }}>Delete this authorization?</span>
+                                  <button type="button" className="btn-sm" style={{ background: 'var(--color-danger-text)', color: 'var(--color-surface)', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(a)}>Confirm delete</button>
                                   <button type="button" className="btn-ghost btn-sm" onClick={() => { setConfirmDeleteId(null); setRowError(null); }}>Cancel</button>
                                 </>
                               ) : (
-                                <button type="button" className="btn-ghost btn-sm" style={{ color: '#BE123C' }} onClick={() => { setConfirmDeleteId(a.id); setRowError(null); }}>Delete</button>
+                                <button type="button" className="btn-ghost btn-sm" style={{ color: 'var(--color-danger-text)' }} onClick={() => { setConfirmDeleteId(a.id); setRowError(null); }}>Delete</button>
                               )}
                             </div>
                             {rowError && confirmDeleteId === a.id && (
-                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: '#BE123C' }}>{rowError}</div>
+                              <div role="alert" style={{ marginTop: '0.6rem', fontSize: '0.8125rem', color: 'var(--color-danger-text)' }}>{rowError}</div>
                             )}
                           </td>
                         </tr>

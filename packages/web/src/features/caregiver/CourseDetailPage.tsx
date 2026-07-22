@@ -77,7 +77,7 @@ function formatDate(iso: string | null) {
 const backBtnStyle: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#107480',
+  color: 'var(--color-primary)',
   fontWeight: 600,
   fontSize: '0.875rem',
   cursor: 'pointer',
@@ -104,7 +104,7 @@ function VideoPlayer({ videoUrl, onPlay }: { videoUrl: string; onPlay?: () => vo
         style={{
           position: 'relative',
           paddingBottom: '56.25%',
-          background: '#0F172A',
+          background: 'var(--color-text)',
           borderRadius: '10px',
           overflow: 'hidden',
           marginBottom: '1.25rem',
@@ -194,9 +194,9 @@ function Quiz({ questions, onPass }: QuizProps) {
 
   return (
     <div style={{ marginBottom: '1.5rem' }}>
-      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <div style={{
-          background: 'linear-gradient(135deg, #107480 0%, #0c5d66 100%)',
+          background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
           padding: '1rem 1.5rem',
           display: 'flex', alignItems: 'center', gap: '0.75rem',
         }}>
@@ -214,13 +214,13 @@ function Quiz({ questions, onPass }: QuizProps) {
 
         {quizState === 'passed' ? (
           <div style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
-            <div style={{ color: '#15803D', marginBottom: '0.5rem', lineHeight: 0 }}>
+            <div style={{ color: 'var(--color-success-text)', marginBottom: '0.5rem', lineHeight: 0 }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1.125rem', color: '#15803D', marginBottom: '0.25rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '1.125rem', color: 'var(--color-success-text)', marginBottom: '0.25rem' }}>
               Quiz Passed!
             </div>
-            <div style={{ fontSize: '0.875rem', color: '#16A34A' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-success)' }}>
               {correctCount} of {questions.length} correct, course is now marked complete.
             </div>
           </div>
@@ -228,8 +228,8 @@ function Quiz({ questions, onPass }: QuizProps) {
           <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {quizState === 'failed' && (
               <div style={{
-                background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px',
-                padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#DC2626',
+                background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px',
+                padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-danger)',
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
               }}>
                 <span style={{ display: 'inline-flex', flexShrink: 0 }}>
@@ -248,15 +248,15 @@ function Quiz({ questions, onPass }: QuizProps) {
 
               return (
                 <div key={qi} style={{
-                  background: isWrong ? '#FFF7F7' : 'white',
-                  border: `1px solid ${isWrong ? '#FECACA' : '#E2E8F0'}`,
+                  background: isWrong ? 'var(--color-danger-bg)' : 'white',
+                  border: `1px solid ${isWrong ? 'var(--color-danger-border)' : 'var(--color-border)'}`,
                   borderRadius: '10px', padding: '1rem 1.25rem',
                 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0F172A', marginBottom: '0.75rem', lineHeight: 1.45 }}>
-                    <span style={{ color: '#94A3B8', marginRight: '0.4rem' }}>{qi + 1}.</span>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text)', marginBottom: '0.75rem', lineHeight: 1.45 }}>
+                    <span style={{ color: 'var(--color-text-subtle)', marginRight: '0.4rem' }}>{qi + 1}.</span>
                     {q.question}
                     {isWrong && (
-                      <span style={{ marginLeft: '0.5rem', color: '#EF4444', fontSize: '0.8rem', fontWeight: 500 }}>
+                      <span style={{ marginLeft: '0.5rem', color: 'var(--color-danger)', fontSize: '0.8rem', fontWeight: 500 }}>
                         Correct: {q.options[q.correct]}
                       </span>
                     )}
@@ -267,12 +267,12 @@ function Quiz({ questions, onPass }: QuizProps) {
                       const isCorrectOpt = quizState === 'failed' && isWrong && oi === q.correct;
                       const isWrongSelection = quizState === 'failed' && isWrong && isSelected && oi !== q.correct;
 
-                      let optBg = isSelected ? '#EEF2FF' : 'transparent';
-                      let optBorder = isSelected ? '#ddd6fe' : '#E2E8F0';
-                      let optColor = isSelected ? '#4338CA' : '#334155';
+                      let optBg = isSelected ? 'var(--color-info-bg)' : 'transparent';
+                      let optBorder = isSelected ? 'var(--color-primary-light)' : 'var(--color-border)';
+                      let optColor = isSelected ? 'var(--color-primary-dark)' : 'var(--color-text-secondary)';
 
-                      if (isCorrectOpt) { optBg = '#F0FDF4'; optBorder = '#BBF7D0'; optColor = '#15803D'; }
-                      if (isWrongSelection) { optBg = '#FEF2F2'; optBorder = '#FECACA'; optColor = '#DC2626'; }
+                      if (isCorrectOpt) { optBg = 'var(--color-success-bg)'; optBorder = 'var(--color-success-border)'; optColor = 'var(--color-success-text)'; }
+                      if (isWrongSelection) { optBg = 'var(--color-danger-bg)'; optBorder = 'var(--color-danger-border)'; optColor = 'var(--color-danger)'; }
 
                       return (
                         <label
@@ -292,7 +292,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                             checked={isSelected}
                             disabled={quizState !== 'active'}
                             onChange={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
-                            style={{ marginTop: '2px', flexShrink: 0, accentColor: '#107480' }}
+                            style={{ marginTop: '2px', flexShrink: 0, accentColor: 'var(--color-primary)' }}
                           />
                           <span>{opt}</span>
                         </label>
@@ -311,7 +311,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                   onClick={handleSubmit}
                   style={{
                     padding: '0.65rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem',
-                    color: '#fff', background: allAnswered ? '#107480' : '#CBD5E1',
+                    color: 'var(--color-surface)', background: allAnswered ? 'var(--color-primary)' : 'var(--color-border-strong)',
                     border: 'none', borderRadius: '8px', cursor: allAnswered ? 'pointer' : 'not-allowed',
                   }}
                 >
@@ -324,7 +324,7 @@ function Quiz({ questions, onPass }: QuizProps) {
                   onClick={handleRetry}
                   style={{
                     padding: '0.65rem 1.5rem', fontWeight: 700, fontSize: '0.9375rem',
-                    color: '#fff', background: '#107480',
+                    color: 'var(--color-surface)', background: 'var(--color-primary)',
                     border: 'none', borderRadius: '8px', cursor: 'pointer',
                   }}
                 >
@@ -390,7 +390,7 @@ export function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#64748B' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--color-text-muted)' }}>
         Loading course…
       </div>
     );
@@ -402,7 +402,7 @@ export function CourseDetailPage() {
         <button type="button" onClick={() => navigate('/portal/training')} style={backBtnStyle}>
           ← Back to My Training
         </button>
-        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', padding: '2rem', color: '#DC2626', textAlign: 'center' }}>
+        <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '10px', padding: '2rem', color: 'var(--color-danger)', textAlign: 'center' }}>
           Course not found or you are not enrolled.
         </div>
       </div>
@@ -433,10 +433,10 @@ export function CourseDetailPage() {
 
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #107480 0%, #0c5d66 100%)',
+        background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
         borderRadius: '14px',
         padding: '1.75rem 2rem',
-        color: '#fff',
+        color: 'var(--color-surface)',
         marginBottom: '1.5rem',
       }}>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
@@ -449,12 +449,12 @@ export function CourseDetailPage() {
             {CADENCE_LABEL[course.cadence] ?? course.cadence}
           </span>
           {isCompleted && (
-            <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'rgba(134,239,172,0.3)', color: '#BBF7D0', borderRadius: '100px', padding: '0.2rem 0.65rem' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'rgba(134,239,172,0.3)', color: 'var(--color-success-border)', borderRadius: '100px', padding: '0.2rem 0.65rem' }}>
               Completed
             </span>
           )}
           {isInProgress && (
-            <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'rgba(254,215,170,0.3)', color: '#FED7AA', borderRadius: '100px', padding: '0.2rem 0.65rem' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 700, background: 'rgba(254,215,170,0.3)', color: 'var(--color-accent-light)', borderRadius: '100px', padding: '0.2rem 0.65rem' }}>
               In Progress
             </span>
           )}
@@ -476,20 +476,20 @@ export function CourseDetailPage() {
       </div>
 
       {error && (
-        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#DC2626' }}>
+        <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--color-danger)' }}>
           {error}
         </div>
       )}
 
       {/* Learning objectives */}
       {mods?.objectives && mods.objectives.length > 0 && (
-        <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#0369A1', margin: '0 0 0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div style={{ background: 'var(--color-primary-bg)', border: '1px solid var(--color-info-border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-primary-dark)', margin: '0 0 0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Learning Objectives
           </h2>
           <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {mods.objectives.map((obj, i) => (
-              <li key={i} style={{ fontSize: '0.875rem', color: '#0C4A6E', lineHeight: 1.55 }}>{obj}</li>
+              <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-primary-dark)', lineHeight: 1.55 }}>{obj}</li>
             ))}
           </ul>
         </div>
@@ -497,7 +497,7 @@ export function CourseDetailPage() {
 
       {/* Important note */}
       {mods?.note && (
-        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontSize: '0.875rem', color: '#92400E', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+        <div style={{ background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)', borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontSize: '0.875rem', color: 'var(--color-warning-text)', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
           <span style={{ display: 'inline-flex', flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
           </span>
@@ -508,7 +508,7 @@ export function CourseDetailPage() {
       {/* Embedded training video */}
       {hasVideo && (
         <div style={{ marginBottom: '0.25rem' }}>
-          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B', margin: '0 0 0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', margin: '0 0 0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Training Video
           </h2>
           <VideoPlayer videoUrl={mods!.videoUrl!} onPlay={trackStarted} />
@@ -519,13 +519,13 @@ export function CourseDetailPage() {
       {mods?.sections && mods.sections.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Course Content, {mods.sections.length} Sections
             </h2>
             <button
               type="button"
               onClick={() => setOpenSection(openSection === null ? 0 : null)}
-              style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: '#107480', fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer' }}
             >
               {openSection !== null ? 'Collapse all' : 'Expand all'}
             </button>
@@ -534,7 +534,7 @@ export function CourseDetailPage() {
             {mods.sections.map((section, i) => {
               const isOpen = openSection === i;
               return (
-                <div key={i} style={{ background: '#fff', border: `1px solid ${isOpen ? '#ddd6fe' : '#E2E8F0'}`, borderRadius: '10px', overflow: 'hidden' }}>
+                <div key={i} style={{ background: 'var(--color-surface)', border: `1px solid ${isOpen ? 'var(--color-primary-light)' : 'var(--color-border)'}`, borderRadius: '10px', overflow: 'hidden' }}>
                   <button
                     type="button"
                     onClick={() => setOpenSection(isOpen ? null : i)}
@@ -543,19 +543,19 @@ export function CourseDetailPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{
                         width: '26px', height: '26px', borderRadius: '50%',
-                        background: isOpen ? 'var(--color-primary, #107480)' : '#F1F5F9',
-                        color: isOpen ? '#fff' : '#64748B',
+                        background: isOpen ? 'var(--color-primary, var(--color-primary))' : 'var(--color-surface-soft)',
+                        color: isOpen ? 'var(--color-surface)' : 'var(--color-text-muted)',
                         fontSize: '0.75rem', fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
                         {i + 1}
                       </span>
-                      <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#0F172A' }}>{section.title}</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--color-text)' }}>{section.title}</span>
                     </div>
-                    <span style={{ color: '#94A3B8', fontSize: '0.875rem', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
+                    <span style={{ color: 'var(--color-text-subtle)', fontSize: '0.875rem', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
                   </button>
                   {isOpen && (
-                    <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #F1F5F9' }}>
+                    <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid var(--color-surface-soft)' }}>
                       {section.imageUrl && (
                         <img
                           src={section.imageUrl}
@@ -564,7 +564,7 @@ export function CourseDetailPage() {
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.8, margin: '1rem 0 0' }}>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.8, margin: '1rem 0 0' }}>
                         {section.content}
                       </p>
                     </div>
@@ -586,8 +586,8 @@ export function CourseDetailPage() {
             onClick={trackStarted}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
-              padding: '0.6rem 1.1rem', background: '#F8FAFC', color: '#334155',
-              border: '1px solid #E2E8F0', borderRadius: '8px', fontWeight: 600,
+              padding: '0.6rem 1.1rem', background: 'var(--color-bg)', color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)', borderRadius: '8px', fontWeight: 600,
               fontSize: '0.875rem', textDecoration: 'none',
             }}
           >
@@ -604,34 +604,34 @@ export function CourseDetailPage() {
 
       {/* Completion footer */}
       <div style={{
-        background: isCompleted ? '#F0FDF4' : '#F8FAFC',
-        border: `1px solid ${isCompleted ? '#BBF7D0' : '#E2E8F0'}`,
+        background: isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg)',
+        border: `1px solid ${isCompleted ? 'var(--color-success-border)' : 'var(--color-border)'}`,
         borderRadius: '12px', padding: '1.25rem 1.5rem',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap',
       }}>
         <div>
           {isCompleted ? (
             <>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#15803D', fontSize: '1rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: 'var(--color-success-text)', fontSize: '1rem' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                 Training Complete
               </div>
-              <div style={{ fontSize: '0.8125rem', color: '#16A34A', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-success)', marginTop: '0.2rem' }}>
                 Completed {formatDate(enrollment.lastCompletedAt)}
                 {enrollment.expiresAt && ` · Expires ${formatDate(enrollment.expiresAt)}`}
               </div>
             </>
           ) : hasQuiz && !quizPassed ? (
             <>
-              <div style={{ fontWeight: 600, color: '#0F172A', fontSize: '0.9375rem' }}>Pass the knowledge check to complete</div>
-              <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.2rem' }}>
+              <div style={{ fontWeight: 600, color: 'var(--color-text)', fontSize: '0.9375rem' }}>Pass the knowledge check to complete</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
                 Answer all questions above, {Math.round(PASS_THRESHOLD * 100)}% correct required.
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontWeight: 600, color: '#0F172A', fontSize: '0.9375rem' }}>Ready to mark this course complete?</div>
-              <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.2rem' }}>
+              <div style={{ fontWeight: 600, color: 'var(--color-text)', fontSize: '0.9375rem' }}>Ready to mark this course complete?</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
                 Review all sections above, then confirm completion.
               </div>
             </>
@@ -644,7 +644,7 @@ export function CourseDetailPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               padding: '0.6rem 1.4rem', fontWeight: 700, fontSize: '0.9375rem',
-              color: '#15803D', background: '#fff', border: '1px solid #BBF7D0',
+              color: 'var(--color-success-text)', background: 'var(--color-surface)', border: '1px solid var(--color-success-border)',
               borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
           >
@@ -660,7 +660,7 @@ export function CourseDetailPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               padding: '0.6rem 1.4rem', fontWeight: 700, fontSize: '0.9375rem',
-              color: '#fff', background: completing ? '#94A3B8' : 'var(--color-primary, #107480)',
+              color: 'var(--color-surface)', background: completing ? 'var(--color-text-subtle)' : 'var(--color-primary, var(--color-primary))',
               border: 'none', borderRadius: '8px', cursor: completing ? 'wait' : 'pointer', whiteSpace: 'nowrap',
             }}
           >
@@ -673,7 +673,7 @@ export function CourseDetailPage() {
           </button>
         )}
         {!isCompleted && completing && quizPassed && (
-          <span style={{ fontSize: '0.875rem', color: '#64748B' }}>Saving…</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Saving…</span>
         )}
       </div>
     </div>
