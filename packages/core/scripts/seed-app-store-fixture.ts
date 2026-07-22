@@ -36,7 +36,7 @@ const TEST_ASSIGNMENT_ID = '00000000-0000-4000-8000-000000000005';
 const TEST_ADMIN_USER_ID = '00000000-0000-4000-8000-000000000006';
 
 const TEST_CAREGIVER_EMAIL = 'test-caregiver-fixture@rayhealthevv.local';
-const TEST_CAREGIVER_PASSWORD = 'TestCaregiver2026!';
+const TEST_CAREGIVER_PASSWORD = 'Test123!Demo';
 const TEST_ADMIN_EMAIL = 'admin-fixture@rayhealthevv.local';
 const TEST_ADMIN_PASSWORD = 'TestAdmin2026!';
 
