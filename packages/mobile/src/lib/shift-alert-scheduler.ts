@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import * as SecureStore from 'expo-secure-store';
+import { secureKvStore as SecureStore } from './secure-store';
 import { Platform } from 'react-native';
 
 /**
