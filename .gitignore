@@ -20,6 +20,10 @@ dist/
 # Vercel
 .vercel
 
+# Expo
+.expo/
+**/.expo/
+
 # Tooling caches
 .superpowers/
 .claude/

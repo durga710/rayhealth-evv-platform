@@ -26,6 +26,18 @@ breaks the Metro bundler and native runtime for **all** build types. Expo Go
 > a clean install must resolve the versions above. verify with
 > `npx expo install --check`.
 
+### Why `react-native-worklets` is ALSO a root devDependency
+
+npm hoists `react-native-reanimated` to the workspace root but nests
+`react-native-worklets` under `packages/mobile/node_modules` (its react peer
+conflicts with the root `react`). `babel-preset-expo` loads
+`react-native-reanimated/plugin` from the root copy, which requires
+`react-native-worklets/plugin` and can only resolve it from the root. Without
+the root copy, every Metro bundle fails with
+`Cannot find module 'react-native-worklets/plugin'`. Keep the root
+devDependency pinned to the same version as this package's pin, and move both
+together on SDK upgrades.
+
 ## Do NOT bump these individually
 
 A PR (or Dependabot) that raises `react-native`, `react`, `react-native-reanimated`,
