@@ -11,8 +11,10 @@
   --color-primary-light: #7FC7CF;
   --color-primary-bg: rgba(16, 116, 128, 0.08);
 
-  --color-accent: #EE6C2C;
-  --color-accent-dark: #D8551B;
+  /* UI orange is intentionally deeper than the logo orange so white labels
+     remain WCAG AA-safe on badges, buttons, and chart callouts. */
+  --color-accent: #C94E0E;
+  --color-accent-dark: #B8440B;
   --color-accent-light: #FCD9C2;
   --color-accent-bg: rgba(238, 108, 44, 0.08);
   --color-on-brand: #FFFFFF;
@@ -41,7 +43,7 @@
 
   /* Semantic, kept independent of brand colors. Danger uses red-600 (not the
      accent red-700) so a true error state reads distinct from brand chrome. */
-  --color-success: #10B981;        /* emerald-500 */
+  --color-success: #047857;        /* emerald-700, safe with white labels */
   --color-success-bg: #ECFDF5;
   --color-success-border: #A7F3D0;
   --color-success-text: #047857;   /* readable emerald-700 for text on -bg */
@@ -49,7 +51,7 @@
   --color-danger-bg: #FEF2F2;
   --color-danger-border: #FECACA;
   --color-danger-text: #BE123C;    /* readable rose-700 for text on -bg */
-  --color-warning: #F59E0B;        /* amber-500 */
+  --color-warning: #B45309;        /* amber-700, safe with white labels */
   --color-warning-bg: #FFFBEB;
   --color-warning-border: #FCD34D;
   --color-warning-text: #B45309;   /* readable amber-700 for text on -bg */
